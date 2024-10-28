@@ -1,0 +1,31 @@
+[profile.default]
+solc_version = "0.8.27"
+src = "src"
+rpc_url = "http://0.0.0.0:8545"
+out = "out"
+libs = ["lib"]
+optimizer_runs = 200
+via_ir = true
+
+[profile.default.fmt]
+single_line_statement_blocks = "multi"
+multiline_func_header = "attributes_first"
+override_spacing = true
+sort_imports = true
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+#[profile.default.optimizer_details]
+#constantOptimizer = false
+#yul = true
+#
+#[profile.default.optimizer_details.yulDetails]
+#stackAllocation = true
+
+[profile.default.fuzz]
+runs = 256
+[profile.default.invariant]
+runs = 256
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+mainnet = "${MAINNET_RPC_URL}"

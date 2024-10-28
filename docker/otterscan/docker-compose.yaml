@@ -1,0 +1,51 @@
+services:
+  anvil:
+    build:
+      context: anvil
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    #    environment:
+    #      - RPC_URL=https://eth-rpc.dahliadev.xyz
+    #      - PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    command: >
+      --host 0.0.0.0
+      --fork-url https://eth-rpc.dahliadev.xyz
+      --fork-block-number 20720117
+      --chain-id 1
+    ports:
+      - "8546:8545"
+
+  otterscan:
+    image: otterscan/otterscan:v2.6.0
+    environment:
+      #      - DISABLE_CONFIG_OVERWRITE=1
+      - ERIGON_URL=http://localhost:8546
+    ##      - OTTERSCAN_CONFIG={"erigonURL":"http://localhost:8546","beaconAPI":"","assetsURLPrefix":"","experimental": "" }
+    #    build:
+    #      context: otterscan
+    #      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+#  db:
+#    image: postgres:16-alpine
+##    volumes:
+##      - postgres_data:/var/lib/postgresql/data
+#    environment:
+#      POSTGRES_DB: sourcify
+#      POSTGRES_USER: sourcify
+#      POSTGRES_PASSWORD: sourcify
+
+#  sourcify:
+##    image: ghcr.io/ethereum/sourcify/server:1.7.0
+#    build:
+#      context: sourcify
+#      dockerfile: Dockerfile
+#    environment:
+#      DOCKER_HOST_POSTGRES_TEST_PORT: 5432
+#      SOURCIFY_POSTGRES_HOST: "db"
+#      SOURCIFY_POSTGRES_DB: "sourcify"
+#      SOURCIFY_POSTGRES_USER: "sourcify"
+#      SOURCIFY_POSTGRES_PASSWORD: "sourcify"
+#      SOURCIFY_POSTGRES_PORT: 5432
+#    ports:
+#      - "5555:5555"

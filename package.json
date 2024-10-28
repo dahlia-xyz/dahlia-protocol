@@ -1,0 +1,55 @@
+{
+  "name": "dahlia",
+  "description": "Dahlia Contracts",
+  "license": "BSL",
+  "version": "1.0.0",
+  "scripts": {
+    "setup": "pnpm i && pnpm nx run scripts:setup && pnpm nx run scripts:contracts",
+    "size": "forge build --sizes src/core/contracts/ src/irm/contracts src/oracles/contracts",
+    "blockscout": "nx run docker-blockscout:setup",
+    "otterscan": "nx run docker-otterscan:setup",
+    "contracts": "nx run scripts:contracts",
+    "build:forge": "FOUNDRY_PROFILE=build forge build",
+    "lint": "pre-commit run --all-files",
+    "coverage": "forge coverage --no-match-coverage=.s.sol --ir-minimum",
+    "lcov": "forge coverage  --no-match-coverage=.s.sol --ir-minimum --report lcov",
+    "remapping": "forge remappings",
+    "clean": "forge clean",
+    "slither": "slither --filter-paths '(node_modules/|lib/)' .",
+    "desc": "surya describe src/core/contracts/Dahlia.sol",
+    "mdreport": "surya mdreport report.md src/core/contracts/Dahlia.sol",
+    "snapshot": "forge snapshot",
+    "diff": "forge snapshot --diff",
+    "prepare": "husky"
+  },
+  "author": {
+    "name": "Dahlia Labs",
+    "email": "info@dahlia.xyz"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@types/node": "^22.7.9",
+    "husky": "^9.1.6",
+    "nx": "20.0.5",
+    "prettier": "^3.1.1",
+    "prettier-plugin-toml": "^2.0.1",
+    "solhint": "^5.0.3",
+    "surya": "^0.4.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "plugins": [
+      "@trivago/prettier-plugin-sort-imports",
+      "prettier-plugin-toml"
+    ],
+    "importOrder": [
+      "^@",
+      "^\\.\\.",
+      "^\\."
+    ],
+    "importOrderSeparation": true
+  },
+  "nx": {}
+}

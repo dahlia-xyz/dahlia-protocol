@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {ChainlinkOracleMaxDelayParams} from "../types/Types.sol";
+
+interface IChainlinkOracleWithMaxDelay {
+    // function maxDelays() external view returns (ChainlinkOracleMaxDelayParams memory maxDelays);
+
+    /// @notice The ```setMaximumOracleDelays``` function sets the max oracle delay to determine if Chainlink data is stale
+    /// @dev Requires msg.sender to be the timelock address
+    /// @param _newMaxOracleDelays The new max oracle delay
+    function setMaximumOracleDelays(ChainlinkOracleMaxDelayParams memory _newMaxOracleDelays) external;
+}

@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "imports-order": "error",
+    "state-visibility": "error",
+    "func-visibility": ["error", { "ignoreConstructors": true }]
+  }
+}
