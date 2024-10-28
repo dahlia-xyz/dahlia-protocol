@@ -3,7 +3,9 @@ import { createPublicClient, http } from "viem";
 import type { GetBlockNumberReturnType } from "viem";
 import { mainnet } from "viem/chains";
 
+const env = { ...process.env, NX_VERBOSE_LOGGING: "true" };
 const $$ = execa({ verbose: "full" });
+const $ = execa({ env, verbose: "short" });
 
 const rpcUrl = "http://localhost:8546";
 const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
@@ -20,6 +22,8 @@ const waitForRpc = async (): Promise<GetBlockNumberReturnType> => {
 };
 
 const HTTP_URL = "http://localhost:80";
+
+await $({ env })`pnpm nx run dahlia:otterscan`;
 
 console.log("Deploying contracts...");
 

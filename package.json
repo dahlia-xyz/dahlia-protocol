@@ -4,7 +4,8 @@
   "license": "BSL",
   "version": "1.0.0",
   "scripts": {
-    "setup": "pnpm i && pnpm nx run scripts:setup && pnpm nx run scripts:contracts",
+    "setup": "pnpm i && pnpm nx run scripts:setup",
+    "test-deploy-contracts": "pnpm nx run scripts:contracts",
     "size": "forge build --sizes src/core/contracts/ src/irm/contracts src/oracles/contracts",
     "blockscout": "nx run docker-blockscout:setup",
     "otterscan": "nx run docker-otterscan:setup",

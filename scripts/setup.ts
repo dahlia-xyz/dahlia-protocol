@@ -32,6 +32,5 @@ if (command === "submodules") {
   await $`git submodule update --init`;
   await prepareSubmodules();
 
-  await $({ env })`pnpm nx run dahlia:otterscan`;
   console.log("Setup complete!");
 }
