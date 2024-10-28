@@ -31,16 +31,17 @@ library LiquidationImpl {
     ) internal returns (uint256, uint256, uint256) {
         uint256 rescueAssets;
         uint256 rescueShares;
+        uint256 totalBorrowAssets = market.totalBorrowAssets;
+        uint256 totalBorrowShares = market.totalBorrowShares;
+
         // get collateral price from oracle
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         // calc current loan-to-value of borrower position
-        uint256 positionLTV = MarketMath.getLTV(market, borrowerPosition, collateralPrice);
+        uint256 positionLTV = MarketMath.getLTV(totalBorrowAssets, totalBorrowShares, borrowerPosition, collateralPrice);
         // check is borrower not healthy
         if (positionLTV < market.lltv) {
             revert Errors.HealthyPositionLiquidation(positionLTV, market.lltv);
         }
-        uint256 totalBorrowAssets = market.totalBorrowAssets;
-        uint256 totalBorrowShares = market.totalBorrowShares;
         uint256 borrowShares = borrowerPosition.borrowShares;
         uint256 collateral = borrowerPosition.collateral;
         uint256 liquidationBonusRate = market.liquidationBonusRate;
@@ -57,7 +58,7 @@ library LiquidationImpl {
         );
 
         // remove all shares from position
-        borrowerPosition.borrowShares -= borrowShares;
+        borrowerPosition.borrowShares = 0;
         // remove all seizedCollateral from position, always seizedCollateral <= collateral
         borrowerPosition.collateral -= seizedCollateral;
         // remove all position assets from market

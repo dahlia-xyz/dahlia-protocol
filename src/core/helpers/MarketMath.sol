@@ -152,22 +152,14 @@ library MarketMath {
     }
 
     /// @notice Get current borrow position LTV in Market
-    function getLTV(Types.Market memory market, Types.MarketUserPosition memory position)
-        internal
-        view
-        returns (uint256)
-    {
-        return getLTV(market, position, getCollateralPrice(market.oracle));
-    }
-
-    /// @notice Get current borrow position LTV in Market
-    function getLTV(Types.Market memory market, Types.MarketUserPosition memory position, uint256 collateralPrice)
-        internal
-        pure
-        returns (uint256)
-    {
+    function getLTV(
+        uint256 totalBorrowAssets,
+        uint256 totalBorrowShares,
+        Types.MarketUserPosition memory position,
+        uint256 collateralPrice
+    ) internal pure returns (uint256) {
         // decrease collateral value by market LLTV for getting max borrow amount
-        uint256 borrowedAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
+        uint256 borrowedAssets = position.borrowShares.toAssetsUp(totalBorrowAssets, totalBorrowShares);
         // get position LTV
         return getLTV(borrowedAssets, position.collateral, collateralPrice);
     }

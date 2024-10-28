@@ -47,7 +47,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         Types.MarketUserPosition memory position = markets[marketId].userPositions[userAddress];
         Types.Market memory market = markets[marketId].market;
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
-        return MarketMath.getLTV(market, position, collateralPrice);
+        return MarketMath.getLTV(market.totalBorrowAssets, market.totalBorrowShares, position, collateralPrice);
     }
 
     /// @inheritdoc IMarketStorage
