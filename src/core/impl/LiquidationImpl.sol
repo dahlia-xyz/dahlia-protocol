@@ -130,9 +130,10 @@ library LiquidationImpl {
         // calc current loan-to-value of borrower position
         uint256 positionLTV = borrowAssets.getLTV(collateral, collateralPrice);
 
-        // we allow relocate only when rltv < ltv
+        // we allow relocate only when rltv <= ltv
         require(positionLTV >= market.rltv, Errors.HealthyPositionReallocation(positionLTV, market.rltv));
-        require(positionLTV < market.lltv, "ERROR_LIQUIDITY"); // TODO: do we nett this check
+        // and only when ltv < lltv
+        require(positionLTV < market.lltv, Errors.BadPositionReallocation(positionLTV, market.lltv));
 
         // execute repayment in Market A
         (uint256 repaidAssets,) = BorrowImpl.internalRepay(market, borrowerPosition, 0, borrowShares, borrower);

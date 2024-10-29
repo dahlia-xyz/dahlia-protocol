@@ -25,7 +25,7 @@
 To set up the development environment, follow these steps:
 
 1. Ensure you have [pnpm](https://pnpm.io/) installed.
-1. Run the setup command to build and prepare the environment:
+1. Run the setup command to prepare the environment:
 
 ```shell
 pnpm run setup

@@ -19,6 +19,9 @@ library Errors {
     /// @notice Trying to reallocate a healthy position.
     error HealthyPositionReallocation(uint256 ltv, uint256 rltv);
 
+    /// @notice Trying to reallocate a bad posttion, need to liquidate.
+    error BadPositionReallocation(uint256 ltv, uint256 lltv);
+
     /// @notice NotPermitted address calling function `onBehalfOf` another address.
     error NotPermitted();
 
