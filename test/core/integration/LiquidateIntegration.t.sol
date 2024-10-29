@@ -297,7 +297,7 @@ contract LiquidateIntegration is Test {
         assertEq(newBorrowShares, 0, "borrow shares");
         assertEq(newCollateral, expectedLeftCollateral, "collateral");
         assertEq(m.totalLendAssets, lendBalance, "total lend assets decreased with bad data");
-        assertEq(m.totalLendShares, prevTotalLentShares, "total lend stay same with bas data");
+        assertEq(m.totalLendShares, prevTotalLentShares - _rescueShares, "total lend stay same with bas data");
         assertTrue(_bonusCollateral > 0, "_bonusCollateral must be positive");
         assertEq(m.totalBorrowAssets, 0, "total borrow shares");
         assertEq(m.totalBorrowShares, 0, "total borrow shares");

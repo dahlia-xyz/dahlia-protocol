@@ -77,6 +77,8 @@ library LiquidationImpl {
                 );
                 // decrease reserve lend shares
                 reservePosition.lendShares -= rescueShares;
+                // decrease total lend shares
+                market.totalLendShares -= rescueShares;
             }
             // decrease total lend assets without rescueAssets
             market.totalLendAssets -= (badDebtAssets - rescueAssets);
