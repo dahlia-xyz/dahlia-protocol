@@ -81,9 +81,12 @@ interface IDahlia is IMarketStorage {
     function proxyFactory() external view returns (address);
 
     /// @notice Sets a possible LLTV range for market creation.
-    /// @param newMaxLltv Min lltv range.
-    /// @param newMaxLltv Max lltv range
-    function setLltvRange(uint256 newMinLltv, uint256 newMaxLltv) external;
+    /// @param range min max range.
+    function setLltvRange(Types.RateRange memory range) external;
+
+    /// @notice Sets a possible liquidation bonus rate range for market creation.
+    /// @param range min max range.
+    function setLiquidationBonusRateRange(Types.RateRange memory range) external;
 
     /// @notice Sets the protocol fee recipient address for all markets
     /// @param newProtocolFeeRecipient The new protocol fee recipient address

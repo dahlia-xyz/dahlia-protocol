@@ -28,38 +28,71 @@ contract ManageMarketIntegration is Test {
         assertEq($.dahlia.isMarketDeployed($.marketId), true);
     }
 
-    function test_int_manage_setLltvRange(uint256 minLltvFuzz, uint256 maxLltvFuzz) public {
-        minLltvFuzz = bound(minLltvFuzz, 1, Constants.LLTV_100_PERCENT - 1);
-        maxLltvFuzz = bound(maxLltvFuzz, minLltvFuzz, Constants.LLTV_100_PERCENT - 1);
+    function test_int_manage_setLltvRange(uint24 minLltvFuzz, uint24 maxLltvFuzz) public {
+        minLltvFuzz = uint24(bound(minLltvFuzz, 1, Constants.LLTV_100_PERCENT - 1));
+        maxLltvFuzz = uint24(bound(maxLltvFuzz, minLltvFuzz, Constants.LLTV_100_PERCENT - 1));
 
         // firstly check onlyOwner protection
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        $.dahlia.setLltvRange(minLltvFuzz, maxLltvFuzz);
+        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, maxLltvFuzz));
 
         vm.startPrank($.owner);
         // check is range valid
-        vm.expectRevert(abi.encodeWithSelector(Errors.LltvRangeNotValid.selector, 0.0001e18, maxLltvFuzz));
-        $.dahlia.setLltvRange(0.0001e18, maxLltvFuzz);
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 1e6, maxLltvFuzz));
+        $.dahlia.setLltvRange(Types.RateRange(uint24(1e6), maxLltvFuzz));
 
         // check is range valid
-        vm.expectRevert(abi.encodeWithSelector(Errors.LltvRangeNotValid.selector, minLltvFuzz, 1e18));
-        $.dahlia.setLltvRange(minLltvFuzz, 1e18);
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minLltvFuzz, 1e6));
+        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, uint24(1e6)));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(Errors.LltvRangeNotValid.selector, minLltvFuzz, Constants.LLTV_100_PERCENT)
-        );
-        $.dahlia.setLltvRange(minLltvFuzz, Constants.LLTV_100_PERCENT);
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minLltvFuzz, Constants.LLTV_100_PERCENT));
+        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, uint24(Constants.LLTV_100_PERCENT)));
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.LltvRangeNotValid.selector, 0, maxLltvFuzz));
-        $.dahlia.setLltvRange(0, maxLltvFuzz);
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 0, maxLltvFuzz));
+        $.dahlia.setLltvRange(Types.RateRange(0, maxLltvFuzz));
 
         // check success
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.SetLLTVRange(minLltvFuzz, maxLltvFuzz);
-        $.dahlia.setLltvRange(minLltvFuzz, maxLltvFuzz);
+        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, maxLltvFuzz));
 
-        assertEq($.dahlia.minLltv(), minLltvFuzz);
-        assertEq($.dahlia.maxLltv(), maxLltvFuzz);
+        (uint24 newMin, uint24 newMax) = $.dahlia.lltvRange();
+        assertEq(newMin, minLltvFuzz);
+        assertEq(newMax, maxLltvFuzz);
+        vm.stopPrank();
+    }
+
+    function test_int_manage_setLiquidationBonusRateRange(uint24 minFuzz, uint24 maxFuzz) public {
+        maxFuzz = uint24(bound(maxFuzz, 1, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE));
+        minFuzz = uint24(bound(minFuzz, 1, maxFuzz));
+
+        // firstly check onlyOwner protection
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        $.dahlia.setLltvRange(Types.RateRange(minFuzz, maxFuzz));
+
+        vm.startPrank($.owner);
+        // check is range valid
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 1e6, maxFuzz));
+        $.dahlia.setLltvRange(Types.RateRange(uint24(1e6), maxFuzz));
+
+        // check is range valid
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minFuzz, 1e6));
+        $.dahlia.setLltvRange(Types.RateRange(minFuzz, uint24(1e6)));
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minFuzz, Constants.LLTV_100_PERCENT));
+        $.dahlia.setLltvRange(Types.RateRange(minFuzz, uint24(Constants.LLTV_100_PERCENT)));
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 0, maxFuzz));
+        $.dahlia.setLltvRange(Types.RateRange(0, maxFuzz));
+
+        // check success
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.SetLiquidationBonusRateRange(minFuzz, maxFuzz);
+        $.dahlia.setLiquidationBonusRateRange(Types.RateRange(minFuzz, maxFuzz));
+
+        (uint24 newMin, uint24 newMax) = $.dahlia.liquidationBonusRateRange();
+        assertEq(newMin, minFuzz);
+        assertEq(newMax, maxFuzz);
         vm.stopPrank();
     }
 

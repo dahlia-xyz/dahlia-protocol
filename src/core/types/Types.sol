@@ -14,6 +14,11 @@ library Types {
         Deprecated
     }
 
+    struct RateRange {
+        uint24 min;
+        uint24 max;
+    }
+
     struct Market {
         // --- 31 bytes
         MarketId id; // 4 bytes
@@ -32,8 +37,8 @@ library Types {
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
         // --- 28 bytes
         IIrm irm; // 20 bytes
-        uint32 liquidationBonusRate; // 4 bytes
-        uint32 reallocationBonusRate; // 4 bytes
+        uint24 liquidationBonusRate; // 3 bytes
+        uint24 reallocationBonusRate; // 3 bytes
         // --- 20 bytes
         IERC4626 marketProxy; // 20 bytes
         address marketDeployer;
@@ -51,6 +56,7 @@ library Types {
         IIrm irm;
         uint256 lltv;
         uint256 rltv;
+        uint256 liquidationBonusRate;
     }
 
     struct MarketUserPosition {

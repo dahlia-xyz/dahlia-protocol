@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import {Vm, console} from "@forge-std/Test.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
@@ -87,6 +86,10 @@ library BoundUtils {
 
     function randomLltv(Vm vm) public returns (uint256) {
         return vm.randomUint(TestConstants.MIN_TEST_LLTV, TestConstants.MAX_TEST_LLTV);
+    }
+
+    function randomLiquidationBonusRate(Vm vm, uint256 lltv) public returns (uint256) {
+        return vm.randomUint(1, MarketMath.getMaxLiquidationBonusRate(lltv));
     }
 
     function generatePositionInLtvRange(Vm vm, TestTypes.MarketPosition memory pos, uint256 minLtv, uint256 maxLtv)

@@ -49,8 +49,8 @@ library ManageMarketImpl {
         market.rltv = uint24(marketConfig.rltv);
         market.updatedAt = uint48(block.timestamp);
         market.status = Types.MarketStatus.Active;
-        market.liquidationBonusRate = uint32(MarketMath.calcLiquidationBonusRate(market.lltv)); // TODO!!
-        market.reallocationBonusRate = uint32(MarketMath.calcReallocationBonusRate(market.lltv)); // TODO!!
+        market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
+        market.reallocationBonusRate = uint24(MarketMath.calcReallocationBonusRate(market.lltv));
         emit Events.DeployMarket(id, marketConfig);
     }
 }

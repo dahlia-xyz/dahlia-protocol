@@ -107,13 +107,20 @@ library MarketMath {
         rescueShares = rescueAssets.toSharesDown(totalLendAssets, totalLendShares);
     }
 
-    function calcLiquidationBonusRate(uint256 lltv) internal pure returns (uint256) {
-        uint256 multiplicator = 0.3e5;
-        uint256 divisor = Constants.LLTV_100_PERCENT
-            - multiplicator.mulDiv(Constants.LLTV_100_PERCENT - lltv, Constants.LLTV_100_PERCENT);
-        uint256 factor =
-            Constants.LLTV_100_PERCENT.mulDiv(Constants.LLTV_100_PERCENT, divisor) - Constants.LLTV_100_PERCENT;
-        return Constants.MAX_LIQUIDATION_BONUS_RATE.min(factor);
+    // TODO: remove after checking
+    // function calcLiquidationBonusRate(uint256 lltv) internal pure returns (uint256) {
+    //     uint256 multiplicator = 0.3e5;
+    //     uint256 divisor = Constants.LLTV_100_PERCENT
+    //         - multiplicator.mulDiv(Constants.LLTV_100_PERCENT - lltv, Constants.LLTV_100_PERCENT);
+    //     uint256 factor =
+    //         Constants.LLTV_100_PERCENT.mulDiv(Constants.LLTV_100_PERCENT, divisor) - Constants.LLTV_100_PERCENT;
+    //     return Constants.MAX_LIQUIDATION_BONUS_RATE.min(factor);
+    // }
+
+    function getMaxLiquidationBonusRate(uint256 lltv) public returns (uint256) {
+        return FixedPointMathLib.min(
+            Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE, (Constants.LLTV_100_PERCENT - lltv) * 3 / 4
+        );
     }
 
     function calcReallocationBonusRate(uint256 rltv) internal pure returns (uint256) {

@@ -19,7 +19,10 @@ library Constants {
     uint24 internal constant DEFAULT_MAX_LLTV_RANGE = uint24(99 * Constants.LLTV_100_PERCENT / 100);
 
     /// @dev Max liquidation bonus rate.
-    uint256 internal constant MAX_LIQUIDATION_BONUS_RATE = 10 * Constants.LLTV_100_PERCENT / 100;
+    uint256 internal constant DEFAULT_MIN_LIQUIDATION_BONUS_RATE = uint24(1);
+
+    /// @dev Max liquidation bonus rate.
+    uint256 internal constant DEFAULT_MAX_LIQUIDATION_BONUS_RATE = uint24(15 * Constants.LLTV_100_PERCENT / 100);
 
     /// @dev Max reallocation bonus rate.
     uint256 internal constant MAX_REALLOCATION_BONUS_RATE = 4 * Constants.LLTV_100_PERCENT / 100;

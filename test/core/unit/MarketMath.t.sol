@@ -31,16 +31,16 @@ contract MarketMathTest is Test {
         }
     }
 
-    function test_unit_math_calcLiquidationBonusRate() public pure {
-        uint256 C1 = Constants.LLTV_100_PERCENT / 100;
-        assertEq(MarketMath.calcLiquidationBonusRate(99 * C1), 300); // 0.3%
-        assertEq(MarketMath.calcLiquidationBonusRate(98 * C1), 603); // ~0.6%
-        assertEq(MarketMath.calcLiquidationBonusRate(90 * C1), 3092); // ~3%
-        assertEq(MarketMath.calcLiquidationBonusRate(80 * C1), 6382); // ~6.4%
-        assertEq(MarketMath.calcLiquidationBonusRate(75 * C1), 8108); // ~8.1%
-        assertEq(MarketMath.calcLiquidationBonusRate(60 * C1), Constants.MAX_LIQUIDATION_BONUS_RATE); // ~13.6% -> 10%
-        assertEq(MarketMath.calcLiquidationBonusRate(50 * C1), Constants.MAX_LIQUIDATION_BONUS_RATE); // 15% -> 10%
-    }
+    // function test_unit_math_calcLiquidationBonusRate() public pure {
+    //     uint256 C1 = Constants.LLTV_100_PERCENT / 100;
+    //     assertEq(MarketMath.calcLiquidationBonusRate(99 * C1), 300); // 0.3%
+    //     assertEq(MarketMath.calcLiquidationBonusRate(98 * C1), 603); // ~0.6%
+    //     assertEq(MarketMath.calcLiquidationBonusRate(90 * C1), 3092); // ~3%
+    //     assertEq(MarketMath.calcLiquidationBonusRate(80 * C1), 6382); // ~6.4%
+    //     assertEq(MarketMath.calcLiquidationBonusRate(75 * C1), 8108); // ~8.1%
+    //     assertEq(MarketMath.calcLiquidationBonusRate(60 * C1), Constants.MAX_LIQUIDATION_BONUS_RATE); // ~13.6% -> 10%
+    //     assertEq(MarketMath.calcLiquidationBonusRate(50 * C1), Constants.MAX_LIQUIDATION_BONUS_RATE); // 15% -> 10%
+    // }
 
     function test_unit_math_calcReallocationBonusRate() public pure {
         uint256 C1 = Constants.LLTV_100_PERCENT / 100;
