@@ -5,12 +5,12 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
 import {Permitted} from "src/core/abstracts/Permitted.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
+import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
 import {LendImpl} from "src/core/impl/LendImpl.sol";
@@ -35,8 +35,9 @@ import {Types} from "src/core/types/Types.sol";
 contract Dahlia is Permitted, MarketStorage, IDahlia {
     using SafeERC20 for IERC20;
 
-    uint24 public minLltv = Constants.DEFAULT_MIN_LLTV_RANGE; // Initial min lltv // 3 bytes
-    uint24 public maxLltv = Constants.DEFAULT_MAX_LLTV_RANGE; // Initial max lltv // 3 bytes
+    Types.RateRange public lltvRange;
+    Types.RateRange public liquidationBonusRateRange;
+
     uint32 internal marketSequence; // 4 bytes
     address public proxyFactory; // 20 bytes
     IDahliaRegistry public dahliaRegistry; // 20 bytes
@@ -49,19 +50,35 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         require(addressRegistry != address(0), Errors.ZeroAddress());
         dahliaRegistry = IDahliaRegistry(addressRegistry);
         protocolFeeRecipient = _owner;
+        lltvRange = Types.RateRange(Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        liquidationBonusRateRange = Types.RateRange(
+            uint24(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE), uint24(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE)
+        );
     }
 
     /// @inheritdoc IDahlia
-    function setLltvRange(uint256 minLltv_, uint256 maxLltv_) external onlyOwner {
+    function setLltvRange(Types.RateRange memory range) external onlyOwner {
         // percent should be always between 0 and 100% and min ltv should be <= max ltv
         require(
-            minLltv_ > 0 && maxLltv_ < Constants.LLTV_100_PERCENT && minLltv_ <= maxLltv_,
-            Errors.LltvRangeNotValid(minLltv_, maxLltv_)
+            range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max,
+            Errors.RangeNotValid(range.min, range.max)
         );
-        minLltv = uint24(minLltv_);
-        maxLltv = uint24(maxLltv_);
+        lltvRange = range;
 
-        emit Events.SetLLTVRange(minLltv_, maxLltv_);
+        emit Events.SetLLTVRange(range.min, range.max);
+    }
+
+    /// @inheritdoc IDahlia
+    function setLiquidationBonusRateRange(Types.RateRange memory range) external onlyOwner {
+        // percent should be always between 0 and 100% and range.min should be <= range.max
+        require(
+            range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE
+                && range.max <= Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE && range.min <= range.max,
+            Errors.RangeNotValid(range.min, range.max)
+        );
+        liquidationBonusRateRange = range;
+
+        emit Events.SetLiquidationBonusRateRange(range.min, range.max);
     }
 
     /// @inheritdoc IDahlia
@@ -106,8 +123,14 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         returns (Types.MarketId id)
     {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
-        require(marketConfig.lltv >= minLltv && marketConfig.lltv <= maxLltv, Errors.LltvNotAllowed());
+        require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
         require(marketConfig.rltv < marketConfig.lltv, Errors.RltvNotAllowed());
+        require(
+            marketConfig.liquidationBonusRate >= liquidationBonusRateRange.min
+                && marketConfig.liquidationBonusRate <= liquidationBonusRateRange.max
+                && marketConfig.liquidationBonusRate <= MarketMath.getMaxLiquidationBonusRate(marketConfig.lltv),
+            Errors.LiquidationBonusRateNotAllowed()
+        );
 
         id = Types.MarketId.wrap(++marketSequence);
 

@@ -32,6 +32,11 @@ library Events {
     /// @param maxLltv The max LLTV.
     event SetLLTVRange(uint256 minLltv, uint256 maxLltv);
 
+    /// @notice Emitted when allowing an liquidation bonus rate range.
+    /// @param minLltv The min liquidation bonus rate.
+    /// @param maxLltv The max liquidation bonus rate.
+    event SetLiquidationBonusRateRange(uint256 minLltv, uint256 maxLltv);
+
     /// @notice Emitted when market status changed.
     /// @param from previous status.
     /// @param to new status.

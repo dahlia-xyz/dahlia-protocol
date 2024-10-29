@@ -58,8 +58,8 @@ library Errors {
     /// @notice Value is already set.
     error AlreadySet();
 
-    /// @notice LLTV range is not valid.
-    error LltvRangeNotValid(uint256, uint256);
+    /// @notice Range is not valid.
+    error RangeNotValid(uint256, uint256);
 
     /// @notice Max protocol fee exceeded.
     error MaxProtocolFeeExceeded();
@@ -67,10 +67,13 @@ library Errors {
     /// @notice Interest Rate Model not allowed in the registry.
     error IrmNotAllowed();
 
-    /// @notice Liquidation LTV not allowed in the registry.
+    /// @notice Liquidation LTV not allowed from range.
     error LltvNotAllowed();
 
-    /// @notice Liquidation LTV not allowed in the registry.
+    /// @notice Liquidation liquidation bonus rate not allowed.
+    error LiquidationBonusRateNotAllowed();
+
+    /// @notice Liquidation RLTV not allowed.
     error RltvNotAllowed();
 
     /// @notice Liquidation LTV not allowed in the registry.

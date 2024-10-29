@@ -13,6 +13,7 @@ import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
 import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {OracleFactory} from "src/oracles/contracts/OracleFactory.sol";
+import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
 import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
 import {OracleMock} from "test/common/mocks/OracleMock.sol";
@@ -224,13 +225,13 @@ contract TestContext {
             oracle: address(createTestOracle(Constants.ORACLE_PRICE_SCALE)),
             irm: createTestIrm(),
             lltv: lltv,
-            rltv: rltv
+            rltv: rltv,
+            liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv)
         });
     }
 
     function copyMarketConfig(Types.MarketConfig memory config, uint256 rltv, uint256 lltv)
         public
-        pure
         returns (Types.MarketConfig memory marketConfig)
     {
         marketConfig = Types.MarketConfig({
@@ -239,7 +240,8 @@ contract TestContext {
             oracle: config.oracle,
             irm: config.irm,
             lltv: lltv,
-            rltv: rltv
+            rltv: rltv,
+            liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv)
         });
     }
 
