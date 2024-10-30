@@ -148,6 +148,23 @@ interface IDahlia is IMarketStorage {
         external
         returns (uint256 assetsBorrowed, uint256 sharesBorrowed);
 
+    /// @notice Supplies collateral and borrows `assets` or `shares` on behalf of a user and sends the assets to a receiver.
+    /// @dev either the `assets` or the `shares` must be set to zero.
+    /// @param id of the market.
+    /// @param collateralAssets The amount of assets for collateral.
+    /// @param borrowAssets The amount of assets to borrow.
+    /// @param onBehalfOf The address that will own the increased borrow position.
+    /// @param receiver The address that will receive the borrowed assets.
+    /// @return borrowedAssets The amount of assets borrowed.
+    /// @return borrowedShares The amount of shares minted.
+    function supplyAndBorrow(
+        Types.MarketId id,
+        uint256 collateralAssets,
+        uint256 borrowAssets,
+        address onBehalfOf,
+        address receiver
+    ) external returns (uint256 borrowedAssets, uint256 borrowedShares);
+
     /// @notice Repays `assets` or `shares` on behalf of a user, with an optional callback.
     /// @dev either the `assets` or the `shares` must be set to zero.
     /// @param id of the market.

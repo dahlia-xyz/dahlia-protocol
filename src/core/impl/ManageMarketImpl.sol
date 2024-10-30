@@ -17,7 +17,7 @@ library ManageMarketImpl {
 
     function setProtocolFeeRate(Types.Market storage market, uint256 newFee) internal {
         require(newFee != market.protocolFeeRate, Errors.AlreadySet());
-        require(newFee <= Constants.MAX_FEE, Errors.MaxProtocolFeeExceeded());
+        require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxProtocolFeeExceeded());
 
         market.protocolFeeRate = uint24(newFee);
         emit Events.SetProtocolFeeRate(market.id, newFee);
@@ -25,7 +25,7 @@ library ManageMarketImpl {
 
     function setReserveFeeRate(Types.Market storage market, uint256 newFee) internal {
         require(newFee != market.reserveFeeRate, Errors.AlreadySet());
-        require(newFee <= Constants.MAX_FEE, Errors.MaxProtocolFeeExceeded());
+        require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxProtocolFeeExceeded());
 
         market.reserveFeeRate = uint24(newFee);
         emit Events.SetReserveFeeRate(market.id, newFee);

@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import {Test, Vm} from "@forge-std/Test.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IWrappedVault} from "@royco/interfaces/IWrappedVault.sol";
+import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestContext} from "test/common/TestContext.sol";
@@ -33,7 +34,8 @@ contract RoycoIntegration is Test {
     }
 
     function test_int_royco_autoWrapVault() public {
-        Types.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", 0.7e5, 0.8e5);
+        Types.MarketConfig memory marketConfig =
+            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
         Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(Types.MarketId.unwrap(marketId), 2);
 

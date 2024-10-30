@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import {Test, Vm} from "forge-std/Test.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
@@ -49,7 +48,7 @@ contract LiquidateIntegration is Test {
 
         uint256 positionLTV = $.dahlia.getPositionLTV($.marketId, $.alice);
         (uint256 borrowedAssets,,) = $.dahlia.marketUserMaxBorrows($.marketId, $.alice);
-        vm.dahliaPrepareLiquidator($.bob, borrowedAssets, $);
+        vm.dahliaPrepareLoanBalanceFor($.bob, borrowedAssets, $);
 
         vm.prank($.bob);
         vm.expectRevert(
@@ -77,7 +76,7 @@ contract LiquidateIntegration is Test {
         vm.assume(positionLTV < $.marketConfig.lltv);
 
         // Bob is LIQUIDATOR
-        vm.dahliaPrepareLiquidator($.bob, pos.borrowed, $);
+        vm.dahliaPrepareLoanBalanceFor($.bob, pos.borrowed, $);
         vm.startPrank($.bob);
         if (positionLTV < $.marketConfig.lltv) {
             vm.expectRevert(
@@ -90,7 +89,7 @@ contract LiquidateIntegration is Test {
 
     function test_int_liquidate_mathematic(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, TestConstants.MAX_TEST_LLTV + 0.3e5);
+        pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, MarketMath.toPercent(130));
 
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
@@ -180,7 +179,7 @@ contract LiquidateIntegration is Test {
         uint256 repaidShares = borrowShares - _badDebtShares;
 
         // Bob is LIQUIDATOR
-        vm.dahliaPrepareLiquidator($.bob, repaidAssets, $);
+        vm.dahliaPrepareLoanBalanceFor($.bob, repaidAssets, $);
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
@@ -261,7 +260,7 @@ contract LiquidateIntegration is Test {
         uint256 repaidShares = borrowShares - _badDebtShares;
 
         // Bob is LIQUIDATOR
-        vm.dahliaPrepareLiquidator($.bob, repaidAssets, $);
+        vm.dahliaPrepareLoanBalanceFor($.bob, repaidAssets, $);
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
@@ -327,12 +326,11 @@ contract LiquidateIntegration is Test {
         vm.resumeGasMetering();
         $.dahlia.liquidate($.marketId, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.stopPrank();
-        vm.stopPrank();
     }
 
     function test_int_liquidate_seizedAssetsRoundUp() public {
         vm.pauseGasMetering();
-        uint256 lltv = 75 * Constants.LLTV_100_PERCENT / 100;
+        uint256 lltv = MarketMath.toPercent(75);
         TestContext.MarketContext memory $m1 = ctx.bootstrapMarket("USDC", "WBTC", lltv);
         uint256 amountCollateral = 400;
         uint256 amountBorrowed = 300;
@@ -353,8 +351,8 @@ contract LiquidateIntegration is Test {
         (uint256 returnRepaidAssets,, uint256 returnSeizedCollateral) =
             $m1.dahlia.liquidate($m1.marketId, $m1.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
-
         vm.stopPrank();
+
         // assertEq(returnSeizedCollateral, 325, "seized collateral");
         assertEq(returnRepaidAssets, 300, "repaid assets");
     }

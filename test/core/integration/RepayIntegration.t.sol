@@ -63,7 +63,7 @@ contract RepayIntegration is Test {
         uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
         uint256 expectedRepaidShares = amountRepaid.toSharesDown(pos.borrowed, expectedBorrowShares);
 
-        vm.dahliaPrepareLiquidator($.bob, amountRepaid, $);
+        vm.dahliaPrepareLoanBalanceFor($.bob, amountRepaid, $);
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
@@ -95,7 +95,7 @@ contract RepayIntegration is Test {
         sharesRepaid = bound(sharesRepaid, 1, expectedBorrowShares);
         uint256 expectedAmountRepaid = sharesRepaid.toAssetsUp(pos.borrowed, expectedBorrowShares);
 
-        vm.dahliaPrepareLiquidator($.bob, expectedAmountRepaid, $);
+        vm.dahliaPrepareLoanBalanceFor($.bob, expectedAmountRepaid, $);
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));

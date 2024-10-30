@@ -53,11 +53,22 @@ library DahliaTransUtils {
         $.oracle.setPrice(pos.price);
     }
 
-    function dahliaPrepareLiquidator(Vm vm, address liquidator, uint256 amount, TestContext.MarketContext memory $)
+    function dahliaPrepareLoanBalanceFor(Vm vm, address liquidator, uint256 amount, TestContext.MarketContext memory $)
         internal
     {
         $.loanToken.setBalance(liquidator, amount);
         vm.prank(liquidator);
         $.loanToken.approve(address($.dahlia), amount);
+    }
+
+    function dahliaPrepareCollateralBalanceFor(
+        Vm vm,
+        address liquidator,
+        uint256 amount,
+        TestContext.MarketContext memory $
+    ) internal {
+        $.collateralToken.setBalance(liquidator, amount);
+        vm.prank(liquidator);
+        $.collateralToken.approve(address($.dahlia), amount);
     }
 }

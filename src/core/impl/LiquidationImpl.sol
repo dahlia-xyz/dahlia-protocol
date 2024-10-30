@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
-import {IDahliaLiquidateCallback} from "src/core/interfaces/IDahliaCallbacks.sol";
 import {Types} from "src/core/types/Types.sol";
 
 /**
@@ -17,7 +14,6 @@ import {Types} from "src/core/types/Types.sol";
  * @notice Implements functions to validate the different actions of the protocol
  */
 library LiquidationImpl {
-    using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using MarketMath for uint256;
@@ -26,8 +22,7 @@ library LiquidationImpl {
         Types.Market storage market,
         Types.MarketUserPosition storage borrowerPosition,
         Types.MarketUserPosition storage reservePosition,
-        address borrower,
-        bytes calldata callbackData
+        address borrower
     ) internal returns (uint256, uint256, uint256) {
         uint256 rescueAssets;
         uint256 rescueShares;
@@ -102,17 +97,6 @@ library LiquidationImpl {
             rescueShares
         );
 
-        // transfer  collateral (seized) to liquidator wallet from Dahlia wallet
-        IERC20(market.collateralToken).safeTransfer(msg.sender, seizedCollateral);
-
-        // this callback is for smart contract to receive repaid amount before they approve in collateral token
-        if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
-            IDahliaLiquidateCallback(msg.sender).onDahliaLiquidate(repaidAssets, callbackData);
-        }
-
-        // transfer (repaid) assets from liquidator wallet to Dahlia wallet
-        IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
-
         return (repaidAssets, repaidShares, seizedCollateral);
     }
 
@@ -172,10 +156,6 @@ library LiquidationImpl {
             bonusCollateral
         );
 
-        // transfer bonus collateral assets to reallocator wallet
-        if (bonusCollateral > 0) {
-            IERC20(market.collateralToken).safeTransfer(msg.sender, bonusCollateral);
-        }
         return (newAssets, newShares, newCollateral, bonusCollateral);
     }
 }

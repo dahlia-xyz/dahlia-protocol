@@ -51,6 +51,11 @@ library MarketMath {
         return value.mulDivUp(Constants.LLTV_100_PERCENT, percent);
     }
 
+    /// @notice get percentage down (x * 100) / %
+    function toPercent(uint24 value) internal pure returns (uint24) {
+        return uint24(value * Constants.LLTV_100_PERCENT / 100);
+    }
+
     function calcLiquidation(
         uint256 totalBorrowAssets,
         uint256 totalBorrowShares,

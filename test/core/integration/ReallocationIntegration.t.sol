@@ -33,8 +33,10 @@ contract ReallocationIntegration is Test {
 
     function setUp() public {
         ctx = new TestContext(vm);
-        $m1 = ctx.bootstrapMarket("USDC", "WBTC", 0.7e5, 0.8e5);
-        $m2 = ctx.bootstrapMarket(ctx.copyMarketConfig($m1.marketConfig, 0.8e5, 0.9e5));
+        $m1 = ctx.bootstrapMarket("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        $m2 = ctx.bootstrapMarket(
+            ctx.copyMarketConfig($m1.marketConfig, MarketMath.toPercent(80), MarketMath.toPercent(90))
+        );
         borrower = $m1.alice;
         lender = $m1.carol;
         reallocator = $m1.bob;

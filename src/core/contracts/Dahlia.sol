@@ -20,6 +20,7 @@ import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {
     IDahliaFlashLoanCallback,
     IDahliaLendCallback,
+    IDahliaLiquidateCallback,
     IDahliaRepayCallback,
     IDahliaSupplyCollateralCallback
 } from "src/core/interfaces/IDahliaCallbacks.sol";
@@ -214,6 +215,58 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         return (assets, shares);
     }
 
+    // @inheritdoc IDahlia
+    function supplyAndBorrow(
+        Types.MarketId id,
+        uint256 collateralAssets,
+        uint256 borrowAssets,
+        address onBehalfOf,
+        address receiver
+    ) external isSenderPermitted(onBehalfOf) returns (uint256 borrowedAssets, uint256 borrowedShares) {
+        require(collateralAssets > 0 && borrowAssets > 0, Errors.ZeroAssets());
+        require(receiver != address(0), Errors.ZeroAddress());
+        Types.MarketData storage marketData = markets[id];
+        Types.Market storage market = marketData.market;
+        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        _validateMarket(market.status, true);
+
+        BorrowImpl.internalSupplyCollateral(market, positions[onBehalfOf], collateralAssets, onBehalfOf);
+
+        IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
+
+        (borrowedAssets, borrowedShares) =
+            BorrowImpl.internalBorrow(market, positions[onBehalfOf], borrowAssets, 0, onBehalfOf, receiver, 0);
+
+        IERC20(market.loanToken).safeTransfer(receiver, borrowedAssets);
+        return (borrowedAssets, borrowedShares);
+    }
+
+    // // @inheritdoc IDahlia
+    // function repayAndWithdraw(
+    //     Types.MarketId id,
+    //     uint256 collateralAssets,
+    //     uint256 borrowAssets,
+    //     address onBehalfOf,
+    //     address receiver
+    // ) external isSenderPermitted(onBehalfOf) returns (uint256 borrowedAssets, uint256 borrowedShares) {
+    //     require(collateralAssets > 0 && borrowAssets > 0, Errors.ZeroAssets());
+    //     require(receiver != address(0), Errors.ZeroAddress());
+    //     Types.MarketData storage marketData = markets[id];
+    //     Types.Market storage market = marketData.market;
+    //     mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+    //     _validateMarket(market.status, true);
+
+    //     BorrowImpl.internalSupplyCollateral(market, positions[onBehalfOf], collateralAssets, onBehalfOf);
+
+    //     IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
+
+    //     (borrowedAssets, borrowedShares) =
+    //         BorrowImpl.internalBorrow(market, positions[onBehalfOf], borrowAssets, 0, onBehalfOf, receiver, 0);
+
+    //     IERC20(market.loanToken).safeTransfer(receiver, borrowedAssets);
+    //     return (borrowedAssets, borrowedShares);
+    // }
+
     /// @inheritdoc IDahlia
     function repay(Types.MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
         external
@@ -238,7 +291,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     /// @inheritdoc IDahlia
     function liquidate(Types.MarketId id, address borrower, bytes calldata callbackData)
         external
-        returns (uint256, uint256, uint256)
+        returns (uint256 repaidAssets, uint256 repaidShares, uint256 seizedCollateral)
     {
         require(borrower != address(0), Errors.ZeroAddress());
         Types.MarketData storage marketData = markets[id];
@@ -247,15 +300,25 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
 
-        return LiquidationImpl.internalLiquidate(
-            market, positions[borrower], positions[reserveFeeRecipient], borrower, callbackData
-        );
+        (repaidAssets, repaidShares, seizedCollateral) =
+            LiquidationImpl.internalLiquidate(market, positions[borrower], positions[reserveFeeRecipient], borrower);
+
+        // transfer  collateral (seized) to liquidator wallet from Dahlia wallet
+        IERC20(market.collateralToken).safeTransfer(msg.sender, seizedCollateral);
+
+        // this callback is for smart contract to receive repaid amount before they approve in collateral token
+        if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
+            IDahliaLiquidateCallback(msg.sender).onDahliaLiquidate(repaidAssets, callbackData);
+        }
+
+        // transfer (repaid) assets from liquidator wallet to Dahlia wallet
+        IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
     }
 
     /// @inheritdoc IDahlia
     function reallocate(Types.MarketId marketId, Types.MarketId marketIdTo, address borrower)
         external
-        returns (uint256, uint256, uint256, uint256)
+        returns (uint256 newAssets, uint256 newShares, uint256 newCollateral, uint256 bonusCollateral)
     {
         Types.MarketData storage marketData = markets[marketId];
         Types.MarketData storage marketDataTo = markets[marketIdTo];
@@ -279,8 +342,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _accrueMarketInterest(positions, market);
         _accrueMarketInterest(positionsTo, marketTo);
 
-        return
+        (newAssets, newShares, newCollateral, bonusCollateral) =
             LiquidationImpl.internalReallocate(market, marketTo, positions[borrower], positionsTo[borrower], borrower);
+
+        // transfer bonus collateral assets to reallocator wallet
+        if (bonusCollateral > 0) {
+            IERC20(market.collateralToken).safeTransfer(msg.sender, bonusCollateral);
+        }
     }
 
     /// @inheritdoc IDahlia

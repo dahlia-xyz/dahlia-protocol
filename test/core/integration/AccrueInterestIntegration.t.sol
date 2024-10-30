@@ -6,6 +6,7 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
+import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
 import {Types} from "src/core/types/Types.sol";
@@ -116,8 +117,8 @@ contract AccrueInterestIntegration is Test {
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
-        uint32 protocolFee = uint32(bound(uint256(fee), 0.02e5, 0.05e5));
-        uint32 reserveFee = uint32(bound(uint256(fee), 0.005e5, 0.01e5));
+        uint32 protocolFee = uint32(bound(uint256(fee), MarketMath.toPercent(2), MarketMath.toPercent(5)));
+        uint32 reserveFee = uint32(bound(uint256(fee), MarketMath.toPercent(1), MarketMath.toPercent(2)));
 
         vm.startPrank($.owner);
         if (protocolFee != $.dahlia.getMarket($.marketId).protocolFeeRate) {
@@ -186,7 +187,7 @@ contract AccrueInterestIntegration is Test {
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
-        fee = uint32(bound(uint256(fee), 1, Constants.MAX_FEE));
+        fee = uint32(bound(uint256(fee), 1, Constants.MAX_FEE_RATE));
 
         vm.startPrank($.owner);
         if (fee != $.dahlia.getMarket($.marketId).protocolFeeRate) {

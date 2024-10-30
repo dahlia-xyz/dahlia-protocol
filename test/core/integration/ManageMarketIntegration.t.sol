@@ -111,14 +111,14 @@ contract ManageMarketIntegration is Test {
         $.dahlia.setProtocolFeeRate($.marketId, feeFuzz);
 
         // revert when too hight
-        feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE + 1, type(uint32).max));
+        feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE_RATE + 1, type(uint32).max));
 
         vm.prank($.owner);
         vm.expectRevert(Errors.MaxProtocolFeeExceeded.selector);
         $.dahlia.setProtocolFeeRate($.marketId, feeFuzz);
 
         // success
-        feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE));
+        feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE_RATE));
 
         vm.prank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
@@ -187,13 +187,13 @@ contract ManageMarketIntegration is Test {
         $.dahlia.setProtocolFeeRate($.marketId, feeFuzz);
 
         // revert when too hight
-        feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE + 1, type(uint32).max));
+        feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE_RATE + 1, type(uint32).max));
 
         vm.prank($.owner);
         vm.expectRevert(Errors.MaxProtocolFeeExceeded.selector);
         $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
 
-        feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE));
+        feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE_RATE));
 
         // success
         vm.prank($.owner);

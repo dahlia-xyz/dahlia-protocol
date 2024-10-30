@@ -7,6 +7,7 @@ import {DahliaProvider} from "src/core/contracts/DahliaProvider.sol";
 import {DahliaRegistry, IDahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
 import {ERC4626ProxyFactory} from "src/core/contracts/ERC4626ProxyFactory.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
+import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IrmFactory} from "src/irm/contracts/IrmFactory.sol";
 import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
@@ -65,7 +66,9 @@ contract TestContext {
         public
         returns (MarketContext memory)
     {
-        return bootstrapMarket(createMarketConfig(loanTokenName, collateralTokenName, lltv - 0.1e5, lltv));
+        return bootstrapMarket(
+            createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv)
+        );
     }
 
     function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 rltv, uint256 lltv)
