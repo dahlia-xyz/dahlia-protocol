@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import {Test, Vm} from "@forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
+import {Events} from "src/core/helpers/Events.sol";
 import {Types} from "src/core/types/Types.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
@@ -11,7 +12,7 @@ import {TestConstants} from "test/common/TestConstants.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {ERC20Mock} from "test/common/mocks/ERC20Mock.sol";
 
-contract SupplyCollateralIntegration is Test {
+contract SupplyCollateralIntegrationTest is Test {
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
 
@@ -60,6 +61,8 @@ contract SupplyCollateralIntegration is Test {
         IERC20($.marketConfig.collateralToken).approve(address($.dahlia), assets);
 
         vm.resumeGasMetering();
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.SupplyCollateral($.marketId, $.alice, $.alice, assets);
         $.dahlia.supplyCollateral($.marketId, assets, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
         vm.stopPrank();

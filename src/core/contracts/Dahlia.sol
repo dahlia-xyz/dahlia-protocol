@@ -241,31 +241,30 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         return (borrowedAssets, borrowedShares);
     }
 
-    // // @inheritdoc IDahlia
-    // function repayAndWithdraw(
-    //     Types.MarketId id,
-    //     uint256 collateralAssets,
-    //     uint256 borrowAssets,
-    //     address onBehalfOf,
-    //     address receiver
-    // ) external isSenderPermitted(onBehalfOf) returns (uint256 borrowedAssets, uint256 borrowedShares) {
-    //     require(collateralAssets > 0 && borrowAssets > 0, Errors.ZeroAssets());
-    //     require(receiver != address(0), Errors.ZeroAddress());
-    //     Types.MarketData storage marketData = markets[id];
-    //     Types.Market storage market = marketData.market;
-    //     mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
-    //     _validateMarket(market.status, true);
+    // @inheritdoc IDahlia
+    function repayAndWithdraw(
+        Types.MarketId id,
+        uint256 collateralAssets,
+        uint256 repayAssets,
+        uint256 repayShares,
+        address onBehalfOf,
+        address receiver
+    ) external isSenderPermitted(onBehalfOf) returns (uint256 repaidAssets, uint256 repaidShares) {
+        require(collateralAssets > 0, Errors.ZeroAssets());
+        require(receiver != address(0), Errors.ZeroAddress());
+        Types.MarketData storage marketData = markets[id];
+        Types.Market storage market = marketData.market;
+        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        _validateMarket(market.status, true);
+        _accrueMarketInterest(positions, market);
 
-    //     BorrowImpl.internalSupplyCollateral(market, positions[onBehalfOf], collateralAssets, onBehalfOf);
+        (repaidAssets, repaidShares) =
+            BorrowImpl.internalRepay(market, positions[onBehalfOf], repayAssets, repayShares, onBehalfOf);
+        IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
 
-    //     IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
-
-    //     (borrowedAssets, borrowedShares) =
-    //         BorrowImpl.internalBorrow(market, positions[onBehalfOf], borrowAssets, 0, onBehalfOf, receiver, 0);
-
-    //     IERC20(market.loanToken).safeTransfer(receiver, borrowedAssets);
-    //     return (borrowedAssets, borrowedShares);
-    // }
+        BorrowImpl.internalWithdrawCollateral(market, positions[onBehalfOf], collateralAssets, onBehalfOf, receiver);
+        IERC20(market.collateralToken).safeTransfer(receiver, collateralAssets);
+    }
 
     /// @inheritdoc IDahlia
     function repay(Types.MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)

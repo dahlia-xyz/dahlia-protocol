@@ -14,7 +14,7 @@ import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract ERC4626ProxyIntegration is Test {
+contract ERC4626ProxyIntegrationTest is Test {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;

@@ -11,7 +11,7 @@ import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract FlashLoanIntegration is Test, IDahliaFlashLoanCallback {
+contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;

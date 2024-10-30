@@ -11,7 +11,7 @@ import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
 
-contract ManageMarketIntegration is Test {
+contract ManageMarketIntegrationTest is Test {
     using BoundUtils for Vm;
 
     TestContext.MarketContext $;

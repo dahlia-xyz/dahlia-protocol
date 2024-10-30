@@ -12,7 +12,7 @@ import {TestConstants} from "test/common/TestConstants.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract WithdrawCollateralIntegration is Test {
+contract WithdrawCollateralIntegrationTest is Test {
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
     using SharesMathLib for uint256;

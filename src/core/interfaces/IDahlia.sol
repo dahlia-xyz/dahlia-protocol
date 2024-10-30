@@ -165,6 +165,25 @@ interface IDahlia is IMarketStorage {
         address receiver
     ) external returns (uint256 borrowedAssets, uint256 borrowedShares);
 
+    /// @notice Repays  borrowed `assets` or `shares` on behalf of a user and and withdraw collateral to a receiver.
+    /// @dev either the `assets` or the `shares` must be set to zero.
+    /// @param id of the market.
+    /// @param collateralAssets The amount of assets for collateral.
+    /// @param repayAssets The amount of assets to repay.
+    /// @param repayShares The amount of shares to burn.
+    /// @param onBehalfOf The address that will own the increased borrow position.
+    /// @param receiver The address that will receive the borrowed assets.
+    /// @return repaidAssets The amount of shares minted.
+    /// @return repaidShares The amount of shares minted.
+    function repayAndWithdraw(
+        Types.MarketId id,
+        uint256 collateralAssets,
+        uint256 repayAssets,
+        uint256 repayShares,
+        address onBehalfOf,
+        address receiver
+    ) external returns (uint256 repaidAssets, uint256 repaidShares);
+
     /// @notice Repays `assets` or `shares` on behalf of a user, with an optional callback.
     /// @dev either the `assets` or the `shares` must be set to zero.
     /// @param id of the market.

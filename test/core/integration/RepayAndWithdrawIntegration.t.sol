@@ -5,6 +5,7 @@ import {Test, Vm} from "@forge-std/Test.sol";
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
+import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {Types} from "src/core/types/Types.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
@@ -12,9 +13,10 @@ import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract RepayIntegrationTest is Test {
+contract RepayAndWithdrawIntegrationTest is Test {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
+    using MarketMath for uint256;
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
 
@@ -26,35 +28,40 @@ contract RepayIntegrationTest is Test {
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_repay_marketNotDeployed(Types.MarketId marketIdFuzz, uint256 assets) public {
+    function test_int_repayAndWithdraw_marketNotDeployed(Types.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
+        vm.assume(assets > 0);
         vm.prank($.alice);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
-        $.dahlia.repay(marketIdFuzz, assets, 0, $.alice, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.repayAndWithdraw(marketIdFuzz, assets, 0, assets, $.alice, $.alice);
     }
 
-    function test_int_repay_zeroAmount() public {
-        vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
+    function test_int_repayAndWithdraw_zeroAmount() public {
+        vm.expectRevert(Errors.ZeroAssets.selector);
         vm.prank($.alice);
-        $.dahlia.repay($.marketId, 0, 0, $.alice, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.repayAndWithdraw($.marketId, 0, 0, 0, $.alice, $.alice);
     }
 
-    function test_int_repay_zeroAddress(uint256 assets) public {
+    function test_int_repayAndWithdraw_zeroAddress(uint256 assets) public {
+        vm.assume(assets > 0);
+        vm.startPrank($.alice);
+        vm.expectRevert(Errors.NotPermitted.selector);
+        $.dahlia.repayAndWithdraw($.marketId, assets, assets, 0, address(0), $.alice);
         vm.startPrank($.alice);
         vm.expectRevert(Errors.ZeroAddress.selector);
-        $.dahlia.repay($.marketId, assets, 0, address(0), TestConstants.EMPTY_CALLBACK);
+        $.dahlia.repayAndWithdraw($.marketId, assets, assets, 0, $.alice, address(0));
     }
 
-    function test_int_repay_InconsistentAssetsOrSharesInput(uint256 amount, uint256 shares) public {
+    function test_int_repayAndWithdraw_inconsistentAssetsOrSharesInput(uint256 amount, uint256 shares) public {
         amount = vm.boundAmount(amount);
         shares = bound(shares, 1, TestConstants.MAX_TEST_SHARES);
 
         vm.prank($.alice);
         vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
-        $.dahlia.repay($.marketId, amount, shares, $.alice, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.repayAndWithdraw($.marketId, amount, amount, shares, $.alice, $.alice);
     }
 
-    function test_int_repay_byAssets(TestTypes.MarketPosition memory pos, uint256 amountRepaid) public {
+    function test_int_repayAndWithdraw_byAssets(TestTypes.MarketPosition memory pos, uint256 amountRepaid) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
@@ -62,16 +69,20 @@ contract RepayIntegrationTest is Test {
         amountRepaid = bound(amountRepaid, 1, pos.borrowed);
         uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
         uint256 expectedRepaidShares = amountRepaid.toSharesDown(pos.borrowed, expectedBorrowShares);
+        uint256 amountCollateral = amountRepaid.lendToCollateralUp(pos.price).mulPercentUp($.marketConfig.lltv);
 
-        vm.dahliaPrepareLoanBalanceFor($.bob, amountRepaid, $);
-
-        vm.prank($.bob);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address($.dahlia), amountRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaRepay($.marketId, $.bob, $.alice, amountRepaid, expectedRepaidShares);
+        emit Events.DahliaRepay($.marketId, $.alice, $.alice, amountRepaid, expectedRepaidShares);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
+
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) =
-            $.dahlia.repay($.marketId, amountRepaid, 0, $.alice, TestConstants.EMPTY_CALLBACK);
+            $.dahlia.repayAndWithdraw($.marketId, amountCollateral, amountRepaid, 0, $.alice, $.alice);
         vm.pauseGasMetering();
+        vm.stopPrank();
 
         expectedBorrowShares -= expectedRepaidShares;
 
@@ -82,11 +93,19 @@ contract RepayIntegrationTest is Test {
         assertEq(borrowShares, expectedBorrowShares, "borrow shares");
         assertEq(stateAfter.totalBorrowAssets, pos.borrowed - amountRepaid, "total borrow");
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
-        assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "RECEIVER balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia balance");
+        assertEq($.loanToken.balanceOf($.alice), pos.borrowed - amountRepaid, "RECEIVER balance");
+        assertEq(
+            $.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance"
+        );
+        assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
+        assertEq(
+            $.collateralToken.balanceOf(address($.dahlia)),
+            pos.collateral - amountCollateral,
+            "Dahlia collateral balance"
+        );
     }
 
-    function test_int_repay_byShares(TestTypes.MarketPosition memory pos, uint256 sharesRepaid) public {
+    function test_int_repayAndWithdraw_byShares(TestTypes.MarketPosition memory pos, uint256 sharesRepaid) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
@@ -94,16 +113,19 @@ contract RepayIntegrationTest is Test {
         uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
         sharesRepaid = bound(sharesRepaid, 1, expectedBorrowShares);
         uint256 expectedAmountRepaid = sharesRepaid.toAssetsUp(pos.borrowed, expectedBorrowShares);
+        uint256 amountCollateral = expectedAmountRepaid.lendToCollateralUp(pos.price).mulPercentUp($.marketConfig.lltv);
 
-        vm.dahliaPrepareLoanBalanceFor($.bob, expectedAmountRepaid, $);
-
-        vm.prank($.bob);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address($.dahlia), expectedAmountRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaRepay($.marketId, $.bob, $.alice, expectedAmountRepaid, sharesRepaid);
+        emit Events.DahliaRepay($.marketId, $.alice, $.alice, expectedAmountRepaid, sharesRepaid);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) =
-            $.dahlia.repay($.marketId, 0, sharesRepaid, $.alice, TestConstants.EMPTY_CALLBACK);
+            $.dahlia.repayAndWithdraw($.marketId, amountCollateral, 0, sharesRepaid, $.alice, $.alice);
         vm.pauseGasMetering();
+        vm.stopPrank();
 
         expectedBorrowShares -= sharesRepaid;
 
@@ -115,33 +137,16 @@ contract RepayIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowAssets, pos.borrowed - expectedAmountRepaid, "total borrow");
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
 
-        assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "RECEIVER balance");
+        assertEq($.loanToken.balanceOf($.alice), pos.borrowed - expectedAmountRepaid, "RECEIVER balance");
         assertEq(
             $.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance"
         );
-    }
 
-    function test_int_repay_maxOnBehalf(uint256 shares) public {
-        vm.pauseGasMetering();
-        shares = vm.boundShares(shares);
-        uint256 assets = shares.toAssetsUp(0, 0);
-
-        vm.dahliaLendBy($.carol, assets, $);
-        vm.dahliaSupplyCollateralBy($.alice, TestConstants.HIGH_COLLATERAL_AMOUNT, $);
-        vm.dahliaBorrowBy($.alice, assets, $);
-
-        $.loanToken.setBalance($.bob, assets);
-
-        vm.startPrank($.bob);
-        $.loanToken.approve(address($.dahlia), assets);
-
-        vm.resumeGasMetering();
-        $.dahlia.repay($.marketId, 0, shares, $.alice, TestConstants.EMPTY_CALLBACK);
-        vm.pauseGasMetering();
-        vm.stopPrank();
-
-        vm.startPrank($.alice);
-        $.dahlia.withdrawCollateral($.marketId, assets, $.alice, $.alice);
-        vm.stopPrank();
+        assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
+        assertEq(
+            $.collateralToken.balanceOf(address($.dahlia)),
+            pos.collateral - amountCollateral,
+            "Dahlia collateral balance"
+        );
     }
 }

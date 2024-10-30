@@ -16,7 +16,7 @@ import {TestConstants} from "test/common/TestConstants.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract ReallocationIntegration is Test {
+contract ReallocationIntegrationTest is Test {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using MarketMath for uint256;

@@ -16,7 +16,7 @@ import {TestConstants} from "test/common/TestConstants.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract CallbacksIntegration is
+contract CallbacksIntegrationTest is
     Test,
     IDahliaLiquidateCallback,
     IDahliaRepayCallback,

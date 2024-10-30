@@ -11,7 +11,7 @@ import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
 
-contract LendIntegration is Test {
+contract LendIntegrationTest is Test {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;

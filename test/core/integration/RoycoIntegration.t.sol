@@ -10,7 +10,7 @@ import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {RoycoMock} from "test/common/mocks/RoycoMock.sol";
 
-contract RoycoIntegration is Test {
+contract RoycoIntegrationTest is Test {
     using BoundUtils for Vm;
 
     IERC4626 marketProxy;

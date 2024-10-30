@@ -109,6 +109,8 @@ contract SupplyAndBorrowIntegrationTest is Test {
 
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         (uint256 _assets, uint256 _shares) =
