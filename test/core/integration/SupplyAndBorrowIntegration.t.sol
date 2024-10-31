@@ -55,7 +55,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
     function test_int_supplyAndBorrow_zeroAddress(uint256 assets) public {
         vm.assume(assets > 0);
         vm.startPrank($.alice);
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.supplyAndBorrow($.marketId, assets, assets, address(0), $.alice);
 
         vm.expectRevert(Errors.ZeroAddress.selector);

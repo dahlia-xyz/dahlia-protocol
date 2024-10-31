@@ -33,7 +33,7 @@ contract WithdrawCollateralIntegrationTest is Test {
         vm.resumeGasMetering();
         vm.startPrank($.alice);
         // check zero onBehalfOf address
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.withdrawCollateral($.marketId, assets, address(0), $.alice);
 
         // check zero receiver address
@@ -52,7 +52,7 @@ contract WithdrawCollateralIntegrationTest is Test {
         vm.dahliaSupplyCollateralBy($.alice, assets, $);
 
         vm.prank(attacker);
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, attacker));
         vm.resumeGasMetering();
         $.dahlia.withdrawCollateral($.marketId, assets, $.alice, attacker);
     }

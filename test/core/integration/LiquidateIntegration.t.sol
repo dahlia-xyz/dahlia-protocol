@@ -348,8 +348,7 @@ contract LiquidateIntegrationTest is Test {
         vm.startPrank($m1.bob);
         $m1.loanToken.approve(address($m1.dahlia), loanAmount);
         vm.resumeGasMetering();
-        (uint256 returnRepaidAssets,, uint256 returnSeizedCollateral) =
-            $m1.dahlia.liquidate($m1.marketId, $m1.alice, TestConstants.EMPTY_CALLBACK);
+        (uint256 returnRepaidAssets,,) = $m1.dahlia.liquidate($m1.marketId, $m1.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
         vm.stopPrank();
 

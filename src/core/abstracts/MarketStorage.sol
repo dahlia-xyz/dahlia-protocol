@@ -17,6 +17,14 @@ import {Types} from "src/core/types/Types.sol";
 abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     mapping(Types.MarketId => Types.MarketData) internal markets;
 
+    /**
+     * @dev Throws if the sender is not the owner.
+     */
+    function _checkOwnerOrAdmin(address admin) internal view {
+        address sender = _msgSender();
+        require(sender == owner() || sender == admin, Errors.NotPermitted(sender));
+    }
+
     function getMarket(Types.MarketId marketId) external view returns (Types.Market memory) {
         return markets[marketId].market;
     }
@@ -56,8 +64,9 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     }
 
     /// @inheritdoc IMarketStorage
-    function pauseMarket(Types.MarketId id) external onlyOwner {
+    function pauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
+        _checkOwnerOrAdmin(market.admin);
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Active, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Paused);
@@ -65,8 +74,9 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     }
 
     /// @inheritdoc IMarketStorage
-    function unpauseMarket(Types.MarketId id) external onlyOwner {
+    function unpauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
+        _checkOwnerOrAdmin(market.admin);
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Paused, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Active);
@@ -79,6 +89,28 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         _validateMarket(market.status, false);
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Deprecated);
         market.status = Types.MarketStatus.Deprecated;
+    }
+
+    /// @inheritdoc IMarketStorage
+    function updateMarketBonusRates(Types.MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate)
+        external
+    {
+        require(reallocationBonusRate < liquidationBonusRate, Errors.MarketReallocationLtvInsufficient());
+        Types.Market storage market = markets[id].market;
+        _checkOwnerOrAdmin(market.admin);
+        _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
+        _validateReallocationBonusRate(reallocationBonusRate, market.rltv);
+        emit Events.MarketBonusRatesChanged(liquidationBonusRate, reallocationBonusRate);
+        market.liquidationBonusRate = uint24(liquidationBonusRate);
+        market.reallocationBonusRate = uint24(reallocationBonusRate);
+    }
+
+    function updateMarketAdmin(Types.MarketId id, address newAdmin) external {
+        Types.Market storage market = markets[id].market;
+        address oldAdmin = market.admin;
+        _checkOwnerOrAdmin(oldAdmin);
+        emit Events.MarketAdminChanged(oldAdmin, newAdmin);
+        market.admin = newAdmin;
     }
 
     /// @inheritdoc IMarketStorage
@@ -101,5 +133,11 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
                 revert Errors.MarketPaused();
             }
         }
+    }
+
+    function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view virtual;
+
+    function _validateReallocationBonusRate(uint256 rate, uint256 rltv) internal pure {
+        require(rate <= MarketMath.calcReallocationBonusRate(rltv), Errors.MarketReallocationLtvInsufficient());
     }
 }

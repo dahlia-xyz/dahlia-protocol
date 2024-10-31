@@ -44,6 +44,7 @@ library ManageMarketImpl {
         market.collateralToken = marketConfig.collateralToken;
         market.oracle = marketConfig.oracle;
         market.marketDeployer = msg.sender;
+        market.admin = marketConfig.admin;
         market.irm = marketConfig.irm;
         market.lltv = uint24(marketConfig.lltv);
         market.rltv = uint24(marketConfig.rltv);

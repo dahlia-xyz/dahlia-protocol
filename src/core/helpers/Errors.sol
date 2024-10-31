@@ -23,7 +23,7 @@ library Errors {
     error BadPositionReallocation(uint256 ltv, uint256 lltv);
 
     /// @notice NotPermitted address calling function `onBehalfOf` another address.
-    error NotPermitted();
+    error NotPermitted(address sender);
 
     /// @notice Zero assets passed as input.
     error ZeroAssets();
@@ -70,8 +70,11 @@ library Errors {
     /// @notice Liquidation LTV not allowed from range.
     error LltvNotAllowed();
 
-    /// @notice Liquidation liquidation bonus rate not allowed.
+    /// @notice Liquidation bonus rate not allowed.
     error LiquidationBonusRateNotAllowed();
+
+    /// @notice Relocation bonus rate not allowed.
+    error RelocationBonusRateNotAllowed();
 
     /// @notice Liquidation RLTV not allowed.
     error RltvNotAllowed();

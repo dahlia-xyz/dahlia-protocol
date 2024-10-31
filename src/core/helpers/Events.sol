@@ -42,6 +42,16 @@ library Events {
     /// @param to new status.
     event MarketStatusChanged(Types.MarketStatus from, Types.MarketStatus to);
 
+    /// @notice Emitted when market bonus rate changed.
+    /// @param liquidationBonusRate The new liquidation bonus rate.
+    /// @param reallocationBonusRate The new reallocation bonus rate.
+    event MarketBonusRatesChanged(uint256 liquidationBonusRate, uint256 reallocationBonusRate);
+
+    /// @notice Emitted when market status changed.
+    /// @param from previous status.
+    /// @param to new status.
+    event MarketAdminChanged(address from, address to);
+
     /// @notice Emitted when deploying a market.
     /// @param id The market id.
     /// @param marketConfig The market parameters.

@@ -23,9 +23,8 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
     }
 
     modifier isSenderPermitted(address onBehalfOf) {
-        if (!_isSenderPermitted(onBehalfOf)) {
-            revert Errors.NotPermitted();
-        }
+        address sender = msg.sender;
+        require(_isSenderPermitted(onBehalfOf), Errors.NotPermitted(sender));
         _;
     }
 

@@ -18,21 +18,30 @@ contract MarketStatusIntegrationTest is Test {
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
 
-    TestContext.MarketContext $;
-    TestContext ctx;
+    TestContext.MarketContext internal $;
+    TestContext internal ctx;
+    address internal permitted;
+
+    modifier usePermittedOwners() {
+        for (uint256 i = 0; i < $.permitted.length; i++) {
+            permitted = $.permitted[i];
+            _;
+            vm.clearMockedCalls();
+        }
+    }
 
     function setUp() public {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_marketStatus_pause() public {
+    function test_int_marketStatus_pause() public usePermittedOwners {
         // revert when not owner
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, address(this)));
         $.dahlia.pauseMarket($.marketId);
 
         // pause
-        vm.prank($.owner);
+        vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.MarketStatusChanged(Types.MarketStatus.Active, Types.MarketStatus.Paused);
         $.dahlia.pauseMarket($.marketId);
@@ -42,27 +51,33 @@ contract MarketStatusIntegrationTest is Test {
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketPaused.selector));
 
         // revert when pause not active market
-        vm.prank($.owner);
+        vm.prank(permitted);
         vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
         $.dahlia.pauseMarket($.marketId);
+        // unpause
+        vm.prank(permitted);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.MarketStatusChanged(Types.MarketStatus.Paused, Types.MarketStatus.Active);
+        $.dahlia.unpauseMarket($.marketId);
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(Types.MarketStatus.Active));
     }
 
-    function test_int_marketStatus_unpause() public {
+    function test_int_marketStatus_unpause() public usePermittedOwners {
         // revert when not owner
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, address(this)));
         $.dahlia.unpauseMarket($.marketId);
 
         // revert when unpause active market
-        vm.prank($.owner);
+        vm.prank(permitted);
         vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
         $.dahlia.unpauseMarket($.marketId);
 
         // pause
-        vm.prank($.owner);
+        vm.prank(permitted);
         $.dahlia.pauseMarket($.marketId);
 
         // unpause
-        vm.startPrank($.owner);
+        vm.startPrank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.MarketStatusChanged(Types.MarketStatus.Paused, Types.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
@@ -85,7 +100,7 @@ contract MarketStatusIntegrationTest is Test {
 
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketDeprecated.selector));
 
-        // check unpause revertion
+        // check unpause reversion
         vm.prank($.owner);
         vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
         $.dahlia.unpauseMarket($.marketId);
@@ -115,5 +130,31 @@ contract MarketStatusIntegrationTest is Test {
         vm.expectRevert(revertData);
         $.dahlia.borrow($.marketId, assets, 0, $.alice, $.alice);
         vm.resumeGasMetering();
+    }
+
+    function test_updateMarketAdminOwner(address newAdmin) public usePermittedOwners {
+        vm.assume(newAdmin != $.admin);
+        vm.assume(newAdmin != permitted);
+        vm.prank(newAdmin);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, newAdmin));
+        $.dahlia.updateMarketAdmin($.marketId, newAdmin);
+
+        vm.prank(permitted);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.MarketAdminChanged($.admin, newAdmin);
+        $.dahlia.updateMarketAdmin($.marketId, newAdmin);
+        assertEq($.dahlia.getMarket($.marketId).admin, newAdmin);
+
+        // old admin does not have permission anymore
+        vm.prank($.admin);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.admin));
+        $.dahlia.updateMarketAdmin($.marketId, newAdmin);
+
+        // revert back old admin using owner
+        vm.prank($.owner);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.MarketAdminChanged(newAdmin, $.admin);
+        $.dahlia.updateMarketAdmin($.marketId, $.admin);
+        assertEq($.dahlia.getMarket($.marketId).admin, $.admin);
     }
 }

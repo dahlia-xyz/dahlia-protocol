@@ -52,6 +52,18 @@ interface IMarketStorage {
     /// @param id of the market.
     function unpauseMarket(Types.MarketId id) external;
 
+    /// @notice Update liquidationBonusRate and reallocationBonusRate for given market.
+    /// @param id of the market.
+    /// @param liquidationBonusRate The new liquidationBonusRate where 100% is LLTV_100_PERCENT
+    /// @param reallocationBonusRate The new reallocationBonusRate where 100% is LLTV_100_PERCENT.
+    function updateMarketBonusRates(Types.MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate)
+        external;
+
+    /// @notice Update admin for given market.
+    /// @param id of the market.
+    /// @param admin The new admin. 0 address mean no admin, but owner still can control
+    function updateMarketAdmin(Types.MarketId id, address admin) external;
+
     /// @notice Deprecate market.
     /// @param id of the market.
     function deprecateMarket(Types.MarketId id) external;

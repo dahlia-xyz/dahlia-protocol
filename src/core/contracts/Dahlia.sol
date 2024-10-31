@@ -118,6 +118,15 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         emit Events.SetReserveFeeRecipient(newReserveFeeRecipient);
     }
 
+    function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view override {
+        require(
+            liquidationBonusRate >= liquidationBonusRateRange.min
+                && liquidationBonusRate <= liquidationBonusRateRange.max
+                && liquidationBonusRate <= MarketMath.getMaxLiquidationBonusRate(lltv),
+            Errors.LiquidationBonusRateNotAllowed()
+        );
+    }
+
     /// @inheritdoc IDahlia
     function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata data)
         external
@@ -126,12 +135,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
         require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
         require(marketConfig.rltv < marketConfig.lltv, Errors.RltvNotAllowed());
-        require(
-            marketConfig.liquidationBonusRate >= liquidationBonusRateRange.min
-                && marketConfig.liquidationBonusRate <= liquidationBonusRateRange.max
-                && marketConfig.liquidationBonusRate <= MarketMath.getMaxLiquidationBonusRate(marketConfig.lltv),
-            Errors.LiquidationBonusRateNotAllowed()
-        );
+        _validateLiquidationBonusRate(marketConfig.liquidationBonusRate, marketConfig.lltv);
 
         id = Types.MarketId.wrap(++marketSequence);
 

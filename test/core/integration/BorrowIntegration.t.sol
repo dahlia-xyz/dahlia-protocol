@@ -48,7 +48,7 @@ contract BorrowIntegrationTest is Test {
 
     function test_int_borrow_zeroAddress(uint256 assets) public {
         vm.startPrank($.alice);
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.borrow($.marketId, assets, 0, address(0), $.alice);
 
         vm.expectRevert(Errors.ZeroAddress.selector);
@@ -56,7 +56,7 @@ contract BorrowIntegrationTest is Test {
         vm.stopPrank();
     }
 
-    function test_int_borrow_inconsistantInput(uint256 amount, uint256 shares) public {
+    function test_int_borrow_inconsistentInput(uint256 amount, uint256 shares) public {
         vm.pauseGasMetering();
 
         amount = vm.boundBlocks(amount);
@@ -81,7 +81,7 @@ contract BorrowIntegrationTest is Test {
         vm.dahliaSupplyCollateralBy(supplier, pos.collateral, $);
 
         vm.prank(attacker);
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, attacker));
         vm.resumeGasMetering();
         $.dahlia.borrow($.marketId, pos.borrowed, 0, supplier, attacker);
     }

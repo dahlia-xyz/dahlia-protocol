@@ -35,7 +35,7 @@ library Types {
         address oracle; // 20 bytes
         uint64 fullUtilizationRate; // 3 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 28 bytes
+        // --- 26 bytes
         IIrm irm; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
         uint24 reallocationBonusRate; // 3 bytes
@@ -43,6 +43,7 @@ library Types {
         IERC4626 marketProxy; // 20 bytes
         address marketDeployer;
         // --- having all 256 bytes at the end make deployment size smaller
+        address admin; // 20 bytes
         uint256 totalLendAssets; // 32 bytes
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
@@ -57,6 +58,7 @@ library Types {
         uint256 lltv;
         uint256 rltv;
         uint256 liquidationBonusRate;
+        address admin;
     }
 
     struct MarketUserPosition {

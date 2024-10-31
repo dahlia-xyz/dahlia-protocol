@@ -49,7 +49,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.resumeGasMetering();
         vm.startPrank($.alice);
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.withdraw($.marketId, lent, address(0), $.alice);
 
         vm.expectRevert(Errors.ZeroAddress.selector);

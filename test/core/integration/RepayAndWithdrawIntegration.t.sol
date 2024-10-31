@@ -45,7 +45,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
     function test_int_repayAndWithdraw_zeroAddress(uint256 assets) public {
         vm.assume(assets > 0);
         vm.startPrank($.alice);
-        vm.expectRevert(Errors.NotPermitted.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.repayAndWithdraw($.marketId, assets, assets, 0, address(0), $.alice);
         vm.startPrank($.alice);
         vm.expectRevert(Errors.ZeroAddress.selector);
