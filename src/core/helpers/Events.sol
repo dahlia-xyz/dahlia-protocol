@@ -54,8 +54,9 @@ library Events {
 
     /// @notice Emitted when deploying a market.
     /// @param id The market id.
+    /// @param vault The vault address.
     /// @param marketConfig The market parameters.
-    event DeployMarket(Types.MarketId indexed id, Types.MarketConfig marketConfig);
+    event DeployMarket(Types.MarketId indexed id, address indexed vault, Types.MarketConfig marketConfig);
 
     /// @notice Emitted when setting an authorization.
     /// @param sender The sender.

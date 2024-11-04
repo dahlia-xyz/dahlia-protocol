@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {WrappedVault} from "@royco/WrappedVault.sol";
+import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
 
 /// @title IRoycoWrappedVaultFactory
 /// @notice Interface for Royco's WrappedVaultFactory integration with Dahlia markets.

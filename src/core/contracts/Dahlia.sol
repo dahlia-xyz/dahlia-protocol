@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
 import {Permitted} from "src/core/abstracts/Permitted.sol";
@@ -11,12 +11,14 @@ import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
+import {StringUtilsLib} from "src/core/helpers/StringUtilsLib.sol";
 import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
 import {LendImpl} from "src/core/impl/LendImpl.sol";
 import {LiquidationImpl} from "src/core/impl/LiquidationImpl.sol";
 import {ManageMarketImpl} from "src/core/impl/ManageMarketImpl.sol";
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
+
 import {
     IDahliaFlashLoanCallback,
     IDahliaLendCallback,
@@ -24,10 +26,11 @@ import {
     IDahliaRepayCallback,
     IDahliaSupplyCollateralCallback
 } from "src/core/interfaces/IDahliaCallbacks.sol";
-import {IDahliaProvider} from "src/core/interfaces/IDahliaProvider.sol";
 import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
-import {IERC4626ProxyFactory} from "src/core/interfaces/IERC4626ProxyFactory.sol";
 import {Types} from "src/core/types/Types.sol";
+
+import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
+
 //TODO: protect some methods by ReentrancyGuard
 //import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -128,7 +131,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata data)
+    function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata)
         external
         returns (Types.MarketId id)
     {
@@ -139,16 +142,25 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         id = Types.MarketId.wrap(++marketSequence);
 
-        ManageMarketImpl.deployMarket(markets, id, marketConfig);
-        Types.Market storage market = markets[id].market;
-        IERC4626 marketProxy = IERC4626ProxyFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_MARKET_PROXY))
-            .deployProxy(marketConfig, id);
+        IERC20Metadata loanToken = IERC20Metadata(marketConfig.loanToken);
+        string memory loanTokenSymbol = loanToken.symbol();
+        string memory name = string.concat(
+            loanTokenSymbol,
+            "/",
+            IERC20Metadata(marketConfig.collateralToken).symbol(),
+            " (",
+            StringUtilsLib.toPercentString(marketConfig.lltv, Constants.LLTV_100_PERCENT),
+            "% LLTV)"
+        );
+        uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE);
 
-        address provider = dahliaRegistry.getAddress(Constants.ADDRESS_ID_DAHLIA_PROVIDER);
-        if (provider != address(0)) {
-            IDahliaProvider(provider).onMarketDeployed(id, marketProxy, msg.sender, data);
-        }
-        market.marketProxy = marketProxy;
+        address wrappedVault = address(
+            WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)).wrapVault(
+                id, marketConfig.loanToken, msg.sender, name, fee
+            )
+        );
+        ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
+        // TODO: add emit event here
     }
 
     /// @inheritdoc IDahlia

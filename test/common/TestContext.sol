@@ -5,7 +5,7 @@ import {Vm} from "@forge-std/Test.sol";
 import {Dahlia} from "src/core/contracts/Dahlia.sol";
 import {DahliaProvider} from "src/core/contracts/DahliaProvider.sol";
 import {DahliaRegistry, IDahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
-import {ERC4626ProxyFactory} from "src/core/contracts/ERC4626ProxyFactory.sol";
+
 import {Constants} from "src/core/helpers/Constants.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
@@ -43,6 +43,7 @@ contract TestContext {
         address bob;
         address carol;
         address admin;
+        address royco;
         address owner;
         address[] permitted;
         OracleMock oracle;
@@ -87,6 +88,7 @@ contract TestContext {
         v.carol = createWallet("CAROL");
         v.owner = createWallet("OWNER");
         v.admin = createWallet("ADMIN");
+        v.royco = createWallet("ROYCO");
         v.permitted = new address[](2);
         v.permitted[0] = v.owner;
         v.permitted[1] = v.admin;
@@ -159,10 +161,10 @@ contract TestContext {
     }
 
     function createTestIrm() public virtual returns (IIrm irm) {
-        if (contracts["IrmFacotory"] == address(0)) {
-            contracts["IrmFacotory"] = address(new IrmFactory());
+        if (contracts["IrmFactory"] == address(0)) {
+            contracts["IrmFactory"] = address(new IrmFactory());
         }
-        irm = IrmFactory(contracts["IrmFacotory"]).createVariableIrm(
+        irm = IrmFactory(contracts["IrmFactory"]).createVariableIrm(
             VariableIrm.Config({
                 minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
                 maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
@@ -174,15 +176,6 @@ contract TestContext {
                 targetRatePercent: 0.2e18
             })
         );
-    }
-
-    function createProxyFactory() public returns (address proxyFactory) {
-        if (contracts["proxyFactory"] != address(0)) {
-            return contracts["proxyFactory"];
-        }
-        proxyFactory = address(new ERC4626ProxyFactory());
-        vm.label(proxyFactory, "[ PROXY FACTORY ]");
-        contracts["proxyFactory"] = proxyFactory;
     }
 
     function createDahliaRegistry(address owner) public returns (address dahliaRegistry) {
@@ -202,16 +195,14 @@ contract TestContext {
         }
         address owner = createWallet("OWNER");
         address dahliaRegistry = createDahliaRegistry(owner);
-        address proxyFactory = createProxyFactory();
         vm.startPrank(owner);
-        DahliaRegistry(dahliaRegistry).setAddress(Constants.ADDRESS_ID_MARKET_PROXY, proxyFactory);
 
         dahlia = new DahliaExt(owner, dahliaRegistry);
         vm.label(address(dahlia), "[ DAHLIA ]");
         dahlia.setProtocolFeeRecipient(createWallet("PROTOCOL_FEE_RECIPIENT"));
         dahlia.setReserveFeeRecipient(createWallet("RESERVE_FEE_RECIPIENT"));
-
         vm.stopPrank();
+        createRoycoContracts(address(dahlia));
         contracts["dahlia"] = address(dahlia);
     }
 
@@ -267,12 +258,12 @@ contract TestContext {
         return dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
     }
 
-    function createRoycoContracts() public virtual returns (RoycoMock.RoycoContracts memory royco) {
+    function createRoycoContracts(address dahlia) public virtual returns (RoycoMock.RoycoContracts memory royco) {
         address dahliaRegistry = createDahliaRegistry(wallets["OWNER"]);
 
         // Register royco with DahliaProvider
         address roycoOwner = createWallet("ROYCO_OWNER");
-        royco = RoycoMock.createRoycoContracts(roycoOwner);
+        royco = RoycoMock.createRoycoContracts(roycoOwner, dahlia);
 
         DahliaProvider dahliaProvider = new DahliaProvider(dahliaRegistry);
 
