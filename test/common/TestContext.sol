@@ -5,11 +5,8 @@ import {Vm} from "@forge-std/Test.sol";
 import {Dahlia} from "src/core/contracts/Dahlia.sol";
 import {DahliaProvider} from "src/core/contracts/DahliaProvider.sol";
 import {DahliaRegistry, IDahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
-
 import {Constants} from "src/core/helpers/Constants.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
-
-import {InterestImpl} from "src/core/impl/InterestImpl.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IrmFactory} from "src/irm/contracts/IrmFactory.sol";
 import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
@@ -29,13 +26,6 @@ interface IERC20Mint is IERC20 {
 
 contract DahliaExt is Dahlia {
     constructor(address _owner, address addressRegistry) Dahlia(_owner, addressRegistry) {}
-
-    function getMarketInterest(Types.MarketId id) external returns (uint256) {
-        Types.Market storage market = markets[id].market;
-        return InterestImpl._calculateUserRewards(
-            market.interestPeriod, market.totalLendShares, 0, market.interestRateAccumulated
-        );
-    }
 
     // function forceChangeMarketLltv(Types.MarketId marketId, uint24 lltv) external {
     //     markets[marketId].market.lltv = lltv;

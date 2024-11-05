@@ -2,12 +2,9 @@
 pragma solidity ^0.8.27;
 
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {SafeCastLib} from "@solady/utils/SafeCastLib.sol";
 import {console} from "forge-std/console.sol";
-
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
@@ -19,35 +16,6 @@ import {IIrm} from "src/irm/interfaces/IIrm.sol";
 library InterestImpl {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
-    using MarketMath for uint256;
-    using SafeCastLib for uint256;
-
-    /// @notice Calculate the interest accumulated by user shares between two checkpoints.
-    function _calculateUserRewards(
-        uint256 interestPeriod,
-        uint256 shares,
-        uint256 earlierUserCheckpointRate,
-        uint256 latterRewardsCheckpointRate
-    ) internal pure returns (uint256) {
-        return interestPeriod * shares * (latterRewardsCheckpointRate - earlierUserCheckpointRate)
-            / FixedPointMathLib.WAD / 1e6; // We must scale down the rewards by the precision factor
-    }
-
-    function updateUserRewards(
-        uint256 interestPeriod,
-        uint256 interestRateAccumulated,
-        Types.MarketUserPosition storage user
-    ) internal returns (uint256 assets) {
-        uint256 interestRateCheckpointed = user.interestRateCheckpointed;
-        console.log("updateUserRewards.interestPeriod", interestPeriod);
-        console.log("updateUserRewards.interestRateCheckpointed", interestRateCheckpointed);
-        console.log("updateUserRewards.interestRateAccumulated", interestRateAccumulated);
-        assets = user.interestAccumulated;
-        assets +=
-            _calculateUserRewards(interestPeriod, user.lendShares, interestRateCheckpointed, interestRateAccumulated);
-        user.interestAccumulated = assets;
-        user.interestRateCheckpointed = interestRateAccumulated;
-    }
 
     /// @dev Accrues interest for the given market `marketConfig`.
     /// @dev Assumes that the inputs `marketConfig` and `id` match.
@@ -59,6 +27,7 @@ library InterestImpl {
         if (address(market.irm) == address(0)) {
             return;
         }
+
         uint256 deltaTime = block.timestamp - market.updatedAt;
         if (deltaTime == 0) {
             return;
@@ -73,25 +42,10 @@ library InterestImpl {
             market.fullUtilizationRate = uint64(newFullUtilizationRate);
             market.ratePerSec = uint64(newRatePerSec);
             market.totalBorrowAssets += interestEarnedAssets;
-            // TODO: keep to add to allow to pass tests
             market.totalLendAssets += interestEarnedAssets;
 
-            uint256 totalLendShares = market.totalLendShares;
-            // interest / totalLendShares / elapsed - rate per sec for lent shares
-            uint256 lendShareInterestRate =
-                (totalBorrowAssets * newRatePerSec).mulDiv(SharesMathLib.SHARES_OFFSET, totalLendShares);
-            console.log("newRatePerSec", newRatePerSec);
-            console.log("deltaTime", deltaTime);
-            console.log("totalLendShares", totalLendShares);
-            console.log("lentSharesInterestRate", lendShareInterestRate);
-
-            //            uint256 reserveFeeTaken = interestEarnedAssets.mulPercentDown(reserveFeeRate);
-            //            uint256 protocolFeeTaken = interestEarnedAssets.mulPercentDown(protocolFeeRate);
-            //            uint256 interestAfterFee = interestEarnedAssets - reserveFeeTaken - protocolFeeTaken;
-
-            market.interestRateAccumulated += lendShareInterestRate; // we accumulate rate of interest per second
-
             // calculate protocol fee
+            uint256 totalLendShares = market.totalLendShares;
             uint256 protocolFeeShares = 0;
             uint256 protocolFeeRate = market.protocolFeeRate;
             if (protocolFeeRate > 0) {
@@ -115,7 +69,6 @@ library InterestImpl {
                 market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares
             );
             //TODO: Safe "unchecked" cast?
-            market.interestPeriod = uint48(deltaTime); // remember old updateAt to use as a start to distribute interest
             market.updatedAt = uint48(block.timestamp);
         }
     }
@@ -135,7 +88,7 @@ library InterestImpl {
     /// @return totalLendShares The expected total lend shares.
     /// @return totalBorrowAssets The expected total borrow assets.
     /// @return totalBorrowShares The expected total borrow shares.
-    function getLastMarketState(Types.Market memory market)
+    function getLastMarketState(Types.Market memory market, uint256 assets)
         internal
         view
         returns (
@@ -147,7 +100,7 @@ library InterestImpl {
             uint256 ratePerSec
         )
     {
-        totalLendAssets = market.totalLendAssets;
+        totalLendAssets = market.totalLendAssets + assets;
         totalLendShares = market.totalLendShares;
         totalBorrowAssets = market.totalBorrowAssets;
         totalBorrowShares = market.totalBorrowShares;

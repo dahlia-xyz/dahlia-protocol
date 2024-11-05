@@ -152,6 +152,13 @@ interface IDahlia is IMarketStorage {
         external
         returns (uint256 assetsWithdrawn);
 
+    function claimInterest(Types.MarketId id, address onBehalfOf, address receiver) external returns (uint256 assets);
+
+    function previewLendRateAfterDeposit(Types.MarketId id, uint256 assets)
+        external
+        view
+        returns (uint256 ratePerSec);
+
     /// @notice Borrows `assets` or `shares` on behalf of a user and sends the assets to a receiver.
     /// @dev either the `assets` or the `shares` must be set to zero.
     /// @param id of the market.

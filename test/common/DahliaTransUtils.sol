@@ -10,7 +10,8 @@ import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
 
 library DahliaTransUtils {
     function dahliaLendBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
-        ERC20Mock($.marketConfig.loanToken).setBalance(lender, assets);
+        uint256 previousBalance = $.loanToken.balanceOf(lender);
+        ERC20Mock($.marketConfig.loanToken).setBalance(lender, previousBalance + assets);
 
         vm.startPrank(lender);
         IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);

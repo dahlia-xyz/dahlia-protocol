@@ -533,6 +533,9 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function _claim(address reward, address from, address to, uint256 amount) internal virtual {
         _updateUserRewards(reward, from);
         rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
+        if (reward == address(DEPOSIT_ASSET)) {
+            dahlia.claimInterest(marketId, from, to);
+        }
         pushReward(reward, to, amount);
         emit Claimed(reward, from, to, amount);
     }
@@ -603,6 +606,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         uint256 rewardsRate = (uint256(rewardsInterval.rate) * shares / (totalSupply + shares)) * 1e18 / assets;
         // TODO: for x call dahlia.getLastStateAfterDeposit(assets)
+        if (reward == address(DEPOSIT_ASSET)) {
+            uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(marketId, assets);
+            rewardsRate += dahliaRate;
+        }
         return rewardsRate;
     }
 
