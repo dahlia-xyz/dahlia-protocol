@@ -39,9 +39,9 @@ library InterestImpl {
         Types.MarketUserPosition storage user
     ) internal returns (uint256 assets) {
         uint256 interestRateCheckpointed = user.interestRateCheckpointed;
-        console.log("interestPeriod", interestPeriod);
-        console.log("interestRateCheckpointed", interestRateCheckpointed);
-        console.log("interestRateAccumulated", interestRateAccumulated);
+        console.log("updateUserRewards.interestPeriod", interestPeriod);
+        console.log("updateUserRewards.interestRateCheckpointed", interestRateCheckpointed);
+        console.log("updateUserRewards.interestRateAccumulated", interestRateAccumulated);
         assets = user.interestAccumulated;
         assets +=
             _calculateUserRewards(interestPeriod, user.lendShares, interestRateCheckpointed, interestRateAccumulated);
