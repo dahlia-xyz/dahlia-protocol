@@ -604,8 +604,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function totalAssets() public view returns (uint256) {
-        uint256 shares = balanceOfDahlia(address(this));
-        return convertToAssets(shares);
+        (uint256 totalLendAssets,,,,,) = dahlia.getLastMarketState(marketId);
+        return totalLendAssets;
     }
 
     /**
@@ -667,8 +667,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         uint256 assets = previewRedeem(shares);
         (_assets) = _withdraw(msg.sender, shares, receiver, owner);
 
-        _burn(owner, shares);
-
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
 
@@ -725,8 +723,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function maxWithdraw(address) external view returns (uint256 maxAssets) {
-        maxAssets = convertToAssets(balanceOfDahlia(address(this)));
+    function maxWithdraw(address addr) external view returns (uint256 maxAssets) {
+        maxAssets = convertToAssets(balanceOfDahlia(addr));
     }
 
     /// @inheritdoc IWrappedVault
@@ -736,8 +734,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function maxRedeem(address) external view returns (uint256 maxShares) {
-        maxShares = balanceOfDahlia(address(this));
+    function maxRedeem(address addr) external view returns (uint256 maxShares) {
+        maxShares = balanceOfDahlia(addr);
     }
 
     /// @inheritdoc IWrappedVault
