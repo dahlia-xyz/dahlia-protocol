@@ -7,7 +7,6 @@ import {console} from "forge-std/console.sol";
 
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Events} from "src/core/helpers/Events.sol";
-
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {Types} from "src/core/types/Types.sol";
@@ -38,13 +37,15 @@ library InterestImpl {
         uint256 interestPeriod,
         uint256 interestRateAccumulated,
         Types.MarketUserPosition storage user
-    ) internal {
+    ) internal returns (uint256 assets) {
         uint256 interestRateCheckpointed = user.interestRateCheckpointed;
         console.log("interestPeriod", interestPeriod);
         console.log("interestRateCheckpointed", interestRateCheckpointed);
         console.log("interestRateAccumulated", interestRateAccumulated);
-        user.interestAccumulated +=
+        assets = user.interestAccumulated;
+        assets +=
             _calculateUserRewards(interestPeriod, user.lendShares, interestRateCheckpointed, interestRateAccumulated);
+        user.interestAccumulated = assets;
         user.interestRateCheckpointed = interestRateAccumulated;
     }
 
@@ -67,6 +68,7 @@ library InterestImpl {
         (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) = IIrm(market.irm)
             .calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, market.fullUtilizationRate);
 
+        console.log("interestEarnedAssets", interestEarnedAssets);
         if (interestEarnedAssets > 0) {
             market.fullUtilizationRate = uint64(newFullUtilizationRate);
             market.ratePerSec = uint64(newRatePerSec);
@@ -76,19 +78,18 @@ library InterestImpl {
 
             uint256 totalLendShares = market.totalLendShares;
             // interest / totalLendShares / elapsed - rate per sec for lent shares
-            uint256 lentSharesInterestRate =
+            uint256 lendShareInterestRate =
                 (totalBorrowAssets * newRatePerSec).mulDiv(SharesMathLib.SHARES_OFFSET, totalLendShares);
             console.log("newRatePerSec", newRatePerSec);
             console.log("deltaTime", deltaTime);
             console.log("totalLendShares", totalLendShares);
-            console.log("interestEarnedAssets", interestEarnedAssets);
-            console.log("lentSharesInterestRate", lentSharesInterestRate);
+            console.log("lentSharesInterestRate", lendShareInterestRate);
 
             //            uint256 reserveFeeTaken = interestEarnedAssets.mulPercentDown(reserveFeeRate);
             //            uint256 protocolFeeTaken = interestEarnedAssets.mulPercentDown(protocolFeeRate);
             //            uint256 interestAfterFee = interestEarnedAssets - reserveFeeTaken - protocolFeeTaken;
 
-            market.interestRateAccumulated += lentSharesInterestRate; // we accumulate rate of interest per second
+            market.interestRateAccumulated += lendShareInterestRate; // we accumulate rate of interest per second
 
             // calculate protocol fee
             uint256 protocolFeeShares = 0;

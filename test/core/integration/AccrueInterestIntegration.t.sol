@@ -224,10 +224,23 @@ contract AccrueInterestIntegrationTest is Test {
         assertEq(totalLendShares, totalLendSharesBeforeAccrued + protocolFeeShares, "total supply shares");
     }
 
+    function printMarketState(string memory suffix, string memory title) public {
+        console.log("####", title);
+        Types.Market memory state = $.dahlia.getMarket($.marketId);
+        console.log(suffix, "market.interestRateAccumulated", state.interestRateAccumulated);
+        console.log(suffix, "market.totalLendAssets", state.totalLendAssets);
+        console.log(suffix, "market.totalLendShares", state.totalLendShares);
+        //        uint256 marketInterest = $.dahlia.getMarketInterest($.marketId);
+        //        console.log(suffix, "market.marketInterest", marketInterest);
+        printUserPos(string.concat(suffix, " carol"), $.carol);
+        printUserPos(string.concat(suffix, " bob"), $.bob);
+    }
+
     function printUserPos(string memory suffix, address user) public {
         Types.MarketUserPosition memory pos = $.dahlia.getMarketUserPosition($.marketId, user);
         console.log(suffix, ".interestRateCheckpointed", pos.interestRateCheckpointed);
         console.log(suffix, ".interestAccumulated", pos.interestAccumulated);
+        console.log(suffix, ".lendShares", pos.lendShares);
     }
 
     function test_int_accrueInterest_Test1() public {
@@ -239,8 +252,8 @@ contract AccrueInterestIntegrationTest is Test {
             price: 1e34,
             ltv: MarketMath.toPercent(80)
         });
-        uint32 protocolFee = MarketMath.toPercent(2);
-        uint32 reserveFee = MarketMath.toPercent(1);
+        uint32 protocolFee = MarketMath.toPercent(0);
+        uint32 reserveFee = MarketMath.toPercent(0);
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaLendBy($.bob, pos.lent, $);
@@ -259,76 +272,31 @@ contract AccrueInterestIntegrationTest is Test {
             $.dahlia.setReserveFeeRate($.marketId, reserveFee);
         }
         vm.stopPrank();
+        printMarketState("0", "carol and bob has equal position with 10% ltv");
         vm.forward(blocks);
-
-        Types.Market memory state = $.dahlia.getMarket($.marketId);
-
-        uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
-        IIrm irm = ctx.createTestIrm();
-        (uint256 interestEarnedAssets, uint256 newRatePerSec,) =
-            irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
-
-        uint256 protocolFeeShares = InterestImpl.calcFeeSharesFromInterest(
-            state.totalLendAssets, state.totalLendShares, interestEarnedAssets, protocolFee
-        );
-        uint256 reserveFeeShares = InterestImpl.calcFeeSharesFromInterest(
-            state.totalLendAssets, state.totalLendShares, interestEarnedAssets, reserveFee
-        );
-
-        if (interestEarnedAssets > 0) {
-            vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit Events.DahliaAccrueInterest(
-                $.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares
-            );
-        }
-
+        console.log();
         $.dahlia.accrueMarketInterest($.marketId);
-        console.log("1 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("1 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        printUserPos("1 carol", $.carol);
-        printUserPos("1 bob", $.bob);
+        printMarketState("1", "accrual of interest after 100 blocks and lending again by carol");
         vm.forward(blocks);
         vm.dahliaLendBy($.carol, pos.lent, $);
-        console.log("2 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("2 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        printUserPos("2 carol", $.carol);
-        printUserPos("2 bob", $.bob);
-        console.log("2 bob.interestAccumulated", $.dahlia.getMarketUserPosition($.marketId, $.bob).interestAccumulated);
+        printMarketState("2", "accrual of interest after 200 blocks and lending again by carol");
         vm.dahliaLendBy($.carol, pos.lent, $);
-        console.log("3 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("3 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        printUserPos("3 carol", $.carol);
-        printUserPos("3 bob", $.bob);
+        printMarketState("3", "carol lending again");
         $.dahlia.accrueMarketInterest($.marketId);
-        console.log("4 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("4 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        printUserPos("4 carol", $.carol);
-        printUserPos("4 bob", $.bob);
-        vm.dahliaWithdrawBy($.bob, $.dahlia.getMarketUserPosition($.marketId, $.bob).lendShares, $);
-        console.log("5 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("5 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        printUserPos("5 carol", $.carol);
-        printUserPos("5 bob", $.bob);
-        vm.forward(blocks);
+        printMarketState("4", "after accrueMarketInterest");
+        //        vm.dahliaLendBy($.bob, pos.lent, $);
+        //        printMarketState("4.1", "bob lending again");
+        uint256 assets = vm.dahliaWithdrawBy($.bob, $.dahlia.getMarketUserPosition($.marketId, $.bob).lendShares, $);
+        printMarketState("5", "after bob withdraw all shares");
+        console.log("5 bob assets withdrawn: ", assets);
         $.dahlia.accrueMarketInterest($.marketId);
-        console.log("6 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("6 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        printUserPos("6 carol", $.carol);
-        printUserPos("6 bob", $.bob);
+        printMarketState("6", "accrueMarketInterest after 100 blocks");
         vm.dahliaWithdrawBy($.carol, $.dahlia.getMarketUserPosition($.marketId, $.carol).lendShares / 3, $);
-        console.log("7 market.interestRateAccumulated", $.dahlia.getMarket($.marketId).interestRateAccumulated);
-        console.log("7 market.totalLendAssets", $.dahlia.getMarket($.marketId).totalLendAssets);
-        console.log(
-            "7 carol.interestRateCheckpointed",
-            $.dahlia.getMarketUserPosition($.marketId, $.carol).interestRateCheckpointed
-        );
-        console.log(
-            "7 carol.interestAccumulated", $.dahlia.getMarketUserPosition($.marketId, $.carol).interestAccumulated
-        );
-        console.log(
-            "7 bob.interestRateCheckpointed", $.dahlia.getMarketUserPosition($.marketId, $.bob).interestRateCheckpointed
-        );
-        console.log("7 bob.interestAccumulated", $.dahlia.getMarketUserPosition($.marketId, $.bob).interestAccumulated);
-        console.log("7 bob.lendShares", $.dahlia.getMarketUserPosition($.marketId, $.bob).lendShares);
+        printMarketState("7", "carol withdraw 1/3 of shares");
+        vm.dahliaRepayBy($.alice, pos.borrowed, $);
+        printMarketState("8", "repay by alice");
+        vm.forward(blocks);
+        $.dahlia.accrueMarketInterest($.marketId);
+        printMarketState("9", "accrueMarketInterest after 100 blocks");
     }
 }

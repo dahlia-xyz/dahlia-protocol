@@ -17,9 +17,12 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaWithdrawBy(Vm vm, address lender, uint256 shares, TestContext.MarketContext memory $) internal {
+    function dahliaWithdrawBy(Vm vm, address lender, uint256 shares, TestContext.MarketContext memory $)
+        internal
+        returns (uint256 assets)
+    {
         vm.startPrank(lender);
-        $.dahlia.withdraw($.marketId, shares, lender, lender);
+        assets = $.dahlia.withdraw($.marketId, shares, lender, lender);
         vm.stopPrank();
     }
 

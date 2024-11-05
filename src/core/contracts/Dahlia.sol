@@ -6,11 +6,13 @@ import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
+
 import {Permitted} from "src/core/abstracts/Permitted.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
+import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {StringUtilsLib} from "src/core/helpers/StringUtilsLib.sol";
 import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
@@ -205,6 +207,31 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], shares, onBehalfOf, receiver);
 
+        // remove isPermitted if user withdraw all money by proxy
+        if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
+            isPermitted[onBehalfOf][msg.sender] = false;
+        }
+
+        IERC20(market.loanToken).safeTransfer(receiver, assets);
+    }
+
+    function claimInterest(Types.MarketId id, address onBehalfOf, address receiver)
+        external
+        isSenderPermitted(onBehalfOf)
+        returns (uint256 assets)
+    {
+        require(receiver != address(0), Errors.ZeroAddress());
+        Types.MarketData storage marketData = markets[id];
+        Types.Market storage market = marketData.market;
+        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        _validateMarket(market.status, false);
+        _accrueMarketInterest(positions, market);
+        uint256 assetsInterest =
+            InterestImpl.updateUserRewards(market.interestPeriod, market.interestRateAccumulated, positions[onBehalfOf]);
+        uint256 sharesInterest =
+            SharesMathLib.toSharesUp(assetsInterest, market.totalLendAssets, market.totalLendShares);
+
+        assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
         // remove isPermitted if user withdraw all money by proxy
         if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
