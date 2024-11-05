@@ -110,7 +110,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @dev Maps a reward address to whether it has been added via addRewardsToken
     mapping(address => bool) public isReward;
     /// @dev Maps a reward to the interval in which rewards are distributed over
-    mapping(address => RewardsInterval) public rewardToInterval;
+    mapping(address => RewardsInterval) internal rewardToIntervalData;
     /// @dev maps a reward (either token or points) to the accumulator to track reward distribution
     mapping(address => RewardsPerToken) public rewardToRPT;
     /// @dev Maps a reward (either token or points) to a user, and that users accumulated rewards
@@ -158,6 +158,19 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         _mint(address(0), 10_000); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
+    }
+
+    // TODO: add external rewardToInterval to fake end to be block.timestamp + MIN_CAMPAIGN_DURATION for the loan asset only
+    // if there are some borrowers
+    function rewardToInterval(address reward) external view returns (uint32 start, uint32 end, uint96 rate) {
+        start = rewardToIntervalData[reward].start;
+        end = rewardToIntervalData[reward].end;
+        rate = rewardToIntervalData[reward].rate;
+        if (reward == address(DEPOSIT_ASSET)) {
+            if (dahlia.getMarket(marketId).totalBorrowAssets > 0) {
+                end = uint32(block.timestamp + MIN_CAMPAIGN_DURATION);
+            }
+        }
     }
 
     /// @param rewardsToken The new reward token / points program to be used as incentives
@@ -260,7 +273,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         if (!isReward[reward]) {
             revert InvalidReward();
         }
-        RewardsInterval storage rewardsInterval = rewardToInterval[reward];
+        RewardsInterval storage rewardsInterval = rewardToIntervalData[reward];
         if (newEnd <= rewardsInterval.end) {
             revert InvalidInterval();
         }
@@ -334,7 +347,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
             revert InvalidIntervalDuration();
         }
 
-        RewardsInterval storage rewardsInterval = rewardToInterval[reward];
+        RewardsInterval storage rewardsInterval = rewardToIntervalData[reward];
         RewardsPerToken storage rewardsPerToken = rewardToRPT[reward];
 
         // A new rewards program cannot be set if one is running
@@ -394,8 +407,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         if (!isReward[reward]) {
             revert InvalidReward();
         }
-        RewardsInterval memory rewardsInterval = rewardToInterval[reward];
-        delete rewardToInterval[reward];
+        RewardsInterval memory rewardsInterval = rewardToIntervalData[reward];
+        delete rewardToIntervalData[reward];
         if (block.timestamp >= rewardsInterval.start) {
             revert IntervalInProgress();
         }
@@ -458,7 +471,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @notice Update and return the rewards per token accumulator according to the rate, the time elapsed since the last update, and the current total staked
     /// amount.
     function _updateRewardsPerToken(address reward) internal returns (RewardsPerToken memory) {
-        RewardsInterval storage rewardsInterval = rewardToInterval[reward];
+        RewardsInterval storage rewardsInterval = rewardToIntervalData[reward];
         RewardsPerToken memory rewardsPerTokenIn = rewardToRPT[reward];
         RewardsPerToken memory rewardsPerTokenOut = _calculateRewardsPerToken(rewardsPerTokenIn, rewardsInterval);
 
@@ -566,7 +579,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @notice Calculate and return current rewards per token.
     function currentRewardsPerToken(address reward) public view returns (uint256) {
-        return _calculateRewardsPerToken(rewardToRPT[reward], rewardToInterval[reward]).accumulated;
+        return _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]).accumulated;
     }
 
     /// @notice Calculate and return current rewards for a user.
@@ -574,7 +587,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function currentUserRewards(address reward, address user) public view returns (uint256) {
         UserRewards memory accumulatedRewards_ = rewardToUserToAR[reward][user];
         RewardsPerToken memory rewardsPerToken_ =
-            _calculateRewardsPerToken(rewardToRPT[reward], rewardToInterval[reward]);
+            _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]);
         return accumulatedRewards_.accumulated
             + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
     }
@@ -582,7 +595,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @notice Calculates the rate a user would receive in rewards after depositing assets
     /// @return The rate of rewards, measured in wei of rewards token per wei of assets per second, scaled up by 1e18 to avoid precision loss
     function previewRateAfterDeposit(address reward, uint256 assets) public view returns (uint256) {
-        RewardsInterval memory rewardsInterval = rewardToInterval[reward];
+        RewardsInterval memory rewardsInterval = rewardToIntervalData[reward];
         if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) {
             return 0;
         }

@@ -174,6 +174,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
+        InterestImpl.updateUserRewards(market.interestPeriod, market.interestRateAccumulated, positions[onBehalfOf]);
 
         // Set isPermitted permission for ERC4626Proxy if it sent transaction
         if (msg.sender == address(market.marketProxy)) {
@@ -200,6 +201,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
+        InterestImpl.updateUserRewards(market.interestPeriod, market.interestRateAccumulated, positions[onBehalfOf]);
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], shares, onBehalfOf, receiver);
 

@@ -35,10 +35,11 @@ library Types {
         address oracle; // 20 bytes
         uint64 fullUtilizationRate; // 3 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 26 bytes
+        // --- 32 bytes
         IIrm irm; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
         uint24 reallocationBonusRate; // 3 bytes
+        uint48 interestPeriod; // 6 bytes // start of interest
         // --- 20 bytes
         IERC4626 marketProxy; // 20 bytes
         address marketDeployer;
@@ -48,6 +49,7 @@ library Types {
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
+        uint256 interestRateAccumulated; // 32 bytes
     }
 
     struct MarketConfig {
@@ -65,6 +67,8 @@ library Types {
         uint256 lendShares;
         uint256 borrowShares;
         uint256 collateral;
+        uint256 interestAccumulated;
+        uint256 interestRateCheckpointed;
     }
 
     struct MarketData {
