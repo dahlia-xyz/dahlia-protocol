@@ -2,12 +2,12 @@
 pragma solidity ^0.8.27;
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {WrappedVault} from "@royco/WrappedVault.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {IDahliaProvider} from "src/core/interfaces/IDahliaProvider.sol";
 import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
 import {IRoycoWrappedVaultFactory} from "src/core/interfaces/IRoycoWrappedVaultFactory.sol";
 import {Types} from "src/core/types/Types.sol";
+import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
 
 /// @title DahliaProvider
 contract DahliaProvider is IDahliaProvider {

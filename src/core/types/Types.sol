@@ -63,6 +63,7 @@ library Types {
 
     struct MarketUserPosition {
         uint256 lendShares;
+        uint256 lendAssets; // store user initial lend assets
         uint256 borrowShares;
         uint256 collateral;
     }

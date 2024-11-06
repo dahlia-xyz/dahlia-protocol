@@ -25,6 +25,7 @@ library LendImpl {
         shares = assets.toSharesDown(market.totalLendAssets, market.totalLendShares);
 
         marketOnBehalfOfPosition.lendShares += shares;
+        marketOnBehalfOfPosition.lendAssets += assets;
         market.totalLendShares += shares;
         market.totalLendAssets += assets;
 

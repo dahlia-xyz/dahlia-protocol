@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
@@ -34,7 +35,8 @@ library ManageMarketImpl {
     function deployMarket(
         mapping(Types.MarketId => Types.MarketData) storage markets,
         Types.MarketId id,
-        Types.MarketConfig memory marketConfig
+        Types.MarketConfig memory marketConfig,
+        address wrappedVault
     ) internal {
         Types.Market storage market = markets[id].market;
         require(market.updatedAt == 0, Errors.MarketAlreadyDeployed());
@@ -52,6 +54,7 @@ library ManageMarketImpl {
         market.status = Types.MarketStatus.Active;
         market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
         market.reallocationBonusRate = uint24(MarketMath.calcReallocationBonusRate(market.lltv));
-        emit Events.DeployMarket(id, marketConfig);
+        market.marketProxy = IERC4626(wrappedVault);
+        emit Events.DeployMarket(id, wrappedVault, marketConfig);
     }
 }

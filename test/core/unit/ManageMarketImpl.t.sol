@@ -17,15 +17,15 @@ contract ManageMarketImplUnitTest is Test {
         ctx = new TestContext(vm);
     }
 
-    function test_unit_manage_deployMarket_success(Types.MarketConfig memory marketParamsFuzz) public {
+    function test_unit_manage_deployMarket_success(Types.MarketConfig memory marketParamsFuzz, address vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
 
         Types.MarketId marketParamsFuzzId = Types.MarketId.wrap(1);
         vm.expectEmit(true, true, true, true, address(this));
-        emit Events.DeployMarket(marketParamsFuzzId, marketParamsFuzz);
-        ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz);
+        emit Events.DeployMarket(marketParamsFuzzId, vault, marketParamsFuzz);
+        ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
 
         Types.Market memory market = markets[marketParamsFuzzId].market;
         assertEq(market.collateralToken, marketParamsFuzz.collateralToken);
@@ -40,17 +40,20 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(market.totalBorrowAssets, 0, "totalBorrowAssets != 0");
         assertEq(market.totalBorrowShares, 0, "totalBorrowShares != 0");
         assertEq(market.protocolFeeRate, 0, "fee != 0");
+        assertEq(address(market.marketProxy), vault, "marketProxy != vault");
     }
 
-    function test_unit_manage_deployMarket_alreadyDeployed(Types.MarketConfig memory marketParamsFuzz) public {
+    function test_unit_manage_deployMarket_alreadyDeployed(Types.MarketConfig memory marketParamsFuzz, address vault)
+        public
+    {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
         Types.MarketId marketParamsFuzzId = Types.MarketId.wrap(1);
 
-        ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz);
+        ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
 
         vm.expectRevert(Errors.MarketAlreadyDeployed.selector);
-        ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz);
+        ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
     }
 }

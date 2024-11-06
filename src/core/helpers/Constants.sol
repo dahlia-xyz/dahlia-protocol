@@ -33,9 +33,6 @@ library Constants {
     /// @dev `DahliaProvider` contract address position in DahliaRegistry.
     uint256 internal constant ADDRESS_ID_DAHLIA_PROVIDER = 2;
 
-    /// @dev `MarketProxy` contract address position in DahliaRegistry.
-    uint256 internal constant ADDRESS_ID_MARKET_PROXY = 3;
-
     /// @dev `OracleFactory` contract address position in DahliaRegistry.
     uint256 internal constant ADDRESS_ID_ORACLE_FACTORY = 4;
 

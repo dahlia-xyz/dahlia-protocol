@@ -118,7 +118,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     {
         Types.Market storage market = markets[id].market;
         _validateMarket(market.status, false);
-        return InterestImpl.getLastMarketState(market);
+        return InterestImpl.getLastMarketState(market, 0);
     }
 
     function _validateMarket(Types.MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {

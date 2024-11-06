@@ -3,14 +3,17 @@ pragma solidity ^0.8.27;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
 import {Permitted} from "src/core/abstracts/Permitted.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
+import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
+import {StringUtilsLib} from "src/core/helpers/StringUtilsLib.sol";
 import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
 import {LendImpl} from "src/core/impl/LendImpl.sol";
@@ -24,10 +27,9 @@ import {
     IDahliaRepayCallback,
     IDahliaSupplyCollateralCallback
 } from "src/core/interfaces/IDahliaCallbacks.sol";
-import {IDahliaProvider} from "src/core/interfaces/IDahliaProvider.sol";
 import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
-import {IERC4626ProxyFactory} from "src/core/interfaces/IERC4626ProxyFactory.sol";
 import {Types} from "src/core/types/Types.sol";
+import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 //TODO: protect some methods by ReentrancyGuard
 //import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -35,6 +37,7 @@ import {Types} from "src/core/types/Types.sol";
 /// @notice The Dahlia contract.
 contract Dahlia is Permitted, MarketStorage, IDahlia {
     using SafeERC20 for IERC20;
+    using SharesMathLib for uint256;
 
     Types.RateRange public lltvRange;
     Types.RateRange public liquidationBonusRateRange;
@@ -128,7 +131,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata data)
+    function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata)
         external
         returns (Types.MarketId id)
     {
@@ -139,16 +142,25 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         id = Types.MarketId.wrap(++marketSequence);
 
-        ManageMarketImpl.deployMarket(markets, id, marketConfig);
-        Types.Market storage market = markets[id].market;
-        IERC4626 marketProxy = IERC4626ProxyFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_MARKET_PROXY))
-            .deployProxy(marketConfig, id);
+        IERC20Metadata loanToken = IERC20Metadata(marketConfig.loanToken);
+        string memory loanTokenSymbol = loanToken.symbol();
+        string memory name = string.concat(
+            loanTokenSymbol,
+            "/",
+            IERC20Metadata(marketConfig.collateralToken).symbol(),
+            " (",
+            StringUtilsLib.toPercentString(marketConfig.lltv, Constants.LLTV_100_PERCENT),
+            "% LLTV)"
+        );
+        uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE);
 
-        address provider = dahliaRegistry.getAddress(Constants.ADDRESS_ID_DAHLIA_PROVIDER);
-        if (provider != address(0)) {
-            IDahliaProvider(provider).onMarketDeployed(id, marketProxy, msg.sender, data);
-        }
-        market.marketProxy = marketProxy;
+        address wrappedVault = address(
+            WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)).wrapVault(
+                id, marketConfig.loanToken, msg.sender, name, fee
+            )
+        );
+        ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
+        // TODO: add emit event here
     }
 
     /// @inheritdoc IDahlia
@@ -188,8 +200,11 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
+        Types.MarketUserPosition storage userPosition = positions[onBehalfOf];
 
-        assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], shares, onBehalfOf, receiver);
+        assets = LendImpl.internalWithdraw(market, userPosition, shares, onBehalfOf, receiver);
+        uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
+        userPosition.lendAssets -= adjustedAssets;
 
         // remove isPermitted if user withdraw all money by proxy
         if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
@@ -197,6 +212,45 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         }
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
+    }
+
+    function claimInterest(Types.MarketId id, address onBehalfOf, address receiver)
+        external
+        isSenderPermitted(onBehalfOf)
+        returns (uint256 assets)
+    {
+        require(receiver != address(0), Errors.ZeroAddress());
+        Types.MarketData storage marketData = markets[id];
+        Types.Market storage market = marketData.market;
+        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        _validateMarket(market.status, false);
+        _accrueMarketInterest(positions, market);
+        Types.MarketUserPosition storage position = positions[onBehalfOf];
+        uint256 totalLendAssets = market.totalLendAssets;
+        uint256 totalLendShares = market.totalLendShares;
+        uint256 lendShares = position.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
+        uint256 sharesInterest = position.lendShares - lendShares;
+
+        assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
+        // remove isPermitted if user withdraw all money by proxy
+        if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
+            isPermitted[onBehalfOf][msg.sender] = false;
+        }
+
+        IERC20(market.loanToken).safeTransfer(receiver, assets);
+    }
+
+    function previewLendRateAfterDeposit(Types.MarketId id, uint256 assets)
+        external
+        view
+        returns (uint256 newRatePerSec)
+    {
+        Types.Market storage market = markets[id].market;
+
+        // TODO: do we need validation of market here?
+        (uint256 totalLendAssets,, uint256 totalBorrowAssets,,, uint256 ratePerSec) =
+            InterestImpl.getLastMarketState(market, assets);
+        return totalBorrowAssets * ratePerSec / totalLendAssets;
     }
 
     /// @inheritdoc IDahlia

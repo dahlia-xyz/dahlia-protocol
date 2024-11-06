@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
@@ -67,7 +66,7 @@ library InterestImpl {
             emit Events.DahliaAccrueInterest(
                 market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares
             );
-            // Safe "unchecked" cast.
+            //TODO: Safe "unchecked" cast?
             market.updatedAt = uint48(block.timestamp);
         }
     }
@@ -87,7 +86,7 @@ library InterestImpl {
     /// @return totalLendShares The expected total lend shares.
     /// @return totalBorrowAssets The expected total borrow assets.
     /// @return totalBorrowShares The expected total borrow shares.
-    function getLastMarketState(Types.Market memory market)
+    function getLastMarketState(Types.Market memory market, uint256 assets)
         internal
         view
         returns (
@@ -99,7 +98,7 @@ library InterestImpl {
             uint256 ratePerSec
         )
     {
-        totalLendAssets = market.totalLendAssets;
+        totalLendAssets = market.totalLendAssets + assets;
         totalLendShares = market.totalLendShares;
         totalBorrowAssets = market.totalBorrowAssets;
         totalBorrowShares = market.totalBorrowShares;

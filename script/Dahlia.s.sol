@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import {Script} from "@forge-std/Script.sol";
 import {console} from "@forge-std/console.sol";
 import {Dahlia} from "src/core/contracts/Dahlia.sol";
-import {ERC4626ProxyFactory} from "src/core/contracts/ERC4626ProxyFactory.sol";
+import {DahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
 
 contract DeployDahlia is Script {
     function run() public {
@@ -14,9 +14,9 @@ contract DeployDahlia is Script {
         address deployerAddress = vm.addr(deployerPrivateKey);
         console.log("Deployer address:", deployerAddress);
 
-        address proxyFactory = address(new ERC4626ProxyFactory());
+        address registry = address(new DahliaRegistry(dahliaOwner));
         // Deploy the contract
-        Dahlia dahlia = new Dahlia(dahliaOwner, proxyFactory);
+        Dahlia dahlia = new Dahlia(dahliaOwner, registry);
         console.log("Dahlia contract deployed to:", address(dahlia));
         uint256 contractSize = address(dahlia).code.length;
         console.log("Dahlia contract size:", contractSize);

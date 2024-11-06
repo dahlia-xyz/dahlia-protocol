@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {Vm} from "@forge-std/Test.sol";
+import {console} from "@forge-std/console.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
@@ -9,11 +10,30 @@ import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
 
 library DahliaTransUtils {
     function dahliaLendBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
-        ERC20Mock($.marketConfig.loanToken).setBalance(lender, assets);
+        uint256 previousBalance = $.loanToken.balanceOf(lender);
+        ERC20Mock($.marketConfig.loanToken).setBalance(lender, previousBalance + assets);
 
         vm.startPrank(lender);
         IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);
         $.dahlia.lend($.marketId, assets, lender, TestConstants.EMPTY_CALLBACK);
+        vm.stopPrank();
+    }
+
+    function dahliaClaimInterestBy(Vm vm, address lender, TestContext.MarketContext memory $)
+        internal
+        returns (uint256 interest)
+    {
+        vm.startPrank(lender);
+        interest = $.dahlia.claimInterest($.marketId, lender, lender);
+        vm.stopPrank();
+    }
+
+    function dahliaWithdrawBy(Vm vm, address lender, uint256 shares, TestContext.MarketContext memory $)
+        internal
+        returns (uint256 assets)
+    {
+        vm.startPrank(lender);
+        assets = $.dahlia.withdraw($.marketId, shares, lender, lender);
         vm.stopPrank();
     }
 
@@ -26,6 +46,22 @@ library DahliaTransUtils {
         vm.startPrank(borrower);
         IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);
         $.dahlia.repay($.marketId, assets, 0, borrower, TestConstants.EMPTY_CALLBACK);
+        vm.stopPrank();
+    }
+
+    function dahliaRepayByShares(
+        Vm vm,
+        address borrower,
+        uint256 shares,
+        uint256 assets,
+        TestContext.MarketContext memory $
+    ) internal {
+        vm.startPrank(borrower);
+        ERC20Mock($.marketConfig.loanToken).setBalance(borrower, assets);
+        console.log("borrower assets: ", assets);
+        console.log("borrower shares: ", shares);
+        IERC20($.marketConfig.loanToken).approve(address($.dahlia), type(uint256).max);
+        $.dahlia.repay($.marketId, 0, shares, borrower, TestConstants.EMPTY_CALLBACK);
         vm.stopPrank();
     }
 

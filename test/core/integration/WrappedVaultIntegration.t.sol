@@ -2,19 +2,20 @@
 pragma solidity ^0.8.27;
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IWrappedVault} from "@royco/interfaces/IWrappedVault.sol";
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Test, Vm} from "forge-std/Test.sol";
-import {ERC4626Proxy} from "src/core/contracts/ERC4626Proxy.sol";
 
 import {Constants} from "src/core/helpers/Constants.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {Types} from "src/core/types/Types.sol";
+import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
-contract ERC4626ProxyIntegrationTest is Test {
+contract WrappedVaultIntegration is Test {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
@@ -32,11 +33,11 @@ contract ERC4626ProxyIntegrationTest is Test {
     }
 
     function test_int_proxy_checks() public view {
-        assertEq(marketProxy.decimals(), 6);
+        assertEq(marketProxy.decimals(), 12);
         assertEq(marketProxy.asset(), $.marketConfig.loanToken);
     }
 
-    function test_proxy_name() public {
+    function test_int_proxy_name() public {
         TestContext.MarketContext memory ctx2 =
             ctx.bootstrapMarket("USDC", "WBTC", 81 * Constants.LLTV_100_PERCENT / 100);
         assertEq(Types.MarketId.unwrap(ctx2.marketId), 2);
@@ -65,11 +66,11 @@ contract ERC4626ProxyIntegrationTest is Test {
         assertEq(shares, expectedLendShares);
         assertEq(userPos.lendShares, shares);
 
-        assertEq(marketProxy.balanceOf($.alice), 0);
-        assertEq(marketProxy.balanceOf($.bob), shares);
-        assertEq(marketProxy.maxWithdraw($.bob), assets);
-        assertEq(marketProxy.totalAssets(), assets);
-        assertEq(marketProxy.totalSupply(), shares);
+        assertEq(marketProxy.balanceOf($.alice), 0, "alice balance");
+        assertEq(marketProxy.balanceOf($.bob), shares, "bob balance");
+        assertEq(marketProxy.maxWithdraw($.bob), assets, "bob max withdraw");
+        assertEq(marketProxy.totalAssets(), assets, "total assets");
+        assertEq(marketProxy.totalSupply(), shares + 10_000, "total supply");
     }
 
     function test_int_proxy_depositByShares(uint256 shares) public {
@@ -96,7 +97,7 @@ contract ERC4626ProxyIntegrationTest is Test {
         assertEq(marketProxy.balanceOf($.bob), shares);
         assertEq(marketProxy.maxWithdraw($.bob), assets);
         assertEq(marketProxy.totalAssets(), assets);
-        assertEq(marketProxy.totalSupply(), shares);
+        assertEq(marketProxy.totalSupply(), shares + 10_000);
     }
 
     function test_int_proxy_withdrawByAssets(uint256 assets) public {
@@ -115,7 +116,7 @@ contract ERC4626ProxyIntegrationTest is Test {
 
         vm.startPrank($.bob);
         vm.expectEmit(true, true, true, true, address(marketProxy));
-        emit ERC4626Proxy.ProxyWithdraw($.bob, $.alice, $.bob, assets, shares);
+        emit IWrappedVault.Withdraw($.bob, $.alice, $.bob, assets, shares);
         vm.resumeGasMetering();
         uint256 sharesWithdrawn = marketProxy.withdraw(assets, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -130,7 +131,7 @@ contract ERC4626ProxyIntegrationTest is Test {
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
         assertEq(marketProxy.totalAssets(), 0);
-        assertEq(marketProxy.totalSupply(), 0);
+        assertEq(marketProxy.totalSupply(), 10_000);
     }
 
     function test_int_proxy_withdrawByShares(uint256 shares) public {
@@ -151,7 +152,7 @@ contract ERC4626ProxyIntegrationTest is Test {
 
         vm.startPrank($.bob);
         vm.expectEmit(true, true, true, true, address(marketProxy));
-        emit ERC4626Proxy.ProxyWithdraw($.bob, $.alice, $.bob, assets, shares);
+        emit IWrappedVault.Withdraw($.bob, $.alice, $.bob, assets, shares);
         vm.resumeGasMetering();
         uint256 assetsRedeemed = marketProxy.redeem(shares, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -165,7 +166,7 @@ contract ERC4626ProxyIntegrationTest is Test {
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
         assertEq(marketProxy.totalAssets(), 0);
-        assertEq(marketProxy.totalSupply(), 0);
+        assertEq(marketProxy.totalSupply(), 10_000);
     }
 
     function test_int_proxy_revertWithdrawNoApprove(uint256 assets) public {
@@ -180,7 +181,7 @@ contract ERC4626ProxyIntegrationTest is Test {
 
         vm.startPrank($.bob);
         vm.resumeGasMetering();
-        vm.expectRevert("NOT_ENOUGH_ALLOWANCE");
+        vm.expectRevert(WrappedVault.NotOwnerOfVaultOrApproved.selector);
         marketProxy.withdraw(assets, $.bob, $.alice);
         vm.stopPrank();
     }
@@ -273,12 +274,12 @@ contract ERC4626ProxyIntegrationTest is Test {
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
-                    ERC4626Proxy(address(marketProxy)).DOMAIN_SEPARATOR(),
+                    WrappedVault(address(marketProxy)).DOMAIN_SEPARATOR(),
                     keccak256(abi.encode(PERMIT_TYPEHASH, $.alice, $.bob, shares, 0, block.timestamp))
                 )
             )
         );
-        ERC4626Proxy(address(marketProxy)).permit($.alice, $.bob, shares, block.timestamp, v, r, s);
+        WrappedVault(address(marketProxy)).permit($.alice, $.bob, shares, block.timestamp, v, r, s);
         vm.stopPrank();
 
         vm.startPrank($.bob);
