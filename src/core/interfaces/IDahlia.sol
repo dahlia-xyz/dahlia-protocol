@@ -67,20 +67,6 @@ interface IMarketStorage {
     /// @notice Deprecate market.
     /// @param id of the market.
     function deprecateMarket(Types.MarketId id) external;
-
-    /// @notice Returns the last market state for given market parameters
-    /// @param id of the market
-    function getLastMarketState(Types.MarketId id)
-        external
-        view
-        returns (
-            uint256 totalLendAssets,
-            uint256 totalLendShares,
-            uint256 totalBorrowAssets,
-            uint256 totalBorrowShares,
-            uint256 fullUtilizationRate,
-            uint256 ratePerSec
-        );
 }
 
 /// @title IDahlia

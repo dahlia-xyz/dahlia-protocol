@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+// TODO: document this
 interface IIrm {
+    function zeroUtilizationRate() external view returns (uint256);
+    function minFullUtilizationRate() external view returns (uint256);
+
     function name() external view returns (string memory);
 
     function version() external view returns (uint256);

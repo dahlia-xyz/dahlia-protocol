@@ -38,6 +38,7 @@ import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 contract Dahlia is Permitted, MarketStorage, IDahlia {
     using SafeERC20 for IERC20;
     using SharesMathLib for uint256;
+    using FixedPointMathLib for uint256;
 
     Types.RateRange public lltvRange;
     Types.RateRange public liquidationBonusRateRange;
@@ -240,17 +241,12 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function previewLendRateAfterDeposit(Types.MarketId id, uint256 assets)
-        external
-        view
-        returns (uint256 newRatePerSec)
-    {
-        Types.Market storage market = markets[id].market;
-
-        // TODO: do we need validation of market here?
-        (uint256 totalLendAssets,, uint256 totalBorrowAssets,,, uint256 ratePerSec) =
-            InterestImpl.getLastMarketState(market, assets);
-        return totalBorrowAssets * ratePerSec / totalLendAssets;
+    function previewLendRateAfterDeposit(Types.MarketId id, uint256 assets) external view returns (uint256) {
+        Types.Market memory market = InterestImpl.getLastMarketState(markets[id].market, assets);
+        if (market.totalLendAssets == 0) {
+            return 0;
+        }
+        return market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets);
     }
 
     /// @inheritdoc IDahlia

@@ -25,8 +25,8 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         require(sender == owner() || sender == admin, Errors.NotPermitted(sender));
     }
 
-    function getMarket(Types.MarketId marketId) external view returns (Types.Market memory) {
-        return markets[marketId].market;
+    function getMarket(Types.MarketId id) external view returns (Types.Market memory) {
+        return InterestImpl.getLastMarketState(markets[id].market, 0);
     }
 
     function getMarketUserPosition(Types.MarketId marketId, address userAddress)
@@ -108,17 +108,6 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         _checkOwnerOrAdmin(oldAdmin);
         emit Events.MarketAdminChanged(oldAdmin, newAdmin);
         market.admin = newAdmin;
-    }
-
-    /// @inheritdoc IMarketStorage
-    function getLastMarketState(Types.MarketId id)
-        external
-        view
-        returns (uint256, uint256, uint256, uint256, uint256, uint256)
-    {
-        Types.Market storage market = markets[id].market;
-        _validateMarket(market.status, false);
-        return InterestImpl.getLastMarketState(market, 0);
     }
 
     function _validateMarket(Types.MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {

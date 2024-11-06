@@ -47,6 +47,7 @@ contract VariableIrm is IIrm {
 
     uint256 public immutable minFullUtilizationRate;
     uint256 public immutable maxFullUtilizationRate;
+    // TODO: make uint64
     uint256 public immutable zeroUtilizationRate;
     uint256 public immutable targetRatePercent;
     uint24 public immutable minTargetUtilization;
