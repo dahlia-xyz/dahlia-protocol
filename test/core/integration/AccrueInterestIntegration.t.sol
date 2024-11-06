@@ -42,12 +42,12 @@ contract AccrueInterestIntegrationTest is Test {
         $.dahlia.accrueMarketInterest($.marketId);
         vm.pauseGasMetering();
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.owner);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.owner);
         Types.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued, "total borrow");
         assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued, "total supply");
         assertEq(stateAfter.totalLendShares, totalLendSharesBeforeAccrued, "total supply shares");
-        assertEq(lendShares, 0, "feeRecipient's supply shares");
+        assertEq(userPos.lendShares, 0, "feeRecipient's supply shares");
     }
 
     function test_int_accrueInterest_marketNotDeployed(Types.MarketId marketIdFuzz) public {
@@ -168,12 +168,12 @@ contract AccrueInterestIntegrationTest is Test {
             "total lend shares"
         );
 
-        (uint256 protocolFeeLendShares,,) =
-            $.dahlia.marketUserPositions($.marketId, ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
-        (uint256 reserveFeeLendShares,,) =
-            $.dahlia.marketUserPositions($.marketId, ctx.wallets("RESERVE_FEE_RECIPIENT"));
-        assertEq(protocolFeeLendShares, protocolFeeShares, "protocolFeeRecipient's lend shares");
-        assertEq(reserveFeeLendShares, reserveFeeShares, "reserveFeeRecipient's lend shares");
+        Types.MarketUserPosition memory userPos1 =
+            $.dahlia.getMarketUserPosition($.marketId, ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
+        Types.MarketUserPosition memory userPos =
+            $.dahlia.getMarketUserPosition($.marketId, ctx.wallets("RESERVE_FEE_RECIPIENT"));
+        assertEq(userPos1.lendShares, protocolFeeShares, "protocolFeeRecipient's lend shares");
+        assertEq(userPos.lendShares, reserveFeeShares, "reserveFeeRecipient's lend shares");
         if (interestEarnedAssets > 0) {
             assertEq(stateAfter.updatedAt, block.timestamp, "last update");
         }

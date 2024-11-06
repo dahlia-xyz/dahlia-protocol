@@ -62,9 +62,9 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.bob);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
         assertEq(shares, expectedLendShares);
-        assertEq(lendShares, shares);
+        assertEq(userPos.lendShares, shares);
 
         assertEq(marketProxy.balanceOf($.alice), 0, "alice balance");
         assertEq(marketProxy.balanceOf($.bob), shares, "bob balance");
@@ -89,9 +89,9 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.bob);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
         assertEq(assets, resAssets);
-        assertEq(lendShares, shares);
+        assertEq(userPos.lendShares, shares);
 
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), shares);
@@ -122,10 +122,10 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.bob);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
         assertEq(shares, sharesWithdrawn);
         assertEq(shares, expectedLendShares);
-        assertEq(lendShares, 0);
+        assertEq(userPos.lendShares, 0);
 
         assertEq($.loanToken.balanceOf($.alice), assets);
         assertEq(marketProxy.balanceOf($.alice), 0);
@@ -158,10 +158,10 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.bob);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
         assertEq(resAssets, assets);
         assertEq(assetsRedeemed, assets);
-        assertEq(lendShares, 0);
+        assertEq(userPos.lendShares, 0);
         assertEq($.loanToken.balanceOf($.alice), assets);
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);

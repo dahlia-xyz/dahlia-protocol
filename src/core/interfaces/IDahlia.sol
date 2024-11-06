@@ -18,15 +18,10 @@ interface IMarketStorage {
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.
     /// @param userAddress User address.
-    function marketUserPositions(Types.MarketId marketId, address userAddress)
-        external
-        view
-        returns (uint256 lendShares, uint256 borrowShares, uint256 collateral);
-
     function getMarketUserPosition(Types.MarketId marketId, address userAddress)
         external
         view
-        returns (Types.MarketUserPosition memory);
+        returns (Types.MarketUserPosition memory position);
 
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.

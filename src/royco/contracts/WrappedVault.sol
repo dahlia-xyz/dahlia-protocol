@@ -632,7 +632,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
      * @dev See {IERC4626-balanceOf}.
      */
     function balanceOfDahlia(address account) public view returns (uint256 lendShares) {
-        (lendShares,,) = dahlia.marketUserPositions(marketId, account);
+        return dahlia.getMarketUserPosition(marketId, account).lendShares;
     }
 
     /// @notice safeDeposit allows a user to specify a minimum amount of shares out to avoid any

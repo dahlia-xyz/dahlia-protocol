@@ -128,11 +128,11 @@ contract SupplyAndBorrowIntegrationTest is Test {
         uint256 amountBorrowed,
         uint256 expectedBorrowShares
     ) internal view {
-        (, uint256 borrowShares,) = $.dahlia.marketUserPositions($.marketId, $.alice);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");
-        assertEq(borrowShares, expectedBorrowShares, "borrow share");
+        assertEq(userPos.borrowShares, expectedBorrowShares, "borrow share");
         assertEq($.loanToken.balanceOf($.bob), amountBorrowed, "receiver balance");
         assertEq($.loanToken.balanceOf(address($.dahlia)), amountLent - amountBorrowed, "dahlia balance");
     }

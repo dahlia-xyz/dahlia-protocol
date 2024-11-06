@@ -56,10 +56,10 @@ contract LendIntegrationTest is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.bob);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
 
         assertEq(_shares, expectedLendShares, "returned shares amount");
-        assertEq(lendShares, expectedLendShares, "supply shares");
+        assertEq(userPos.lendShares, expectedLendShares, "supply shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, amount, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedLendShares, "total supply shares");
         assertEq($.loanToken.balanceOf($.alice), 0, "Alice balance");

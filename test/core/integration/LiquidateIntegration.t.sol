@@ -87,7 +87,7 @@ contract LiquidateIntegrationTest is Test {
         $.dahlia.liquidate($.marketId, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 
-    function test_int_liquidate_mathematic(TestTypes.MarketPosition memory pos) public {
+    function test_int_liquidate_mathematics(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, MarketMath.toPercent(130));
 
@@ -95,17 +95,17 @@ contract LiquidateIntegrationTest is Test {
 
         Types.Market memory market = $.dahlia.getMarket($.marketId);
 
-        (, uint256 borrowShares, uint256 collateral) = $.dahlia.marketUserPositions($.marketId, $.alice);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 totalBorrowShares = market.totalBorrowShares;
         uint256 bonusRate = market.liquidationBonusRate;
         uint256 collateralPrice = pos.price;
 
-        uint256 borrowedAssets = borrowShares.toAssetsDown(totalBorrowAssets, totalBorrowShares);
+        uint256 borrowedAssets = userPos.borrowShares.toAssetsDown(totalBorrowAssets, totalBorrowShares);
         uint256 borrowedInCollateral = borrowedAssets.lendToCollateralUp(collateralPrice);
         uint256 expectedBonusInCollateral =
-            FixedPointMathLib.min(borrowedInCollateral, collateral).mulPercentUp(bonusRate);
+            FixedPointMathLib.min(borrowedInCollateral, userPos.collateral).mulPercentUp(bonusRate);
 
         uint256 expectedSeizeCollateral = borrowedInCollateral + expectedBonusInCollateral;
         (
@@ -115,23 +115,23 @@ contract LiquidateIntegrationTest is Test {
             uint256 _badDebtAssets,
             uint256 _badDebtShares
         ) = MarketMath.calcLiquidation(
-            totalBorrowAssets, totalBorrowShares, collateral, collateralPrice, borrowShares, bonusRate
+            totalBorrowAssets, totalBorrowShares, userPos.collateral, collateralPrice, userPos.borrowShares, bonusRate
         );
 
         // vm.assume(_badDebtShares > 0);
 
         assertEq(_borrowAssets, borrowedAssets, "borrow asset calculated correctly");
-        assertTrue(_seizedCollateral <= collateral, "check bonus");
+        assertTrue(_seizedCollateral <= userPos.collateral, "check bonus");
         assertEq(_bonusCollateral, expectedBonusInCollateral, "got max of collateral");
 
         if (_badDebtShares > 0) {
             assertTrue(_badDebtShares > 0);
             assertTrue(_badDebtAssets > 0);
 
-            assertEq(_seizedCollateral, collateral, "got max of collateral");
+            assertEq(_seizedCollateral, userPos.collateral, "got max of collateral");
             assertTrue(_seizedCollateral < expectedSeizeCollateral, "real seized mus be less");
 
-            uint256 badDebtInCollateral = expectedSeizeCollateral - collateral;
+            uint256 badDebtInCollateral = expectedSeizeCollateral - userPos.collateral;
             uint256 badDebtInAssets = badDebtInCollateral.collateralToLendUp(collateralPrice);
             assertEq(badDebtInAssets, _badDebtAssets, "bad debt assets");
 
@@ -146,7 +146,7 @@ contract LiquidateIntegrationTest is Test {
             assertEq(
                 _seizedCollateral - expectedBonusInCollateral, borrowedInCollateral, "bonus is included into seized"
             );
-            assertTrue(expectedSeizeCollateral <= collateral);
+            assertTrue(expectedSeizeCollateral <= userPos.collateral);
         }
     }
 
@@ -158,7 +158,7 @@ contract LiquidateIntegrationTest is Test {
         Types.Market memory market = $.dahlia.getMarket($.marketId);
 
         uint256 totalLentInShares = pos.lent.toSharesDown(market.totalLendAssets, market.totalLendShares);
-        (, uint256 borrowShares, uint256 maxCollateral) = $.dahlia.marketUserPositions($.marketId, $.alice);
+        Types.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         (
             uint256 _borrowAssets,
@@ -169,14 +169,14 @@ contract LiquidateIntegrationTest is Test {
         ) = MarketMath.calcLiquidation(
             market.totalBorrowAssets,
             market.totalBorrowShares,
-            maxCollateral,
+            userPos1.collateral,
             pos.price,
-            borrowShares,
+            userPos1.borrowShares,
             market.liquidationBonusRate
         );
 
         uint256 repaidAssets = _borrowAssets - _badDebtAssets;
-        uint256 repaidShares = borrowShares - _badDebtShares;
+        uint256 repaidShares = userPos1.borrowShares - _badDebtShares;
 
         // Bob is LIQUIDATOR
         vm.dahliaPrepareLoanBalanceFor($.bob, repaidAssets, $);
@@ -202,15 +202,14 @@ contract LiquidateIntegrationTest is Test {
 
         vm.pauseGasMetering();
         uint256 expectedLeftCollateral = pos.collateral - _seizedCollateral;
-        (uint256 borrowAssets, uint256 newBorrowShares, uint256 newCollateral) =
-            $.dahlia.marketUserPositions($.marketId, $.alice);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         Types.Market memory m = $.dahlia.getMarket($.marketId);
         assertEq(returnSeizedCollateral, _seizedCollateral, "returned seized collateral");
         assertEq(returnRepaidAssets, repaidAssets, "returned asset amount");
-        assertEq(borrowAssets, 0, "borrow assets");
-        assertEq(newBorrowShares, 0, "borrow shares");
-        assertEq(newCollateral, expectedLeftCollateral, "collateral");
+        assertEq(userPos.lendShares, 0, "lend shares");
+        assertEq(userPos.borrowShares, 0, "borrow shares");
+        assertEq(userPos.collateral, expectedLeftCollateral, "collateral");
         assertEq(m.totalLendAssets, pos.lent - _badDebtAssets, "total lend assets decreased with bad data");
         assertEq(m.totalLendShares, totalLentInShares, "total lend stay same with bas data");
         assertTrue(_bonusCollateral > 0, "_bonusCollateral must be positive");
@@ -223,7 +222,7 @@ contract LiquidateIntegrationTest is Test {
         assertEq($.collateralToken.balanceOf($.bob), returnSeizedCollateral, "liquidator collateral balance");
     }
 
-    function test_int_liquidate_withReservSharese(TestTypes.MarketPosition memory pos) public {
+    function test_int_liquidate_withReserveShares(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
         address reserveAddress = ctx.createWallet("RESERVE_FEE_RECIPIENT");
         pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, TestConstants.MAX_TEST_LLTV);
@@ -235,7 +234,7 @@ contract LiquidateIntegrationTest is Test {
 
         Types.Market memory market = $.dahlia.getMarket($.marketId);
         uint256 prevTotalLentShares = market.totalLendShares;
-        (, uint256 borrowShares, uint256 maxCollateral) = $.dahlia.marketUserPositions($.marketId, $.alice);
+        Types.MarketUserPosition memory userPos2 = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         (
             uint256 _borrowAssets,
@@ -246,18 +245,18 @@ contract LiquidateIntegrationTest is Test {
         ) = MarketMath.calcLiquidation(
             market.totalBorrowAssets,
             market.totalBorrowShares,
-            maxCollateral,
+            userPos2.collateral,
             pos.price,
-            borrowShares,
+            userPos2.borrowShares,
             market.liquidationBonusRate
         );
 
-        (uint256 reserveLendShares,,) = $.dahlia.marketUserPositions($.marketId, reserveAddress);
+        Types.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, reserveAddress);
         (uint256 _rescueAssets, uint256 _rescueShares) = MarketMath.calcRescueAssets(
-            market.totalLendAssets, market.totalLendShares, _badDebtAssets, reserveLendShares
+            market.totalLendAssets, market.totalLendShares, _badDebtAssets, userPos1.lendShares
         );
         uint256 repaidAssets = _borrowAssets - _badDebtAssets;
-        uint256 repaidShares = borrowShares - _badDebtShares;
+        uint256 repaidShares = userPos2.borrowShares - _badDebtShares;
 
         // Bob is LIQUIDATOR
         vm.dahliaPrepareLoanBalanceFor($.bob, repaidAssets, $);
@@ -283,8 +282,7 @@ contract LiquidateIntegrationTest is Test {
 
         vm.pauseGasMetering();
         uint256 expectedLeftCollateral = pos.collateral - _seizedCollateral;
-        (uint256 borrowAssets, uint256 newBorrowShares, uint256 newCollateral) =
-            $.dahlia.marketUserPositions($.marketId, $.alice);
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         uint256 lendBalance = pos.lent + reserveAssets - _badDebtAssets + _rescueAssets;
         uint256 dahliaLoanTokenBalance = pos.lent + reserveAssets - _badDebtAssets;
@@ -292,9 +290,9 @@ contract LiquidateIntegrationTest is Test {
         Types.Market memory m = $.dahlia.getMarket($.marketId);
         assertEq(returnSeizedCollateral, _seizedCollateral, "returned seized collateral");
         assertEq(returnRepaidAssets, repaidAssets, "returned asset amount");
-        assertEq(borrowAssets, 0, "borrow assets");
-        assertEq(newBorrowShares, 0, "borrow shares");
-        assertEq(newCollateral, expectedLeftCollateral, "collateral");
+        assertEq(userPos.lendShares, 0, "lend shares");
+        assertEq(userPos.borrowShares, 0, "borrow shares");
+        assertEq(userPos.collateral, expectedLeftCollateral, "collateral");
         assertEq(m.totalLendAssets, lendBalance, "total lend assets decreased with bad data");
         assertEq(m.totalLendShares, prevTotalLentShares - _rescueShares, "total lend stay same with bas data");
         assertTrue(_bonusCollateral > 0, "_bonusCollateral must be positive");
