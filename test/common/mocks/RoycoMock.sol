@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import {PointsFactory} from "@royco/PointsFactory.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
-
 import {TestConstants} from "test/common/TestConstants.sol";
 
 library RoycoMock {

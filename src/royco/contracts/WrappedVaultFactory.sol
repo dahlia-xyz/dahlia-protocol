@@ -2,10 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import {Owned} from "lib/solmate/src/auth/Owned.sol";
-import {ERC4626} from "lib/solmate/src/tokens/ERC4626.sol";
-import {LibString} from "lib/solmate/src/utils/LibString.sol";
-
+import {Owned} from "@solmate/auth/Owned.sol";
+import {ERC4626} from "@solmate/tokens/ERC4626.sol";
+import {LibString} from "@solmate/utils/LibString.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
 
