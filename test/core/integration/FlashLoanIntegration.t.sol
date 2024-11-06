@@ -6,6 +6,7 @@ import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {IDahliaFlashLoanCallback} from "src/core/interfaces/IDahliaCallbacks.sol";
+import {Types} from "src/core/types/Types.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -107,9 +108,9 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
             address(this),
             abi.encode(this.test_int_flashActions.selector, abi.encode(pos.borrowed))
         );
-        (, uint256 borrowShares,) = $.dahlia.marketUserPositions($.marketId, address(this));
+        Types.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, address(this));
 
-        assertGt(borrowShares, 0, "no borrow");
+        assertGt(userPos1.borrowShares, 0, "no borrow");
 
         $.dahlia.repay(
             $.marketId,
@@ -118,7 +119,7 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
             address(this),
             abi.encode(this.test_int_flashActions.selector, abi.encode(pos.collateral))
         );
-        (,, uint256 collateral) = $.dahlia.marketUserPositions($.marketId, address(this));
-        assertEq(collateral, 0, "no withdraw collateral");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, address(this));
+        assertEq(userPos.collateral, 0, "no withdraw collateral");
     }
 }

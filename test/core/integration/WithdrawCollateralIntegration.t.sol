@@ -6,6 +6,7 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
+import {Types} from "src/core/types/Types.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
@@ -92,8 +93,8 @@ contract WithdrawCollateralIntegrationTest is Test {
         $.dahlia.withdrawCollateral($.marketId, amountCollateralExcess, $.alice, $.bob);
         vm.pauseGasMetering();
 
-        (,, uint256 resultCollateral) = $.dahlia.marketUserPositions($.marketId, $.alice);
-        assertEq(resultCollateral, pos.collateral - amountCollateralExcess, "collateral balance");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        assertEq(userPos.collateral, pos.collateral - amountCollateralExcess, "collateral balance");
         assertEq($.collateralToken.balanceOf($.bob), amountCollateralExcess, "receiver balance");
         assertEq(
             $.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance"
@@ -129,8 +130,8 @@ contract WithdrawCollateralIntegrationTest is Test {
         $.dahlia.withdrawCollateral($.marketId, amountCollateralExcess, $.alice, $.alice);
         vm.pauseGasMetering();
 
-        (,, uint256 resultCollateral) = $.dahlia.marketUserPositions($.marketId, $.alice);
-        assertEq(resultCollateral, pos.collateral - amountCollateralExcess, "collateral balance");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        assertEq(userPos.collateral, pos.collateral - amountCollateralExcess, "collateral balance");
         assertEq($.collateralToken.balanceOf($.alice), amountCollateralExcess, "lender balance");
         assertEq(
             $.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance"

@@ -78,14 +78,14 @@ contract ReallocationIntegrationTest is Test {
 
         Types.Market memory market1 = dahlia.getMarket($m1.marketId);
         Types.Market memory market2 = dahlia.getMarket($m2.marketId);
-        (, uint256 borrowSharesM1, uint256 collateralM1) = dahlia.marketUserPositions($m1.marketId, borrower);
-        (, uint256 borrowSharesM2, uint256 collateralM2) = dahlia.marketUserPositions($m2.marketId, borrower);
+        Types.MarketUserPosition memory user1 = dahlia.getMarketUserPosition($m1.marketId, borrower);
+        Types.MarketUserPosition memory user2 = dahlia.getMarketUserPosition($m2.marketId, borrower);
         assertEq($m1.collateralToken.balanceOf(reallocator), bonusCollateral);
         assertEq($m2.collateralToken.balanceOf(address(dahlia)), pos.collateral - bonusCollateral);
-        assertEq(borrowSharesM1, 0, "old position shares");
-        assertEq(collateralM1, 0, "old position collatera");
-        assertEq(borrowSharesM2, newShares, "new position shares");
-        assertEq(collateralM2, newCollateral, "new position collatera");
+        assertEq(user1.borrowShares, 0, "old position shares");
+        assertEq(user1.collateral, 0, "old position collatera");
+        assertEq(user2.borrowShares, newShares, "new position shares");
+        assertEq(user2.collateral, newCollateral, "new position collateral");
         assertEq(market1.totalBorrowAssets, 0, "market1 total assets");
         assertEq(market1.totalBorrowShares, 0, "market1 total shares");
         assertEq(market2.totalBorrowAssets, pos.borrowed, "market2 total assets");

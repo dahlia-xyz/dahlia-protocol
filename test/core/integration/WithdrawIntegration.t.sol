@@ -90,8 +90,8 @@ contract WithdrawIntegrationTest is Test {
 
         expectedSupplyShares -= expectedWithdrawnShares;
         assertEq(returnAssets, amountWithdrawn, "returned asset amount");
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.alice);
-        assertEq(lendShares, expectedSupplyShares, "lend shares");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        assertEq(userPos.lendShares, expectedSupplyShares, "lend shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - amountWithdrawn, "total supply");
         assertEq($.loanToken.balanceOf($.bob), amountWithdrawn, "receiver balance");
@@ -121,8 +121,8 @@ contract WithdrawIntegrationTest is Test {
 
         expectedSupplyShares -= sharesWithdrawn;
         assertEq(returnAssets, expectedAmountWithdrawn, "returned asset amount");
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.alice);
-        assertEq(lendShares, expectedSupplyShares, "lend shares");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        assertEq(userPos.lendShares, expectedSupplyShares, "lend shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - expectedAmountWithdrawn, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.loanToken.balanceOf($.bob), expectedAmountWithdrawn, "receiver balance");
@@ -159,8 +159,8 @@ contract WithdrawIntegrationTest is Test {
         expectedSupplyShares -= expectedWithdrawnShares;
         assertEq(returnAssets, amountWithdrawn, "returned asset amount");
 
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.alice);
-        assertEq(lendShares, expectedSupplyShares, "lend shares");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        assertEq(userPos.lendShares, expectedSupplyShares, "lend shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - amountWithdrawn, "total supply");
         assertEq($.loanToken.balanceOf($.bob), amountWithdrawn, "receiver balance");
@@ -197,8 +197,8 @@ contract WithdrawIntegrationTest is Test {
 
         expectedSupplyShares -= sharesWithdrawn;
         assertEq(returnAssets, expectedAmountWithdrawn, "returned asset amount");
-        (uint256 lendShares,,) = $.dahlia.marketUserPositions($.marketId, $.alice);
-        assertEq(lendShares, expectedSupplyShares, "lend shares");
+        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        assertEq(userPos.lendShares, expectedSupplyShares, "lend shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - expectedAmountWithdrawn, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.loanToken.balanceOf($.bob), expectedAmountWithdrawn, "receiver balance");

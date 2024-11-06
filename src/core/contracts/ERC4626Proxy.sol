@@ -115,7 +115,7 @@ contract ERC4626Proxy is IERC4626, IERC20Permit, EIP712, Nonces {
      * @dev See {IERC4626-balanceOf}.
      */
     function balanceOf(address account) public view returns (uint256 lendShares) {
-        (lendShares,,) = dahlia.marketUserPositions(marketId, account);
+        return dahlia.getMarketUserPosition(marketId, account).lendShares;
     }
 
     /**

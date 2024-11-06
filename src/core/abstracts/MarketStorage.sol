@@ -29,15 +29,12 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         return markets[marketId].market;
     }
 
-    function marketUserPositions(Types.MarketId marketId, address userAddress)
+    function getMarketUserPosition(Types.MarketId marketId, address userAddress)
         external
         view
-        returns (uint256 lendShares, uint256 borrowShares, uint256 collateral)
+        returns (Types.MarketUserPosition memory)
     {
-        Types.MarketUserPosition memory position = markets[marketId].userPositions[userAddress];
-        lendShares = position.lendShares;
-        borrowShares = position.borrowShares;
-        collateral = position.collateral;
+        return markets[marketId].userPositions[userAddress];
     }
 
     function marketUserMaxBorrows(Types.MarketId marketId, address userAddress)
