@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {console} from "@forge-std/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
@@ -231,7 +230,6 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         uint256 totalLendShares = market.totalLendShares;
         uint256 lendShares = position.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
         uint256 sharesInterest = position.lendShares - lendShares;
-        console.log("sharesInterest", sharesInterest);
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
         // remove isPermitted if user withdraw all money by proxy

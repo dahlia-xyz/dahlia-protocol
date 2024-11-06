@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {console} from "forge-std/console.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
@@ -37,7 +36,6 @@ library InterestImpl {
         (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) = IIrm(market.irm)
             .calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, market.fullUtilizationRate);
 
-        console.log("interestEarnedAssets", interestEarnedAssets);
         if (interestEarnedAssets > 0) {
             market.fullUtilizationRate = uint64(newFullUtilizationRate);
             market.ratePerSec = uint64(newRatePerSec);
