@@ -2,8 +2,8 @@
 pragma solidity ^0.8.27;
 
 import {Vm} from "@forge-std/Test.sol";
+import {PointsFactory} from "@royco/PointsFactory.sol";
 import {Dahlia} from "src/core/contracts/Dahlia.sol";
-import {DahliaProvider} from "src/core/contracts/DahliaProvider.sol";
 import {DahliaRegistry, IDahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
@@ -13,11 +13,11 @@ import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
 import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {OracleFactory} from "src/oracles/contracts/OracleFactory.sol";
+import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
 import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
 import {OracleMock} from "test/common/mocks/OracleMock.sol";
-import {RoycoMock} from "test/common/mocks/RoycoMock.sol";
 import {Mainnet} from "test/oracles/Constants.sol";
 
 interface IERC20Mint is IERC20 {
@@ -93,11 +93,20 @@ contract TestContext {
         v.permitted[1] = v.admin;
         v.dahlia = createDahlia();
         v.dahliaRegistry = v.dahlia.dahliaRegistry();
+        createRoycoWrappedVaultFactory(
+            v.dahlia,
+            createWallet("ROYCO_OWNER"),
+            createWallet("ROYCO_REE_RECIPIENT"),
+            TestConstants.ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE,
+            TestConstants.ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE
+        );
+
         v.marketConfig = marketConfig;
         v.marketId = deployDahliaMarket(v.marketConfig);
         v.oracle = OracleMock(marketConfig.oracle);
         v.loanToken = ERC20Mock(marketConfig.loanToken);
         v.collateralToken = ERC20Mock(marketConfig.collateralToken);
+
         vm.resumeGasMetering();
     }
 
@@ -200,8 +209,8 @@ contract TestContext {
         vm.label(address(dahlia), "[ DAHLIA ]");
         dahlia.setProtocolFeeRecipient(createWallet("PROTOCOL_FEE_RECIPIENT"));
         dahlia.setReserveFeeRecipient(createWallet("RESERVE_FEE_RECIPIENT"));
+
         vm.stopPrank();
-        createRoycoContracts(address(dahlia));
         contracts["dahlia"] = address(dahlia);
     }
 
@@ -254,24 +263,35 @@ contract TestContext {
             dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
         }
         vm.stopPrank();
-        return dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
+
+        vm.prank(createWallet("MARKET_DEPLOYER"));
+        id = dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
     }
 
-    function createRoycoContracts(address dahlia) public virtual returns (RoycoMock.RoycoContracts memory royco) {
-        address dahliaRegistry = createDahliaRegistry(wallets["OWNER"]);
+    function createRoycoWrappedVaultFactory(
+        Dahlia dahlia,
+        address roycoOwner,
+        address protocolFeeRecipient,
+        uint256 protocolFee,
+        uint256 minimumFrontendFee
+    ) public virtual returns (WrappedVaultFactory wrappedVaultFactory) {
+        address dahliaOwner = createWallet("OWNER");
+        address dahliaRegistry = createDahliaRegistry(dahliaOwner);
+        // skip if factory already created
+        address existed = DahliaRegistry(dahliaRegistry).getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY);
+        if (existed != address(0)) {
+            return WrappedVaultFactory(existed);
+        }
 
-        // Register royco with DahliaProvider
-        address roycoOwner = createWallet("ROYCO_OWNER");
-        royco = RoycoMock.createRoycoContracts(roycoOwner, dahlia);
-
-        DahliaProvider dahliaProvider = new DahliaProvider(dahliaRegistry);
-
-        vm.startPrank(wallets["OWNER"]);
-        DahliaRegistry(dahliaRegistry).setAddress(
-            Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY, address(royco.erc4626iFactory)
+        address pointsFactory = address(new PointsFactory(roycoOwner));
+        wrappedVaultFactory = new WrappedVaultFactory(
+            protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia)
         );
 
-        DahliaRegistry(dahliaRegistry).setAddress(Constants.ADDRESS_ID_DAHLIA_PROVIDER, address(dahliaProvider));
+        vm.startPrank(dahliaOwner);
+        DahliaRegistry(dahliaRegistry).setAddress(
+            Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, address(wrappedVaultFactory)
+        );
         vm.stopPrank();
     }
 

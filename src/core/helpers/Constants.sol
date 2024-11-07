@@ -40,8 +40,8 @@ library Constants {
     uint256 internal constant ADDRESS_ID_IRM_FACTORY = 5;
 
     /// @dev `RoycoERC4626IFactory` contract address position in DahliaRegistry.
-    uint256 internal constant ADDRESS_ID_ROYCO_ERC4626I_FACTORY = 10;
+    uint256 internal constant ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY = 10;
 
     /// @dev `initialFrontendFee` value position in DahliaRegistry.
-    uint256 internal constant VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE = 10;
+    uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE = 10;
 }

@@ -152,10 +152,10 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
             StringUtilsLib.toPercentString(marketConfig.lltv, Constants.LLTV_100_PERCENT),
             "% LLTV)"
         );
-        uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE);
+        uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
 
         address wrappedVault = address(
-            WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)).wrapVault(
+            WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
                 id, marketConfig.loanToken, msg.sender, name, fee
             )
         );

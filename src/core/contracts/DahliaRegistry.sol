@@ -14,7 +14,7 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
     mapping(IIrm => bool) public isIrmAllowed;
 
     constructor(address _owner) Ownable(_owner) {
-        values[Constants.VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE] = 0.02e18;
+        values[Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE] = 0.02e18;
     }
 
     /// @inheritdoc IDahliaRegistry

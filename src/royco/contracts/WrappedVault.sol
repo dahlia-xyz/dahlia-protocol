@@ -14,11 +14,13 @@ import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 
+import {console} from "@forge-std/Test.sol";
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
+
 contract WrappedVault is Owned, ERC20, IWrappedVault {
     using SafeTransferLib for ERC20;
     using SafeCast for uint256;
@@ -155,7 +157,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         DEPOSIT_ASSET = ERC20(_asset);
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
-        _mint(address(0), 10_000); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
+        _mint(address(0), 10_000e6); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
     }
@@ -591,6 +593,11 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         UserRewards memory accumulatedRewards_ = rewardToUserToAR[reward][user];
         RewardsPerToken memory rewardsPerToken_ =
             _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]);
+
+        console.log("rewardsPerToken_.accumulated", rewardsPerToken_.accumulated);
+        console.log("accumulatedRewards_.checkpoint", accumulatedRewards_.checkpoint);
+        console.log("accumulatedRewards_.accumulated", accumulatedRewards_.accumulated);
+        console.log("balanceOf[user]", balanceOf[user]);
         return accumulatedRewards_.accumulated
             + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
     }
