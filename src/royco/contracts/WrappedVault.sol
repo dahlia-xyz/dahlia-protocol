@@ -14,7 +14,6 @@ import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 
-import {console} from "@forge-std/Test.sol";
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
@@ -452,8 +451,9 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
 
-        uint256 elapsedWAD = elapsed * 1e18;
+        uint256 elapsedWAD = elapsed * (10 ** (18 + 6));
         // Calculate and update the new value of the accumulator.
+
         rewardsPerTokenOut.accumulated =
             (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDivDown(rewardsInterval_.rate, totalSupply))); // The
             // rewards per token are scaled up for precision
@@ -467,7 +467,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         pure
         returns (uint256)
     {
-        return stake_ * (latterCheckpoint - earlierCheckpoint) / 1e18; // We must scale down the rewards by the precision factor
+        return stake_ * (latterCheckpoint - earlierCheckpoint) / (10 ** (18 + 6)); // We must scale down the rewards by the precision factor
     }
 
     /// @notice Update and return the rewards per token accumulator according to the rate, the time elapsed since the last update, and the current total staked
@@ -593,11 +593,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         UserRewards memory accumulatedRewards_ = rewardToUserToAR[reward][user];
         RewardsPerToken memory rewardsPerToken_ =
             _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]);
-
-        console.log("rewardsPerToken_.accumulated", rewardsPerToken_.accumulated);
-        console.log("accumulatedRewards_.checkpoint", accumulatedRewards_.checkpoint);
-        console.log("accumulatedRewards_.accumulated", accumulatedRewards_.accumulated);
-        console.log("balanceOf[user]", balanceOf[user]);
         return accumulatedRewards_.accumulated
             + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
     }

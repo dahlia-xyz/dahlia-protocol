@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {PointsFactory} from "@royco/PointsFactory.sol";
-import {Test, Vm, console} from "forge-std/Test.sol";
+import {Test, Vm} from "forge-std/Test.sol";
 import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 import {ERC4626} from "lib/solmate/src/tokens/ERC4626.sol";
 import {FixedPointMathLib} from "lib/solmate/src/utils/FixedPointMathLib.sol";
@@ -70,8 +70,8 @@ contract WrappedVaultTest is Test {
 
         testIncentivizedVault = WrappedVault(address(dahlia.getMarket($.marketId).marketProxy));
         pointsFactory = testIncentivizedVault.POINTS_FACTORY();
-        rewardToken1 = ctx.createERC20Token("RewardToken1", 6);
-        rewardToken2 = ctx.createERC20Token("RewardToken2", 6);
+        rewardToken1 = ctx.createERC20Token("RewardToken1", 8);
+        rewardToken2 = ctx.createERC20Token("RewardToken2", 10);
 
         vm.label(address(testIncentivizedVault), "IncentivizedVault");
         vm.label(REGULAR_USER, "RegularUser");
@@ -116,7 +116,6 @@ contract WrappedVaultTest is Test {
 
     function testAddRewardToken(address newRewardToken) public {
         vm.assume(newRewardToken != address(0));
-        // vm.assume(newRewardToken != address(testIncentivizedVault.VAULT()));
         vm.assume(newRewardToken != address(testIncentivizedVault));
 
         testIncentivizedVault.addRewardsToken(newRewardToken);
@@ -485,9 +484,9 @@ contract WrappedVaultTest is Test {
         // depositAmount = 4076725132;
         // timeElapsed = 9305;
         // withdrawAmount = 1294;
-        // depositAmount = 68770290467632281537321058;
-        // timeElapsed = 1;
-        // withdrawAmount = 3;
+        depositAmount = 68770290467632281537321058;
+        timeElapsed = 1;
+        withdrawAmount = 3;
 
         vm.assume(depositAmount > 1e6 && depositAmount <= type(uint96).max);
         vm.assume(timeElapsed > 0 && timeElapsed < 30 days);

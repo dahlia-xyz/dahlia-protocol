@@ -70,7 +70,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.bob), shares, "bob balance");
         assertEq(marketProxy.maxWithdraw($.bob), assets, "bob max withdraw");
         assertEq(marketProxy.totalAssets(), assets, "total assets");
-        assertEq(marketProxy.totalSupply(), shares + 10_000, "total supply");
+        assertEq(marketProxy.totalSupply(), shares + 10_000e6, "total supply");
     }
 
     function test_int_proxy_depositByShares(uint256 shares) public {
@@ -97,7 +97,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.bob), shares);
         assertEq(marketProxy.maxWithdraw($.bob), assets);
         assertEq(marketProxy.totalAssets(), assets);
-        assertEq(marketProxy.totalSupply(), shares + 10_000);
+        assertEq(marketProxy.totalSupply(), shares + 10_000e6);
     }
 
     function test_int_proxy_withdrawByAssets(uint256 assets) public {
@@ -131,7 +131,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
         assertEq(marketProxy.totalAssets(), 0);
-        assertEq(marketProxy.totalSupply(), 10_000);
+        assertEq(marketProxy.totalSupply(), 10_000e6);
     }
 
     function test_int_proxy_withdrawByShares(uint256 shares) public {
@@ -166,7 +166,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
         assertEq(marketProxy.totalAssets(), 0);
-        assertEq(marketProxy.totalSupply(), 10_000);
+        assertEq(marketProxy.totalSupply(), 10_000e6);
     }
 
     function test_int_proxy_revertWithdrawNoApprove(uint256 assets) public {
