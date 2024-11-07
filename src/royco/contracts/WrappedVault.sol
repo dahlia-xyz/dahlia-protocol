@@ -669,7 +669,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 expectedShares) {
-        // TODO: should we call _updateUserRewards to update rewards per token?
         expectedShares = previewWithdraw(assets);
         uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, owner);
 
@@ -682,7 +681,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function redeem(uint256 shares, address receiver, address owner) external returns (uint256 _assets) {
-        // TODO: should we call _updateUserRewards to update rewards per token?
         uint256 assets = previewRedeem(shares);
         (_assets) = _withdraw(msg.sender, shares, receiver, owner);
 
