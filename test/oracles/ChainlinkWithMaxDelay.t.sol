@@ -4,11 +4,9 @@ pragma solidity ^0.8.27;
 import {AggregatorV3Interface} from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {Test, Vm} from "@forge-std/Test.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {
-    ChainlinkOracleMaxDelayParams,
-    ChainlinkOracleParams,
-    ChainlinkWithMaxDelay
-} from "src/oracles/contracts/ChainlinkWithMaxDelay.sol";
+import {ChainlinkWithMaxDelayBase} from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
+import {ChainlinkWithMaxDelay} from "src/oracles/contracts/ChainlinkWithMaxDelay.sol";
+import {IChainlinkOracleWithMaxDelay} from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {Mainnet} from "test/oracles/Constants.sol";
@@ -26,7 +24,7 @@ contract ChainlinkWithMaxDelayTest is Test {
 
         oracle = new ChainlinkWithMaxDelay(
             owner,
-            ChainlinkOracleParams({
+            ChainlinkWithMaxDelayBase.Params({
                 baseToken: Mainnet.WBTC_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.BTC_USD_CHAINLINK_ORACLE),
                 baseFeedSecondary: AggregatorV3Interface(Mainnet.WBTC_BTC_CHAINLINK_ORACLE),
@@ -34,7 +32,7 @@ contract ChainlinkWithMaxDelayTest is Test {
                 quoteFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
                 quoteFeedSecondary: AggregatorV3Interface(address(0))
             }),
-            ChainlinkOracleMaxDelayParams({
+            IChainlinkOracleWithMaxDelay.Delays({
                 baseMaxDelayPrimary: 86400,
                 baseMaxDelaySecondary: 86400,
                 quoteMaxDelayPrimary: 86400,
@@ -55,7 +53,7 @@ contract ChainlinkWithMaxDelayTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
         oracle.setMaximumOracleDelays(
-            ChainlinkOracleMaxDelayParams({
+            IChainlinkOracleWithMaxDelay.Delays({
                 baseMaxDelayPrimary: 1,
                 baseMaxDelaySecondary: 2,
                 quoteMaxDelayPrimary: 3,
@@ -70,7 +68,7 @@ contract ChainlinkWithMaxDelayTest is Test {
         vm.startPrank(owner);
 
         oracle.setMaximumOracleDelays(
-            ChainlinkOracleMaxDelayParams({
+            IChainlinkOracleWithMaxDelay.Delays({
                 baseMaxDelayPrimary: 1,
                 baseMaxDelaySecondary: 2,
                 quoteMaxDelayPrimary: 3,
@@ -89,7 +87,7 @@ contract ChainlinkWithMaxDelayTest is Test {
         vm.startPrank(owner);
 
         oracle.setMaximumOracleDelays(
-            ChainlinkOracleMaxDelayParams({
+            IChainlinkOracleWithMaxDelay.Delays({
                 baseMaxDelayPrimary: 86400,
                 baseMaxDelaySecondary: 1000, // <- 1000 second for good value
                 quoteMaxDelayPrimary: 86400,

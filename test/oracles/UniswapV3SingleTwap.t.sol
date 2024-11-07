@@ -2,7 +2,8 @@
 pragma solidity ^0.8.27;
 
 import {Test, Vm} from "@forge-std/Test.sol";
-import {Ownable, UniswapOraclerParams, UniswapV3SingleTwap} from "src/oracles/contracts/UniswapV3SingleTwap.sol";
+import {UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
+import {Ownable, UniswapV3SingleTwap} from "src/oracles/contracts/UniswapV3SingleTwap.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {Mainnet} from "test/oracles/Constants.sol";
@@ -20,7 +21,7 @@ contract UniswapV3SingleTwapTest is Test {
 
         oracle = new UniswapV3SingleTwap(
             owner,
-            UniswapOraclerParams({
+            UniswapV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.UNI_ERC20,
                 uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,

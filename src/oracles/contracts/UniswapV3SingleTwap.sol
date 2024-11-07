@@ -2,12 +2,12 @@
 pragma solidity ^0.8.27;
 
 import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {UniswapOraclerParams, UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
+import {UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
 import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
 import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
 
 contract UniswapV3SingleTwap is UniswapV3SingleTwapBase, Ownable2Step, IDahliaOracle {
-    constructor(address owner_, UniswapOraclerParams memory params_, address uniswapStaticOracle_)
+    constructor(address owner_, OracleParams memory params_, address uniswapStaticOracle_)
         UniswapV3SingleTwapBase(params_, uniswapStaticOracle_)
         Ownable(owner_)
     {}
