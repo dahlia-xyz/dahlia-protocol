@@ -66,7 +66,6 @@ library InterestImpl {
             emit Events.DahliaAccrueInterest(
                 market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares
             );
-            //TODO: Safe "unchecked" cast?
             market.updatedAt = uint48(block.timestamp);
         }
     }

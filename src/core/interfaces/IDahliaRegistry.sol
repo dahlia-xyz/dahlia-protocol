@@ -49,7 +49,8 @@ interface IDahliaRegistry {
     /// @return The value associated with the given ID.
     function getValue(uint256 id) external view returns (uint256);
 
-    // TODO: add description
+    /// @notice Adds an IRM contract address to the registry.
+    /// @param irm IRM address.
     function allowIrm(IIrm irm) external;
 
     /// @notice Checks if an IRM contract address is allowed to be used for the market deployment.

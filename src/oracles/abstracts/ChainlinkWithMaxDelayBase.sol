@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import {AggregatorV3Interface} from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {console} from "forge-std/Test.sol";
 import {AggregatorV3InterfaceLib} from "src/oracles/abstracts/AggregatorV3InterfaceLib.sol";
 import {Errors} from "src/oracles/helpers/Errors.sol";
 import {IChainlinkOracleWithMaxDelay} from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
@@ -64,12 +63,5 @@ abstract contract ChainlinkWithMaxDelayBase is IChainlinkOracleWithMaxDelay {
 
         price =
             ORACLE_PRECISION.mulDiv(_basePrimaryPrice * _baseSecondaryPrice, _quotePrimaryPrice * _quoteSecondaryPrice);
-
-        // TODO: need for develop purpose, remove later
-        console.log("chainlink basePrimaryPrice", _basePrimaryPrice);
-        console.log("chainlink baseSecondaryPrice", _baseSecondaryPrice);
-        console.log("chainlink quotePrimaryPrice", _quotePrimaryPrice);
-        console.log("chainlink quoteSecondaryPrice", _quoteSecondaryPrice);
-        console.log("chainlink price", price);
     }
 }

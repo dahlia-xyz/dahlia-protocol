@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IStaticOracle} from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
-import {console} from "forge-std/Test.sol";
 import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
 import {UniswapOraclerParams} from "src/oracles/types/Types.sol";
 
@@ -58,6 +57,5 @@ abstract contract UniswapV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle 
             pools: _pools,
             period: twapDuration
         });
-        console.log("uniswap price", price); // TODO: remove console
     }
 }
