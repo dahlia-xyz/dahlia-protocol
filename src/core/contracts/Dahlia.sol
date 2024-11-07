@@ -161,7 +161,6 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
             )
         );
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
-        // TODO: add emit event here
     }
 
     /// @inheritdoc IDahlia
