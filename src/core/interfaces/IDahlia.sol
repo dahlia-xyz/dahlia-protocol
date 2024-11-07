@@ -6,15 +6,6 @@ import {Types} from "src/core/types/Types.sol";
 /// @title IMarketStorage
 /// @notice Interface for the market storage functions
 interface IMarketStorage {
-    // TODO
-    // /// @notice Returns the market config for a given market ID.
-    // /// @param marketId The unique market id.
-    // function marketConfigs(Types.MarketId marketId) external view returns (Types.MarketConfig memory);
-
-    // /// @notice Returns the market state for a given market ID
-    // /// @param marketId The unique identifier of the market.
-    // function marketState(Types.MarketId marketId) external view returns (Types.MarketState memory);
-
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.
     /// @param userAddress User address.
@@ -67,20 +58,6 @@ interface IMarketStorage {
     /// @notice Deprecate market.
     /// @param id of the market.
     function deprecateMarket(Types.MarketId id) external;
-
-    /// @notice Returns the last market state for given market parameters
-    /// @param id of the market
-    function getLastMarketState(Types.MarketId id)
-        external
-        view
-        returns (
-            uint256 totalLendAssets,
-            uint256 totalLendShares,
-            uint256 totalBorrowAssets,
-            uint256 totalBorrowShares,
-            uint256 fullUtilizationRate,
-            uint256 ratePerSec
-        );
 }
 
 /// @title IDahlia

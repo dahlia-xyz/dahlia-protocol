@@ -48,6 +48,8 @@ library ManageMarketImpl {
         market.marketDeployer = msg.sender;
         market.admin = marketConfig.admin;
         market.irm = marketConfig.irm;
+        market.fullUtilizationRate = uint64(marketConfig.irm.minFullUtilizationRate());
+        market.ratePerSec = uint64(marketConfig.irm.zeroUtilizationRate());
         market.lltv = uint24(marketConfig.lltv);
         market.rltv = uint24(marketConfig.rltv);
         market.updatedAt = uint48(block.timestamp);

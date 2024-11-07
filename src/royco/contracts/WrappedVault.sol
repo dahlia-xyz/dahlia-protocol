@@ -626,8 +626,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function totalAssets() public view returns (uint256) {
-        (uint256 totalLendAssets,,,,,) = dahlia.getLastMarketState(marketId);
-        return totalLendAssets;
+        return dahlia.getMarket(marketId).totalLendAssets;
     }
 
     /**
@@ -672,7 +671,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 expectedShares) {
-        // TODO: should we call _updateUserRewards to update rewards per token?
         expectedShares = previewWithdraw(assets);
         uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, owner);
 
@@ -685,7 +683,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function redeem(uint256 shares, address receiver, address owner) external returns (uint256 _assets) {
-        // TODO: should we call _updateUserRewards to update rewards per token?
         uint256 assets = previewRedeem(shares);
         (_assets) = _withdraw(msg.sender, shares, receiver, owner);
 
@@ -729,8 +726,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewDeposit(uint256 assets) public view returns (uint256 shares) {
-        (uint256 totalLendAssets, uint256 totalLendShares,,,,) = dahlia.getLastMarketState(marketId);
-        return SharesMathLib.toSharesDown(assets, totalLendAssets, totalLendShares);
+        Types.Market memory market = dahlia.getMarket(marketId);
+        return SharesMathLib.toSharesDown(assets, market.totalLendAssets, market.totalLendShares);
     }
 
     /// @inheritdoc IWrappedVault
@@ -740,8 +737,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewMint(uint256 shares) public view returns (uint256 assets) {
-        (uint256 totalLendAssets, uint256 totalLendShares,,,,) = dahlia.getLastMarketState(marketId);
-        return SharesMathLib.toAssetsUp(shares, totalLendAssets, totalLendShares);
+        Types.Market memory market = dahlia.getMarket(marketId);
+        return SharesMathLib.toAssetsUp(shares, market.totalLendAssets, market.totalLendShares);
     }
 
     /// @inheritdoc IWrappedVault
@@ -751,8 +748,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewWithdraw(uint256 assets) public view virtual returns (uint256 shares) {
-        (uint256 totalLendAssets, uint256 totalLendShares,,,,) = dahlia.getLastMarketState(marketId);
-        return SharesMathLib.toSharesUp(assets, totalLendAssets, totalLendShares);
+        Types.Market memory market = dahlia.getMarket(marketId);
+        return SharesMathLib.toSharesUp(assets, market.totalLendAssets, market.totalLendShares);
     }
 
     /// @inheritdoc IWrappedVault
@@ -762,7 +759,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewRedeem(uint256 shares) public view returns (uint256 assets) {
-        (uint256 totalLendAssets, uint256 totalLendShares,,,,) = dahlia.getLastMarketState(marketId);
-        return SharesMathLib.toAssetsDown(shares, totalLendAssets, totalLendShares);
+        Types.Market memory market = dahlia.getMarket(marketId);
+        return SharesMathLib.toAssetsDown(shares, market.totalLendAssets, market.totalLendShares);
     }
 }
