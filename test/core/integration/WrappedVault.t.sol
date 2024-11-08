@@ -11,8 +11,7 @@ import {Constants} from "src/core/helpers/Constants.sol";
 import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import {TestContext} from "test/common/TestContext.sol";
 import {ERC20Mock as MockERC20} from "test/common/mocks/ERC20Mock.sol";
 
 contract MockERC4626 is ERC4626 {
@@ -517,7 +516,7 @@ contract WrappedVaultTest is Test {
 
         uint256 supply = testIncentivizedVault.totalSupply();
 
-        uint256 wshares = testIncentivizedVault.withdraw(withdrawAmount, REGULAR_USER, REGULAR_USER);
+        //uint256 wshares = testIncentivizedVault.withdraw(withdrawAmount, REGULAR_USER, REGULAR_USER);
         vm.stopPrank();
 
         uint256 expectedRewards = rewardsAfterFee * timeElapsed / duration * shares / supply;
