@@ -41,7 +41,7 @@ contract TestContext {
         address alice;
         address bob;
         address carol;
-        address admin;
+        address marketAdmin;
         address royco;
         address owner;
         address[] permitted;
@@ -86,11 +86,11 @@ contract TestContext {
         v.bob = createWallet("BOB");
         v.carol = createWallet("CAROL");
         v.owner = createWallet("OWNER");
-        v.admin = createWallet("ADMIN");
+        v.marketAdmin = createWallet("MARKET_ADMIN");
         v.royco = createWallet("ROYCO");
         v.permitted = new address[](2);
         v.permitted[0] = v.owner;
-        v.permitted[1] = v.admin;
+        v.permitted[1] = v.marketAdmin;
         v.dahlia = createDahlia();
         v.dahliaRegistry = v.dahlia.dahliaRegistry();
         v.marketConfig = marketConfig;
@@ -218,7 +218,7 @@ contract TestContext {
         public
         returns (Types.MarketConfig memory marketConfig)
     {
-        address admin = createWallet("ADMIN");
+        address admin = createWallet("MARKET_ADMIN");
         marketConfig = Types.MarketConfig({
             loanToken: loanToken,
             collateralToken: collateralToken,
@@ -227,7 +227,7 @@ contract TestContext {
             lltv: lltv,
             rltv: rltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv),
-            admin: admin
+            owner: admin
         });
     }
 
@@ -240,7 +240,7 @@ contract TestContext {
             collateralToken: config.collateralToken,
             oracle: config.oracle,
             irm: config.irm,
-            admin: config.admin,
+            owner: config.owner,
             lltv: lltv,
             rltv: rltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv)

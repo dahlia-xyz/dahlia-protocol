@@ -3,11 +3,15 @@ pragma solidity ^0.8.27;
 
 import {Test, Vm} from "@forge-std/Test.sol";
 import {console} from "@forge-std/console.sol";
+
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {Owned} from "@solmate/auth/Owned.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
+
 import {BoundUtils} from "test/common/BoundUtils.sol";
+import {TestConstants} from "test/common/TestConstants.sol";
 import {TestContext} from "test/common/TestContext.sol";
 import {ERC20Mock} from "test/common/mocks/ERC20Mock.sol";
 import {RoycoMock} from "test/common/mocks/RoycoMock.sol";
@@ -82,5 +86,32 @@ contract RoycoIntegrationTest is Test {
 
         // vm.expectEmit(true, true, true, true, address(royco.erc4626iFactory));
         // DahliaProvider.IncentivizedVaultCreated();
+    }
+
+    function test_int_royco_deployWithOwner(address ownerFuzz) public {
+        vm.assume(ownerFuzz != address(0));
+        Types.MarketConfig memory marketConfig =
+            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        marketConfig.owner = ownerFuzz;
+        Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
+        assertEq(Types.MarketId.unwrap(marketId), 2);
+        Types.Market memory market = $.dahlia.getMarket(marketId);
+        assertEq(Owned(address(market.marketProxy)).owner(), ownerFuzz);
+    }
+
+    function test_int_royco_deployWithNoOwner() public {
+        Types.MarketConfig memory marketConfig =
+            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        marketConfig.owner = address(0);
+        vm.startPrank(ctx.createWallet("OWNER"));
+        $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
+        vm.stopPrank();
+        vm.startPrank($.marketAdmin);
+        Types.MarketId marketId = $.dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
+        assertEq(Types.MarketId.unwrap(marketId), 2);
+        Types.Market memory market = $.dahlia.getMarket(marketId);
+        assertEq($.dahlia.isMarketDeployed(marketId), true);
+        assertEq(Owned(address(market.marketProxy)).owner(), $.marketAdmin);
+        vm.stopPrank();
     }
 }

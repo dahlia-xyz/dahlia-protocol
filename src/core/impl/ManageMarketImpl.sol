@@ -46,7 +46,6 @@ library ManageMarketImpl {
         market.collateralToken = marketConfig.collateralToken;
         market.oracle = marketConfig.oracle;
         market.marketDeployer = msg.sender;
-        market.admin = marketConfig.admin;
         market.irm = marketConfig.irm;
         market.fullUtilizationRate = uint64(marketConfig.irm.minFullUtilizationRate());
         market.ratePerSec = uint64(marketConfig.irm.zeroUtilizationRate());

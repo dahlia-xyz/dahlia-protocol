@@ -132,7 +132,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    // TODO: add owner address to as parameter to pass deployed market
+    // TODO: remove calldata?
     function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata)
         external
         returns (Types.MarketId id)
@@ -155,10 +155,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
             "% LLTV)"
         );
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE);
-
+        address owner = msg.sender;
+        if (marketConfig.owner != address(0)) {
+            owner = marketConfig.owner;
+        }
         address wrappedVault = address(
             WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)).wrapVault(
-                id, marketConfig.loanToken, msg.sender, name, fee
+                id, marketConfig.loanToken, owner, name, fee
             )
         );
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);

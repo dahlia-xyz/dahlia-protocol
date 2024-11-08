@@ -47,11 +47,6 @@ library Events {
     /// @param reallocationBonusRate The new reallocation bonus rate.
     event MarketBonusRatesChanged(uint256 liquidationBonusRate, uint256 reallocationBonusRate);
 
-    /// @notice Emitted when market status changed.
-    /// @param from previous status.
-    /// @param to new status.
-    event MarketAdminChanged(address from, address to);
-
     /// @notice Emitted when deploying a market.
     /// @param id The market id.
     /// @param vault The vault address.

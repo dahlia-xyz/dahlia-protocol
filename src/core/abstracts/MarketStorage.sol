@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Owned} from "@solmate/auth/Owned.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
@@ -20,9 +21,9 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /**
      * @dev Throws if the sender is not the owner.
      */
-    function _checkOwnerOrAdmin(address admin) internal view {
+    function _checkOwnerOrAdmin(address marketProxy) internal view {
         address sender = _msgSender();
-        require(sender == owner() || sender == admin, Errors.NotPermitted(sender));
+        require(sender == owner() || sender == Owned(marketProxy).owner(), Errors.NotPermitted(sender));
     }
 
     function getMarket(Types.MarketId id) external view returns (Types.Market memory) {
@@ -63,7 +64,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /// @inheritdoc IMarketStorage
     function pauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.admin);
+        _checkOwnerOrAdmin(address(market.marketProxy));
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Active, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Paused);
@@ -73,7 +74,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /// @inheritdoc IMarketStorage
     function unpauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.admin);
+        _checkOwnerOrAdmin(address(market.marketProxy));
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Paused, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Active);
@@ -94,20 +95,12 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     {
         require(reallocationBonusRate < liquidationBonusRate, Errors.MarketReallocationLtvInsufficient());
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.admin);
+        _checkOwnerOrAdmin(address(market.marketProxy));
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
         _validateReallocationBonusRate(reallocationBonusRate, market.rltv);
         emit Events.MarketBonusRatesChanged(liquidationBonusRate, reallocationBonusRate);
         market.liquidationBonusRate = uint24(liquidationBonusRate);
         market.reallocationBonusRate = uint24(reallocationBonusRate);
-    }
-
-    function updateMarketAdmin(Types.MarketId id, address newAdmin) external {
-        Types.Market storage market = markets[id].market;
-        address oldAdmin = market.admin;
-        _checkOwnerOrAdmin(oldAdmin);
-        emit Events.MarketAdminChanged(oldAdmin, newAdmin);
-        market.admin = newAdmin;
     }
 
     function _validateMarket(Types.MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {

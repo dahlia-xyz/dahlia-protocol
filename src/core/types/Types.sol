@@ -40,25 +40,27 @@ library Types {
         uint24 liquidationBonusRate; // 3 bytes
         uint24 reallocationBonusRate; // 3 bytes
         // --- 20 bytes
-        IERC4626 marketProxy; // 20 bytes
+        IERC4626 marketProxy; // 20 bytes // TODO: should be IWrappedVault interface to include Owned
         address marketDeployer;
         // --- having all 256 bytes at the end make deployment size smaller
-        address admin; // 20 bytes
         uint256 totalLendAssets; // 32 bytes
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
     }
 
+    // TODO: move to IDahlia?
     struct MarketConfig {
         address loanToken;
         address collateralToken;
+        // TODO: should be interface?
         address oracle;
         IIrm irm;
         uint256 lltv;
         uint256 rltv;
         uint256 liquidationBonusRate;
-        address admin;
+        /// @dev owner of the deployed market
+        address owner;
     }
 
     struct MarketUserPosition {
