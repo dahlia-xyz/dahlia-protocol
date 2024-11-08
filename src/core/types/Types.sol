@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
+import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 library Types {
@@ -32,7 +33,7 @@ library Types {
         uint24 protocolFeeRate; // 3 bytes // taken from interest
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
-        address oracle; // 20 bytes
+        IDahliaOracle oracle; // 20 bytes
         uint64 fullUtilizationRate; // 3 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
         // --- 26 bytes
@@ -53,8 +54,7 @@ library Types {
     struct MarketConfig {
         address loanToken;
         address collateralToken;
-        // TODO: should be interface?
-        address oracle;
+        IDahliaOracle oracle;
         IIrm irm;
         uint256 lltv;
         uint256 rltv;

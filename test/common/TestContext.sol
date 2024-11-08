@@ -13,6 +13,7 @@ import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
 import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {OracleFactory} from "src/oracles/contracts/OracleFactory.sol";
+import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
 import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
@@ -95,7 +96,7 @@ contract TestContext {
         v.dahliaRegistry = v.dahlia.dahliaRegistry();
         v.marketConfig = marketConfig;
         v.marketId = deployDahliaMarket(v.marketConfig);
-        v.oracle = OracleMock(marketConfig.oracle);
+        v.oracle = OracleMock(address(marketConfig.oracle));
         v.loanToken = ERC20Mock(marketConfig.loanToken);
         v.collateralToken = ERC20Mock(marketConfig.collateralToken);
         vm.resumeGasMetering();
@@ -154,9 +155,10 @@ contract TestContext {
         ERC20Mock(token).setBalance(wallet, amount);
     }
 
-    function createTestOracle(uint256 price) public virtual returns (OracleMock oracle) {
-        oracle = new OracleMock();
+    function createTestOracle(uint256 price) public virtual returns (IDahliaOracle oracle) {
+        OracleMock oracle = new OracleMock();
         oracle.setPrice(price);
+        return oracle;
     }
 
     function createTestIrm() public virtual returns (IIrm irm) {
@@ -222,7 +224,7 @@ contract TestContext {
         marketConfig = Types.MarketConfig({
             loanToken: loanToken,
             collateralToken: collateralToken,
-            oracle: address(createTestOracle(Constants.ORACLE_PRICE_SCALE)),
+            oracle: createTestOracle(Constants.ORACLE_PRICE_SCALE),
             irm: createTestIrm(),
             lltv: lltv,
             rltv: rltv,

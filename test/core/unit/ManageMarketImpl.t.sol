@@ -35,7 +35,7 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(market.collateralToken, marketParamsFuzz.collateralToken);
         assertEq(market.loanToken, marketParamsFuzz.loanToken);
         assertEq(address(market.irm), address(marketParamsFuzz.irm));
-        assertEq(market.oracle, marketParamsFuzz.oracle);
+        assertEq(address(market.oracle), address(marketParamsFuzz.oracle));
         assertEq(market.lltv, marketParamsFuzz.lltv);
 
         assertEq(market.updatedAt, block.timestamp, "updatedAt != block.timestamp");
