@@ -155,7 +155,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         DEPOSIT_ASSET = ERC20(_asset);
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
-        _mint(address(0), 10_000); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
+        _mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
     }
@@ -450,7 +450,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
 
-        uint256 elapsedWAD = elapsed * 1e18;
+        uint256 elapsedWAD = elapsed * 1e18 * SharesMathLib.SHARES_OFFSET;
         // Calculate and update the new value of the accumulator.
         rewardsPerTokenOut.accumulated =
             (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDivDown(rewardsInterval_.rate, totalSupply))); // The
@@ -465,7 +465,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         pure
         returns (uint256)
     {
-        return stake_ * (latterCheckpoint - earlierCheckpoint) / 1e18; // We must scale down the rewards by the precision factor
+        return stake_ * (latterCheckpoint - earlierCheckpoint) / 1e18 / SharesMathLib.SHARES_OFFSET; // We must scale down the rewards by the precision factor
     }
 
     /// @notice Update and return the rewards per token accumulator according to the rate, the time elapsed since the last update, and the current total staked

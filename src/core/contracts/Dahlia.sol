@@ -6,7 +6,6 @@ import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-
 import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
 import {Permitted} from "src/core/abstracts/Permitted.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
@@ -156,13 +155,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
             StringUtilsLib.toPercentString(marketConfig.lltv, Constants.LLTV_100_PERCENT),
             "% LLTV)"
         );
-        uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_ERC4626I_FACTORY_MIN_INITIAL_FRONTEND_FEE);
+        uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
         address owner = msg.sender;
         if (marketConfig.owner != address(0)) {
             owner = marketConfig.owner;
         }
         IWrappedVault wrappedVault = WrappedVaultFactory(
-            dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)
+            dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)
         ).wrapVault(id, marketConfig.loanToken, owner, name, fee);
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
     }
