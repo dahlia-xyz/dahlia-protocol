@@ -41,7 +41,7 @@ library Types {
         uint24 reallocationBonusRate; // 3 bytes
         // --- 20 bytes
         IWrappedVault marketProxy; // 20 bytes
-        address marketDeployer;
+        address marketDeployer; // 20 bytes // TODO: remove if relocation removed
         // --- having all 256 bytes at the end make deployment size smaller
         uint256 totalLendAssets; // 32 bytes
         uint256 totalLendShares; // 32 bytes

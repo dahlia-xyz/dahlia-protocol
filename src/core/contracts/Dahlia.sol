@@ -381,6 +381,8 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         Types.Market storage market = marketData.market;
         Types.Market storage marketTo = marketDataTo.market;
+        //TODO: compute hash instead of this complex condition or maybe we need to
+        // check owner of the market not deployer?
         require(
             market.oracle == marketTo.oracle && market.loanToken == marketTo.loanToken
                 && market.collateralToken == marketTo.collateralToken && market.marketDeployer == marketTo.marketDeployer,
