@@ -2,13 +2,14 @@
 pragma solidity ^0.8.27;
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {IWrappedVault} from "@royco/interfaces/IWrappedVault.sol";
+
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Test, Vm} from "forge-std/Test.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -28,7 +29,7 @@ contract WrappedVaultIntegration is Test {
     function setUp() public {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
-        marketProxy = IERC4626($.dahlia.getMarket($.marketId).marketProxy);
+        marketProxy = IERC4626(address($.dahlia.getMarket($.marketId).marketProxy));
     }
 
     function test_int_proxy_checks() public view {
@@ -40,11 +41,11 @@ contract WrappedVaultIntegration is Test {
         TestContext.MarketContext memory ctx2 =
             ctx.bootstrapMarket("USDC", "WBTC", 81 * Constants.LLTV_100_PERCENT / 100);
         assertEq(Types.MarketId.unwrap(ctx2.marketId), 2);
-        assertEq(ctx2.dahlia.getMarket(ctx2.marketId).marketProxy.name(), "USDC/WBTC (81% LLTV)");
+        assertEq(IERC4626(address(ctx2.dahlia.getMarket(ctx2.marketId).marketProxy)).name(), "USDC/WBTC (81% LLTV)");
         TestContext.MarketContext memory ctx3 =
             ctx.bootstrapMarket("USDC", "WBTC", 8105 * Constants.LLTV_100_PERCENT / 10000);
         assertEq(Types.MarketId.unwrap(ctx3.marketId), 3);
-        assertEq(ctx3.dahlia.getMarket(ctx3.marketId).marketProxy.name(), "USDC/WBTC (81.05% LLTV)");
+        assertEq(IERC4626(address(ctx3.dahlia.getMarket(ctx3.marketId).marketProxy)).name(), "USDC/WBTC (81.05% LLTV)");
     }
 
     function test_int_proxy_depositByAssets(uint256 assets) public {

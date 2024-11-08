@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
+
 import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
 import {Permitted} from "src/core/abstracts/Permitted.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
@@ -30,6 +31,7 @@ import {
 import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 //TODO: protect some methods by ReentrancyGuard
 //import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -159,11 +161,9 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         if (marketConfig.owner != address(0)) {
             owner = marketConfig.owner;
         }
-        address wrappedVault = address(
-            WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)).wrapVault(
-                id, marketConfig.loanToken, owner, name, fee
-            )
-        );
+        IWrappedVault wrappedVault = WrappedVaultFactory(
+            dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_ERC4626I_FACTORY)
+        ).wrapVault(id, marketConfig.loanToken, owner, name, fee);
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
     }
 

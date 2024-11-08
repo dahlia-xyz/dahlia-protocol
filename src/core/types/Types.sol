@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 library Types {
     type MarketId is uint32;
@@ -40,7 +40,7 @@ library Types {
         uint24 liquidationBonusRate; // 3 bytes
         uint24 reallocationBonusRate; // 3 bytes
         // --- 20 bytes
-        IERC4626 marketProxy; // 20 bytes // TODO: should be IWrappedVault interface to include Owned
+        IWrappedVault marketProxy; // 20 bytes
         address marketDeployer;
         // --- having all 256 bytes at the end make deployment size smaller
         uint256 totalLendAssets; // 32 bytes

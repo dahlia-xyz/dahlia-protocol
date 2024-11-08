@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Points} from "@royco/Points.sol";
 import {PointsFactory} from "@royco/PointsFactory.sol";
-import {IWrappedVault} from "@royco/interfaces/IWrappedVault.sol";
 import {SafeCast} from "@royco/libraries/SafeCast.sol";
 import {Owned} from "@solmate/auth/Owned.sol";
 import {ERC20} from "@solmate/tokens/ERC20.sol";
@@ -13,6 +12,7 @@ import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
@@ -759,5 +759,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function previewRedeem(uint256 shares) public view returns (uint256 assets) {
         Types.Market memory market = dahlia.getMarket(marketId);
         return SharesMathLib.toAssetsDown(shares, market.totalLendAssets, market.totalLendShares);
+    }
+
+    /// @inheritdoc IWrappedVault
+    function vaultOwner() external view returns (address) {
+        return owner;
     }
 }

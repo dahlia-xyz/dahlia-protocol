@@ -4,11 +4,10 @@ pragma solidity ^0.8.27;
 import {Test, Vm} from "@forge-std/Test.sol";
 import {console} from "@forge-std/console.sol";
 
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {Owned} from "@solmate/auth/Owned.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
@@ -19,7 +18,7 @@ import {RoycoMock} from "test/common/mocks/RoycoMock.sol";
 contract RoycoIntegrationTest is Test {
     using BoundUtils for Vm;
 
-    IERC4626 marketProxy;
+    IWrappedVault marketProxy;
 
     TestContext.MarketContext $;
     RoycoMock.RoycoContracts royco;
@@ -30,7 +29,7 @@ contract RoycoIntegrationTest is Test {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
         royco = ctx.createRoycoContracts(address($.dahlia));
-        marketProxy = IERC4626($.dahlia.getMarket($.marketId).marketProxy);
+        marketProxy = $.dahlia.getMarket($.marketId).marketProxy;
     }
 
     function test_int_royco_manuallyWrapVault() public {
@@ -96,7 +95,7 @@ contract RoycoIntegrationTest is Test {
         Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(Types.MarketId.unwrap(marketId), 2);
         Types.Market memory market = $.dahlia.getMarket(marketId);
-        assertEq(Owned(address(market.marketProxy)).owner(), ownerFuzz);
+        assertEq(market.marketProxy.vaultOwner(), ownerFuzz);
     }
 
     function test_int_royco_deployWithNoOwner() public {
@@ -111,7 +110,7 @@ contract RoycoIntegrationTest is Test {
         assertEq(Types.MarketId.unwrap(marketId), 2);
         Types.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);
-        assertEq(Owned(address(market.marketProxy)).owner(), $.marketAdmin);
+        assertEq(market.marketProxy.vaultOwner(), $.marketAdmin);
         vm.stopPrank();
     }
 }
