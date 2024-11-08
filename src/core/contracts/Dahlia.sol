@@ -180,7 +180,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _accrueMarketInterest(positions, market);
 
         // Set isPermitted permission for ERC4626Proxy if it sent transaction
-        if (msg.sender == address(market.marketProxy)) {
+        if (msg.sender == address(market.vault)) {
             isPermitted[onBehalfOf][msg.sender] = true;
         }
         shares = LendImpl.internalLend(market, positions[onBehalfOf], assets, onBehalfOf);
@@ -211,7 +211,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         userPosition.lendAssets -= adjustedAssets;
 
         // remove isPermitted if user withdraw all money by proxy
-        if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
+        if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
         }
 
@@ -237,7 +237,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
         // remove isPermitted if user withdraw all money by proxy
-        if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
+        if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
         }
 

@@ -21,9 +21,9 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /**
      * @dev Throws if the sender is not the owner.
      */
-    function _checkOwnerOrAdmin(IWrappedVault marketProxy) internal view {
+    function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
         address sender = _msgSender();
-        require(sender == owner() || sender == marketProxy.vaultOwner(), Errors.NotPermitted(sender));
+        require(sender == owner() || sender == vault.vaultOwner(), Errors.NotPermitted(sender));
     }
 
     function getMarket(Types.MarketId id) external view returns (Types.Market memory) {
@@ -64,7 +64,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /// @inheritdoc IMarketStorage
     function pauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.marketProxy);
+        _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Active, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Paused);
@@ -74,7 +74,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /// @inheritdoc IMarketStorage
     function unpauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.marketProxy);
+        _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Paused, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Active);
@@ -95,7 +95,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     {
         require(reallocationBonusRate < liquidationBonusRate, Errors.MarketReallocationLtvInsufficient());
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.marketProxy);
+        _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
         _validateReallocationBonusRate(reallocationBonusRate, market.rltv);
         emit Events.MarketBonusRatesChanged(liquidationBonusRate, reallocationBonusRate);

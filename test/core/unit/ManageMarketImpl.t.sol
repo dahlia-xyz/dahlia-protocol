@@ -44,7 +44,7 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(market.totalBorrowAssets, 0, "totalBorrowAssets != 0");
         assertEq(market.totalBorrowShares, 0, "totalBorrowShares != 0");
         assertEq(market.protocolFeeRate, 0, "fee != 0");
-        assertEq(address(market.marketProxy), address(vault), "marketProxy != vault");
+        assertEq(address(market.vault), address(vault), "marketProxy != vault");
     }
 
     function test_unit_manage_deployMarket_alreadyDeployed(

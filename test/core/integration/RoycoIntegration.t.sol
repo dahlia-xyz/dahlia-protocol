@@ -29,7 +29,7 @@ contract RoycoIntegrationTest is Test {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
         royco = ctx.createRoycoContracts(address($.dahlia));
-        marketProxy = $.dahlia.getMarket($.marketId).marketProxy;
+        marketProxy = $.dahlia.getMarket($.marketId).vault;
     }
 
     function test_int_royco_manuallyWrapVault() public {
@@ -95,7 +95,7 @@ contract RoycoIntegrationTest is Test {
         Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(Types.MarketId.unwrap(marketId), 2);
         Types.Market memory market = $.dahlia.getMarket(marketId);
-        assertEq(market.marketProxy.vaultOwner(), ownerFuzz);
+        assertEq(market.vault.vaultOwner(), ownerFuzz);
     }
 
     function test_int_royco_deployWithNoOwner() public {
@@ -110,7 +110,7 @@ contract RoycoIntegrationTest is Test {
         assertEq(Types.MarketId.unwrap(marketId), 2);
         Types.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);
-        assertEq(market.marketProxy.vaultOwner(), $.marketAdmin);
+        assertEq(market.vault.vaultOwner(), $.marketAdmin);
         vm.stopPrank();
     }
 }

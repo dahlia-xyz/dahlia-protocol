@@ -36,7 +36,7 @@ library ManageMarketImpl {
         mapping(Types.MarketId => Types.MarketData) storage markets,
         Types.MarketId id,
         Types.MarketConfig memory marketConfig,
-        IWrappedVault wrappedVault
+        IWrappedVault vault
     ) internal {
         Types.Market storage market = markets[id].market;
         require(market.updatedAt == 0, Errors.MarketAlreadyDeployed());
@@ -55,7 +55,7 @@ library ManageMarketImpl {
         market.status = Types.MarketStatus.Active;
         market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
         market.reallocationBonusRate = uint24(MarketMath.calcReallocationBonusRate(market.lltv));
-        market.marketProxy = wrappedVault;
-        emit Events.DeployMarket(id, wrappedVault, marketConfig);
+        market.vault = vault;
+        emit Events.DeployMarket(id, vault, marketConfig);
     }
 }
