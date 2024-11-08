@@ -31,7 +31,7 @@ contract MarketStatusIntegrationTest is Test {
     function test_updateMarketBonusRates_by_attacker(address attacker) public {
         vm.pauseGasMetering();
         vm.assume(attacker != $.owner);
-        vm.assume(attacker != $.admin);
+        vm.assume(attacker != $.marketAdmin);
         vm.prank(attacker);
         vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, attacker));

@@ -13,6 +13,7 @@ import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
 import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {OracleFactory} from "src/oracles/contracts/OracleFactory.sol";
+import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
@@ -41,7 +42,7 @@ contract TestContext {
         address alice;
         address bob;
         address carol;
-        address admin;
+        address marketAdmin;
         address royco;
         address owner;
         address[] permitted;
@@ -62,6 +63,18 @@ contract TestContext {
         defaultTokenDecimals["WETH"] = 18;
         defaultTokenDecimals["WBTC"] = 8;
         vm = vm_;
+    }
+
+    function bootstrapMarket(
+        string memory loanTokenName,
+        string memory collateralTokenName,
+        uint256 lltv,
+        address owner
+    ) public returns (MarketContext memory) {
+        Types.MarketConfig memory config =
+            createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv);
+        config.owner = owner;
+        return bootstrapMarket(config);
     }
 
     function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv)
@@ -86,11 +99,11 @@ contract TestContext {
         v.bob = createWallet("BOB");
         v.carol = createWallet("CAROL");
         v.owner = createWallet("OWNER");
-        v.admin = createWallet("ADMIN");
+        v.marketAdmin = createWallet("MARKET_ADMIN");
         v.royco = createWallet("ROYCO");
         v.permitted = new address[](2);
         v.permitted[0] = v.owner;
-        v.permitted[1] = v.admin;
+        v.permitted[1] = v.marketAdmin;
         v.dahlia = createDahlia();
         v.dahliaRegistry = v.dahlia.dahliaRegistry();
         createRoycoWrappedVaultFactory(
@@ -103,7 +116,7 @@ contract TestContext {
 
         v.marketConfig = marketConfig;
         v.marketId = deployDahliaMarket(v.marketConfig);
-        v.oracle = OracleMock(marketConfig.oracle);
+        v.oracle = OracleMock(address(marketConfig.oracle));
         v.loanToken = ERC20Mock(marketConfig.loanToken);
         v.collateralToken = ERC20Mock(marketConfig.collateralToken);
 
@@ -163,9 +176,10 @@ contract TestContext {
         ERC20Mock(token).setBalance(wallet, amount);
     }
 
-    function createTestOracle(uint256 price) public virtual returns (OracleMock oracle) {
-        oracle = new OracleMock();
+    function createTestOracle(uint256 price) public virtual returns (IDahliaOracle) {
+        OracleMock oracle = new OracleMock();
         oracle.setPrice(price);
+        return oracle;
     }
 
     function createTestIrm() public virtual returns (IIrm irm) {
@@ -227,16 +241,16 @@ contract TestContext {
         public
         returns (Types.MarketConfig memory marketConfig)
     {
-        address admin = createWallet("ADMIN");
+        address admin = createWallet("MARKET_ADMIN");
         marketConfig = Types.MarketConfig({
             loanToken: loanToken,
             collateralToken: collateralToken,
-            oracle: address(createTestOracle(Constants.ORACLE_PRICE_SCALE)),
+            oracle: createTestOracle(Constants.ORACLE_PRICE_SCALE),
             irm: createTestIrm(),
             lltv: lltv,
             rltv: rltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv),
-            admin: admin
+            owner: admin
         });
     }
 
@@ -249,7 +263,7 @@ contract TestContext {
             collateralToken: config.collateralToken,
             oracle: config.oracle,
             irm: config.irm,
-            admin: config.admin,
+            owner: config.owner,
             lltv: lltv,
             rltv: rltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv)

@@ -188,9 +188,9 @@ library MarketMath {
 
     /// @notice Get current collateral price
     /// @dev Precision is 1e36
-    function getCollateralPrice(address oracle) internal view returns (uint256 collateralPrice) {
+    function getCollateralPrice(IDahliaOracle oracle) internal view returns (uint256 collateralPrice) {
         bool isBadData;
-        (collateralPrice, isBadData) = IDahliaOracle(oracle).getPrice();
+        (collateralPrice, isBadData) = oracle.getPrice();
         require(!isBadData && collateralPrice > 0, Errors.OraclePriceBadData());
     }
 }

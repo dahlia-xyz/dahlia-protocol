@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
+import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 library Types {
     type MarketId is uint32;
@@ -32,7 +33,7 @@ library Types {
         uint24 protocolFeeRate; // 3 bytes // taken from interest
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
-        address oracle; // 20 bytes
+        IDahliaOracle oracle; // 20 bytes
         uint64 fullUtilizationRate; // 3 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
         // --- 26 bytes
@@ -40,25 +41,26 @@ library Types {
         uint24 liquidationBonusRate; // 3 bytes
         uint24 reallocationBonusRate; // 3 bytes
         // --- 20 bytes
-        IERC4626 marketProxy; // 20 bytes
-        address marketDeployer;
+        IWrappedVault vault; // 20 bytes
+        address marketDeployer; // 20 bytes // TODO: remove if relocation removed
         // --- having all 256 bytes at the end make deployment size smaller
-        address admin; // 20 bytes
         uint256 totalLendAssets; // 32 bytes
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
     }
 
+    // TODO: move to IDahlia?
     struct MarketConfig {
         address loanToken;
         address collateralToken;
-        address oracle;
+        IDahliaOracle oracle;
         IIrm irm;
         uint256 lltv;
         uint256 rltv;
         uint256 liquidationBonusRate;
-        address admin;
+        /// @dev owner of the deployed market
+        address owner;
     }
 
     struct MarketUserPosition {

@@ -6,6 +6,8 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
+
+import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
@@ -221,5 +223,32 @@ contract ManageMarketIntegrationTest is Test {
         vm.expectRevert(Errors.LltvNotAllowed.selector);
         $.dahlia.deployMarket(marketParamsFuzz, TestConstants.EMPTY_CALLBACK);
         assertEq($.dahlia.protocolFeeRecipient(), ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
+    }
+
+    function test_int_royco_deployWithOwner(address ownerFuzz) public {
+        vm.assume(ownerFuzz != address(0));
+        Types.MarketConfig memory marketConfig =
+            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        marketConfig.owner = ownerFuzz;
+        Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
+        assertEq(Types.MarketId.unwrap(marketId), 2);
+        Types.Market memory market = $.dahlia.getMarket(marketId);
+        assertEq(market.vault.vaultOwner(), ownerFuzz);
+    }
+
+    function test_int_royco_deployWithNoOwner() public {
+        Types.MarketConfig memory marketConfig =
+            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        marketConfig.owner = address(0);
+        vm.startPrank(ctx.createWallet("OWNER"));
+        $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
+        vm.stopPrank();
+        vm.startPrank($.marketAdmin);
+        Types.MarketId marketId = $.dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
+        assertEq(Types.MarketId.unwrap(marketId), 2);
+        Types.Market memory market = $.dahlia.getMarket(marketId);
+        assertEq($.dahlia.isMarketDeployed(marketId), true);
+        assertEq(market.vault.vaultOwner(), $.marketAdmin);
+        vm.stopPrank();
     }
 }

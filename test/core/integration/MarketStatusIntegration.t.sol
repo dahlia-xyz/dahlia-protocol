@@ -131,30 +131,4 @@ contract MarketStatusIntegrationTest is Test {
         $.dahlia.borrow($.marketId, assets, 0, $.alice, $.alice);
         vm.resumeGasMetering();
     }
-
-    function test_updateMarketAdminOwner(address newAdmin) public usePermittedOwners {
-        vm.assume(newAdmin != $.admin);
-        vm.assume(newAdmin != permitted);
-        vm.prank(newAdmin);
-        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, newAdmin));
-        $.dahlia.updateMarketAdmin($.marketId, newAdmin);
-
-        vm.prank(permitted);
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketAdminChanged($.admin, newAdmin);
-        $.dahlia.updateMarketAdmin($.marketId, newAdmin);
-        assertEq($.dahlia.getMarket($.marketId).admin, newAdmin);
-
-        // old admin does not have permission anymore
-        vm.prank($.admin);
-        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.admin));
-        $.dahlia.updateMarketAdmin($.marketId, newAdmin);
-
-        // revert back old admin using owner
-        vm.prank($.owner);
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketAdminChanged(newAdmin, $.admin);
-        $.dahlia.updateMarketAdmin($.marketId, $.admin);
-        assertEq($.dahlia.getMarket($.marketId).admin, $.admin);
-    }
 }

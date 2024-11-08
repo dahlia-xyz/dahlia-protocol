@@ -4,11 +4,17 @@ pragma solidity ^0.8.27;
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IStaticOracle} from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
 import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
-import {UniswapOraclerParams} from "src/oracles/types/Types.sol";
 
 /// @title UniswapV3SingleTwapBase
 /// @notice  An oracle for UniV3 Twap prices
 abstract contract UniswapV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle {
+    struct OracleParams {
+        address uniswapV3PairAddress;
+        uint32 twapDuration;
+        address baseToken;
+        address quoteToken;
+    }
+
     event SetTwapDuration(uint256 oldTwapDuration, uint256 newTwapDuration);
 
     /// @notice address of the Uniswap V3 pair
@@ -27,7 +33,7 @@ abstract contract UniswapV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle 
     uint32 public twapDuration;
     address public immutable UNISWAP_STATIC_ORACLE_ADDRESS;
 
-    constructor(UniswapOraclerParams memory _params, address _uniswapStaticOracle) {
+    constructor(OracleParams memory _params, address _uniswapStaticOracle) {
         UNI_V3_PAIR_ADDRESS = _params.uniswapV3PairAddress;
         twapDuration = _params.twapDuration;
         UNISWAP_STATIC_ORACLE_ADDRESS = _uniswapStaticOracle;

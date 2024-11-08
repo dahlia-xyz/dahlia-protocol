@@ -8,6 +8,7 @@ import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
 import {IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
  * @title MarketStorage
@@ -20,9 +21,9 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /**
      * @dev Throws if the sender is not the owner.
      */
-    function _checkOwnerOrAdmin(address admin) internal view {
+    function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
         address sender = _msgSender();
-        require(sender == owner() || sender == admin, Errors.NotPermitted(sender));
+        require(sender == owner() || sender == vault.vaultOwner(), Errors.NotPermitted(sender));
     }
 
     function getMarket(Types.MarketId id) external view returns (Types.Market memory) {
@@ -63,7 +64,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /// @inheritdoc IMarketStorage
     function pauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.admin);
+        _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Active, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Paused);
@@ -73,7 +74,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     /// @inheritdoc IMarketStorage
     function unpauseMarket(Types.MarketId id) external {
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.admin);
+        _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateMarket(market.status, false);
         require(market.status == Types.MarketStatus.Paused, Errors.CannotChangeMarketStatus());
         emit Events.MarketStatusChanged(market.status, Types.MarketStatus.Active);
@@ -94,20 +95,12 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     {
         require(reallocationBonusRate < liquidationBonusRate, Errors.MarketReallocationLtvInsufficient());
         Types.Market storage market = markets[id].market;
-        _checkOwnerOrAdmin(market.admin);
+        _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
         _validateReallocationBonusRate(reallocationBonusRate, market.rltv);
         emit Events.MarketBonusRatesChanged(liquidationBonusRate, reallocationBonusRate);
         market.liquidationBonusRate = uint24(liquidationBonusRate);
         market.reallocationBonusRate = uint24(reallocationBonusRate);
-    }
-
-    function updateMarketAdmin(Types.MarketId id, address newAdmin) external {
-        Types.Market storage market = markets[id].market;
-        address oldAdmin = market.admin;
-        _checkOwnerOrAdmin(oldAdmin);
-        emit Events.MarketAdminChanged(oldAdmin, newAdmin);
-        market.admin = newAdmin;
     }
 
     function _validateMarket(Types.MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {

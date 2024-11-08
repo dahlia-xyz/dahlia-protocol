@@ -30,6 +30,7 @@ import {
 import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
 import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 //TODO: protect some methods by ReentrancyGuard
 //import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -132,7 +133,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    // TODO: add owner address to as parameter to pass deployed market
+    // TODO: remove calldata?
     function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata)
         external
         returns (Types.MarketId id)
@@ -155,12 +156,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
             "% LLTV)"
         );
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
-
-        address wrappedVault = address(
-            WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
-                id, marketConfig.loanToken, msg.sender, name, fee
-            )
-        );
+        address owner = msg.sender;
+        if (marketConfig.owner != address(0)) {
+            owner = marketConfig.owner;
+        }
+        IWrappedVault wrappedVault = WrappedVaultFactory(
+            dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)
+        ).wrapVault(id, marketConfig.loanToken, owner, name, fee);
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
     }
 
@@ -177,7 +179,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _accrueMarketInterest(positions, market);
 
         // Set isPermitted permission for ERC4626Proxy if it sent transaction
-        if (msg.sender == address(market.marketProxy)) {
+        if (msg.sender == address(market.vault)) {
             isPermitted[onBehalfOf][msg.sender] = true;
         }
         shares = LendImpl.internalLend(market, positions[onBehalfOf], assets, onBehalfOf);
@@ -208,7 +210,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         userPosition.lendAssets -= adjustedAssets;
 
         // remove isPermitted if user withdraw all money by proxy
-        if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
+        if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
         }
 
@@ -234,7 +236,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
         // remove isPermitted if user withdraw all money by proxy
-        if (msg.sender == address(market.marketProxy) && positions[onBehalfOf].lendShares == 0) {
+        if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
         }
 
@@ -378,6 +380,8 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         Types.Market storage market = marketData.market;
         Types.Market storage marketTo = marketDataTo.market;
+        //TODO: compute hash instead of this complex condition or maybe we need to
+        // check owner of the market not deployer?
         require(
             market.oracle == marketTo.oracle && market.loanToken == marketTo.loanToken
                 && market.collateralToken == marketTo.collateralToken && market.marketDeployer == marketTo.marketDeployer,

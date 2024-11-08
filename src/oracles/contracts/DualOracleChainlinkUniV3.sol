@@ -2,12 +2,8 @@
 pragma solidity ^0.8.27;
 
 import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {
-    ChainlinkOracleMaxDelayParams,
-    ChainlinkOracleParams,
-    ChainlinkWithMaxDelayBase
-} from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
-import {UniswapOraclerParams, UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
+import {ChainlinkWithMaxDelayBase} from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
+import {UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
 import {IChainlinkOracleWithMaxDelay} from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
 import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
 import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
@@ -15,9 +11,9 @@ import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3Singl
 contract DualOracleChainlinkUniV3 is ChainlinkWithMaxDelayBase, UniswapV3SingleTwapBase, Ownable2Step, IDahliaOracle {
     constructor(
         address owner_,
-        ChainlinkOracleParams memory chainlinkParams,
-        ChainlinkOracleMaxDelayParams memory chainlinkMaxDelays,
-        UniswapOraclerParams memory uniswapParams,
+        Params memory chainlinkParams,
+        Delays memory chainlinkMaxDelays,
+        OracleParams memory uniswapParams,
         address uniswapStaticOracle
     )
         ChainlinkWithMaxDelayBase(chainlinkParams, chainlinkMaxDelays)
@@ -26,11 +22,7 @@ contract DualOracleChainlinkUniV3 is ChainlinkWithMaxDelayBase, UniswapV3SingleT
     {}
 
     /// @inheritdoc IChainlinkOracleWithMaxDelay
-    function setMaximumOracleDelays(ChainlinkOracleMaxDelayParams memory _newMaxOracleDelays)
-        external
-        override
-        onlyOwner
-    {
+    function setMaximumOracleDelays(Delays memory _newMaxOracleDelays) external override onlyOwner {
         _setMaximumOracleDelays(_newMaxOracleDelays);
     }
 

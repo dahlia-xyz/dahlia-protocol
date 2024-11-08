@@ -2,11 +2,13 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
+
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {ManageMarketImpl} from "src/core/impl/ManageMarketImpl.sol";
 import {Types} from "src/core/types/Types.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 import {TestContext} from "test/common/TestContext.sol";
 
 contract ManageMarketImplUnitTest is Test {
@@ -17,7 +19,9 @@ contract ManageMarketImplUnitTest is Test {
         ctx = new TestContext(vm);
     }
 
-    function test_unit_manage_deployMarket_success(Types.MarketConfig memory marketParamsFuzz, address vault) public {
+    function test_unit_manage_deployMarket_success(Types.MarketConfig memory marketParamsFuzz, IWrappedVault vault)
+        public
+    {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
@@ -31,7 +35,7 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(market.collateralToken, marketParamsFuzz.collateralToken);
         assertEq(market.loanToken, marketParamsFuzz.loanToken);
         assertEq(address(market.irm), address(marketParamsFuzz.irm));
-        assertEq(market.oracle, marketParamsFuzz.oracle);
+        assertEq(address(market.oracle), address(marketParamsFuzz.oracle));
         assertEq(market.lltv, marketParamsFuzz.lltv);
 
         assertEq(market.updatedAt, block.timestamp, "updatedAt != block.timestamp");
@@ -40,12 +44,13 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(market.totalBorrowAssets, 0, "totalBorrowAssets != 0");
         assertEq(market.totalBorrowShares, 0, "totalBorrowShares != 0");
         assertEq(market.protocolFeeRate, 0, "fee != 0");
-        assertEq(address(market.marketProxy), vault, "marketProxy != vault");
+        assertEq(address(market.vault), address(vault), "marketProxy != vault");
     }
 
-    function test_unit_manage_deployMarket_alreadyDeployed(Types.MarketConfig memory marketParamsFuzz, address vault)
-        public
-    {
+    function test_unit_manage_deployMarket_alreadyDeployed(
+        Types.MarketConfig memory marketParamsFuzz,
+        IWrappedVault vault
+    ) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);

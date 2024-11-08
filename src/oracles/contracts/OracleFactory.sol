@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {
-    ChainlinkOracleMaxDelayParams, ChainlinkOracleParams, ChainlinkWithMaxDelay
-} from "./ChainlinkWithMaxDelay.sol";
+import {ChainlinkWithMaxDelay} from "./ChainlinkWithMaxDelay.sol";
 import {DualOracleChainlinkUniV3} from "./DualOracleChainlinkUniV3.sol";
-import {UniswapOraclerParams, UniswapV3SingleTwap} from "./UniswapV3SingleTwap.sol";
+import {UniswapV3SingleTwap} from "./UniswapV3SingleTwap.sol";
 
 contract OracleFactory {
     event ChainlinkOracleCreated(
-        address indexed oracleAddress, ChainlinkOracleParams params, ChainlinkOracleMaxDelayParams maxDelays
+        address indexed oracleAddress, ChainlinkWithMaxDelay.Params params, ChainlinkWithMaxDelay.Delays maxDelays
     );
-    event UniswapOracleCreated(address indexed oracleAddress, UniswapOraclerParams params);
+    event UniswapOracleCreated(address indexed oracleAddress, UniswapV3SingleTwap.OracleParams params);
     event DualOracleChainlinkUniV3Created(
         address indexed oracleAddress,
-        ChainlinkOracleParams chainlinkParams,
-        ChainlinkOracleMaxDelayParams chainlinkMaxDelays,
-        UniswapOraclerParams uniswapParams
+        ChainlinkWithMaxDelay.Params chainlinkParams,
+        ChainlinkWithMaxDelay.Delays chainlinkMaxDelays,
+        UniswapV3SingleTwap.OracleParams uniswapParams
     );
 
     address public immutable timelockAddress;
@@ -27,25 +25,28 @@ contract OracleFactory {
         uniswapStaticOracleAddress = uniswapStaticOracleAddress_;
     }
 
-    function createChainlinkOracle(ChainlinkOracleParams memory params, ChainlinkOracleMaxDelayParams memory maxDelays)
-        external
-        returns (ChainlinkWithMaxDelay)
-    {
+    function createChainlinkOracle(
+        ChainlinkWithMaxDelay.Params memory params,
+        ChainlinkWithMaxDelay.Delays memory maxDelays
+    ) external returns (ChainlinkWithMaxDelay) {
         ChainlinkWithMaxDelay oracle = new ChainlinkWithMaxDelay(timelockAddress, params, maxDelays);
         emit ChainlinkOracleCreated(address(oracle), params, maxDelays);
         return oracle;
     }
 
-    function createUniswapOracle(UniswapOraclerParams memory params) external returns (UniswapV3SingleTwap) {
+    function createUniswapOracle(UniswapV3SingleTwap.OracleParams memory params)
+        external
+        returns (UniswapV3SingleTwap)
+    {
         UniswapV3SingleTwap oracle = new UniswapV3SingleTwap(timelockAddress, params, uniswapStaticOracleAddress);
         emit UniswapOracleCreated(address(oracle), params);
         return oracle;
     }
 
     function createDualOracleChainlinkUniV3(
-        ChainlinkOracleParams memory chainlinkParams,
-        ChainlinkOracleMaxDelayParams memory chainlinkMaxDelays,
-        UniswapOraclerParams memory uniswapParams
+        ChainlinkWithMaxDelay.Params memory chainlinkParams,
+        ChainlinkWithMaxDelay.Delays memory chainlinkMaxDelays,
+        UniswapV3SingleTwap.OracleParams memory uniswapParams
     ) external returns (DualOracleChainlinkUniV3) {
         DualOracleChainlinkUniV3 oracle = new DualOracleChainlinkUniV3(
             timelockAddress, chainlinkParams, chainlinkMaxDelays, uniswapParams, uniswapStaticOracleAddress

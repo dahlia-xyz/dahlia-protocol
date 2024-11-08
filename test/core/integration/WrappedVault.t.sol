@@ -64,10 +64,10 @@ contract WrappedVaultTest is Test {
         );
         vm.stopPrank();
 
-        $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
+        $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv(), address(this));
         token = $.loanToken;
 
-        testIncentivizedVault = WrappedVault(address(dahlia.getMarket($.marketId).marketProxy));
+        testIncentivizedVault = WrappedVault(address(dahlia.getMarket($.marketId).vault));
         pointsFactory = testIncentivizedVault.POINTS_FACTORY();
         rewardToken1 = ctx.createERC20Token("RewardToken1", 8);
         rewardToken2 = ctx.createERC20Token("RewardToken2", 10);

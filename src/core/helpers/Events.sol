@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {Types} from "src/core/types/Types.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
  * @title Events library
@@ -47,16 +48,11 @@ library Events {
     /// @param reallocationBonusRate The new reallocation bonus rate.
     event MarketBonusRatesChanged(uint256 liquidationBonusRate, uint256 reallocationBonusRate);
 
-    /// @notice Emitted when market status changed.
-    /// @param from previous status.
-    /// @param to new status.
-    event MarketAdminChanged(address from, address to);
-
     /// @notice Emitted when deploying a market.
     /// @param id The market id.
     /// @param vault The vault address.
     /// @param marketConfig The market parameters.
-    event DeployMarket(Types.MarketId indexed id, address indexed vault, Types.MarketConfig marketConfig);
+    event DeployMarket(Types.MarketId indexed id, IWrappedVault indexed vault, Types.MarketConfig marketConfig);
 
     /// @notice Emitted when setting an authorization.
     /// @param sender The sender.
