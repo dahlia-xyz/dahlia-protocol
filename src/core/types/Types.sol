@@ -50,19 +50,6 @@ library Types {
         uint256 totalBorrowShares; // 32 bytes
     }
 
-    // TODO: move to IDahlia?
-    struct MarketConfig {
-        address loanToken;
-        address collateralToken;
-        IDahliaOracle oracle;
-        IIrm irm;
-        uint256 lltv;
-        uint256 rltv;
-        uint256 liquidationBonusRate;
-        /// @dev owner of the deployed market
-        address owner;
-    }
-
     struct MarketUserPosition {
         uint256 lendShares;
         uint256 lendAssets; // store user initial lend assets

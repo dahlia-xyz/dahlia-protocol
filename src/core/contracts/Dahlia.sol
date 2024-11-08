@@ -134,10 +134,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
     /// @inheritdoc IDahlia
     // TODO: remove calldata?
-    function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata)
-        external
-        returns (Types.MarketId id)
-    {
+    function deployMarket(MarketConfig memory marketConfig, bytes calldata) external returns (Types.MarketId id) {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
         require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
         require(marketConfig.rltv < marketConfig.lltv, Errors.RltvNotAllowed());

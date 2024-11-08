@@ -6,8 +6,9 @@ import {Test, Vm} from "forge-std/Test.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
-
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
+
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
@@ -206,7 +207,7 @@ contract ManageMarketIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).reserveFeeRate, feeFuzz);
     }
 
-    function test_int_manage_deployMarketWhenIrmNotAllowed(Types.MarketConfig memory marketParamsFuzz) public {
+    function test_int_manage_deployMarketWhenIrmNotAllowed(IDahlia.MarketConfig memory marketParamsFuzz) public {
         vm.assume(!$.dahliaRegistry.isIrmAllowed(marketParamsFuzz.irm));
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
@@ -215,7 +216,7 @@ contract ManageMarketIntegrationTest is Test {
         $.dahlia.deployMarket(marketParamsFuzz, TestConstants.EMPTY_CALLBACK);
     }
 
-    function test_int_manage_deployMarketWhenLltvNotAllowed(Types.MarketConfig memory marketParamsFuzz) public {
+    function test_int_manage_deployMarketWhenLltvNotAllowed(IDahlia.MarketConfig memory marketParamsFuzz) public {
         // need to disable IRM
         marketParamsFuzz.irm = IIrm(address(0));
         marketParamsFuzz.lltv = 0.001e18;
@@ -227,7 +228,7 @@ contract ManageMarketIntegrationTest is Test {
 
     function test_int_royco_deployWithOwner(address ownerFuzz) public {
         vm.assume(ownerFuzz != address(0));
-        Types.MarketConfig memory marketConfig =
+        IDahlia.MarketConfig memory marketConfig =
             ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
         marketConfig.owner = ownerFuzz;
         Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
@@ -237,7 +238,7 @@ contract ManageMarketIntegrationTest is Test {
     }
 
     function test_int_royco_deployWithNoOwner() public {
-        Types.MarketConfig memory marketConfig =
+        IDahlia.MarketConfig memory marketConfig =
             ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
         marketConfig.owner = address(0);
         vm.startPrank(ctx.createWallet("OWNER"));

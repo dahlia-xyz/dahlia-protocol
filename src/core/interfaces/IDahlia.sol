@@ -3,6 +3,9 @@ pragma solidity ^0.8.27;
 
 import {Types} from "src/core/types/Types.sol";
 
+import {IIrm} from "src/irm/interfaces/IIrm.sol";
+import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
+
 /// @title IMarketStorage
 /// @notice Interface for the market storage functions
 interface IMarketStorage {
@@ -81,11 +84,23 @@ interface IDahlia is IMarketStorage {
     function setReserveFeeRecipient(address newReserveFeeRecipient) external;
 
     /// @notice Deploys a new market with the given parameters and returns its id.
+    /// @param @param loanToken The address of the loan token.
+    struct MarketConfig {
+        address loanToken;
+        address collateralToken;
+        IDahliaOracle oracle;
+        IIrm irm;
+        uint256 lltv;
+        uint256 rltv;
+        uint256 liquidationBonusRate;
+        /// @dev owner of the deployed market
+        address owner;
+    }
+
+    /// @notice Deploys a new market with the given parameters and returns its id.
     /// @param marketConfig The parameters of the market.
     /// @param data Additional data for market creation.
-    function deployMarket(Types.MarketConfig memory marketConfig, bytes calldata data)
-        external
-        returns (Types.MarketId id);
+    function deployMarket(MarketConfig memory marketConfig, bytes calldata data) external returns (Types.MarketId id);
 
     /// @notice Sets a new protocol fee for a given market.
     /// @param id of the market.

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
@@ -52,7 +53,7 @@ library Events {
     /// @param id The market id.
     /// @param vault The vault address.
     /// @param marketConfig The market parameters.
-    event DeployMarket(Types.MarketId indexed id, IWrappedVault indexed vault, Types.MarketConfig marketConfig);
+    event DeployMarket(Types.MarketId indexed id, IWrappedVault indexed vault, IDahlia.MarketConfig marketConfig);
 
     /// @notice Emitted when setting an authorization.
     /// @param sender The sender.

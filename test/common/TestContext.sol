@@ -7,6 +7,8 @@ import {Dahlia} from "src/core/contracts/Dahlia.sol";
 import {DahliaRegistry, IDahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
+
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IrmFactory} from "src/irm/contracts/IrmFactory.sol";
 import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
@@ -35,7 +37,7 @@ contract DahliaExt is Dahlia {
 
 contract TestContext {
     struct MarketContext {
-        Types.MarketConfig marketConfig;
+        Dahlia.MarketConfig marketConfig;
         Types.MarketId marketId;
         DahliaExt dahlia;
         IDahliaRegistry dahliaRegistry;
@@ -71,7 +73,7 @@ contract TestContext {
         uint256 lltv,
         address owner
     ) public returns (MarketContext memory) {
-        Types.MarketConfig memory config =
+        Dahlia.MarketConfig memory config =
             createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv);
         config.owner = owner;
         return bootstrapMarket(config);
@@ -93,7 +95,7 @@ contract TestContext {
         return bootstrapMarket(createMarketConfig(loanTokenName, collateralTokenName, rltv, lltv));
     }
 
-    function bootstrapMarket(Types.MarketConfig memory marketConfig) public returns (MarketContext memory v) {
+    function bootstrapMarket(Dahlia.MarketConfig memory marketConfig) public returns (MarketContext memory v) {
         vm.pauseGasMetering();
         v.alice = createWallet("ALICE");
         v.bob = createWallet("BOB");
@@ -230,7 +232,7 @@ contract TestContext {
 
     function createMarketConfig(string memory loanToken, string memory collateralToken, uint256 rltv, uint256 lltv)
         public
-        returns (Types.MarketConfig memory)
+        returns (Dahlia.MarketConfig memory)
     {
         return createMarketConfig(
             address(createERC20Token(loanToken)), address(createERC20Token(collateralToken)), rltv, lltv
@@ -239,10 +241,10 @@ contract TestContext {
 
     function createMarketConfig(address loanToken, address collateralToken, uint256 rltv, uint256 lltv)
         public
-        returns (Types.MarketConfig memory marketConfig)
+        returns (Dahlia.MarketConfig memory marketConfig)
     {
         address admin = createWallet("MARKET_ADMIN");
-        marketConfig = Types.MarketConfig({
+        marketConfig = IDahlia.MarketConfig({
             loanToken: loanToken,
             collateralToken: collateralToken,
             oracle: createTestOracle(Constants.ORACLE_PRICE_SCALE),
@@ -254,11 +256,11 @@ contract TestContext {
         });
     }
 
-    function copyMarketConfig(Types.MarketConfig memory config, uint256 rltv, uint256 lltv)
+    function copyMarketConfig(Dahlia.MarketConfig memory config, uint256 rltv, uint256 lltv)
         public
-        returns (Types.MarketConfig memory marketConfig)
+        returns (Dahlia.MarketConfig memory marketConfig)
     {
-        marketConfig = Types.MarketConfig({
+        marketConfig = IDahlia.MarketConfig({
             loanToken: config.loanToken,
             collateralToken: config.collateralToken,
             oracle: config.oracle,
@@ -270,7 +272,7 @@ contract TestContext {
         });
     }
 
-    function deployDahliaMarket(Types.MarketConfig memory marketConfig) public returns (Types.MarketId id) {
+    function deployDahliaMarket(Dahlia.MarketConfig memory marketConfig) public returns (Types.MarketId id) {
         Dahlia dahlia = createDahlia();
         vm.startPrank(wallets["OWNER"]);
         if (!dahlia.dahliaRegistry().isIrmAllowed(marketConfig.irm)) {

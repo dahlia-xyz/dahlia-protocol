@@ -6,6 +6,8 @@ import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
+
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {Types} from "src/core/types/Types.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
@@ -35,7 +37,7 @@ library ManageMarketImpl {
     function deployMarket(
         mapping(Types.MarketId => Types.MarketData) storage markets,
         Types.MarketId id,
-        Types.MarketConfig memory marketConfig,
+        IDahlia.MarketConfig memory marketConfig,
         IWrappedVault vault
     ) internal {
         Types.Market storage market = markets[id].market;
