@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 import { Points } from "@royco/Points.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { SafeCast } from "@royco/libraries/SafeCast.sol";
+
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
-import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -248,8 +249,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         _updateRewardsPerToken(reward);
 
         // Calculate fees
-        uint256 frontendFeeTaken = rewardsAdded.mulWadDown(frontendFee);
-        uint256 protocolFeeTaken = rewardsAdded.mulWadDown(ERC4626I_FACTORY.protocolFee());
+        uint256 frontendFeeTaken = rewardsAdded.mulWad(frontendFee);
+        uint256 protocolFeeTaken = rewardsAdded.mulWad(ERC4626I_FACTORY.protocolFee());
 
         // Make fees available for claiming
         rewardToClaimantToFees[reward][frontendFeeRecipient] += frontendFeeTaken;
@@ -300,8 +301,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         _updateRewardsPerToken(reward);
 
         // Calculate fees
-        uint256 frontendFeeTaken = totalRewards.mulWadDown(frontendFee);
-        uint256 protocolFeeTaken = totalRewards.mulWadDown(ERC4626I_FACTORY.protocolFee());
+        uint256 frontendFeeTaken = totalRewards.mulWad(frontendFee);
+        uint256 protocolFeeTaken = totalRewards.mulWad(ERC4626I_FACTORY.protocolFee());
 
         // Make fees available for claiming
         rewardToClaimantToFees[reward][frontendFeeRecipient] += frontendFeeTaken;
@@ -368,7 +369,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         uint256 elapsedWAD = elapsed * 1e18 * SharesMathLib.SHARES_OFFSET;
         // Calculate and update the new value of the accumulator.
-        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDivDown(rewardsInterval_.rate, totalSupply))); // The
+        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDiv(rewardsInterval_.rate, totalSupply))); // The
             // rewards per token are scaled up for precision
 
         return rewardsPerTokenOut;
