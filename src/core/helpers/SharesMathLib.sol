@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 
 /// @title SharesMathLib
 /// @dev : The implication is based on solady and uniswap

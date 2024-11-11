@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
-import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
+import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
 
 contract VariableIrmTest is Test {
     VariableIrm internal rate;
@@ -16,9 +16,9 @@ contract VariableIrmTest is Test {
     using Strings for uint256;
     using SharesMathLib for uint256;
 
-    uint64 constant ZERO_UTIL_RATE = 158247046;
-    uint64 constant MIN_FULL_UTIL_RATE = 1582470460;
-    uint64 constant MAX_FULL_UTIL_RATE = 3164940920000;
+    uint64 constant ZERO_UTIL_RATE = 158_247_046;
+    uint64 constant MIN_FULL_UTIL_RATE = 1_582_470_460;
+    uint64 constant MAX_FULL_UTIL_RATE = 3_164_940_920_000;
 
     struct NewRateSet {
         uint256 d; //deltaTime
@@ -68,7 +68,7 @@ contract VariableIrmTest is Test {
                 minFullUtilizationRate: MIN_FULL_UTIL_RATE,
                 maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
                 zeroUtilizationRate: ZERO_UTIL_RATE,
-                rateHalfLife: 172800,
+                rateHalfLife: 172_800,
                 targetRatePercent: 0.2e18
             })
         );
@@ -82,25 +82,25 @@ contract VariableIrmTest is Test {
     function test_VariableIrm_zeroUtilization() public returns (uint256 deltaTime) {
         deltaTime = bound(deltaTime, 1, TestConstants.MAX_PERIOD_IN_SECONDS);
         delete rates;
-        rates.push(NewRateSet({d: deltaTime, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: deltaTime, u: 0, i: 1000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: deltaTime, u: 0, i: 2000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: deltaTime, u: 0, i: 1582470465, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: deltaTime, u: 0, i: 1582470466, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: 265 days, u: 0, i: MAX_FULL_UTIL_RATE, newRPS: ZERO_UTIL_RATE, newUtl: 23707422621}));
-        rates.push(NewRateSet({d: 365 days, u: 0, i: MAX_FULL_UTIL_RATE, newRPS: ZERO_UTIL_RATE, newUtl: 17247634441}));
+        rates.push(NewRateSet({ d: deltaTime, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: deltaTime, u: 0, i: 1000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: deltaTime, u: 0, i: 2000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: deltaTime, u: 0, i: 1_582_470_465, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: deltaTime, u: 0, i: 1_582_470_466, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: 265 days, u: 0, i: MAX_FULL_UTIL_RATE, newRPS: ZERO_UTIL_RATE, newUtl: 23_707_422_621 }));
+        rates.push(NewRateSet({ d: 365 days, u: 0, i: MAX_FULL_UTIL_RATE, newRPS: ZERO_UTIL_RATE, newUtl: 17_247_634_441 }));
         processRateTest(validator_getNewRate);
     }
 
     /// deltaTime does not matter if utilization is zero and deltaTime = 0
     function test_VariableIrm_zeroDeltaTimeZeroUtilization() public {
         delete rates;
-        rates.push(NewRateSet({d: 0, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: 0, u: 0, i: 1000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: 0, u: 0, i: 2000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: 0, u: 0, i: 1582470465, newRPS: ZERO_UTIL_RATE, newUtl: 1582470465}));
-        rates.push(NewRateSet({d: 0, u: 0, i: 1582470466, newRPS: ZERO_UTIL_RATE, newUtl: 1582470466}));
-        rates.push(NewRateSet({d: 0, u: 0, i: 15824704661, newRPS: ZERO_UTIL_RATE, newUtl: 15824704661}));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 1000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 2000, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 1_582_470_465, newRPS: ZERO_UTIL_RATE, newUtl: 1_582_470_465 }));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 1_582_470_466, newRPS: ZERO_UTIL_RATE, newUtl: 1_582_470_466 }));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 15_824_704_661, newRPS: ZERO_UTIL_RATE, newUtl: 15_824_704_661 }));
         processRateTest(validator_getNewRate);
     }
 
@@ -112,8 +112,8 @@ contract VariableIrmTest is Test {
 
     function test_VariableIrm_getNewRateRandom() public {
         delete rates;
-        rates.push(NewRateSet({d: 0, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
-        rates.push(NewRateSet({d: 1000, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE}));
+        rates.push(NewRateSet({ d: 0, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
+        rates.push(NewRateSet({ d: 1000, u: 0, i: 0, newRPS: ZERO_UTIL_RATE, newUtl: MIN_FULL_UTIL_RATE }));
         processRateTest(validaator_getNewRateRandom);
     }
 
@@ -133,7 +133,7 @@ contract VariableIrmTest is Test {
                 totalBorrowAssets: 5e18,
                 oldFullUtilizationInterest: 0,
                 expectedInterestEarnedAssets: 0,
-                expectedRatePerSec: 325802741,
+                expectedRatePerSec: 325_802_741,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -144,8 +144,8 @@ contract VariableIrmTest is Test {
                 totalLendAssets: 10e18,
                 totalBorrowAssets: 5e18,
                 oldFullUtilizationInterest: 0,
-                expectedInterestEarnedAssets: 1629013705000,
-                expectedRatePerSec: 325802741,
+                expectedInterestEarnedAssets: 1_629_013_705_000,
+                expectedRatePerSec: 325_802_741,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -156,8 +156,8 @@ contract VariableIrmTest is Test {
                 totalLendAssets: 10e18,
                 totalBorrowAssets: 5e18,
                 oldFullUtilizationInterest: MIN_FULL_UTIL_RATE,
-                expectedInterestEarnedAssets: 1629013705000,
-                expectedRatePerSec: 325802741,
+                expectedInterestEarnedAssets: 1_629_013_705_000,
+                expectedRatePerSec: 325_802_741,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -175,7 +175,7 @@ contract VariableIrmTest is Test {
                 totalBorrowAssets: 5e18,
                 oldFullUtilizationInterest: 0,
                 expectedInterestEarnedAssets: 0,
-                expectedRatePerSec: 437505421,
+                expectedRatePerSec: 437_505_421,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -186,8 +186,8 @@ contract VariableIrmTest is Test {
                 totalLendAssets: 6e18,
                 totalBorrowAssets: 5e18,
                 oldFullUtilizationInterest: 0,
-                expectedInterestEarnedAssets: 2187527105000,
-                expectedRatePerSec: 437505421,
+                expectedInterestEarnedAssets: 2_187_527_105_000,
+                expectedRatePerSec: 437_505_421,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -198,8 +198,8 @@ contract VariableIrmTest is Test {
                 totalLendAssets: 5.1e18,
                 totalBorrowAssets: 5e18,
                 oldFullUtilizationInterest: 0,
-                expectedInterestEarnedAssets: 7167578400000,
-                expectedRatePerSec: 1433515680,
+                expectedInterestEarnedAssets: 7_167_578_400_000,
+                expectedRatePerSec: 1_433_515_680,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -213,11 +213,11 @@ contract VariableIrmTest is Test {
         interests.push(
             InterestSet({
                 deltaTime: 1 days,
-                totalLendAssets: 10000,
+                totalLendAssets: 10_000,
                 totalBorrowAssets: 500,
                 oldFullUtilizationInterest: MIN_FULL_UTIL_RATE,
                 expectedInterestEarnedAssets: 0,
-                expectedRatePerSec: 175002615,
+                expectedRatePerSec: 175_002_615,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -225,11 +225,11 @@ contract VariableIrmTest is Test {
         interests.push(
             InterestSet({
                 deltaTime: 365 days,
-                totalLendAssets: 10000,
+                totalLendAssets: 10_000,
                 totalBorrowAssets: 3000,
                 oldFullUtilizationInterest: MIN_FULL_UTIL_RATE,
                 expectedInterestEarnedAssets: 24,
-                expectedRatePerSec: 258780463,
+                expectedRatePerSec: 258_780_463,
                 expectedFullUtilizationInterest: MIN_FULL_UTIL_RATE
             })
         );
@@ -237,33 +237,33 @@ contract VariableIrmTest is Test {
         interests.push(
             InterestSet({
                 deltaTime: 365 days,
-                totalLendAssets: 10000,
+                totalLendAssets: 10_000,
                 totalBorrowAssets: 9000,
                 oldFullUtilizationInterest: MIN_FULL_UTIL_RATE,
                 expectedInterestEarnedAssets: 4483,
-                expectedRatePerSec: 15797743991,
-                expectedFullUtilizationInterest: 33671454787
+                expectedRatePerSec: 15_797_743_991,
+                expectedFullUtilizationInterest: 33_671_454_787
             })
         );
         interests.push(
             InterestSet({
                 deltaTime: 30 days,
-                totalLendAssets: 10000,
-                totalBorrowAssets: 10000,
+                totalLendAssets: 10_000,
+                totalBorrowAssets: 10_000,
                 oldFullUtilizationInterest: MIN_FULL_UTIL_RATE,
                 expectedInterestEarnedAssets: 656,
-                expectedRatePerSec: 25319527360,
-                expectedFullUtilizationInterest: 25319527360
+                expectedRatePerSec: 25_319_527_360,
+                expectedFullUtilizationInterest: 25_319_527_360
             })
         );
 
         interests.push(
             InterestSet({
                 deltaTime: 365 days,
-                totalLendAssets: 10000,
-                totalBorrowAssets: 10000,
-                oldFullUtilizationInterest: 290383329410,
-                expectedInterestEarnedAssets: 998095,
+                totalLendAssets: 10_000,
+                totalBorrowAssets: 10_000,
+                oldFullUtilizationInterest: 290_383_329_410,
+                expectedInterestEarnedAssets: 998_095,
                 expectedRatePerSec: MAX_FULL_UTIL_RATE,
                 expectedFullUtilizationInterest: MAX_FULL_UTIL_RATE
             })
@@ -274,8 +274,8 @@ contract VariableIrmTest is Test {
                 deltaTime: 365 days,
                 totalLendAssets: 1 ether,
                 totalBorrowAssets: 1 ether,
-                oldFullUtilizationInterest: 290383329410,
-                expectedInterestEarnedAssets: 99809576853120000000,
+                oldFullUtilizationInterest: 290_383_329_410,
+                expectedInterestEarnedAssets: 99_809_576_853_120_000_000,
                 expectedRatePerSec: MAX_FULL_UTIL_RATE,
                 expectedFullUtilizationInterest: MAX_FULL_UTIL_RATE
             })
@@ -286,8 +286,8 @@ contract VariableIrmTest is Test {
                 deltaTime: 365 days,
                 totalLendAssets: 1_000_000_000_000 ether,
                 totalBorrowAssets: 1_000_000_000_000 ether,
-                oldFullUtilizationInterest: 290383329410,
-                expectedInterestEarnedAssets: 99809576853120000000000000000000,
+                oldFullUtilizationInterest: 290_383_329_410,
+                expectedInterestEarnedAssets: 99_809_576_853_120_000_000_000_000_000_000,
                 expectedRatePerSec: MAX_FULL_UTIL_RATE,
                 expectedFullUtilizationInterest: MAX_FULL_UTIL_RATE
             })
@@ -299,14 +299,8 @@ contract VariableIrmTest is Test {
     function validator_VariableIrm_calculateInterest(InterestSet memory s, string memory index) internal view {
         (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
             rate.calculateInterest(s.deltaTime, s.totalLendAssets, s.totalBorrowAssets, s.oldFullUtilizationInterest);
-        assertEq(
-            newFullUtilizationRate,
-            s.expectedFullUtilizationInterest,
-            string.concat(index, ": expectedFullUtilizationInterest")
-        );
+        assertEq(newFullUtilizationRate, s.expectedFullUtilizationInterest, string.concat(index, ": expectedFullUtilizationInterest"));
         assertEq(newRatePerSec, s.expectedRatePerSec, string.concat(index, ": expectedRatePerSec"));
-        assertEq(
-            interestEarnedAssets, s.expectedInterestEarnedAssets, string.concat(index, ": expectedInterestEarnedAssets")
-        );
+        assertEq(interestEarnedAssets, s.expectedInterestEarnedAssets, string.concat(index, ": expectedInterestEarnedAssets"));
     }
 }

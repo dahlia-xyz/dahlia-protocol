@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "forge-std/Test.sol";
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "forge-std/Test.sol";
+import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract WithdrawCollateralIntegrationTest is Test {
     using BoundUtils for Vm;
@@ -69,18 +69,14 @@ contract WithdrawCollateralIntegrationTest is Test {
         $.dahlia.withdrawCollateral($.marketId, pos.collateral, $.alice, $.alice);
     }
 
-    function test_int_withdrawCollateral_success(TestTypes.MarketPosition memory pos, uint256 amountCollateralExcess)
-        public
-    {
+    function test_int_withdrawCollateral_success(TestTypes.MarketPosition memory pos, uint256 amountCollateralExcess) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.assume(pos.collateral < TestConstants.MAX_COLLATERAL_ASSETS);
         amountCollateralExcess = bound(
             amountCollateralExcess,
             1,
-            FixedPointMathLib.min(
-                TestConstants.MAX_COLLATERAL_ASSETS - pos.collateral, type(uint256).max / pos.price - pos.collateral
-            )
+            FixedPointMathLib.min(TestConstants.MAX_COLLATERAL_ASSETS - pos.collateral, type(uint256).max / pos.price - pos.collateral)
         );
         pos.collateral += amountCollateralExcess;
 
@@ -96,24 +92,17 @@ contract WithdrawCollateralIntegrationTest is Test {
         IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(userPos.collateral, pos.collateral - amountCollateralExcess, "collateral balance");
         assertEq($.collateralToken.balanceOf($.bob), amountCollateralExcess, "receiver balance");
-        assertEq(
-            $.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance"
-        );
+        assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance");
     }
 
-    function test_int_withdrawCollateral_onBehalfSuccess(
-        TestTypes.MarketPosition memory pos,
-        uint256 amountCollateralExcess
-    ) public {
+    function test_int_withdrawCollateral_onBehalfSuccess(TestTypes.MarketPosition memory pos, uint256 amountCollateralExcess) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.assume(pos.collateral < TestConstants.MAX_COLLATERAL_ASSETS);
         amountCollateralExcess = bound(
             amountCollateralExcess,
             1,
-            FixedPointMathLib.min(
-                TestConstants.MAX_COLLATERAL_ASSETS - pos.collateral, type(uint256).max / pos.price - pos.collateral
-            )
+            FixedPointMathLib.min(TestConstants.MAX_COLLATERAL_ASSETS - pos.collateral, type(uint256).max / pos.price - pos.collateral)
         );
         pos.collateral += amountCollateralExcess;
 
@@ -133,8 +122,6 @@ contract WithdrawCollateralIntegrationTest is Test {
         IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(userPos.collateral, pos.collateral - amountCollateralExcess, "collateral balance");
         assertEq($.collateralToken.balanceOf($.alice), amountCollateralExcess, "lender balance");
-        assertEq(
-            $.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance"
-        );
+        assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance");
     }
 }

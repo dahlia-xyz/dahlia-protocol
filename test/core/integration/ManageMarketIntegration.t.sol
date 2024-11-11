@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Test, Vm} from "forge-std/Test.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
-import {IIrm} from "src/irm/interfaces/IIrm.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestContext} from "test/common/TestContext.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Test, Vm } from "forge-std/Test.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IIrm } from "src/irm/interfaces/IIrm.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { TestContext } from "test/common/TestContext.sol";
 
 contract ManageMarketIntegrationTest is Test {
     using BoundUtils for Vm;
@@ -97,10 +97,7 @@ contract ManageMarketIntegrationTest is Test {
         vm.stopPrank();
     }
 
-    function test_int_manage_setProtocolFeeRateWhenMarketNotDeployed(
-        IMarketStorage.MarketId marketIdFuzz,
-        uint32 feeFuzz
-    ) public {
+    function test_int_manage_setProtocolFeeRateWhenMarketNotDeployed(IMarketStorage.MarketId marketIdFuzz, uint32 feeFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.owner);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
@@ -130,9 +127,7 @@ contract ManageMarketIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).protocolFeeRate, feeFuzz);
     }
 
-    function test_int_manage_setReserveFeeRateWhenMarketNotDeployed(IDahlia.MarketId marketIdFuzz, uint32 feeFuzz)
-        public
-    {
+    function test_int_manage_setReserveFeeRateWhenMarketNotDeployed(IDahlia.MarketId marketIdFuzz, uint32 feeFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.owner);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
@@ -208,8 +203,7 @@ contract ManageMarketIntegrationTest is Test {
 
     function test_int_manage_deployMarketWhenIrmNotAllowed(IDahlia.MarketConfig memory marketParamsFuzz) public {
         vm.assume(!$.dahliaRegistry.isIrmAllowed(marketParamsFuzz.irm));
-        marketParamsFuzz.lltv =
-            bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
 
         vm.expectRevert(Errors.IrmNotAllowed.selector);
         $.dahlia.deployMarket(marketParamsFuzz);
@@ -227,8 +221,7 @@ contract ManageMarketIntegrationTest is Test {
 
     function test_int_royco_deployWithOwner(address ownerFuzz) public {
         vm.assume(ownerFuzz != address(0));
-        IDahlia.MarketConfig memory marketConfig =
-            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
         marketConfig.owner = ownerFuzz;
         IMarketStorage.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);
@@ -237,8 +230,7 @@ contract ManageMarketIntegrationTest is Test {
     }
 
     function test_int_royco_deployWithNoOwner() public {
-        IDahlia.MarketConfig memory marketConfig =
-            ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
         marketConfig.owner = address(0);
         vm.startPrank(ctx.createWallet("OWNER"));
         $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);

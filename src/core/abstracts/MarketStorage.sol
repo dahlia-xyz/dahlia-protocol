@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {InterestImpl} from "src/core/impl/InterestImpl.sol";
-import {IMarketStorage} from "src/core/interfaces/IDahlia.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { InterestImpl } from "src/core/impl/InterestImpl.sol";
+import { IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
  * @title MarketStorage
@@ -29,11 +29,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         return InterestImpl.getLastMarketState(markets[id].market, 0);
     }
 
-    function getMarketUserPosition(MarketId marketId, address userAddress)
-        external
-        view
-        returns (MarketUserPosition memory)
-    {
+    function getMarketUserPosition(MarketId marketId, address userAddress) external view returns (MarketUserPosition memory) {
         return markets[marketId].userPositions[userAddress];
     }
 
@@ -89,9 +85,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     }
 
     /// @inheritdoc IMarketStorage
-    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate)
-        external
-    {
+    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate) external {
         require(reallocationBonusRate < liquidationBonusRate, Errors.MarketReallocationLtvInsufficient());
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);

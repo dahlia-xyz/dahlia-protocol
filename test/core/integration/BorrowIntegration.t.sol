@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract BorrowIntegrationTest is Test {
     using FixedPointMathLib for uint256;
@@ -69,9 +69,7 @@ contract BorrowIntegrationTest is Test {
         $.dahlia.borrow($.marketId, amount, shares, $.alice, $.alice);
     }
 
-    function test_int_borrow_unauthorized(TestTypes.MarketPosition memory pos, address supplier, address attacker)
-        public
-    {
+    function test_int_borrow_unauthorized(TestTypes.MarketPosition memory pos, address supplier, address attacker) public {
         vm.pauseGasMetering();
 
         vm.assume(supplier != attacker && supplier != address(0));
@@ -165,13 +163,10 @@ contract BorrowIntegrationTest is Test {
         _checkMarketBorrowValid(_assets, _shares, pos.lent, pos.borrowed, sharesBorrowed);
     }
 
-    function _checkMarketBorrowValid(
-        uint256 returnAssets,
-        uint256 returnShares,
-        uint256 amountLent,
-        uint256 amountBorrowed,
-        uint256 expectedBorrowShares
-    ) internal view {
+    function _checkMarketBorrowValid(uint256 returnAssets, uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares)
+        internal
+        view
+    {
         IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");

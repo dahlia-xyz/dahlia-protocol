@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {Test} from "forge-std/Test.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Test } from "forge-std/Test.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 
 contract MarketMathTest is Test {
     using MarketMath for uint256;
@@ -58,7 +58,7 @@ contract MarketMathTest is Test {
         mathSets.push(MarketData(0, 0, 1, 0, 1, SharesMathLib.SHARES_OFFSET));
         mathSets.push(MarketData(0, 0, 0, SharesMathLib.SHARES_OFFSET, 1, 0));
         mathSets.push(MarketData(100, 100 * SharesMathLib.SHARES_OFFSET, 0, SharesMathLib.SHARES_OFFSET, 1, 0));
-        mathSets.push(MarketData(1000, 100 * SharesMathLib.SHARES_OFFSET, 1, 0, 1, 100899));
+        mathSets.push(MarketData(1000, 100 * SharesMathLib.SHARES_OFFSET, 1, 0, 1, 100_899));
         processRateTest(validate_lend);
     }
 

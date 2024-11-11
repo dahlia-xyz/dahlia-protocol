@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
-import {Ownable, UniswapV3SingleTwap} from "src/oracles/contracts/UniswapV3SingleTwap.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {Mainnet} from "test/oracles/Constants.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { UniswapV3SingleTwapBase } from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
+import { Ownable, UniswapV3SingleTwap } from "src/oracles/contracts/UniswapV3SingleTwap.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { Mainnet } from "test/oracles/Constants.sol";
 
 contract UniswapV3SingleTwapTest is Test {
     using BoundUtils for Vm;
@@ -33,7 +33,7 @@ contract UniswapV3SingleTwapTest is Test {
 
     function test_oracle_uniswap_success() public view {
         (uint256 _price, bool _isBadData) = oracle.getPrice();
-        assertEq(_price, 342170188147668813010937084335830514402);
+        assertEq(_price, 342_170_188_147_668_813_010_937_084_335_830_514_402);
         assertEq(((_price * 1e18) / 1e18) / 1e36, 342); // 342 UNI per 1 ETH
         assertEq(_isBadData, false);
     }

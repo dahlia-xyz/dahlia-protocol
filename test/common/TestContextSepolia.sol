@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Vm} from "forge-std/Test.sol";
-import {IERC20, TestContext} from "test/common/TestContext.sol";
+import { Vm } from "forge-std/Test.sol";
+import { IERC20, TestContext } from "test/common/TestContext.sol";
 
 interface IERC20Mint is IERC20 {
     function mint(address account, uint256 value) external returns (bool);
@@ -19,11 +19,7 @@ contract TestContextSepolia is TestContext {
         tokenOwners["WBTC"] = 0xC959483DBa39aa9E78757139af0e9a2EDEb3f42D;
     }
 
-    function mint(string memory tokenName, string memory walletName, uint256 amount)
-        public
-        override
-        returns (address wallet)
-    {
+    function mint(string memory tokenName, string memory walletName, uint256 amount) public override returns (address wallet) {
         wallet = createWallet(walletName);
         IERC20Mint token = IERC20Mint(address(createERC20Token(tokenName)));
         vm.prank(tokenOwners[walletName]);

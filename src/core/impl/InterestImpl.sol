@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IIrm} from "src/irm/interfaces/IIrm.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 /**
  * @title InterestImpl library
@@ -33,8 +33,8 @@ library InterestImpl {
         }
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalBorrowAssets = market.totalBorrowAssets;
-        (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) = IIrm(market.irm)
-            .calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, market.fullUtilizationRate);
+        (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
+            IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, market.fullUtilizationRate);
 
         if (interestEarnedAssets > 0) {
             market.fullUtilizationRate = uint64(newFullUtilizationRate);
@@ -47,8 +47,7 @@ library InterestImpl {
             uint256 protocolFeeShares = 0;
             uint256 protocolFeeRate = market.protocolFeeRate;
             if (protocolFeeRate > 0) {
-                protocolFeeShares =
-                    calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
+                protocolFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
                 protocolFeeRecipientPosition.lendShares += protocolFeeShares;
                 market.totalLendShares += protocolFeeShares;
             }
@@ -57,36 +56,27 @@ library InterestImpl {
             uint256 reserveFeeShares = 0;
             uint256 reserveFeeRate = market.reserveFeeRate;
             if (reserveFeeRate > 0) {
-                reserveFeeShares =
-                    calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
+                reserveFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
                 reserveFeeRecipientPosition.lendShares += reserveFeeShares;
                 market.totalLendShares += reserveFeeShares;
             }
 
-            emit Events.DahliaAccrueInterest(
-                market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares
-            );
+            emit Events.DahliaAccrueInterest(market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
             market.updatedAt = uint48(block.timestamp);
         }
     }
 
-    function calcFeeSharesFromInterest(
-        uint256 totalLendAssets,
-        uint256 totalLendShares,
-        uint256 interestEarnedAssets,
-        uint256 feeRate
-    ) internal pure returns (uint256 feeShares) {
-        feeShares = (interestEarnedAssets * feeRate * totalLendShares)
-            / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets));
+    function calcFeeSharesFromInterest(uint256 totalLendAssets, uint256 totalLendShares, uint256 interestEarnedAssets, uint256 feeRate)
+        internal
+        pure
+        returns (uint256 feeShares)
+    {
+        feeShares = (interestEarnedAssets * feeRate * totalLendShares) / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets));
     }
 
     /// @notice Returns the expected market balances of a market after having accrued interest.
     /// @return market balances with update of interest
-    function getLastMarketState(IDahlia.Market memory market, uint256 assets)
-        internal
-        view
-        returns (IDahlia.Market memory)
-    {
+    function getLastMarketState(IDahlia.Market memory market, uint256 assets) internal view returns (IDahlia.Market memory) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
 
         // Skipped if elapsed == 0 or totalBorrowAssets == 0 because interest would be null, or if irm == address(0).
@@ -100,10 +90,8 @@ library InterestImpl {
             (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
                 IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, fullUtilizationRate);
 
-            uint256 protocolFeeShares =
-                calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
-            uint256 reserveFeeShares =
-                calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
+            uint256 protocolFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
+            uint256 reserveFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
 
             market.totalLendShares = totalLendShares + protocolFeeShares + reserveFeeShares;
             market.fullUtilizationRate = uint64(newFullUtilizationRate);

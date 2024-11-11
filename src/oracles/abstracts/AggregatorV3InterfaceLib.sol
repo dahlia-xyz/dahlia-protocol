@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import {Errors} from "src/oracles/helpers/Errors.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import { Errors } from "src/oracles/helpers/Errors.sol";
 
 library AggregatorV3InterfaceLib {
-    function getFeedPrice(AggregatorV3Interface feed, uint256 maxDelay)
-        internal
-        view
-        returns (uint256 price, bool isBadData)
-    {
+    function getFeedPrice(AggregatorV3Interface feed, uint256 maxDelay) internal view returns (uint256 price, bool isBadData) {
         if (address(feed) == address(0)) {
             return (1, false);
         }

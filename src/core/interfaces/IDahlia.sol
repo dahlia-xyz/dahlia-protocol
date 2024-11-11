@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IIrm} from "src/irm/interfaces/IIrm.sol";
-import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
+import { IIrm } from "src/irm/interfaces/IIrm.sol";
+import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title IMarketStorage
 /// @notice Interface for the market storage functions
@@ -31,7 +31,8 @@ interface IMarketStorage {
         address loanToken; // 20 bytes
         // --- 32 bytes
         address collateralToken; // 20 bytes
-        uint48 updatedAt; // 6 bytes // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers#understanding-the-optimization
+        uint48 updatedAt; // 6 bytes //
+            // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers#understanding-the-optimization
         uint24 protocolFeeRate; // 3 bytes // taken from interest
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
@@ -67,10 +68,7 @@ interface IMarketStorage {
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.
     /// @param userAddress User address.
-    function getMarketUserPosition(MarketId marketId, address userAddress)
-        external
-        view
-        returns (MarketUserPosition memory position);
+    function getMarketUserPosition(MarketId marketId, address userAddress) external view returns (MarketUserPosition memory position);
 
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.
@@ -105,8 +103,7 @@ interface IMarketStorage {
     /// @param id of the market.
     /// @param liquidationBonusRate The new liquidationBonusRate where 100% is LLTV_100_PERCENT
     /// @param reallocationBonusRate The new reallocationBonusRate where 100% is LLTV_100_PERCENT.
-    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate)
-        external;
+    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate) external;
 
     /// @notice Deprecate market.
     /// @param id of the market.
@@ -173,9 +170,7 @@ interface IDahlia is IMarketStorage {
     /// @param onBehalfOf The address that will own the increased lend position.
     /// @param callbackData Arbitrary data to pass to the `onDahliaLend` callback. Pass empty data if not needed.
     /// @return sharesSupplied The amount of shares minted.
-    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
-        external
-        returns (uint256 sharesSupplied);
+    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData) external returns (uint256 sharesSupplied);
 
     /// @notice Withdraws `assets` by `shares` on behalf of a user and sends the assets to a receiver.
     /// @dev This function designed to be called by ERC4626Proxy contract.
@@ -184,9 +179,7 @@ interface IDahlia is IMarketStorage {
     /// @param onBehalfOf The address of the owner of the supply position.
     /// @param receiver The address that will receive the withdrawn assets.
     /// @return assetsWithdrawn The amount of assets withdrawn.
-    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
-        external
-        returns (uint256 assetsWithdrawn);
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external returns (uint256 assetsWithdrawn);
 
     function claimInterest(MarketId id, address onBehalfOf, address receiver) external returns (uint256 assets);
 
@@ -214,13 +207,9 @@ interface IDahlia is IMarketStorage {
     /// @param receiver The address that will receive the borrowed assets.
     /// @return borrowedAssets The amount of assets borrowed.
     /// @return borrowedShares The amount of shares minted.
-    function supplyAndBorrow(
-        MarketId id,
-        uint256 collateralAssets,
-        uint256 borrowAssets,
-        address onBehalfOf,
-        address receiver
-    ) external returns (uint256 borrowedAssets, uint256 borrowedShares);
+    function supplyAndBorrow(MarketId id, uint256 collateralAssets, uint256 borrowAssets, address onBehalfOf, address receiver)
+        external
+        returns (uint256 borrowedAssets, uint256 borrowedShares);
 
     /// @notice Repays  borrowed `assets` or `shares` on behalf of a user and and withdraw collateral to a receiver.
     /// @dev either the `assets` or the `shares` must be set to zero.
@@ -232,14 +221,9 @@ interface IDahlia is IMarketStorage {
     /// @param receiver The address that will receive the borrowed assets.
     /// @return repaidAssets The amount of shares minted.
     /// @return repaidShares The amount of shares minted.
-    function repayAndWithdraw(
-        MarketId id,
-        uint256 collateralAssets,
-        uint256 repayAssets,
-        uint256 repayShares,
-        address onBehalfOf,
-        address receiver
-    ) external returns (uint256 repaidAssets, uint256 repaidShares);
+    function repayAndWithdraw(MarketId id, uint256 collateralAssets, uint256 repayAssets, uint256 repayShares, address onBehalfOf, address receiver)
+        external
+        returns (uint256 repaidAssets, uint256 repaidShares);
 
     /// @notice Repays `assets` or `shares` on behalf of a user, with an optional callback.
     /// @dev either the `assets` or the `shares` must be set to zero.
@@ -275,12 +259,7 @@ interface IDahlia is IMarketStorage {
     /// @return bonusCollateral The amount of collateral bonus for reallocator.
     function reallocate(MarketId marketId, MarketId marketIdTo, address borrower)
         external
-        returns (
-            uint256 reallocatedAssets,
-            uint256 reallocatedShares,
-            uint256 reallocatedCollateral,
-            uint256 bonusCollateral
-        );
+        returns (uint256 reallocatedAssets, uint256 reallocatedShares, uint256 reallocatedCollateral, uint256 bonusCollateral);
 
     /// @notice Supplies collateral on behalf of a user, with an optional callback.
     /// @param id of the market.

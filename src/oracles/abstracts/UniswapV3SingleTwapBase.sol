@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IStaticOracle} from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
-import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
+import { IUniswapV3SingleTwapOracle } from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
 
 /// @title UniswapV3SingleTwapBase
 /// @notice  An oracle for UniV3 Twap prices
@@ -44,7 +44,7 @@ abstract contract UniswapV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle 
     /// @notice The ```_setTwapDuration``` function sets duration of the twap
     /// @param _newTwapDuration The new twap duration
     function _setTwapDuration(uint32 _newTwapDuration) internal {
-        emit SetTwapDuration({oldTwapDuration: twapDuration, newTwapDuration: _newTwapDuration});
+        emit SetTwapDuration({ oldTwapDuration: twapDuration, newTwapDuration: _newTwapDuration });
         twapDuration = _newTwapDuration;
     }
 

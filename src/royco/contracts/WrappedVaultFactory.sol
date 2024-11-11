@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import {Owned} from "@solmate/auth/Owned.sol";
-import {ERC4626} from "@solmate/tokens/ERC4626.sol";
-import {LibString} from "@solmate/utils/LibString.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
+import { Owned } from "@solmate/auth/Owned.sol";
+import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
+import { LibString } from "@solmate/utils/LibString.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 
 /// @title WrappedVaultFactory
 /// @author CopyPaste, Jack Corddry, Shivaansh Kapoor
@@ -15,14 +15,10 @@ contract WrappedVaultFactory is Owned {
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
-    constructor(
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        uint256 _minimumFrontendFee,
-        address _owner,
-        address _pointsFactory,
-        address _dahlia
-    ) payable Owned(_owner) {
+    constructor(address _protocolFeeRecipient, uint256 _protocolFee, uint256 _minimumFrontendFee, address _owner, address _pointsFactory, address _dahlia)
+        payable
+        Owned(_owner)
+    {
         if (_protocolFee > MAX_PROTOCOL_FEE) {
             revert ProtocolFeeTooHigh();
         }
@@ -114,32 +110,20 @@ contract WrappedVaultFactory is Owned {
     /// @param owner The address of the wrapped vault owner
     /// @param name The name of the dahlia market
     /// @param initialFrontendFee The initial frontend fee for the wrapped vault ()
-    function wrapVault(
-        IDahlia.MarketId marketId,
-        address loanToken,
-        address owner,
-        string calldata name,
-        uint256 initialFrontendFee
-    ) external payable returns (WrappedVault wrappedVault) {
+    function wrapVault(IDahlia.MarketId marketId, address loanToken, address owner, string calldata name, uint256 initialFrontendFee)
+        external
+        payable
+        returns (WrappedVault wrappedVault)
+    {
         string memory newSymbol = getNextSymbol();
         bytes32 salt = keccak256(abi.encodePacked(marketId, owner, name, initialFrontendFee));
         uint8 decimals = IERC20Metadata(loanToken).decimals() + 6; // TODO use Constants
-        wrappedVault = new WrappedVault{salt: salt}(
-            owner, name, newSymbol, dahlia, decimals, marketId, loanToken, initialFrontendFee, pointsFactory
-        );
+        wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, marketId, loanToken, initialFrontendFee, pointsFactory);
 
         incentivizedVaults.push(address(wrappedVault));
         isVault[address(wrappedVault)] = true;
 
-        emit WrappedVaultCreated(
-            ERC4626(address(wrappedVault)),
-            wrappedVault,
-            owner,
-            address(wrappedVault.asset()),
-            initialFrontendFee,
-            name,
-            newSymbol
-        );
+        emit WrappedVaultCreated(ERC4626(address(wrappedVault)), wrappedVault, owner, address(wrappedVault.asset()), initialFrontendFee, name, newSymbol);
     }
 
     /// @dev Helper function to get the symbol for a new incentivized vault, ROY-0, ROY-1, etc.

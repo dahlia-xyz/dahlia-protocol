@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Vm, console} from "@forge-std/Test.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Vm, console } from "@forge-std/Test.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 library BoundUtils {
     using MarketMath for uint256;
     using FixedPointMathLib for uint256;
     using Strings for uint256;
 
-    uint256 private constant UINT256_MAX =
-        115792089237316195423570985008687907853269984665640564039457584007913129639935;
+    uint256 private constant UINT256_MAX = 115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_935;
 
     /**
      * Copied from forge StdUtils, because there is only internal visibility;
@@ -104,9 +103,7 @@ library BoundUtils {
 
         if (pos.collateral > TestConstants.MAX_COLLATERAL_ASSETS) {
             pos.collateral = TestConstants.MAX_COLLATERAL_ASSETS;
-            pos.borrowed = FixedPointMathLib.min(
-                pos.collateral.collateralToLendUp(pos.price).mulPercentUp(pos.ltv), TestConstants.MAX_TEST_AMOUNT
-            );
+            pos.borrowed = FixedPointMathLib.min(pos.collateral.collateralToLendUp(pos.price).mulPercentUp(pos.ltv), TestConstants.MAX_TEST_AMOUNT);
         }
 
         pos.lent = bound(pos.lent, pos.borrowed + 1, pos.borrowed + TestConstants.MAX_TEST_AMOUNT);

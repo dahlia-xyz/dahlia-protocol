@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 /// @notice inspired by OpenZeppelin's Timelock.sol
 /// https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/mocks/compound/CompTimelock.sol
@@ -13,15 +13,9 @@ contract Timelock is Ownable2Step {
     error DelayMustExceedMaximumDelay();
 
     event NewDelay(uint256 indexed newDelay);
-    event CancelTransaction(
-        bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta
-    );
-    event ExecuteTransaction(
-        bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta
-    );
-    event QueueTransaction(
-        bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta
-    );
+    event CancelTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
+    event ExecuteTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
+    event QueueTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
 
     uint256 public constant GRACE_PERIOD = 14 days;
     uint256 public constant MINIMUM_DELAY = 2 days;
@@ -49,15 +43,8 @@ contract Timelock is Ownable2Step {
         _setDelay(delay_);
     }
 
-    function queueTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta)
-        public
-        onlyOwner
-        returns (bytes32)
-    {
-        require(
-            getBlockTimestamp() + delay < eta,
-            "Timelock::queueTransaction: Estimated execution block must satisfy delay."
-        );
+    function queueTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta) public onlyOwner returns (bytes32) {
+        require(getBlockTimestamp() + delay < eta, "Timelock::queueTransaction: Estimated execution block must satisfy delay.");
 
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         queuedTransactions[txHash] = true;
@@ -66,10 +53,7 @@ contract Timelock is Ownable2Step {
         return txHash;
     }
 
-    function cancelTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta)
-        public
-        onlyOwner
-    {
+    function cancelTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta) public onlyOwner {
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         queuedTransactions[txHash] = false;
 
@@ -98,7 +82,7 @@ contract Timelock is Ownable2Step {
         }
 
         // Execute the call
-        (bool success, bytes memory returnData) = target.call{value: value}(callData);
+        (bool success, bytes memory returnData) = target.call{ value: value }(callData);
         require(success, "Timelock::executeTransaction: Transaction execution reverted.");
 
         emit ExecuteTransaction(txHash, target, value, signature, data, eta);

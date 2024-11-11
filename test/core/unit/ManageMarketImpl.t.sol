@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test} from "forge-std/Test.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {ManageMarketImpl} from "src/core/impl/ManageMarketImpl.sol";
+import { Test } from "forge-std/Test.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { ManageMarketImpl } from "src/core/impl/ManageMarketImpl.sol";
 
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
-import {TestContext} from "test/common/TestContext.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { TestContext } from "test/common/TestContext.sol";
 
 contract ManageMarketImplUnitTest is Test {
     TestContext ctx;
@@ -20,12 +20,9 @@ contract ManageMarketImplUnitTest is Test {
         ctx = new TestContext(vm);
     }
 
-    function test_unit_manage_deployMarket_success(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault)
-        public
-    {
+    function test_unit_manage_deployMarket_success(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
-        marketParamsFuzz.lltv =
-            bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
 
         IDahlia.MarketId marketParamsFuzzId = IMarketStorage.MarketId.wrap(1);
         vm.expectEmit(true, true, true, true, address(this));
@@ -48,13 +45,9 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(address(market.vault), address(vault), "marketProxy != vault");
     }
 
-    function test_unit_manage_deployMarket_alreadyDeployed(
-        IDahlia.MarketConfig memory marketParamsFuzz,
-        IWrappedVault vault
-    ) public {
+    function test_unit_manage_deployMarket_alreadyDeployed(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
-        marketParamsFuzz.lltv =
-            bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
         IDahlia.MarketId marketParamsFuzzId = IMarketStorage.MarketId.wrap(1);
 
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);

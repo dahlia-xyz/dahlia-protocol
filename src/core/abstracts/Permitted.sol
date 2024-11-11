@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
-import {ECDSA} from "@solady/utils/ECDSA.sol";
-import {EIP712} from "@solady/utils/EIP712.sol";
-import {Events} from "src/core//helpers/Events.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {IPermitted} from "src/core/interfaces/IPermitted.sol";
+import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
+import { ECDSA } from "@solady/utils/ECDSA.sol";
+import { EIP712 } from "@solady/utils/EIP712.sol";
+import { Events } from "src/core//helpers/Events.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { IPermitted } from "src/core/interfaces/IPermitted.sol";
 
 abstract contract Permitted is IPermitted, EIP712, Nonces {
     mapping(address => mapping(address => bool)) public isPermitted;
 
-    bytes32 private constant HASH =
-        keccak256("Permit(address signer,address onBehalfOf,bool isPermitted,uint256 nonce,uint256 deadline)");
+    bytes32 private constant HASH = keccak256("Permit(address signer,address onBehalfOf,bool isPermitted,uint256 nonce,uint256 deadline)");
 
     function hashTypedData(Data memory data) public view returns (bytes32) {
         return _hashTypedData(keccak256(abi.encode(HASH, data)));

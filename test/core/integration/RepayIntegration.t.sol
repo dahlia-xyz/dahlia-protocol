@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract RepayIntegrationTest is Test {
     using FixedPointMathLib for uint256;
@@ -69,8 +69,7 @@ contract RepayIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.DahliaRepay($.marketId, $.bob, $.alice, amountRepaid, expectedRepaidShares);
         vm.resumeGasMetering();
-        (uint256 returnAssets, uint256 returnShares) =
-            $.dahlia.repay($.marketId, amountRepaid, 0, $.alice, TestConstants.EMPTY_CALLBACK);
+        (uint256 returnAssets, uint256 returnShares) = $.dahlia.repay($.marketId, amountRepaid, 0, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
 
         expectedBorrowShares -= expectedRepaidShares;
@@ -101,8 +100,7 @@ contract RepayIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.DahliaRepay($.marketId, $.bob, $.alice, expectedAmountRepaid, sharesRepaid);
         vm.resumeGasMetering();
-        (uint256 returnAssets, uint256 returnShares) =
-            $.dahlia.repay($.marketId, 0, sharesRepaid, $.alice, TestConstants.EMPTY_CALLBACK);
+        (uint256 returnAssets, uint256 returnShares) = $.dahlia.repay($.marketId, 0, sharesRepaid, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
 
         expectedBorrowShares -= sharesRepaid;
@@ -116,9 +114,7 @@ contract RepayIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
 
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "RECEIVER balance");
-        assertEq(
-            $.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance"
-        );
+        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance");
     }
 
     function test_int_repay_maxOnBehalf(uint256 shares) public {

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract WithdrawIntegrationTest is Test {
     using SharesMathLib for uint256;
@@ -126,16 +126,10 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - expectedAmountWithdrawn, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.loanToken.balanceOf($.bob), expectedAmountWithdrawn, "receiver balance");
-        assertEq(
-            $.loanToken.balanceOf(address($.dahlia)),
-            pos.lent - pos.borrowed - expectedAmountWithdrawn,
-            "Dahlia balance"
-        );
+        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - expectedAmountWithdrawn, "Dahlia balance");
     }
 
-    function test_int_withdraw_onBehalfOfByAssets(TestTypes.MarketPosition memory pos, uint256 amountWithdrawn)
-        public
-    {
+    function test_int_withdraw_onBehalfOfByAssets(TestTypes.MarketPosition memory pos, uint256 amountWithdrawn) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.alice, $.carol, $);
@@ -168,9 +162,7 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - amountWithdrawn, "Dahlia balance");
     }
 
-    function test_int_withdraw_onBehalfOfByShares(TestTypes.MarketPosition memory pos, uint256 sharesWithdrawn)
-        public
-    {
+    function test_int_withdraw_onBehalfOfByShares(TestTypes.MarketPosition memory pos, uint256 sharesWithdrawn) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.alice, $.carol, $);
@@ -202,10 +194,6 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - expectedAmountWithdrawn, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.loanToken.balanceOf($.bob), expectedAmountWithdrawn, "receiver balance");
-        assertEq(
-            $.loanToken.balanceOf(address($.dahlia)),
-            pos.lent - pos.borrowed - expectedAmountWithdrawn,
-            "Dahlia balance"
-        );
+        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - expectedAmountWithdrawn, "Dahlia balance");
     }
 }

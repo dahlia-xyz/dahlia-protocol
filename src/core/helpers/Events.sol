@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
  * @title Events library
@@ -60,18 +60,14 @@ library Events {
     /// @param signer The signer address.
     /// @param onBehalfOf The permitted address.
     /// @param newIsPermitted The new authorization status.
-    event updatePermission(
-        address indexed sender, address indexed signer, address indexed onBehalfOf, bool newIsPermitted
-    );
+    event updatePermission(address indexed sender, address indexed signer, address indexed onBehalfOf, bool newIsPermitted);
 
     /// @notice Emitted when collateral is supplied.
     /// @param id The market id.
     /// @param caller The caller.
     /// @param onBehalfOf The owner on behalf of whom the collateral is supplied.
     /// @param assets The amount of supplied assets.
-    event SupplyCollateral(
-        IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets
-    );
+    event SupplyCollateral(IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets);
 
     /// @notice Emitted when collateral is withdrawn.
     /// @param id The market id.
@@ -79,13 +75,7 @@ library Events {
     /// @param onBehalfOf The owner on behalf of whom the collateral is withdrawn.
     /// @param receiver The owner of the modified position.
     /// @param assets The amount of assets withdrawn.
-    event WithdrawCollateral(
-        IDahlia.MarketId indexed id,
-        address caller,
-        address indexed onBehalfOf,
-        address indexed receiver,
-        uint256 assets
-    );
+    event WithdrawCollateral(IDahlia.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets);
 
     /// @notice Emitted on supply of assets.
     /// @dev `protocolFeeRecipient` receives some shares during interest accrual without any supply event emitted.
@@ -94,9 +84,7 @@ library Events {
     /// @param onBehalfOf The owner of the modified position.
     /// @param assets The amount of assets supplied.
     /// @param shares The amount of shares minted.
-    event Lend(
-        IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares
-    );
+    event Lend(IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares);
 
     /// @notice Emitted on withdrawal of assets.
     /// @param id The market id.
@@ -105,14 +93,7 @@ library Events {
     /// @param receiver The address that received the withdrawn assets.
     /// @param assets The amount of assets withdrawn.
     /// @param shares The amount of shares burned.
-    event Withdraw(
-        IDahlia.MarketId indexed id,
-        address caller,
-        address indexed onBehalfOf,
-        address indexed receiver,
-        uint256 assets,
-        uint256 shares
-    );
+    event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets, uint256 shares);
 
     /// @notice Emitted on borrow of assets.
     /// @param id The market id.
@@ -121,14 +102,7 @@ library Events {
     /// @param receiver The address that received the borrowed assets.
     /// @param assets The amount of assets borrowed.
     /// @param shares The amount of shares minted.
-    event DahliaBorrow(
-        IDahlia.MarketId indexed id,
-        address caller,
-        address indexed onBehalfOf,
-        address indexed receiver,
-        uint256 assets,
-        uint256 shares
-    );
+    event DahliaBorrow(IDahlia.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets, uint256 shares);
 
     /// @notice Emitted on repayment of assets.
     /// @param id The market id.
@@ -136,9 +110,7 @@ library Events {
     /// @param onBehalfOf The owner of the modified position.
     /// @param assets The amount of assets repaid. May be 1 over the corresponding market's `totalBorrowAssets`.
     /// @param shares The amount of shares burned.
-    event DahliaRepay(
-        IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares
-    );
+    event DahliaRepay(IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares);
 
     /// @notice Emitted on liquidation of a position.
     /// @param id The market id.
@@ -192,13 +164,7 @@ library Events {
     /// @param interest The amount of interest accrued.
     /// @param protocolFeeShares The amount of shares minted as protocol fee shares.
     /// @param reserveFeeShares The amount of shares minted as reserve fee shares.
-    event DahliaAccrueInterest(
-        IDahlia.MarketId indexed id,
-        uint256 prevBorrowRate,
-        uint256 interest,
-        uint256 protocolFeeShares,
-        uint256 reserveFeeShares
-    );
+    event DahliaAccrueInterest(IDahlia.MarketId indexed id, uint256 prevBorrowRate, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares);
 
     /// @notice Emitted on flash loan.
     /// @param caller The caller.

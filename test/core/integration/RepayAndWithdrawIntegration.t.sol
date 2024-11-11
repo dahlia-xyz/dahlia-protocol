@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract RepayAndWithdrawIntegrationTest is Test {
     using FixedPointMathLib for uint256;
@@ -79,8 +79,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
 
         vm.resumeGasMetering();
-        (uint256 returnAssets, uint256 returnShares) =
-            $.dahlia.repayAndWithdraw($.marketId, amountCollateral, amountRepaid, 0, $.alice, $.alice);
+        (uint256 returnAssets, uint256 returnShares) = $.dahlia.repayAndWithdraw($.marketId, amountCollateral, amountRepaid, 0, $.alice, $.alice);
         vm.pauseGasMetering();
         vm.stopPrank();
 
@@ -94,15 +93,9 @@ contract RepayAndWithdrawIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowAssets, pos.borrowed - amountRepaid, "total borrow");
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed - amountRepaid, "RECEIVER balance");
-        assertEq(
-            $.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance"
-        );
+        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance");
         assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
-        assertEq(
-            $.collateralToken.balanceOf(address($.dahlia)),
-            pos.collateral - amountCollateral,
-            "Dahlia collateral balance"
-        );
+        assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateral, "Dahlia collateral balance");
     }
 
     function test_int_repayAndWithdraw_byShares(TestTypes.MarketPosition memory pos, uint256 sharesRepaid) public {
@@ -122,8 +115,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
         vm.resumeGasMetering();
-        (uint256 returnAssets, uint256 returnShares) =
-            $.dahlia.repayAndWithdraw($.marketId, amountCollateral, 0, sharesRepaid, $.alice, $.alice);
+        (uint256 returnAssets, uint256 returnShares) = $.dahlia.repayAndWithdraw($.marketId, amountCollateral, 0, sharesRepaid, $.alice, $.alice);
         vm.pauseGasMetering();
         vm.stopPrank();
 
@@ -138,15 +130,9 @@ contract RepayAndWithdrawIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
 
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed - expectedAmountRepaid, "RECEIVER balance");
-        assertEq(
-            $.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance"
-        );
+        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance");
 
         assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
-        assertEq(
-            $.collateralToken.balanceOf(address($.dahlia)),
-            pos.collateral - amountCollateral,
-            "Dahlia collateral balance"
-        );
+        assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateral, "Dahlia collateral balance");
     }
 }

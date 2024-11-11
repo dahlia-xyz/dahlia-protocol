@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
-import {Test, Vm} from "forge-std/Test.sol";
-import {Permitted} from "src/core/abstracts/Permitted.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
+import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
+import { Test, Vm } from "forge-std/Test.sol";
+import { Permitted } from "src/core/abstracts/Permitted.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
 
-contract PermittedContract is Permitted {}
+contract PermittedContract is Permitted { }
 
 contract PermittedTest is Test {
     using BoundUtils for Vm;
@@ -42,11 +42,7 @@ contract PermittedTest is Test {
         permitted.updatePermission(addressFuzz, true);
     }
 
-    function test_Permitted_withSignatureDeadlineOutdated(
-        Permitted.Data memory data,
-        uint256 privateKey,
-        uint256 blocks
-    ) public {
+    function test_Permitted_withSignatureDeadlineOutdated(Permitted.Data memory data, uint256 privateKey, uint256 blocks) public {
         data.isPermitted = true;
         blocks = vm.boundBlocks(blocks);
         data.deadline = block.timestamp - 1;

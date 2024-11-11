@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: ISC
 pragma solidity >=0.8.0;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {Script} from "forge-std/Script.sol";
-import {console2 as console} from "forge-std/Test.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Script } from "forge-std/Script.sol";
+import { console2 as console } from "forge-std/Test.sol";
 
 abstract contract BaseScript is Script {
     using Strings for *;
@@ -44,11 +44,7 @@ abstract contract BaseScript is Script {
         _updateEnv(_address, _constructorParams, _contractName);
     }
 
-    function deploy(function() returns (DeployReturn memory) _deployFunction)
-        internal
-        broadcaster
-        returns (DeployReturn memory _return)
-    {
+    function deploy(function() returns (DeployReturn memory) _deployFunction) internal broadcaster returns (DeployReturn memory _return) {
         _return = _deployFunction();
     }
 }

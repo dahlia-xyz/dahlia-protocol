@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Vm} from "@forge-std/Test.sol";
-import {console} from "@forge-std/console.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
-import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
+import { Vm } from "@forge-std/Test.sol";
+import { console } from "@forge-std/console.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
+import { ERC20Mock, IERC20 } from "test/common/mocks/ERC20Mock.sol";
 
 library DahliaTransUtils {
     function dahliaLendBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
@@ -19,19 +19,13 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaClaimInterestBy(Vm vm, address lender, TestContext.MarketContext memory $)
-        internal
-        returns (uint256 interest)
-    {
+    function dahliaClaimInterestBy(Vm vm, address lender, TestContext.MarketContext memory $) internal returns (uint256 interest) {
         vm.startPrank(lender);
         interest = $.dahlia.claimInterest($.marketId, lender, lender);
         vm.stopPrank();
     }
 
-    function dahliaWithdrawBy(Vm vm, address lender, uint256 shares, TestContext.MarketContext memory $)
-        internal
-        returns (uint256 assets)
-    {
+    function dahliaWithdrawBy(Vm vm, address lender, uint256 shares, TestContext.MarketContext memory $) internal returns (uint256 assets) {
         vm.startPrank(lender);
         assets = $.dahlia.withdraw($.marketId, shares, lender, lender);
         vm.stopPrank();
@@ -49,13 +43,7 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaRepayByShares(
-        Vm vm,
-        address borrower,
-        uint256 shares,
-        uint256 assets,
-        TestContext.MarketContext memory $
-    ) internal {
+    function dahliaRepayByShares(Vm vm, address borrower, uint256 shares, uint256 assets, TestContext.MarketContext memory $) internal {
         vm.startPrank(borrower);
         ERC20Mock($.marketConfig.loanToken).setBalance(borrower, assets);
         console.log("borrower assets: ", assets);
@@ -65,9 +53,7 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaSupplyCollateralBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $)
-        internal
-    {
+    function dahliaSupplyCollateralBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
         ERC20Mock($.marketConfig.collateralToken).setBalance(lender, assets);
         vm.startPrank(lender);
         IERC20($.marketConfig.collateralToken).approve(address($.dahlia), assets);
@@ -75,13 +61,7 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaSubmitPosition(
-        Vm vm,
-        TestTypes.MarketPosition memory pos,
-        address lender,
-        address borrower,
-        TestContext.MarketContext memory $
-    ) internal {
+    function dahliaSubmitPosition(Vm vm, TestTypes.MarketPosition memory pos, address lender, address borrower, TestContext.MarketContext memory $) internal {
         $.oracle.setPrice(type(uint256).max / pos.collateral);
         dahliaLendBy(vm, lender, pos.lent, $);
         dahliaSupplyCollateralBy(vm, borrower, pos.collateral, $);
@@ -89,20 +69,13 @@ library DahliaTransUtils {
         $.oracle.setPrice(pos.price);
     }
 
-    function dahliaPrepareLoanBalanceFor(Vm vm, address liquidator, uint256 amount, TestContext.MarketContext memory $)
-        internal
-    {
+    function dahliaPrepareLoanBalanceFor(Vm vm, address liquidator, uint256 amount, TestContext.MarketContext memory $) internal {
         $.loanToken.setBalance(liquidator, amount);
         vm.prank(liquidator);
         $.loanToken.approve(address($.dahlia), amount);
     }
 
-    function dahliaPrepareCollateralBalanceFor(
-        Vm vm,
-        address liquidator,
-        uint256 amount,
-        TestContext.MarketContext memory $
-    ) internal {
+    function dahliaPrepareCollateralBalanceFor(Vm vm, address liquidator, uint256 amount, TestContext.MarketContext memory $) internal {
         $.collateralToken.setBalance(liquidator, amount);
         vm.prank(liquidator);
         $.collateralToken.approve(address($.dahlia), amount);

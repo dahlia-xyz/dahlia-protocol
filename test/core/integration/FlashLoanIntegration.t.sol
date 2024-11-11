@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IDahliaFlashLoanCallback} from "src/core/interfaces/IDahliaCallbacks.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IDahliaFlashLoanCallback } from "src/core/interfaces/IDahliaCallbacks.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
     using FixedPointMathLib for uint256;
@@ -74,11 +74,7 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
 
         vm.resumeGasMetering();
         vm.expectRevert("ERC20: subtraction underflow");
-        $.dahlia.flashLoan(
-            address($.loanToken),
-            amount,
-            abi.encode(this.test_int_flashLoan_shouldRevertIfNotReimbursed.selector, TestConstants.EMPTY_CALLBACK)
-        );
+        $.dahlia.flashLoan(address($.loanToken), amount, abi.encode(this.test_int_flashLoan_shouldRevertIfNotReimbursed.selector, TestConstants.EMPTY_CALLBACK));
     }
 
     function test_int_flashLoan_success(uint256 amount) public {
@@ -103,23 +99,12 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
         vm.dahliaLendBy($.carol, pos.lent, $);
 
         vm.resumeGasMetering();
-        $.dahlia.supplyCollateral(
-            $.marketId,
-            pos.collateral,
-            address(this),
-            abi.encode(this.test_int_flashActions.selector, abi.encode(pos.borrowed))
-        );
+        $.dahlia.supplyCollateral($.marketId, pos.collateral, address(this), abi.encode(this.test_int_flashActions.selector, abi.encode(pos.borrowed)));
         IDahlia.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, address(this));
 
         assertGt(userPos1.borrowShares, 0, "no borrow");
 
-        $.dahlia.repay(
-            $.marketId,
-            pos.borrowed,
-            0,
-            address(this),
-            abi.encode(this.test_int_flashActions.selector, abi.encode(pos.collateral))
-        );
+        $.dahlia.repay($.marketId, pos.borrowed, 0, address(this), abi.encode(this.test_int_flashActions.selector, abi.encode(pos.collateral)));
         IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, address(this));
         assertEq(userPos.collateral, 0, "no withdraw collateral");
     }

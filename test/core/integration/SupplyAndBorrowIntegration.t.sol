@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract SupplyAndBorrowIntegrationTest is Test {
     using FixedPointMathLib for uint256;
@@ -113,21 +113,17 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
-        (uint256 _assets, uint256 _shares) =
-            $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
+        (uint256 _assets, uint256 _shares) = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
 
         _checkMarketBorrowValid(_assets, _shares, pos.lent, pos.borrowed, expectedBorrowShares);
     }
 
-    function _checkMarketBorrowValid(
-        uint256 returnAssets,
-        uint256 returnShares,
-        uint256 amountLent,
-        uint256 amountBorrowed,
-        uint256 expectedBorrowShares
-    ) internal view {
+    function _checkMarketBorrowValid(uint256 returnAssets, uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares)
+        internal
+        view
+    {
         IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");

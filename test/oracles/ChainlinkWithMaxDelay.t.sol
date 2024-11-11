@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import {Test, Vm} from "@forge-std/Test.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ChainlinkWithMaxDelayBase} from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
-import {ChainlinkWithMaxDelay} from "src/oracles/contracts/ChainlinkWithMaxDelay.sol";
-import {IChainlinkOracleWithMaxDelay} from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {Mainnet} from "test/oracles/Constants.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ChainlinkWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
+import { ChainlinkWithMaxDelay } from "src/oracles/contracts/ChainlinkWithMaxDelay.sol";
+import { IChainlinkOracleWithMaxDelay } from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { Mainnet } from "test/oracles/Constants.sol";
 
 contract ChainlinkWithMaxDelayTest is Test {
     using BoundUtils for Vm;
@@ -33,9 +33,9 @@ contract ChainlinkWithMaxDelayTest is Test {
                 quoteFeedSecondary: AggregatorV3Interface(address(0))
             }),
             IChainlinkOracleWithMaxDelay.Delays({
-                baseMaxDelayPrimary: 86400,
-                baseMaxDelaySecondary: 86400,
-                quoteMaxDelayPrimary: 86400,
+                baseMaxDelayPrimary: 86_400,
+                baseMaxDelaySecondary: 86_400,
+                quoteMaxDelayPrimary: 86_400,
                 quoteMaxDelaySecondary: 0
             })
         );
@@ -43,7 +43,7 @@ contract ChainlinkWithMaxDelayTest is Test {
 
     function test_oracle_chainlinkWithMaxDelay_success() public view {
         (uint256 _price, bool _isBadData) = oracle.getPrice();
-        assertEq(_price, 620401598034033622037203720372037203720);
+        assertEq(_price, 620_401_598_034_033_622_037_203_720_372_037_203_720);
         assertEq(_isBadData, false);
     }
 
@@ -53,12 +53,7 @@ contract ChainlinkWithMaxDelayTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
         oracle.setMaximumOracleDelays(
-            IChainlinkOracleWithMaxDelay.Delays({
-                baseMaxDelayPrimary: 1,
-                baseMaxDelaySecondary: 2,
-                quoteMaxDelayPrimary: 3,
-                quoteMaxDelaySecondary: 0
-            })
+            IChainlinkOracleWithMaxDelay.Delays({ baseMaxDelayPrimary: 1, baseMaxDelaySecondary: 2, quoteMaxDelayPrimary: 3, quoteMaxDelaySecondary: 0 })
         );
         vm.stopPrank();
     }
@@ -68,12 +63,7 @@ contract ChainlinkWithMaxDelayTest is Test {
         vm.startPrank(owner);
 
         oracle.setMaximumOracleDelays(
-            IChainlinkOracleWithMaxDelay.Delays({
-                baseMaxDelayPrimary: 1,
-                baseMaxDelaySecondary: 2,
-                quoteMaxDelayPrimary: 3,
-                quoteMaxDelaySecondary: 0
-            })
+            IChainlinkOracleWithMaxDelay.Delays({ baseMaxDelayPrimary: 1, baseMaxDelaySecondary: 2, quoteMaxDelayPrimary: 3, quoteMaxDelaySecondary: 0 })
         );
 
         vm.stopPrank();
@@ -88,16 +78,16 @@ contract ChainlinkWithMaxDelayTest is Test {
 
         oracle.setMaximumOracleDelays(
             IChainlinkOracleWithMaxDelay.Delays({
-                baseMaxDelayPrimary: 86400,
+                baseMaxDelayPrimary: 86_400,
                 baseMaxDelaySecondary: 1000, // <- 1000 second for good value
-                quoteMaxDelayPrimary: 86400,
+                quoteMaxDelayPrimary: 86_400,
                 quoteMaxDelaySecondary: 0
             })
         );
         vm.stopPrank();
 
         (uint256 _price, bool _isBadData) = oracle.getPrice();
-        assertEq(_price, 620401598034033622037203720372037203720);
+        assertEq(_price, 620_401_598_034_033_622_037_203_720_372_037_203_720);
         assertEq(_isBadData, true);
     }
 }

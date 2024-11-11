@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Points} from "@royco/Points.sol";
-import {PointsFactory} from "@royco/PointsFactory.sol";
-import {SafeCast} from "@royco/libraries/SafeCast.sol";
-import {Owned} from "@solmate/auth/Owned.sol";
-import {ERC20} from "@solmate/tokens/ERC20.sol";
-import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
-import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
+import { Points } from "@royco/Points.sol";
+import { PointsFactory } from "@royco/PointsFactory.sol";
+import { SafeCast } from "@royco/libraries/SafeCast.sol";
+import { Owned } from "@solmate/auth/Owned.sol";
+import { ERC20 } from "@solmate/tokens/ERC20.sol";
+import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
@@ -28,15 +28,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
                                INTERFACE
     //////////////////////////////////////////////////////////////*/
 
-    event RewardsSet(
-        address reward,
-        uint32 start,
-        uint32 end,
-        uint256 rate,
-        uint256 totalRewards,
-        uint256 protocolFee,
-        uint256 frontendFee
-    );
+    event RewardsSet(address reward, uint32 start, uint32 end, uint256 rate, uint256 totalRewards, uint256 protocolFee, uint256 frontendFee);
     event RewardsPerTokenUpdated(address reward, uint256 accumulated);
     event UserRewardsUpdated(address reward, address user, uint256 accumulated, uint256 checkpoint);
     event Claimed(address reward, address user, address receiver, uint256 claimed);
@@ -175,9 +167,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param rewardsToken The new reward token / points program to be used as incentives
     function addRewardsToken(address rewardsToken) public payable onlyOwner {
         // Check if max rewards offered limit has been reached
-        if (rewards.length == MAX_REWARDS) {
-            revert MaxRewardsReached();
-        }
+        if (rewards.length == MAX_REWARDS) revert MaxRewardsReached();
 
         if (rewardsToken == address(dahlia)) {
             revert InvalidReward();
@@ -264,11 +254,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param rewardsAdded The amount of rewards to add to the campaign
     /// @param newEnd The end date of the rewards campaign
     /// @param frontendFeeRecipient The address to reward for directing IP flow
-    function extendRewardsInterval(address reward, uint256 rewardsAdded, uint256 newEnd, address frontendFeeRecipient)
-        external
-        payable
-        onlyOwner
-    {
+    function extendRewardsInterval(address reward, uint256 rewardsAdded, uint256 newEnd, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) {
             revert InvalidReward();
         }
@@ -292,8 +278,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         // Calculate the new rate
         uint256 rewardsAfterFee = rewardsAdded - frontendFeeTaken - protocolFeeTaken;
 
-        uint32 newStart =
-            block.timestamp > uint256(rewardsInterval.start) ? block.timestamp.toUint32() : rewardsInterval.start;
+        uint32 newStart = block.timestamp > uint256(rewardsInterval.start) ? block.timestamp.toUint32() : rewardsInterval.start;
 
         if ((newEnd - newStart) < MIN_CAMPAIGN_EXTENSION) {
             revert InvalidIntervalDuration();
@@ -310,15 +295,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         rewardsInterval.end = newEnd.toUint32();
         rewardsInterval.rate = rate.toUint96();
 
-        emit RewardsSet(
-            reward,
-            newStart,
-            newEnd.toUint32(),
-            rate,
-            (rewardsAfterFee + remainingRewards),
-            protocolFeeTaken,
-            frontendFeeTaken
-        );
+        emit RewardsSet(reward, newStart, newEnd.toUint32(), rate, (rewardsAfterFee + remainingRewards), protocolFeeTaken, frontendFeeTaken);
 
         pullReward(reward, msg.sender, rewardsAdded);
     }
@@ -329,13 +306,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param end The end timestamp of the interval
     /// @param totalRewards The amount of rewards to distribute over the interval
     /// @param frontendFeeRecipient The address to reward the frontendFee
-    function setRewardsInterval(
-        address reward,
-        uint256 start,
-        uint256 end,
-        uint256 totalRewards,
-        address frontendFeeRecipient
-    ) external payable onlyOwner {
+    function setRewardsInterval(address reward, uint256 start, uint256 end, uint256 totalRewards, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) {
             revert InvalidReward();
         }
@@ -388,15 +359,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         // Any unclaimed rewards can still be claimed
         rewardsPerToken.lastUpdated = start.toUint32();
 
-        emit RewardsSet(
-            reward,
-            block.timestamp.toUint32(),
-            rewardsInterval.end,
-            rate,
-            rewardsAfterFee,
-            protocolFeeTaken,
-            frontendFeeTaken
-        );
+        emit RewardsSet(reward, block.timestamp.toUint32(), rewardsInterval.end, rate, rewardsAfterFee, protocolFeeTaken, frontendFeeTaken);
 
         pullReward(reward, msg.sender, totalRewards);
     }
@@ -420,12 +383,12 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @notice Update the rewards per token accumulator according to the rate, the time elapsed since the last update, and the current total staked amount.
-    function _calculateRewardsPerToken(
-        RewardsPerToken memory rewardsPerTokenIn,
-        RewardsInterval memory rewardsInterval_
-    ) internal view returns (RewardsPerToken memory) {
-        RewardsPerToken memory rewardsPerTokenOut =
-            RewardsPerToken(rewardsPerTokenIn.accumulated, rewardsPerTokenIn.lastUpdated);
+    function _calculateRewardsPerToken(RewardsPerToken memory rewardsPerTokenIn, RewardsInterval memory rewardsInterval_)
+        internal
+        view
+        returns (RewardsPerToken memory)
+    {
+        RewardsPerToken memory rewardsPerTokenOut = RewardsPerToken(rewardsPerTokenIn.accumulated, rewardsPerTokenIn.lastUpdated);
 
         // No changes if the program hasn't started
         if (block.timestamp < rewardsInterval_.start) {
@@ -451,19 +414,14 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         uint256 elapsedWAD = elapsed * 1e18 * SharesMathLib.SHARES_OFFSET;
         // Calculate and update the new value of the accumulator.
-        rewardsPerTokenOut.accumulated =
-            (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDivDown(rewardsInterval_.rate, totalSupply))); // The
+        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDivDown(rewardsInterval_.rate, totalSupply))); // The
             // rewards per token are scaled up for precision
 
         return rewardsPerTokenOut;
     }
 
     /// @notice Calculate the rewards accumulated by a stake between two checkpoints.
-    function _calculateUserRewards(uint256 stake_, uint256 earlierCheckpoint, uint256 latterCheckpoint)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _calculateUserRewards(uint256 stake_, uint256 earlierCheckpoint, uint256 latterCheckpoint) internal pure returns (uint256) {
         return stake_ * (latterCheckpoint - earlierCheckpoint) / 1e18 / SharesMathLib.SHARES_OFFSET; // We must scale down the rewards by the precision factor
     }
 
@@ -506,8 +464,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         }
 
         // Calculate and update the new value user reserves.
-        userRewards_.accumulated +=
-            _calculateUserRewards(balanceOf[user], userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
+        userRewards_.accumulated += _calculateUserRewards(balanceOf[user], userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
         userRewards_.checkpoint = rewardsPerToken_.accumulated;
 
         rewardToUserToAR[reward][user] = userRewards_;
@@ -588,10 +545,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @dev This repeats the logic used on transactions, but doesn't update the storage.
     function currentUserRewards(address reward, address user) public view returns (uint256) {
         UserRewards memory accumulatedRewards_ = rewardToUserToAR[reward][user];
-        RewardsPerToken memory rewardsPerToken_ =
-            _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]);
-        return accumulatedRewards_.accumulated
-            + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
+        RewardsPerToken memory rewardsPerToken_ = _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]);
+        return accumulatedRewards_.accumulated + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
     }
 
     /// @notice Calculates the rate a user would receive in rewards after depositing assets
@@ -686,11 +641,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
     }
 
-    function _withdraw(address caller, uint256 shares, address receiver, address owner)
-        internal
-        virtual
-        returns (uint256 _assets)
-    {
+    function _withdraw(address caller, uint256 shares, address receiver, address owner) internal virtual returns (uint256 _assets) {
         if (caller != owner) {
             uint256 allowed = allowance[owner][caller]; // Saves gas for limited approvals.
             if (shares > allowed) {

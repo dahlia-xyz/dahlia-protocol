@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import { IERC4626 } from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Test, Vm} from "forge-std/Test.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
-import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Test, Vm } from "forge-std/Test.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract WrappedVaultIntegration is Test {
     using FixedPointMathLib for uint256;
@@ -38,12 +38,10 @@ contract WrappedVaultIntegration is Test {
     }
 
     function test_int_proxy_name() public {
-        TestContext.MarketContext memory ctx2 =
-            ctx.bootstrapMarket("USDC", "WBTC", 81 * Constants.LLTV_100_PERCENT / 100);
+        TestContext.MarketContext memory ctx2 = ctx.bootstrapMarket("USDC", "WBTC", 81 * Constants.LLTV_100_PERCENT / 100);
         assertEq(IMarketStorage.MarketId.unwrap(ctx2.marketId), 2);
         assertEq(IERC4626(address(ctx2.dahlia.getMarket(ctx2.marketId).vault)).name(), "USDC/WBTC (81% LLTV)");
-        TestContext.MarketContext memory ctx3 =
-            ctx.bootstrapMarket("USDC", "WBTC", 8105 * Constants.LLTV_100_PERCENT / 10000);
+        TestContext.MarketContext memory ctx3 = ctx.bootstrapMarket("USDC", "WBTC", 8105 * Constants.LLTV_100_PERCENT / 10_000);
         assertEq(IMarketStorage.MarketId.unwrap(ctx3.marketId), 3);
         assertEq(IERC4626(address(ctx3.dahlia.getMarket(ctx3.marketId).vault)).name(), "USDC/WBTC (81.05% LLTV)");
     }
@@ -255,8 +253,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.bob), 0);
     }
 
-    bytes32 constant PERMIT_TYPEHASH =
-        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    bytes32 constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     function test_int_proxy_withdrawWithPermit(uint256 assets) public {
         vm.pauseGasMetering();

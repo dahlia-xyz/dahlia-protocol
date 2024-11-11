@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { BorrowImpl } from "src/core/impl/BorrowImpl.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title BorrowImpl library
@@ -42,15 +42,8 @@ library LiquidationImpl {
         uint256 liquidationBonusRate = market.liquidationBonusRate;
 
         // calculate collateral to seize and bad data
-        (
-            uint256 borrowAssets,
-            uint256 seizedCollateral,
-            uint256 bonusCollateral,
-            uint256 badDebtAssets,
-            uint256 badDebtShares
-        ) = MarketMath.calcLiquidation(
-            totalBorrowAssets, totalBorrowShares, collateral, collateralPrice, borrowShares, liquidationBonusRate
-        );
+        (uint256 borrowAssets, uint256 seizedCollateral, uint256 bonusCollateral, uint256 badDebtAssets, uint256 badDebtShares) =
+            MarketMath.calcLiquidation(totalBorrowAssets, totalBorrowShares, collateral, collateralPrice, borrowShares, liquidationBonusRate);
 
         // remove all shares from position
         borrowerPosition.borrowShares = 0;
@@ -67,9 +60,7 @@ library LiquidationImpl {
             // if we have reserves for bad debt lend shares we need to calculate them with borrow shares
             if (reserveShares > 0) {
                 // calc rescue assets and  shares by total lends
-                (rescueAssets, rescueShares) = MarketMath.calcRescueAssets(
-                    market.totalLendAssets, market.totalLendShares, badDebtAssets, reserveShares
-                );
+                (rescueAssets, rescueShares) = MarketMath.calcRescueAssets(market.totalLendAssets, market.totalLendShares, badDebtAssets, reserveShares);
                 // decrease reserve lend shares
                 reservePosition.lendShares -= rescueShares;
                 // decrease total lend shares
@@ -138,23 +129,11 @@ library LiquidationImpl {
         BorrowImpl.internalSupplyCollateral(market, borrowerPositionTo, newCollateral, borrower);
 
         // execute borrow in Market B
-        (uint256 newAssets, uint256 newShares) = BorrowImpl.internalBorrow(
-            marketTo, borrowerPositionTo, borrowAssets, 0, borrower, borrower, collateralPrice
-        );
+        (uint256 newAssets, uint256 newShares) = BorrowImpl.internalBorrow(marketTo, borrowerPositionTo, borrowAssets, 0, borrower, borrower, collateralPrice);
         // repaidAssets and newAssets must be the same
         require(repaidAssets == newAssets, "repaidAssets != newAssets"); // TODO: temporary check
 
-        emit Events.DahliaReallocate(
-            market.id,
-            marketTo.id,
-            msg.sender,
-            borrower,
-            newAssets,
-            newShares,
-            collateral,
-            newCollateral,
-            bonusCollateral
-        );
+        emit Events.DahliaReallocate(market.id, marketTo.id, msg.sender, borrower, newAssets, newShares, collateral, newCollateral, bonusCollateral);
 
         return (newAssets, newShares, newCollateral, bonusCollateral);
     }

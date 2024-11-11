@@ -1,25 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Ownable, Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {ChainlinkWithMaxDelayBase} from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
-import {UniswapV3SingleTwapBase} from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
-import {IChainlinkOracleWithMaxDelay} from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
-import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
-import {IUniswapV3SingleTwapOracle} from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
+import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { ChainlinkWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
+import { UniswapV3SingleTwapBase } from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
+import { IChainlinkOracleWithMaxDelay } from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
+import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { IUniswapV3SingleTwapOracle } from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
 
 contract DualOracleChainlinkUniV3 is ChainlinkWithMaxDelayBase, UniswapV3SingleTwapBase, Ownable2Step, IDahliaOracle {
-    constructor(
-        address owner_,
-        Params memory chainlinkParams,
-        Delays memory chainlinkMaxDelays,
-        OracleParams memory uniswapParams,
-        address uniswapStaticOracle
-    )
+    constructor(address owner_, Params memory chainlinkParams, Delays memory chainlinkMaxDelays, OracleParams memory uniswapParams, address uniswapStaticOracle)
         ChainlinkWithMaxDelayBase(chainlinkParams, chainlinkMaxDelays)
         UniswapV3SingleTwapBase(uniswapParams, uniswapStaticOracle)
         Ownable(owner_)
-    {}
+    { }
 
     /// @inheritdoc IChainlinkOracleWithMaxDelay
     function setMaximumOracleDelays(Delays memory _newMaxOracleDelays) external override onlyOwner {

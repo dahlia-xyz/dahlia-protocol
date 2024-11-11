@@ -1,28 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {
-    IDahliaLendCallback,
-    IDahliaLiquidateCallback,
-    IDahliaRepayCallback,
-    IDahliaSupplyCollateralCallback
-} from "src/core/interfaces/IDahliaCallbacks.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahliaLendCallback, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback } from "src/core/interfaces/IDahliaCallbacks.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
-contract CallbacksIntegrationTest is
-    Test,
-    IDahliaLiquidateCallback,
-    IDahliaRepayCallback,
-    IDahliaLendCallback,
-    IDahliaSupplyCollateralCallback
-{
+contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaLendCallback, IDahliaSupplyCollateralCallback {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
@@ -93,9 +82,7 @@ contract CallbacksIntegrationTest is
         vm.expectRevert();
         $.dahlia.supplyCollateral($.marketId, amount, address(this), TestConstants.EMPTY_CALLBACK);
 
-        $.dahlia.supplyCollateral(
-            $.marketId, amount, address(this), abi.encode(this.test_int_callback_supplyCollateral.selector)
-        );
+        $.dahlia.supplyCollateral($.marketId, amount, address(this), abi.encode(this.test_int_callback_supplyCollateral.selector));
 
         assertEq($.collateralToken.balanceOf(address($.dahlia)), amount);
     }

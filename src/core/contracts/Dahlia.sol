@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {MarketStorage} from "src/core/abstracts/MarketStorage.sol";
-import {Permitted} from "src/core/abstracts/Permitted.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {StringUtilsLib} from "src/core/helpers/StringUtilsLib.sol";
-import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
-import {InterestImpl} from "src/core/impl/InterestImpl.sol";
-import {LendImpl} from "src/core/impl/LendImpl.sol";
-import {LiquidationImpl} from "src/core/impl/LiquidationImpl.sol";
-import {ManageMarketImpl} from "src/core/impl/ManageMarketImpl.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { MarketStorage } from "src/core/abstracts/MarketStorage.sol";
+import { Permitted } from "src/core/abstracts/Permitted.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { StringUtilsLib } from "src/core/helpers/StringUtilsLib.sol";
+import { BorrowImpl } from "src/core/impl/BorrowImpl.sol";
+import { InterestImpl } from "src/core/impl/InterestImpl.sol";
+import { LendImpl } from "src/core/impl/LendImpl.sol";
+import { LiquidationImpl } from "src/core/impl/LiquidationImpl.sol";
+import { ManageMarketImpl } from "src/core/impl/ManageMarketImpl.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import {
     IDahliaFlashLoanCallback,
     IDahliaLendCallback,
@@ -27,9 +27,9 @@ import {
     IDahliaRepayCallback,
     IDahliaSupplyCollateralCallback
 } from "src/core/interfaces/IDahliaCallbacks.sol";
-import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
-import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
-import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahliaRegistry } from "src/core/interfaces/IDahliaRegistry.sol";
+import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
+import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 //TODO: protect some methods by ReentrancyGuard
 //import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
@@ -56,18 +56,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         dahliaRegistry = IDahliaRegistry(addressRegistry);
         protocolFeeRecipient = _owner;
         lltvRange = RateRange(Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
-        liquidationBonusRateRange = RateRange(
-            uint24(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE), uint24(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE)
-        );
+        liquidationBonusRateRange = RateRange(uint24(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE), uint24(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE));
     }
 
     /// @inheritdoc IDahlia
     function setLltvRange(RateRange memory range) external onlyOwner {
         // percent should be always between 0 and 100% and min ltv should be <= max ltv
-        require(
-            range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max,
-            Errors.RangeNotValid(range.min, range.max)
-        );
+        require(range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max, Errors.RangeNotValid(range.min, range.max));
         lltvRange = range;
 
         emit Events.SetLLTVRange(range.min, range.max);
@@ -77,8 +72,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     function setLiquidationBonusRateRange(RateRange memory range) external onlyOwner {
         // percent should be always between 0 and 100% and range.min should be <= range.max
         require(
-            range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE
-                && range.max <= Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE && range.min <= range.max,
+            range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE && range.max <= Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE && range.min <= range.max,
             Errors.RangeNotValid(range.min, range.max)
         );
         liquidationBonusRateRange = range;
@@ -124,8 +118,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
     function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view override {
         require(
-            liquidationBonusRate >= liquidationBonusRateRange.min
-                && liquidationBonusRate <= liquidationBonusRateRange.max
+            liquidationBonusRate >= liquidationBonusRateRange.min && liquidationBonusRate <= liquidationBonusRateRange.max
                 && liquidationBonusRate <= MarketMath.getMaxLiquidationBonusRate(lltv),
             Errors.LiquidationBonusRateNotAllowed()
         );
@@ -156,17 +149,14 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         if (marketConfig.owner != address(0)) {
             owner = marketConfig.owner;
         }
-        IWrappedVault wrappedVault = WrappedVaultFactory(
-            dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)
-        ).wrapVault(id, marketConfig.loanToken, owner, name, fee);
+        IWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
+            id, marketConfig.loanToken, owner, name, fee
+        );
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
     }
 
     /// @inheritdoc IDahlia
-    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
-        external
-        returns (uint256 shares)
-    {
+    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData) external returns (uint256 shares) {
         require(onBehalfOf != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -188,11 +178,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
-        external
-        isSenderPermitted(onBehalfOf)
-        returns (uint256 assets)
-    {
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external isSenderPermitted(onBehalfOf) returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -213,11 +199,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function claimInterest(MarketId id, address onBehalfOf, address receiver)
-        external
-        isSenderPermitted(onBehalfOf)
-        returns (uint256 assets)
-    {
+    function claimInterest(MarketId id, address onBehalfOf, address receiver) external isSenderPermitted(onBehalfOf) returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -260,21 +242,18 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
 
-        (assets, shares) =
-            BorrowImpl.internalBorrow(market, positions[onBehalfOf], assets, shares, onBehalfOf, receiver, 0);
+        (assets, shares) = BorrowImpl.internalBorrow(market, positions[onBehalfOf], assets, shares, onBehalfOf, receiver, 0);
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
         return (assets, shares);
     }
 
     // @inheritdoc IDahlia
-    function supplyAndBorrow(
-        MarketId id,
-        uint256 collateralAssets,
-        uint256 borrowAssets,
-        address onBehalfOf,
-        address receiver
-    ) external isSenderPermitted(onBehalfOf) returns (uint256 borrowedAssets, uint256 borrowedShares) {
+    function supplyAndBorrow(MarketId id, uint256 collateralAssets, uint256 borrowAssets, address onBehalfOf, address receiver)
+        external
+        isSenderPermitted(onBehalfOf)
+        returns (uint256 borrowedAssets, uint256 borrowedShares)
+    {
         require(collateralAssets > 0 && borrowAssets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
@@ -286,22 +265,18 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
 
-        (borrowedAssets, borrowedShares) =
-            BorrowImpl.internalBorrow(market, positions[onBehalfOf], borrowAssets, 0, onBehalfOf, receiver, 0);
+        (borrowedAssets, borrowedShares) = BorrowImpl.internalBorrow(market, positions[onBehalfOf], borrowAssets, 0, onBehalfOf, receiver, 0);
 
         IERC20(market.loanToken).safeTransfer(receiver, borrowedAssets);
         return (borrowedAssets, borrowedShares);
     }
 
     // @inheritdoc IDahlia
-    function repayAndWithdraw(
-        MarketId id,
-        uint256 collateralAssets,
-        uint256 repayAssets,
-        uint256 repayShares,
-        address onBehalfOf,
-        address receiver
-    ) external isSenderPermitted(onBehalfOf) returns (uint256 repaidAssets, uint256 repaidShares) {
+    function repayAndWithdraw(MarketId id, uint256 collateralAssets, uint256 repayAssets, uint256 repayShares, address onBehalfOf, address receiver)
+        external
+        isSenderPermitted(onBehalfOf)
+        returns (uint256 repaidAssets, uint256 repaidShares)
+    {
         require(collateralAssets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
@@ -310,8 +285,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
 
-        (repaidAssets, repaidShares) =
-            BorrowImpl.internalRepay(market, positions[onBehalfOf], repayAssets, repayShares, onBehalfOf);
+        (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, positions[onBehalfOf], repayAssets, repayShares, onBehalfOf);
         IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
 
         BorrowImpl.internalWithdrawCollateral(market, positions[onBehalfOf], collateralAssets, onBehalfOf, receiver);
@@ -319,10 +293,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function repay(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
-        external
-        returns (uint256, uint256)
-    {
+    function repay(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData) external returns (uint256, uint256) {
         require(onBehalfOf != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -379,8 +350,8 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         //TODO: compute hash instead of this complex condition or maybe we need to
         // check owner of the market not deployer?
         require(
-            market.oracle == marketTo.oracle && market.loanToken == marketTo.loanToken
-                && market.collateralToken == marketTo.collateralToken && market.marketDeployer == marketTo.marketDeployer,
+            market.oracle == marketTo.oracle && market.loanToken == marketTo.loanToken && market.collateralToken == marketTo.collateralToken
+                && market.marketDeployer == marketTo.marketDeployer,
             Errors.MarketsDiffer()
         );
 
@@ -423,10 +394,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function withdrawCollateral(MarketId id, uint256 assets, address onBehalfOf, address receiver)
-        external
-        isSenderPermitted(onBehalfOf)
-    {
+    function withdrawCollateral(MarketId id, uint256 assets, address onBehalfOf, address receiver) external isSenderPermitted(onBehalfOf) {
         require(assets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
 
@@ -464,11 +432,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         _accrueMarketInterest(positions, market);
     }
 
-    function _accrueMarketInterest(mapping(address => MarketUserPosition) storage positions, Market storage market)
-        internal
-    {
-        InterestImpl.executeMarketAccrueInterest(
-            market, positions[protocolFeeRecipient], positions[reserveFeeRecipient]
-        );
+    function _accrueMarketInterest(mapping(address => MarketUserPosition) storage positions, Market storage market) internal {
+        InterestImpl.executeMarketAccrueInterest(market, positions[protocolFeeRecipient], positions[reserveFeeRecipient]);
     }
 }

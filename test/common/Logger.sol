@@ -20,8 +20,8 @@ pragma solidity ^0.8.27;
 
 // import {AddressHelper} from "./AddressHelper.sol";
 // import {NumberFormat} from "./NumberFormat.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {console2 as console} from "forge-std/Test.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { console2 as console } from "forge-std/Test.sol";
 
 library Logger {
     using Strings for *;
@@ -45,9 +45,7 @@ library Logger {
     }
 
     function logRate(string memory _string, uint256 _rate) public pure {
-        console.log(
-            string(abi.encodePacked(_string, " BPS: ", (_rate / ONE_BPS).toString(), " (raw: ", _rate.toString(), ")"))
-        );
+        console.log(string(abi.encodePacked(_string, " BPS: ", (_rate / ONE_BPS).toString(), " (raw: ", _rate.toString(), ")")));
     }
 
     function rate(string memory _string, uint256 _rate) public pure {
@@ -81,9 +79,7 @@ library Logger {
     }
 
     function addressWithEtherscanLink(string memory _string, address _address) public pure {
-        console.log(
-            string(abi.encodePacked(_string, " ", _address.toHexString(), " (", toEtherscanLink(_address), ")"))
-        );
+        console.log(string(abi.encodePacked(_string, " ", _address.toHexString(), " (", toEtherscanLink(_address), ")")));
     }
 
     function toEtherscanLink(address _address) public pure returns (string memory) {

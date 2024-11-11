@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
+import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title BorrowImpl library
@@ -20,12 +20,9 @@ library BorrowImpl {
     using SharesMathLib for uint256;
     using MarketMath for uint256;
 
-    function internalSupplyCollateral(
-        IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage onBehalfOfPosition,
-        uint256 assets,
-        address onBehalfOf
-    ) internal {
+    function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.MarketUserPosition storage onBehalfOfPosition, uint256 assets, address onBehalfOf)
+        internal
+    {
         // increase collateral value in position
         onBehalfOfPosition.collateral += assets;
 
@@ -84,8 +81,7 @@ library BorrowImpl {
         }
 
         // get current and  max borrow assets
-        (uint256 borrowedAssets, uint256 maxBorrowAssets) =
-            MarketMath.calcMaxBorrowAssets(market, onBehalfOfPosition, collateralPrice);
+        (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, onBehalfOfPosition, collateralPrice);
         // revert if user overflowed borrow amount, need to supply more collateral
         if (borrowedAssets > maxBorrowAssets) {
             revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
@@ -101,13 +97,10 @@ library BorrowImpl {
         return (assets, shares);
     }
 
-    function internalRepay(
-        IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage position,
-        uint256 assets,
-        uint256 shares,
-        address onBehalfOf
-    ) internal returns (uint256, uint256) {
+    function internalRepay(IDahlia.Market storage market, IDahlia.MarketUserPosition storage position, uint256 assets, uint256 shares, address onBehalfOf)
+        internal
+        returns (uint256, uint256)
+    {
         MarketMath.validateExactlyOneZero(assets, shares);
         // calculate assets or shares
         if (assets > 0) {

@@ -1,21 +1,21 @@
 // SPDX-Liense-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {PointsFactory} from "@royco/PointsFactory.sol";
-import {Test, Vm} from "forge-std/Test.sol";
-import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
-import {ERC4626} from "lib/solmate/src/tokens/ERC4626.sol";
-import {FixedPointMathLib} from "lib/solmate/src/utils/FixedPointMathLib.sol";
-import {Dahlia} from "src/core/contracts/Dahlia.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
-import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {ERC20Mock as MockERC20} from "test/common/mocks/ERC20Mock.sol";
+import { PointsFactory } from "@royco/PointsFactory.sol";
+import { Test, Vm } from "forge-std/Test.sol";
+import { ERC20 } from "lib/solmate/src/tokens/ERC20.sol";
+import { ERC4626 } from "lib/solmate/src/tokens/ERC4626.sol";
+import { FixedPointMathLib } from "lib/solmate/src/utils/FixedPointMathLib.sol";
+import { Dahlia } from "src/core/contracts/Dahlia.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
+import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { ERC20Mock as MockERC20 } from "test/common/mocks/ERC20Mock.sol";
 
 contract MockERC4626 is ERC4626 {
-    constructor(ERC20 _asset) ERC4626(_asset, "Base Vault", "bVault") {}
+    constructor(ERC20 _asset) ERC4626(_asset, "Base Vault", "bVault") { }
 
     function totalAssets() public view override returns (uint256) {
         return asset.balanceOf(address(this));
@@ -54,14 +54,10 @@ contract WrappedVaultTest is Test {
         ctx.setWalletAddress("MARKET_DEPLOYER", address(this));
         // set default fee in dahliaRegistry
         Dahlia dahlia = ctx.createDahlia();
-        testFactory = ctx.createRoycoWrappedVaultFactory(
-            dahlia, address(this), DEFAULT_FEE_RECIPIENT, DEFAULT_PROTOCOL_FEE, DEFAULT_FRONTEND_FEE
-        );
+        testFactory = ctx.createRoycoWrappedVaultFactory(dahlia, address(this), DEFAULT_FEE_RECIPIENT, DEFAULT_PROTOCOL_FEE, DEFAULT_FRONTEND_FEE);
 
         vm.startPrank(ctx.createWallet("OWNER"));
-        dahlia.dahliaRegistry().setValue(
-            Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE, DEFAULT_FRONTEND_FEE
-        );
+        dahlia.dahliaRegistry().setValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE, DEFAULT_FRONTEND_FEE);
         vm.stopPrank();
 
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv(), address(this));
@@ -171,21 +167,14 @@ contract WrappedVaultTest is Test {
         uint256 protocolFee = totalRewards.mulWadDown(testFactory.protocolFee());
         totalRewards -= frontendFee + protocolFee;
 
-        (uint32 actualStart, uint32 actualEnd, uint96 actualRate) =
-            testIncentivizedVault.rewardToInterval(address(rewardToken1));
+        (uint32 actualStart, uint32 actualEnd, uint96 actualRate) = testIncentivizedVault.rewardToInterval(address(rewardToken1));
 
         assertEq(actualStart, start);
         assertEq(actualEnd, end);
         assertEq(actualRate, totalRewards / duration);
     }
 
-    function testExtendRewardsInterval(
-        uint256 start,
-        uint256 initialDuration,
-        uint256 extension,
-        uint256 initialRewards,
-        uint256 additionalRewards
-    ) public {
+    function testExtendRewardsInterval(uint256 start, uint256 initialDuration, uint256 extension, uint256 initialRewards, uint256 additionalRewards) public {
         // Bound start to uint32 range
         start = bound(start, 0, type(uint32).max);
 
@@ -266,9 +255,7 @@ contract WrappedVaultTest is Test {
         rewardToken1.mint(address(this), initialRewards + additionalRewards);
         rewardToken1.approve(address(testIncentivizedVault), initialRewards + additionalRewards);
 
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), _start, _initialEnd, initialRewards, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), _start, _initialEnd, initialRewards, DEFAULT_FEE_RECIPIENT);
 
         uint256 frontendFee = initialRewards.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = initialRewards.mulWadDown(testFactory.protocolFee());
@@ -287,8 +274,7 @@ contract WrappedVaultTest is Test {
         protocolFee = additionalRewards.mulWadDown(testFactory.protocolFee());
         additionalRewards -= frontendFee + protocolFee;
 
-        (uint32 actualStart, uint32 actualEnd, uint96 actualRate) =
-            testIncentivizedVault.rewardToInterval(address(rewardToken1));
+        (uint32 actualStart, uint32 actualEnd, uint96 actualRate) = testIncentivizedVault.rewardToInterval(address(rewardToken1));
         assertEq(actualStart, block.timestamp);
         assertEq(actualEnd, _newEnd);
 
@@ -365,9 +351,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
 
         uint256 frontendFee = rewardAmount.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = rewardAmount.mulWadDown(testFactory.protocolFee());
@@ -403,9 +387,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
 
         uint256 frontendFee = rewardAmount.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = rewardAmount.mulWadDown(testFactory.protocolFee());
@@ -445,12 +427,8 @@ contract WrappedVaultTest is Test {
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount1);
         rewardToken2.approve(address(testIncentivizedVault), rewardAmount2);
 
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount1, DEFAULT_FEE_RECIPIENT
-        );
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken2), start, start + duration, rewardAmount2, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount1, DEFAULT_FEE_RECIPIENT);
+        testIncentivizedVault.setRewardsInterval(address(rewardToken2), start, start + duration, rewardAmount2, DEFAULT_FEE_RECIPIENT);
 
         uint256 frontendFee = rewardAmount1.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = rewardAmount1.mulWadDown(testFactory.protocolFee());
@@ -470,10 +448,8 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.claim(REGULAR_USER);
         vm.stopPrank();
 
-        uint256 expectedRewards1 =
-            (rewardAmount1 / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
-        uint256 expectedRewards2 =
-            (rewardAmount2 / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
+        uint256 expectedRewards1 = (rewardAmount1 / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
+        uint256 expectedRewards2 = (rewardAmount2 / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
 
         assertApproxEqRel(rewardToken1.balanceOf(REGULAR_USER), expectedRewards1, 1e15);
         assertApproxEqRel(rewardToken2.balanceOf(REGULAR_USER), expectedRewards2, 1e15);
@@ -483,7 +459,7 @@ contract WrappedVaultTest is Test {
         // depositAmount = 4076725132;
         // timeElapsed = 9305;
         // withdrawAmount = 1294;
-        depositAmount = 68770290467632281537321058;
+        depositAmount = 68_770_290_467_632_281_537_321_058;
         timeElapsed = 1;
         withdrawAmount = 3;
 
@@ -498,9 +474,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
 
         uint256 frontendFee = rewardAmount.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = rewardAmount.mulWadDown(testFactory.protocolFee());
@@ -520,9 +494,7 @@ contract WrappedVaultTest is Test {
         vm.stopPrank();
 
         uint256 expectedRewards = rewardsAfterFee * timeElapsed / duration * shares / supply;
-        assertApproxEqRel(
-            testIncentivizedVault.currentUserRewards(address(rewardToken1), REGULAR_USER), expectedRewards, 5e15
-        );
+        assertApproxEqRel(testIncentivizedVault.currentUserRewards(address(rewardToken1), REGULAR_USER), expectedRewards, 5e15);
     }
 
     function testFeeClaiming(uint256 depositAmount, uint32 timeElapsed) public {
@@ -538,9 +510,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, FRONTEND_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, FRONTEND_FEE_RECIPIENT);
 
         MockERC20(address(token)).mint(REGULAR_USER, depositAmount);
 
@@ -573,9 +543,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
 
         MockERC20(address(token)).mint(REGULAR_USER, initialDeposit + additionalDeposit);
 
@@ -602,9 +570,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
 
         MockERC20(address(token)).mint(REGULAR_USER, depositAmount);
 
@@ -639,9 +605,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
         rewardToken1.mint(address(this), rewardAmount);
         rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(
-            address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT
-        );
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
 
         uint256 frontendFee = rewardAmount.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = rewardAmount.mulWadDown(testFactory.protocolFee());
@@ -669,16 +633,12 @@ contract WrappedVaultTest is Test {
             totalRewards += userRewards;
             totalShares += shares[i];
 
-            uint256 expectedRewards =
-                rewardAmount * timeElapsed / duration * shares[i] / testIncentivizedVault.totalSupply();
+            uint256 expectedRewards = rewardAmount * timeElapsed / duration * shares[i] / testIncentivizedVault.totalSupply();
             assertApproxEqRel(userRewards, expectedRewards, 0.005e18, "Incorrect rewards for user");
         }
 
         assertApproxEqRel(
-            totalRewards,
-            (rewardAmount * timeElapsed) * totalShares / testIncentivizedVault.totalSupply() / duration,
-            1e15,
-            "Total rewards mismatch"
+            totalRewards, (rewardAmount * timeElapsed) * totalShares / testIncentivizedVault.totalSupply() / duration, 1e15, "Total rewards mismatch"
         );
     }
 }

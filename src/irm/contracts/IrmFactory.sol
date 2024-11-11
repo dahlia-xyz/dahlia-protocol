@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: ISC
 pragma solidity ^0.8.27;
 
-import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
-import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
-import {IIrm} from "src/irm/interfaces/IIrm.sol";
+import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
+import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
+import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 contract IrmFactory {
     event VariableIrmCreated(address indexed irmAddressm, VariableIrm.Config config);

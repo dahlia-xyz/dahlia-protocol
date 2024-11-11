@@ -1,34 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Vm} from "@forge-std/Test.sol";
-import {PointsFactory} from "@royco/PointsFactory.sol";
-import {Dahlia} from "src/core/contracts/Dahlia.sol";
-import {DahliaRegistry, IDahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
-import {Constants} from "src/core/helpers/Constants.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
+import { Vm } from "@forge-std/Test.sol";
+import { PointsFactory } from "@royco/PointsFactory.sol";
+import { Dahlia } from "src/core/contracts/Dahlia.sol";
+import { DahliaRegistry, IDahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
 
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IrmFactory} from "src/irm/contracts/IrmFactory.sol";
-import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
-import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
-import {IIrm} from "src/irm/interfaces/IIrm.sol";
-import {OracleFactory} from "src/oracles/contracts/OracleFactory.sol";
-import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
-import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestConstants} from "test/common/TestConstants.sol";
-import {ERC20Mock, IERC20} from "test/common/mocks/ERC20Mock.sol";
-import {OracleMock} from "test/common/mocks/OracleMock.sol";
-import {Mainnet} from "test/oracles/Constants.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
+import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
+import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
+import { IIrm } from "src/irm/interfaces/IIrm.sol";
+import { OracleFactory } from "src/oracles/contracts/OracleFactory.sol";
+import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { ERC20Mock, IERC20 } from "test/common/mocks/ERC20Mock.sol";
+import { OracleMock } from "test/common/mocks/OracleMock.sol";
+import { Mainnet } from "test/oracles/Constants.sol";
 
 interface IERC20Mint is IERC20 {
     function mint(address account, uint256 value) external returns (bool);
 }
 
 contract DahliaExt is Dahlia {
-    constructor(address _owner, address addressRegistry) Dahlia(_owner, addressRegistry) {}
+    constructor(address _owner, address addressRegistry) Dahlia(_owner, addressRegistry) { }
 
     // function forceChangeMarketLltv(IDahlia.MarketId marketId, uint24 lltv) external {
     //     markets[marketId].market.lltv = lltv;
@@ -67,25 +67,17 @@ contract TestContext {
         vm = vm_;
     }
 
-    function bootstrapMarket(
-        string memory loanTokenName,
-        string memory collateralTokenName,
-        uint256 lltv,
-        address owner
-    ) public returns (MarketContext memory) {
-        Dahlia.MarketConfig memory config =
-            createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv);
+    function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv, address owner)
+        public
+        returns (MarketContext memory)
+    {
+        Dahlia.MarketConfig memory config = createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv);
         config.owner = owner;
         return bootstrapMarket(config);
     }
 
-    function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv)
-        public
-        returns (MarketContext memory)
-    {
-        return bootstrapMarket(
-            createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv)
-        );
+    function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv) public returns (MarketContext memory) {
+        return bootstrapMarket(createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv));
     }
 
     function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 rltv, uint256 lltv)
@@ -156,11 +148,7 @@ contract TestContext {
         wallets[name] = wallet;
     }
 
-    function mint(string memory tokenName, string memory walletName, uint256 amount)
-        public
-        virtual
-        returns (address wallet)
-    {
+    function mint(string memory tokenName, string memory walletName, uint256 amount) public virtual returns (address wallet) {
         wallet = createWallet(walletName);
         ERC20Mock token = createERC20Token(tokenName);
         vm.prank(wallet);
@@ -168,11 +156,7 @@ contract TestContext {
         return wallet;
     }
 
-    function setWalletBalance(string memory tokenName, string memory walletName, uint256 amount)
-        public
-        virtual
-        returns (address wallet)
-    {
+    function setWalletBalance(string memory tokenName, string memory walletName, uint256 amount) public virtual returns (address wallet) {
         wallet = createWallet(walletName);
         ERC20Mock token = createERC20Token(tokenName);
         ERC20Mock(token).setBalance(wallet, amount);
@@ -193,10 +177,10 @@ contract TestContext {
                 minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
                 maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
                 targetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                minFullUtilizationRate: 1582470460,
-                maxFullUtilizationRate: 3164940920000,
-                zeroUtilizationRate: 158247046,
-                rateHalfLife: 172800,
+                minFullUtilizationRate: 1_582_470_460,
+                maxFullUtilizationRate: 3_164_940_920_000,
+                zeroUtilizationRate: 158_247_046,
+                rateHalfLife: 172_800,
                 targetRatePercent: 0.2e18
             })
         );
@@ -234,9 +218,7 @@ contract TestContext {
         public
         returns (Dahlia.MarketConfig memory)
     {
-        return createMarketConfig(
-            address(createERC20Token(loanToken)), address(createERC20Token(collateralToken)), rltv, lltv
-        );
+        return createMarketConfig(address(createERC20Token(loanToken)), address(createERC20Token(collateralToken)), rltv, lltv);
     }
 
     function createMarketConfig(address loanToken, address collateralToken, uint256 rltv, uint256 lltv)
@@ -256,10 +238,7 @@ contract TestContext {
         });
     }
 
-    function copyMarketConfig(Dahlia.MarketConfig memory config, uint256 rltv, uint256 lltv)
-        public
-        returns (Dahlia.MarketConfig memory marketConfig)
-    {
+    function copyMarketConfig(Dahlia.MarketConfig memory config, uint256 rltv, uint256 lltv) public returns (Dahlia.MarketConfig memory marketConfig) {
         marketConfig = IDahlia.MarketConfig({
             loanToken: config.loanToken,
             collateralToken: config.collateralToken,
@@ -284,13 +263,11 @@ contract TestContext {
         id = dahlia.deployMarket(marketConfig);
     }
 
-    function createRoycoWrappedVaultFactory(
-        Dahlia dahlia,
-        address roycoOwner,
-        address protocolFeeRecipient,
-        uint256 protocolFee,
-        uint256 minimumFrontendFee
-    ) public virtual returns (WrappedVaultFactory wrappedVaultFactory) {
+    function createRoycoWrappedVaultFactory(Dahlia dahlia, address roycoOwner, address protocolFeeRecipient, uint256 protocolFee, uint256 minimumFrontendFee)
+        public
+        virtual
+        returns (WrappedVaultFactory wrappedVaultFactory)
+    {
         address dahliaOwner = createWallet("OWNER");
         address dahliaRegistry = createDahliaRegistry(dahliaOwner);
         // skip if factory already created
@@ -300,14 +277,10 @@ contract TestContext {
         }
 
         address pointsFactory = address(new PointsFactory(roycoOwner));
-        wrappedVaultFactory = new WrappedVaultFactory(
-            protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia)
-        );
+        wrappedVaultFactory = new WrappedVaultFactory(protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia));
 
         vm.startPrank(dahliaOwner);
-        DahliaRegistry(dahliaRegistry).setAddress(
-            Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, address(wrappedVaultFactory)
-        );
+        DahliaRegistry(dahliaRegistry).setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, address(wrappedVaultFactory));
         vm.stopPrank();
     }
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Script} from "@forge-std/Script.sol";
-import {console} from "@forge-std/console.sol";
-import {Dahlia} from "src/core/contracts/Dahlia.sol";
-import {DahliaRegistry} from "src/core/contracts/DahliaRegistry.sol";
+import { Script } from "@forge-std/Script.sol";
+import { console } from "@forge-std/console.sol";
+import { Dahlia } from "src/core/contracts/Dahlia.sol";
+import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 
 contract DeployDahlia is Script {
     function run() public {

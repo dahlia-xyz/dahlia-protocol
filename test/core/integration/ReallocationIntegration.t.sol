@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import {Test, Vm} from "@forge-std/Test.sol";
-import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
-import {Errors} from "src/core/helpers/Errors.sol";
-import {Events} from "src/core/helpers/Events.sol";
-import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
+import { Test, Vm } from "@forge-std/Test.sol";
+import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
+import { Events } from "src/core/helpers/Events.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 
-import {TestConstants} from "test/common/TestConstants.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {TestTypes} from "test/common/TestTypes.sol";
+import { TestConstants } from "test/common/TestConstants.sol";
+import { TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
 
 contract ReallocationIntegrationTest is Test {
     using FixedPointMathLib for uint256;
@@ -34,9 +34,7 @@ contract ReallocationIntegrationTest is Test {
     function setUp() public {
         ctx = new TestContext(vm);
         $m1 = ctx.bootstrapMarket("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
-        $m2 = ctx.bootstrapMarket(
-            ctx.copyMarketConfig($m1.marketConfig, MarketMath.toPercent(80), MarketMath.toPercent(90))
-        );
+        $m2 = ctx.bootstrapMarket(ctx.copyMarketConfig($m1.marketConfig, MarketMath.toPercent(80), MarketMath.toPercent(90)));
         borrower = $m1.alice;
         lender = $m1.carol;
         reallocator = $m1.bob;
@@ -62,17 +60,7 @@ contract ReallocationIntegrationTest is Test {
         vm.prank(reallocator);
         vm.expectEmit(true, true, true, true, address(dahlia));
         vm.resumeGasMetering();
-        emit Events.DahliaReallocate(
-            $m1.marketId,
-            $m2.marketId,
-            reallocator,
-            borrower,
-            pos.borrowed,
-            newShares,
-            pos.collateral,
-            newCollateral,
-            bonusCollateral
-        );
+        emit Events.DahliaReallocate($m1.marketId, $m2.marketId, reallocator, borrower, pos.borrowed, newShares, pos.collateral, newCollateral, bonusCollateral);
         dahlia.reallocate($m1.marketId, $m2.marketId, borrower);
         vm.pauseGasMetering();
 
@@ -102,9 +90,7 @@ contract ReallocationIntegrationTest is Test {
 
         vm.prank(reallocator);
         vm.resumeGasMetering();
-        vm.expectRevert(
-            abi.encodeWithSelector(Errors.HealthyPositionReallocation.selector, positionLTV, $m1.marketConfig.rltv)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.HealthyPositionReallocation.selector, positionLTV, $m1.marketConfig.rltv));
         dahlia.reallocate($m1.marketId, $m2.marketId, borrower);
         vm.pauseGasMetering();
     }
@@ -119,9 +105,7 @@ contract ReallocationIntegrationTest is Test {
 
         vm.prank(reallocator);
         vm.resumeGasMetering();
-        vm.expectRevert(
-            abi.encodeWithSelector(Errors.BadPositionReallocation.selector, positionLTV, $m1.marketConfig.lltv)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Errors.BadPositionReallocation.selector, positionLTV, $m1.marketConfig.lltv));
         dahlia.reallocate($m1.marketId, $m2.marketId, borrower);
         vm.pauseGasMetering();
     }

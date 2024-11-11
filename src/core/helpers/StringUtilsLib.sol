@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.27;
 
-import {LibString} from "@solady/utils/LibString.sol";
+import { LibString } from "@solady/utils/LibString.sol";
 
 /// @title StringUtilsLib
 /// @notice A library for converting uint256 values to string representations.

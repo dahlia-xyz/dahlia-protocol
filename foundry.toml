@@ -8,9 +8,17 @@ optimizer_runs = 200
 via_ir = true
 
 [profile.default.fmt]
-single_line_statement_blocks = "multi"
-multiline_func_header = "attributes_first"
-override_spacing = true
+# copied from Royco
+line_length = 160
+bracket_spacing = true
+number_underscore = "thousands"
+wrap_comments = true
+int_types = "long"
+#multiline_func_header = "all"
+quote_style = "double"
+# end of copied from Royco
+#single_line_statement_blocks = "multi"
+multiline_func_header = "attributes_first" # improve readability
 sort_imports = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
