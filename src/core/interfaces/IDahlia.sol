@@ -23,7 +23,7 @@ interface IMarketStorage {
     }
 
     struct Market {
-        // --- 31 bytes
+        // --- 28 bytes
         MarketId id; // 4 bytes
         uint24 lltv; // 3 bytes
         MarketStatus status; // 1 byte
@@ -38,12 +38,11 @@ interface IMarketStorage {
         IDahliaOracle oracle; // 20 bytes
         uint64 fullUtilizationRate; // 3 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 26 bytes
+        // --- 23 bytes
         IIrm irm; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
         // --- 20 bytes
         IWrappedVault vault; // 20 bytes
-        address marketDeployer; // 20 bytes // TODO: remove if relocation removed
         // --- having all 256 bytes at the end make deployment size smaller
         uint256 totalLendAssets; // 32 bytes
         uint256 totalLendShares; // 32 bytes
