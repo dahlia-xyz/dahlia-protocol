@@ -13,8 +13,6 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
-/// @title WrappedVault
-/// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
@@ -136,9 +134,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         address pointsFactory
     ) Owned(_owner) ERC20(_name, _symbol, _decimals) {
         ERC4626I_FACTORY = WrappedVaultFactory(msg.sender);
-        if (initialFrontendFee < ERC4626I_FACTORY.minimumFrontendFee()) {
-            revert FrontendFeeBelowMinimum();
-        }
+        if (initialFrontendFee < ERC4626I_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
 
         frontendFee = initialFrontendFee;
         dahlia = IDahlia(_dahlia);
@@ -146,6 +142,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         DEPOSIT_ASSET = ERC20(_asset);
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
+        // TODO: why do we need this? should we dynamically compute base on difference between _asset decimals and
+        // _decimals?
         _mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
@@ -169,18 +167,12 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         // Check if max rewards offered limit has been reached
         if (rewards.length == MAX_REWARDS) revert MaxRewardsReached();
 
-        if (rewardsToken == address(dahlia)) {
-            revert InvalidReward();
-        }
+        if (rewardsToken == address(dahlia)) revert InvalidReward();
 
-        if (rewardsToken == address(this)) {
-            revert InvalidReward();
-        }
+        if (rewardsToken == address(this)) revert InvalidReward();
 
         // Check if reward has already been added to the incentivized vault
-        if (isReward[rewardsToken]) {
-            revert DuplicateRewardToken();
-        }
+        if (isReward[rewardsToken]) revert DuplicateRewardToken();
 
         // Check if vault is authorized to award points if reward is a points program
         if (POINTS_FACTORY.isPointsProgram(rewardsToken) && !Points(rewardsToken).isAllowedVault(address(this))) {
@@ -193,9 +185,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @param newFrontendFee The new front-end fee out of WAD
     function setFrontendFee(uint256 newFrontendFee) public payable onlyOwner {
-        if (newFrontendFee < ERC4626I_FACTORY.minimumFrontendFee()) {
-            revert FrontendFeeBelowMinimum();
-        }
+        if (newFrontendFee < ERC4626I_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
         frontendFee = newFrontendFee;
         emit FrontendFeeUpdated(newFrontendFee);
     }
@@ -211,9 +201,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param to The address to send all fees owed to msg.sender to
     /// @param reward The reward token / points program to claim fees from
     function claimFees(address to, address reward) public payable {
-        if (!isReward[reward]) {
-            revert InvalidReward();
-        }
+        if (!isReward[reward]) revert InvalidReward();
 
         uint256 owed = rewardToClaimantToFees[reward][msg.sender];
         delete rewardToClaimantToFees[reward][msg.sender];
@@ -226,9 +214,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param amount The amount of rewards to deduct from the user
     function pullReward(address reward, address from, uint256 amount) internal {
         if (POINTS_FACTORY.isPointsProgram(reward)) {
-            if (!Points(reward).isAllowedVault(address(this))) {
-                revert VaultNotAuthorizedToRewardPoints();
-            }
+            if (!Points(reward).isAllowedVault(address(this))) revert VaultNotAuthorizedToRewardPoints();
         } else {
             ERC20(reward).safeTransferFrom(from, address(this), amount);
         }
@@ -255,16 +241,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param newEnd The end date of the rewards campaign
     /// @param frontendFeeRecipient The address to reward for directing IP flow
     function extendRewardsInterval(address reward, uint256 rewardsAdded, uint256 newEnd, address frontendFeeRecipient) external payable onlyOwner {
-        if (!isReward[reward]) {
-            revert InvalidReward();
-        }
+        if (!isReward[reward]) revert InvalidReward();
         RewardsInterval storage rewardsInterval = rewardToIntervalData[reward];
-        if (newEnd <= rewardsInterval.end) {
-            revert InvalidInterval();
-        }
-        if (block.timestamp >= rewardsInterval.end) {
-            revert NoIntervalInProgress();
-        }
+        if (newEnd <= rewardsInterval.end) revert InvalidInterval();
+        if (block.timestamp >= rewardsInterval.end) revert NoIntervalInProgress();
         _updateRewardsPerToken(reward);
 
         // Calculate fees
@@ -280,16 +260,12 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         uint32 newStart = block.timestamp > uint256(rewardsInterval.start) ? block.timestamp.toUint32() : rewardsInterval.start;
 
-        if ((newEnd - newStart) < MIN_CAMPAIGN_EXTENSION) {
-            revert InvalidIntervalDuration();
-        }
+        if ((newEnd - newStart) < MIN_CAMPAIGN_EXTENSION) revert InvalidIntervalDuration();
 
         uint256 remainingRewards = rewardsInterval.rate * (rewardsInterval.end - newStart);
         uint256 rate = (rewardsAfterFee + remainingRewards) / (newEnd - newStart);
 
-        if (rate < rewardsInterval.rate) {
-            revert RateCannotDecrease();
-        }
+        if (rate < rewardsInterval.rate) revert RateCannotDecrease();
 
         rewardsInterval.start = newStart;
         rewardsInterval.end = newEnd.toUint32();
@@ -307,28 +283,18 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param totalRewards The amount of rewards to distribute over the interval
     /// @param frontendFeeRecipient The address to reward the frontendFee
     function setRewardsInterval(address reward, uint256 start, uint256 end, uint256 totalRewards, address frontendFeeRecipient) external payable onlyOwner {
-        if (!isReward[reward]) {
-            revert InvalidReward();
-        }
-        if (start >= end || end <= block.timestamp) {
-            revert InvalidInterval();
-        }
-        if ((end - start) < MIN_CAMPAIGN_DURATION) {
-            revert InvalidIntervalDuration();
-        }
+        if (!isReward[reward]) revert InvalidReward();
+        if (start >= end || end <= block.timestamp) revert InvalidInterval();
+        if ((end - start) < MIN_CAMPAIGN_DURATION) revert InvalidIntervalDuration();
 
         RewardsInterval storage rewardsInterval = rewardToIntervalData[reward];
         RewardsPerToken storage rewardsPerToken = rewardToRPT[reward];
 
         // A new rewards program cannot be set if one is running
-        if (block.timestamp.toUint32() >= rewardsInterval.start && block.timestamp.toUint32() <= rewardsInterval.end) {
-            revert IntervalInProgress();
-        }
+        if (block.timestamp.toUint32() >= rewardsInterval.start && block.timestamp.toUint32() <= rewardsInterval.end) revert IntervalInProgress();
 
         // A new rewards program cannot be set if one is scheduled to run in the future
-        if (rewardsInterval.start > block.timestamp) {
-            revert IntervalScheduled();
-        }
+        if (rewardsInterval.start > block.timestamp) revert IntervalScheduled();
 
         // Update the rewards per token so that we don't lose any rewards
         _updateRewardsPerToken(reward);
@@ -345,9 +311,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         uint256 rewardsAfterFee = totalRewards - frontendFeeTaken - protocolFeeTaken;
         uint256 rate = rewardsAfterFee / (end - start);
 
-        if (rate == 0) {
-            revert NoZeroRateAllowed();
-        }
+        if (rate == 0) revert NoZeroRateAllowed();
 
         rewardsInterval.start = start.toUint32();
         rewardsInterval.end = end.toUint32();
@@ -366,14 +330,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @param reward The address of the reward for which campaign should be refunded
     function refundRewardsInterval(address reward) external payable onlyOwner {
-        if (!isReward[reward]) {
-            revert InvalidReward();
-        }
+        if (!isReward[reward]) revert InvalidReward();
         RewardsInterval memory rewardsInterval = rewardToIntervalData[reward];
         delete rewardToIntervalData[reward];
-        if (block.timestamp >= rewardsInterval.start) {
-            revert IntervalInProgress();
-        }
+        if (block.timestamp >= rewardsInterval.start) revert IntervalInProgress();
 
         uint256 rewardsOwed = (rewardsInterval.rate * (rewardsInterval.end - rewardsInterval.start)) - 1; // Round down
         if (!POINTS_FACTORY.isPointsProgram(reward)) {
@@ -391,23 +351,17 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         RewardsPerToken memory rewardsPerTokenOut = RewardsPerToken(rewardsPerTokenIn.accumulated, rewardsPerTokenIn.lastUpdated);
 
         // No changes if the program hasn't started
-        if (block.timestamp < rewardsInterval_.start) {
-            return rewardsPerTokenOut;
-        }
+        if (block.timestamp < rewardsInterval_.start) return rewardsPerTokenOut;
 
         // No changes if the start value is zero
-        if (rewardsInterval_.start == 0) {
-            return rewardsPerTokenOut;
-        }
+        if (rewardsInterval_.start == 0) return rewardsPerTokenOut;
 
         // Stop accumulating at the end of the rewards interval
         uint256 updateTime = block.timestamp < rewardsInterval_.end ? block.timestamp : rewardsInterval_.end;
         uint256 elapsed = updateTime - rewardsPerTokenIn.lastUpdated;
 
         // No changes if no time has passed
-        if (elapsed == 0) {
-            return rewardsPerTokenOut;
-        }
+        if (elapsed == 0) return rewardsPerTokenOut;
         rewardsPerTokenOut.lastUpdated = updateTime.toUint32();
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
@@ -433,9 +387,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         RewardsPerToken memory rewardsPerTokenOut = _calculateRewardsPerToken(rewardsPerTokenIn, rewardsInterval);
 
         // We skip the storage changes if already updated in the same block, or if the program has ended and was updated at the end
-        if (rewardsPerTokenIn.lastUpdated == rewardsPerTokenOut.lastUpdated) {
-            return rewardsPerTokenOut;
-        }
+        if (rewardsPerTokenIn.lastUpdated == rewardsPerTokenOut.lastUpdated) return rewardsPerTokenOut;
 
         rewardToRPT[reward] = rewardsPerTokenOut;
         emit RewardsPerTokenUpdated(reward, rewardsPerTokenOut.accumulated);
@@ -459,9 +411,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         UserRewards memory userRewards_ = rewardToUserToAR[reward][user];
 
         // We skip the storage changes if there are no changes to the rewards per token accumulator
-        if (userRewards_.checkpoint == rewardsPerToken_.accumulated) {
-            return userRewards_;
-        }
+        if (userRewards_.checkpoint == rewardsPerToken_.accumulated) return userRewards_;
 
         // Calculate and update the new value user reserves.
         userRewards_.accumulated += _calculateUserRewards(balanceOf[user], userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
@@ -530,9 +480,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param to The address to send the rewards to
     /// @param reward The reward token / points program to claim rewards from
     function claim(address to, address reward) public payable {
-        if (!isReward[reward]) {
-            revert InvalidReward();
-        }
+        if (!isReward[reward]) revert InvalidReward();
         _claim(reward, msg.sender, to, currentUserRewards(reward, msg.sender));
     }
 
@@ -553,9 +501,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @return The rate of rewards, measured in wei of rewards token per wei of assets per second, scaled up by 1e18 to avoid precision loss
     function previewRateAfterDeposit(address reward, uint256 assets) public view returns (uint256) {
         RewardsInterval memory rewardsInterval = rewardToIntervalData[reward];
-        if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) {
-            return 0;
-        }
+        if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return 0;
         uint256 shares = previewDeposit(assets);
 
         uint256 rewardsRate = (uint256(rewardsInterval.rate) * shares / (totalSupply + shares)) * 1e18 / assets;
@@ -595,9 +541,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param minShares The minimum amount of shares to mint
     function safeDeposit(uint256 assets, address receiver, uint256 minShares) public returns (uint256 shares) {
         shares = _deposit(msg.sender, receiver, assets);
-        if (shares < minShares) {
-            revert TooFewShares();
-        }
+        if (shares < minShares) revert TooFewShares();
     }
 
     /// @inheritdoc IWrappedVault
@@ -610,8 +554,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
      */
     function _deposit(address caller, address receiver, uint256 assets) internal returns (uint256 shares) {
         DEPOSIT_ASSET.safeTransferFrom(caller, address(this), assets);
+
         (shares) = dahlia.lend(marketId, assets, receiver, bytes(""));
         _mint(receiver, shares);
+
         emit Deposit(msg.sender, receiver, assets, shares);
     }
 
@@ -626,9 +572,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         expectedShares = previewWithdraw(assets);
         uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, owner);
 
-        if (assets != actualAssets) {
-            revert InvalidWithdrawal();
-        }
+        if (assets != actualAssets) revert InvalidWithdrawal();
 
         emit Withdraw(msg.sender, receiver, owner, assets, expectedShares);
     }
@@ -644,12 +588,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function _withdraw(address caller, uint256 shares, address receiver, address owner) internal virtual returns (uint256 _assets) {
         if (caller != owner) {
             uint256 allowed = allowance[owner][caller]; // Saves gas for limited approvals.
-            if (shares > allowed) {
-                revert NotOwnerOfVaultOrApproved();
-            }
-            if (allowed != type(uint256).max) {
-                allowance[owner][caller] = allowed - shares;
-            }
+            if (shares > allowed) revert NotOwnerOfVaultOrApproved();
+            if (allowed != type(uint256).max) allowance[owner][caller] = allowed - shares;
         }
 
         _burn(owner, shares);
