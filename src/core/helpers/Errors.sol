@@ -17,7 +17,7 @@ library Errors {
     error HealthyPositionLiquidation(uint256 ltv, uint256 lltv);
 
     /// @notice Trying to reallocate a healthy position.
-    error HealthyPositionReallocation(uint256 ltv, uint256 rltv);
+    error HealthyPositionReallocation(uint256 ltv);
 
     /// @notice Trying to reallocate a bad posttion, need to liquidate.
     error BadPositionReallocation(uint256 ltv, uint256 lltv);
@@ -52,9 +52,6 @@ library Errors {
     /// @notice Inconsistent markets
     error MarketsDiffer();
 
-    /// @notice Market reallocation ltv is insufficient
-    error MarketReallocationLtvInsufficient();
-
     /// @notice Value is already set.
     error AlreadySet();
 
@@ -75,9 +72,6 @@ library Errors {
 
     /// @notice Relocation bonus rate not allowed.
     error RelocationBonusRateNotAllowed();
-
-    /// @notice Liquidation RLTV not allowed.
-    error RltvNotAllowed();
 
     /// @notice Liquidation LTV not allowed in the registry.
     error OraclePriceBadData();

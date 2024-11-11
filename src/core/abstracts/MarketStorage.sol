@@ -85,15 +85,12 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     }
 
     /// @inheritdoc IMarketStorage
-    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate) external {
-        require(reallocationBonusRate < liquidationBonusRate, Errors.MarketReallocationLtvInsufficient());
+    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
-        _validateReallocationBonusRate(reallocationBonusRate, market.rltv);
-        emit Events.MarketBonusRatesChanged(liquidationBonusRate, reallocationBonusRate);
+        emit Events.MarketBonusRatesChanged(liquidationBonusRate);
         market.liquidationBonusRate = uint24(liquidationBonusRate);
-        market.reallocationBonusRate = uint24(reallocationBonusRate);
     }
 
     function _validateMarket(MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {
@@ -108,8 +105,4 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     }
 
     function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view virtual;
-
-    function _validateReallocationBonusRate(uint256 rate, uint256 rltv) internal pure {
-        require(rate <= MarketMath.calcReallocationBonusRate(rltv), Errors.MarketReallocationLtvInsufficient());
-    }
 }

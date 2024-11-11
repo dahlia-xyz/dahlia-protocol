@@ -23,10 +23,9 @@ interface IMarketStorage {
     }
 
     struct Market {
-        // --- 31 bytes
+        // --- 28 bytes
         MarketId id; // 4 bytes
         uint24 lltv; // 3 bytes
-        uint24 rltv; // 3 bytes
         MarketStatus status; // 1 byte
         address loanToken; // 20 bytes
         // --- 32 bytes
@@ -39,13 +38,11 @@ interface IMarketStorage {
         IDahliaOracle oracle; // 20 bytes
         uint64 fullUtilizationRate; // 3 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 26 bytes
+        // --- 23 bytes
         IIrm irm; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
-        uint24 reallocationBonusRate; // 3 bytes
         // --- 20 bytes
         IWrappedVault vault; // 20 bytes
-        address marketDeployer; // 20 bytes // TODO: remove if relocation removed
         // --- having all 256 bytes at the end make deployment size smaller
         uint256 totalLendAssets; // 32 bytes
         uint256 totalLendShares; // 32 bytes
@@ -99,11 +96,10 @@ interface IMarketStorage {
     /// @param id of the market.
     function unpauseMarket(MarketId id) external;
 
-    /// @notice Update liquidationBonusRate and reallocationBonusRate for given market.
+    /// @notice Update liquidationBonusRate for given market.
     /// @param id of the market.
     /// @param liquidationBonusRate The new liquidationBonusRate where 100% is LLTV_100_PERCENT
-    /// @param reallocationBonusRate The new reallocationBonusRate where 100% is LLTV_100_PERCENT.
-    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate) external;
+    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate) external;
 
     /// @notice Deprecate market.
     /// @param id of the market.
@@ -147,7 +143,6 @@ interface IDahlia is IMarketStorage {
         IDahliaOracle oracle;
         IIrm irm;
         uint256 lltv;
-        uint256 rltv;
         uint256 liquidationBonusRate;
         /// @dev owner of the deployed market
         address owner;
@@ -252,18 +247,6 @@ interface IDahlia is IMarketStorage {
     function liquidate(MarketId id, address borrower, bytes calldata callbackData)
         external
         returns (uint256 collateralSeized, uint256 assetsRepaid, uint256 sharesRepaid);
-
-    /// @notice Reallocates a debt position.
-    /// @param marketId id of the market from.
-    /// @param marketId id of the market to.
-    /// @param borrower The address of the borrower.
-    /// @return reallocatedAssets The amount of reallocated assets.
-    /// @return reallocatedShares The amount of reallocated shares.
-    /// @return reallocatedCollateral The amount of reallocated collateral.
-    /// @return bonusCollateral The amount of collateral bonus for reallocator.
-    function reallocate(MarketId marketId, MarketId marketIdTo, address borrower)
-        external
-        returns (uint256 reallocatedAssets, uint256 reallocatedShares, uint256 reallocatedCollateral, uint256 bonusCollateral);
 
     /// @notice Supplies collateral on behalf of a user, with an optional callback.
     /// @param id of the market.

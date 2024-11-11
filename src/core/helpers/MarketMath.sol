@@ -115,13 +115,6 @@ library MarketMath {
         return FixedPointMathLib.min(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE, (Constants.LLTV_100_PERCENT - lltv) * 3 / 4);
     }
 
-    function calcReallocationBonusRate(uint256 rltv) internal pure returns (uint256) {
-        uint256 multiplicator = 0.1e5;
-        uint256 divisor = Constants.LLTV_100_PERCENT - multiplicator.mulDiv(Constants.LLTV_100_PERCENT - rltv, Constants.LLTV_100_PERCENT);
-        uint256 factor = Constants.LLTV_100_PERCENT.mulDiv(Constants.LLTV_100_PERCENT, divisor) - Constants.LLTV_100_PERCENT;
-        return Constants.MAX_REALLOCATION_BONUS_RATE.min(factor);
-    }
-
     /// @dev Returns true if there is exactly one zero among `x` and `y`.
     function validateExactlyOneZero(uint256 x, uint256 y) internal pure returns (bool z) {
         assembly {

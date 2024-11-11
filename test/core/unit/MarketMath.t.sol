@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Test } from "forge-std/Test.sol";
-import { Constants } from "src/core/helpers/Constants.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 
@@ -29,28 +28,6 @@ contract MarketMathTest is Test {
             f(mathSets[i], i.toString());
             i += 1;
         }
-    }
-
-    // function test_unit_math_calcLiquidationBonusRate() public pure {
-    //     uint256 C1 = Constants.LLTV_100_PERCENT / 100;
-    //     assertEq(MarketMath.calcLiquidationBonusRate(99 * C1), 300); // 0.3%
-    //     assertEq(MarketMath.calcLiquidationBonusRate(98 * C1), 603); // ~0.6%
-    //     assertEq(MarketMath.calcLiquidationBonusRate(90 * C1), 3092); // ~3%
-    //     assertEq(MarketMath.calcLiquidationBonusRate(80 * C1), 6382); // ~6.4%
-    //     assertEq(MarketMath.calcLiquidationBonusRate(75 * C1), 8108); // ~8.1%
-    //     assertEq(MarketMath.calcLiquidationBonusRate(60 * C1), Constants.MAX_LIQUIDATION_BONUS_RATE); // ~13.6% -> 10%
-    //     assertEq(MarketMath.calcLiquidationBonusRate(50 * C1), Constants.MAX_LIQUIDATION_BONUS_RATE); // 15% -> 10%
-    // }
-
-    function test_unit_math_calcReallocationBonusRate() public pure {
-        uint256 C1 = Constants.LLTV_100_PERCENT / 100;
-        assertEq(MarketMath.calcReallocationBonusRate(99 * C1), 100); // 0.1%
-        assertEq(MarketMath.calcReallocationBonusRate(98 * C1), 200); // 0.2%
-        assertEq(MarketMath.calcReallocationBonusRate(90 * C1), 1010); // ~1%
-        assertEq(MarketMath.calcReallocationBonusRate(80 * C1), 2040); // ~2.04%
-        assertEq(MarketMath.calcReallocationBonusRate(75 * C1), 2564); // ~2.564%
-        assertEq(MarketMath.calcReallocationBonusRate(60 * C1), Constants.MAX_REALLOCATION_BONUS_RATE); // ~4.166
-        assertEq(MarketMath.calcReallocationBonusRate(50 * C1), Constants.MAX_REALLOCATION_BONUS_RATE);
     }
 
     function test_unit_math_lend() public {

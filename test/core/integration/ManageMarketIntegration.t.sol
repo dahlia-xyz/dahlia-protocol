@@ -244,7 +244,7 @@ contract ManageMarketIntegrationTest is Test {
 
     function test_int_royco_deployWithOwner(address ownerFuzz) public {
         vm.assume(ownerFuzz != address(0));
-        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(80));
         marketConfig.owner = ownerFuzz;
         IMarketStorage.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);
@@ -253,7 +253,7 @@ contract ManageMarketIntegrationTest is Test {
     }
 
     function test_int_royco_deployWithNoOwner() public {
-        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
+        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(80));
         marketConfig.owner = address(0);
         vm.startPrank(ctx.createWallet("OWNER"));
         $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);

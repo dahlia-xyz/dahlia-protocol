@@ -6,7 +6,6 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { BorrowImpl } from "src/core/impl/BorrowImpl.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
 /**
@@ -89,52 +88,5 @@ library LiquidationImpl {
         );
 
         return (repaidAssets, repaidShares, seizedCollateral);
-    }
-
-    function internalReallocate(
-        IDahlia.Market storage market,
-        IDahlia.Market storage marketTo,
-        IDahlia.MarketUserPosition storage borrowerPosition,
-        IDahlia.MarketUserPosition storage borrowerPositionTo,
-        address borrower
-    ) internal returns (uint256, uint256, uint256, uint256) {
-        // get collateral price from oracle
-        uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
-        uint256 borrowShares = borrowerPosition.borrowShares;
-        uint256 collateral = borrowerPosition.collateral;
-        // get borrow assets from borrow shares
-        uint256 borrowAssets = borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
-        // calc current loan-to-value of borrower position
-        uint256 positionLTV = borrowAssets.getLTV(collateral, collateralPrice);
-
-        // we allow relocate only when rltv <= ltv
-        require(positionLTV >= market.rltv, Errors.HealthyPositionReallocation(positionLTV, market.rltv));
-        // and only when ltv < lltv
-        require(positionLTV < market.lltv, Errors.BadPositionReallocation(positionLTV, market.lltv));
-
-        // execute repayment in Market A
-        (uint256 repaidAssets,) = BorrowImpl.internalRepay(market, borrowerPosition, 0, borrowShares, borrower);
-        // execute withdraw collateral in Market A
-        BorrowImpl.internalWithdrawCollateral(market, borrowerPosition, collateral, borrower, borrower);
-
-        // calculate bonus for relocator with borrowAssets by reallocationBonusRate
-        uint256 bonusByBorrowAssets = borrowAssets.mulPercentDown(market.reallocationBonusRate);
-        // convert bonus from loan to collateral
-        uint256 bonusCollateral = bonusByBorrowAssets.lendToCollateralUp(collateralPrice);
-
-        // decrease borrower collateral by this bonus
-        uint256 newCollateral = collateral - bonusCollateral;
-
-        // execute supply collateral in Market B
-        BorrowImpl.internalSupplyCollateral(market, borrowerPositionTo, newCollateral, borrower);
-
-        // execute borrow in Market B
-        (uint256 newAssets, uint256 newShares) = BorrowImpl.internalBorrow(marketTo, borrowerPositionTo, borrowAssets, 0, borrower, borrower, collateralPrice);
-        // repaidAssets and newAssets must be the same
-        require(repaidAssets == newAssets, "repaidAssets != newAssets"); // TODO: temporary check
-
-        emit Events.DahliaReallocate(market.id, marketTo.id, msg.sender, borrower, newAssets, newShares, collateral, newCollateral, bonusCollateral);
-
-        return (newAssets, newShares, newCollateral, bonusCollateral);
     }
 }

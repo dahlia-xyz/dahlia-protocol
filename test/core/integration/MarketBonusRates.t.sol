@@ -34,26 +34,22 @@ contract MarketStatusIntegrationTest is Test {
         vm.prank(attacker);
         vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, attacker));
-        $.dahlia.updateMarketBonusRates($.marketId, 1, 0);
+        $.dahlia.updateMarketBonusRates($.marketId, 1);
     }
 
-    function test_updateMarketBonusRates_by_owner(uint256 liquidationBonusRate, uint256 reallocationBonusRate) public {
+    function test_updateMarketBonusRates_by_owner(uint256 liquidationBonusRate) public {
         vm.pauseGasMetering();
-        uint256 rltv = $.dahlia.getMarket($.marketId).rltv;
         liquidationBonusRate = bound(liquidationBonusRate, Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE);
-        uint256 upper = (liquidationBonusRate - 1).min(MarketMath.calcReallocationBonusRate(rltv));
-        reallocationBonusRate = bound(reallocationBonusRate, 0, upper);
         for (uint256 i = 0; i < $.permitted.length; i++) {
             address permitted = $.permitted[i];
             vm.prank(permitted);
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit Events.MarketBonusRatesChanged(liquidationBonusRate, reallocationBonusRate);
+            emit Events.MarketBonusRatesChanged(liquidationBonusRate);
             vm.resumeGasMetering();
-            $.dahlia.updateMarketBonusRates($.marketId, liquidationBonusRate, reallocationBonusRate);
+            $.dahlia.updateMarketBonusRates($.marketId, liquidationBonusRate);
             vm.pauseGasMetering();
             IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
             assertEq(market.liquidationBonusRate, liquidationBonusRate);
-            assertEq(market.reallocationBonusRate, reallocationBonusRate);
         }
     }
 }
