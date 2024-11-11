@@ -49,6 +49,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
     address public protocolFeeRecipient; // 20 bytes
     address public reserveFeeRecipient; // 20 bytes
+    uint24 public flashLoanFeeRate; // 3 bytes
 
     /// @dev the owner should be used by governance controller to control the call of each onlyOwner function
     constructor(address _owner, address addressRegistry) Ownable(_owner) {
@@ -114,6 +115,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         require(newReserveFeeRecipient != reserveFeeRecipient, Errors.AlreadySet());
         reserveFeeRecipient = newReserveFeeRecipient;
         emit Events.SetReserveFeeRecipient(newReserveFeeRecipient);
+    }
+
+    /// @inheritdoc IDahlia
+    function setFlashLoanFeeRate(uint24 newFlashLoanFeeRate) external onlyOwner {
+        require(newFlashLoanFeeRate <= Constants.MAX_FLASH_LOAN_FEE_RATE, Errors.MaxFeeExceeded());
+        flashLoanFeeRate = uint24(newFlashLoanFeeRate);
+        emit Events.SetFlashLoanFeeRate(newFlashLoanFeeRate);
     }
 
     function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view override {
@@ -414,13 +422,18 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     function flashLoan(address token, uint256 assets, bytes calldata callbackData) external {
         require(assets != 0, Errors.ZeroAssets());
 
+        uint256 fee = MarketMath.mulPercentUp(assets, flashLoanFeeRate);
+
         IERC20(token).safeTransfer(msg.sender, assets);
 
-        IDahliaFlashLoanCallback(msg.sender).onDahliaFlashLoan(assets, callbackData);
+        IDahliaFlashLoanCallback(msg.sender).onDahliaFlashLoan(assets, fee, callbackData);
 
-        IERC20(token).safeTransferFrom(msg.sender, address(this), assets); // TODO: do we need fee?
+        IERC20(token).safeTransferFrom(msg.sender, address(this), assets);
+        if (fee > 0) {
+            IERC20(token).safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
+        }
 
-        emit Events.DahliaFlashLoan(msg.sender, token, assets);
+        emit Events.DahliaFlashLoan(msg.sender, token, assets, fee);
     }
 
     /// @inheritdoc IDahlia

@@ -9,6 +9,9 @@ library Constants {
     /// @dev The maximum fee a market can have (25%).
     uint256 internal constant MAX_FEE_RATE = 0.25e5;
 
+    /// @dev The maximum fee a market can have (3%).
+    uint256 internal constant MAX_FLASH_LOAN_FEE_RATE = 0.03e5;
+
     /// @dev Oracle price scale.
     uint256 internal constant ORACLE_PRICE_SCALE = 1e36;
 

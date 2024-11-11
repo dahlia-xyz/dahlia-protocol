@@ -47,6 +47,7 @@ interface IDahliaSupplyCollateralCallback {
 interface IDahliaFlashLoanCallback {
     /// @notice Function to be called when a flash loan occurs.
     /// @param assets The amount of assets that were flash loaned.
+    /// @param fee The amount of fee.
     /// @param data Arbitrary data passed to the `flashLoan` function.
-    function onDahliaFlashLoan(uint256 assets, bytes calldata data) external;
+    function onDahliaFlashLoan(uint256 assets, uint256 fee, bytes calldata data) external;
 }

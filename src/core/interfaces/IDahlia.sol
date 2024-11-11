@@ -135,6 +135,10 @@ interface IDahlia is IMarketStorage {
     /// @param newReserveFeeRecipient The new protocol fee recipient address
     function setReserveFeeRecipient(address newReserveFeeRecipient) external;
 
+    /// @notice Sets a new flash loan fee.
+    /// @param newFee The new fee.
+    function setFlashLoanFeeRate(uint24 newFee) external;
+
     /// @notice Deploys a new market with the given parameters and returns its id.
     /// @param @param loanToken The address of the loan token.
     struct MarketConfig {
@@ -155,12 +159,12 @@ interface IDahlia is IMarketStorage {
 
     /// @notice Sets a new protocol fee for a given market.
     /// @param id of the market.
-    /// @param newFee The new fee, scaled by WAD.
+    /// @param newFee The new fee.
     function setProtocolFeeRate(MarketId id, uint32 newFee) external;
 
     /// @notice Sets a new reserve fee for a given market.
     /// @param id of the market.
-    /// @param newFee The new fee, scaled by WAD.
+    /// @param newFee The new fee.
     function setReserveFeeRate(MarketId id, uint32 newFee) external;
 
     /// @notice Lends `assets` on behalf of a user, with an optional callback.

@@ -113,7 +113,7 @@ contract ManageMarketIntegrationTest is Test {
         feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE_RATE + 1, type(uint32).max));
 
         vm.prank($.owner);
-        vm.expectRevert(Errors.MaxProtocolFeeExceeded.selector);
+        vm.expectRevert(Errors.MaxFeeExceeded.selector);
         $.dahlia.setProtocolFeeRate($.marketId, feeFuzz);
 
         // success
@@ -187,7 +187,7 @@ contract ManageMarketIntegrationTest is Test {
         feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE_RATE + 1, type(uint32).max));
 
         vm.prank($.owner);
-        vm.expectRevert(Errors.MaxProtocolFeeExceeded.selector);
+        vm.expectRevert(Errors.MaxFeeExceeded.selector);
         $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
 
         feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE_RATE));
@@ -199,6 +199,29 @@ contract ManageMarketIntegrationTest is Test {
         $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
 
         assertEq($.dahlia.getMarket($.marketId).reserveFeeRate, feeFuzz);
+    }
+
+    function test_int_manage_setFlashLoanFeeRate(uint24 feeFuzz) public {
+        // revert when not owner
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        $.dahlia.setFlashLoanFeeRate(feeFuzz);
+
+        // revert when too hight
+        feeFuzz = uint24(bound(uint256(feeFuzz), Constants.MAX_FLASH_LOAN_FEE_RATE + 1, type(uint24).max));
+
+        vm.prank($.owner);
+        vm.expectRevert(Errors.MaxFeeExceeded.selector);
+        $.dahlia.setFlashLoanFeeRate(feeFuzz);
+
+        feeFuzz = uint24(bound(uint256(feeFuzz), 0, Constants.MAX_FLASH_LOAN_FEE_RATE));
+
+        // success
+        vm.prank($.owner);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit Events.SetFlashLoanFeeRate(feeFuzz);
+        $.dahlia.setFlashLoanFeeRate(feeFuzz);
+
+        assertEq($.dahlia.flashLoanFeeRate(), feeFuzz);
     }
 
     function test_int_manage_deployMarketWhenIrmNotAllowed(IDahlia.MarketConfig memory marketParamsFuzz) public {

@@ -29,6 +29,10 @@ library Events {
     /// @param newReserveFeeRecipient The new reserve fee recipient.
     event SetReserveFeeRecipient(address indexed newReserveFeeRecipient);
 
+    /// @notice Emitted when setting a new flash loan fee.
+    /// @param newFee The new fee.
+    event SetFlashLoanFeeRate(uint256 newFee);
+
     /// @notice Emitted when allowing an LLTV range.
     /// @param minLltv The min LLTV.
     /// @param maxLltv The max LLTV.
@@ -170,5 +174,6 @@ library Events {
     /// @param caller The caller.
     /// @param token The token that was flash loaned.
     /// @param assets The amount that was flash loaned.
-    event DahliaFlashLoan(address indexed caller, address indexed token, uint256 assets);
+    /// @param fee The amount of fee.
+    event DahliaFlashLoan(address indexed caller, address indexed token, uint256 assets, uint256 fee);
 }

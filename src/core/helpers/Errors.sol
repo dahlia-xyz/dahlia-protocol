@@ -61,8 +61,8 @@ library Errors {
     /// @notice Range is not valid.
     error RangeNotValid(uint256, uint256);
 
-    /// @notice Max protocol fee exceeded.
-    error MaxProtocolFeeExceeded();
+    /// @notice Max fee exceeded.
+    error MaxFeeExceeded();
 
     /// @notice Interest Rate Model not allowed in the registry.
     error IrmNotAllowed();
