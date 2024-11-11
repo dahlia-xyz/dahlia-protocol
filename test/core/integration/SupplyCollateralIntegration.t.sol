@@ -46,7 +46,7 @@ contract SupplyCollateralIntegrationTest is Test {
         vm.assume(token.code.length == 0);
         $.marketConfig.collateralToken = token;
         vm.expectRevert(); // internal revert: ERC20: subtraction underflow
-        $.dahlia.deployMarket($.marketConfig, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.deployMarket($.marketConfig);
 
         vm.expectRevert(); // internal revert: ERC20: subtraction underflow
         $.dahlia.supplyCollateral($.marketId, assets, $.alice, TestConstants.EMPTY_CALLBACK);

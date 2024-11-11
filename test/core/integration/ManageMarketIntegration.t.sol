@@ -10,7 +10,7 @@ import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
-import {TestConstants, TestContext} from "test/common/TestContext.sol";
+import {TestContext} from "test/common/TestContext.sol";
 
 contract ManageMarketIntegrationTest is Test {
     using BoundUtils for Vm;
@@ -212,7 +212,7 @@ contract ManageMarketIntegrationTest is Test {
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
 
         vm.expectRevert(Errors.IrmNotAllowed.selector);
-        $.dahlia.deployMarket(marketParamsFuzz, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.deployMarket(marketParamsFuzz);
     }
 
     function test_int_manage_deployMarketWhenLltvNotAllowed(IDahlia.MarketConfig memory marketParamsFuzz) public {
@@ -221,7 +221,7 @@ contract ManageMarketIntegrationTest is Test {
         marketParamsFuzz.lltv = 0.001e18;
 
         vm.expectRevert(Errors.LltvNotAllowed.selector);
-        $.dahlia.deployMarket(marketParamsFuzz, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.deployMarket(marketParamsFuzz);
         assertEq($.dahlia.protocolFeeRecipient(), ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
     }
 
@@ -244,7 +244,7 @@ contract ManageMarketIntegrationTest is Test {
         $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
         vm.stopPrank();
         vm.startPrank($.marketAdmin);
-        IDahlia.MarketId marketId = $.dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
+        IDahlia.MarketId marketId = $.dahlia.deployMarket(marketConfig);
         assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);
         IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);

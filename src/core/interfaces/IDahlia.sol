@@ -154,8 +154,7 @@ interface IDahlia is IMarketStorage {
 
     /// @notice Deploys a new market with the given parameters and returns its id.
     /// @param marketConfig The parameters of the market.
-    /// @param data Additional data for market creation.
-    function deployMarket(MarketConfig memory marketConfig, bytes calldata data) external returns (MarketId id);
+    function deployMarket(MarketConfig memory marketConfig) external returns (MarketId id);
 
     /// @notice Sets a new protocol fee for a given market.
     /// @param id of the market.

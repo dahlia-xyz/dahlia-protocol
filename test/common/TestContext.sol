@@ -281,7 +281,7 @@ contract TestContext {
         vm.stopPrank();
 
         vm.prank(createWallet("MARKET_DEPLOYER"));
-        id = dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
+        id = dahlia.deployMarket(marketConfig);
     }
 
     function createRoycoWrappedVaultFactory(
