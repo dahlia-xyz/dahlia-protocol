@@ -50,8 +50,7 @@ library Events {
 
     /// @notice Emitted when market bonus rate changed.
     /// @param liquidationBonusRate The new liquidation bonus rate.
-    /// @param reallocationBonusRate The new reallocation bonus rate.
-    event MarketBonusRatesChanged(uint256 liquidationBonusRate, uint256 reallocationBonusRate);
+    event MarketBonusRatesChanged(uint256 liquidationBonusRate);
 
     /// @notice Emitted when deploying a market.
     /// @param id The market id.

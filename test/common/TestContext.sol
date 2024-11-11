@@ -6,7 +6,6 @@ import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry, IDahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
-import { MarketMath } from "src/core/helpers/MarketMath.sol";
 
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -71,20 +70,13 @@ contract TestContext {
         public
         returns (MarketContext memory)
     {
-        Dahlia.MarketConfig memory config = createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv);
+        Dahlia.MarketConfig memory config = createMarketConfig(loanTokenName, collateralTokenName, lltv);
         config.owner = owner;
         return bootstrapMarket(config);
     }
 
     function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv) public returns (MarketContext memory) {
-        return bootstrapMarket(createMarketConfig(loanTokenName, collateralTokenName, lltv - MarketMath.toPercent(10), lltv));
-    }
-
-    function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 rltv, uint256 lltv)
-        public
-        returns (MarketContext memory)
-    {
-        return bootstrapMarket(createMarketConfig(loanTokenName, collateralTokenName, rltv, lltv));
+        return bootstrapMarket(createMarketConfig(loanTokenName, collateralTokenName, lltv));
     }
 
     function bootstrapMarket(Dahlia.MarketConfig memory marketConfig) public returns (MarketContext memory v) {
@@ -214,17 +206,11 @@ contract TestContext {
         contracts["dahlia"] = address(dahlia);
     }
 
-    function createMarketConfig(string memory loanToken, string memory collateralToken, uint256 rltv, uint256 lltv)
-        public
-        returns (Dahlia.MarketConfig memory)
-    {
-        return createMarketConfig(address(createERC20Token(loanToken)), address(createERC20Token(collateralToken)), rltv, lltv);
+    function createMarketConfig(string memory loanToken, string memory collateralToken, uint256 lltv) public returns (Dahlia.MarketConfig memory) {
+        return createMarketConfig(address(createERC20Token(loanToken)), address(createERC20Token(collateralToken)), lltv);
     }
 
-    function createMarketConfig(address loanToken, address collateralToken, uint256 rltv, uint256 lltv)
-        public
-        returns (Dahlia.MarketConfig memory marketConfig)
-    {
+    function createMarketConfig(address loanToken, address collateralToken, uint256 lltv) public returns (Dahlia.MarketConfig memory marketConfig) {
         address admin = createWallet("MARKET_ADMIN");
         marketConfig = IDahlia.MarketConfig({
             loanToken: loanToken,
@@ -232,13 +218,12 @@ contract TestContext {
             oracle: createTestOracle(Constants.ORACLE_PRICE_SCALE),
             irm: createTestIrm(),
             lltv: lltv,
-            rltv: rltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv),
             owner: admin
         });
     }
 
-    function copyMarketConfig(Dahlia.MarketConfig memory config, uint256 rltv, uint256 lltv) public returns (Dahlia.MarketConfig memory marketConfig) {
+    function copyMarketConfig(Dahlia.MarketConfig memory config, uint256 lltv) public returns (Dahlia.MarketConfig memory marketConfig) {
         marketConfig = IDahlia.MarketConfig({
             loanToken: config.loanToken,
             collateralToken: config.collateralToken,
@@ -246,7 +231,6 @@ contract TestContext {
             irm: config.irm,
             owner: config.owner,
             lltv: lltv,
-            rltv: rltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv)
         });
     }

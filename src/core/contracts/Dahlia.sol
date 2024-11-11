@@ -137,7 +137,6 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     function deployMarket(MarketConfig memory marketConfig) external returns (MarketId id) {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
         require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
-        require(marketConfig.rltv < marketConfig.lltv, Errors.RltvNotAllowed());
         _validateLiquidationBonusRate(marketConfig.liquidationBonusRate, marketConfig.lltv);
 
         id = MarketId.wrap(++marketSequence);
@@ -343,44 +342,6 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         // transfer (repaid) assets from liquidator wallet to Dahlia wallet
         IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
-    }
-
-    /// @inheritdoc IDahlia
-    function reallocate(MarketId marketId, MarketId marketIdTo, address borrower)
-        external
-        returns (uint256 newAssets, uint256 newShares, uint256 newCollateral, uint256 bonusCollateral)
-    {
-        MarketData storage marketData = markets[marketId];
-        MarketData storage marketDataTo = markets[marketIdTo];
-
-        Market storage market = marketData.market;
-        Market storage marketTo = marketDataTo.market;
-        //TODO: compute hash instead of this complex condition or maybe we need to
-        // check owner of the market not deployer?
-        require(
-            market.oracle == marketTo.oracle && market.loanToken == marketTo.loanToken && market.collateralToken == marketTo.collateralToken
-                && market.marketDeployer == marketTo.marketDeployer,
-            Errors.MarketsDiffer()
-        );
-
-        require(market.rltv < marketTo.rltv, Errors.MarketReallocationLtvInsufficient());
-
-        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
-        mapping(address => MarketUserPosition) storage positionsTo = marketDataTo.userPositions;
-
-        _validateMarket(market.status, true);
-        _validateMarket(marketTo.status, true);
-
-        _accrueMarketInterest(positions, market);
-        _accrueMarketInterest(positionsTo, marketTo);
-
-        (newAssets, newShares, newCollateral, bonusCollateral) =
-            LiquidationImpl.internalReallocate(market, marketTo, positions[borrower], positionsTo[borrower], borrower);
-
-        // transfer bonus collateral assets to reallocator wallet
-        if (bonusCollateral > 0) {
-            IERC20(market.collateralToken).safeTransfer(msg.sender, bonusCollateral);
-        }
     }
 
     /// @inheritdoc IDahlia
