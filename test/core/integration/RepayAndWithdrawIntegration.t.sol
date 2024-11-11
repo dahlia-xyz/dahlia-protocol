@@ -7,7 +7,7 @@ import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -28,7 +28,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_repayAndWithdraw_marketNotDeployed(Types.MarketId marketIdFuzz, uint256 assets) public {
+    function test_int_repayAndWithdraw_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.assume(assets > 0);
         vm.prank($.alice);
@@ -86,8 +86,8 @@ contract RepayAndWithdrawIntegrationTest is Test {
 
         expectedBorrowShares -= expectedRepaidShares;
 
-        Types.Market memory stateAfter = $.dahlia.getMarket($.marketId);
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(returnAssets, amountRepaid, "returned asset amount");
         assertEq(returnShares, expectedRepaidShares, "returned shares amount");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow shares");
@@ -129,8 +129,8 @@ contract RepayAndWithdrawIntegrationTest is Test {
 
         expectedBorrowShares -= sharesRepaid;
 
-        Types.Market memory stateAfter = $.dahlia.getMarket($.marketId);
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(returnAssets, expectedAmountRepaid, "returned asset amount");
         assertEq(returnShares, sharesRepaid, "returned shares amount");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow shares");

@@ -5,7 +5,7 @@ import {Vm, console} from "@forge-std/Test.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
 import {TestTypes} from "test/common/TestTypes.sol";
 
@@ -68,8 +68,8 @@ library BoundUtils {
     /**
      * Utils
      */
-    function marketsEq(Vm, Types.MarketId a, Types.MarketId b) public pure returns (bool) {
-        return (Types.MarketId.unwrap(a) == Types.MarketId.unwrap(b));
+    function marketsEq(Vm, IDahlia.MarketId a, IDahlia.MarketId b) public pure returns (bool) {
+        return (IMarketStorage.MarketId.unwrap(a) == IMarketStorage.MarketId.unwrap(b));
     }
 
     function boundBlocks(Vm, uint256 blocks) public pure returns (uint256) {

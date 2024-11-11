@@ -8,7 +8,7 @@ import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 
@@ -76,10 +76,10 @@ contract ReallocationIntegrationTest is Test {
         dahlia.reallocate($m1.marketId, $m2.marketId, borrower);
         vm.pauseGasMetering();
 
-        Types.Market memory market1 = dahlia.getMarket($m1.marketId);
-        Types.Market memory market2 = dahlia.getMarket($m2.marketId);
-        Types.MarketUserPosition memory user1 = dahlia.getMarketUserPosition($m1.marketId, borrower);
-        Types.MarketUserPosition memory user2 = dahlia.getMarketUserPosition($m2.marketId, borrower);
+        IDahlia.Market memory market1 = dahlia.getMarket($m1.marketId);
+        IDahlia.Market memory market2 = dahlia.getMarket($m2.marketId);
+        IDahlia.MarketUserPosition memory user1 = dahlia.getMarketUserPosition($m1.marketId, borrower);
+        IDahlia.MarketUserPosition memory user2 = dahlia.getMarketUserPosition($m2.marketId, borrower);
         assertEq($m1.collateralToken.balanceOf(reallocator), bonusCollateral);
         assertEq($m2.collateralToken.balanceOf(address(dahlia)), pos.collateral - bonusCollateral);
         assertEq(user1.borrowShares, 0, "old position shares");

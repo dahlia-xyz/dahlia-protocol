@@ -7,7 +7,7 @@ import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -28,7 +28,7 @@ contract LiquidateIntegrationTest is Test {
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_liquidate_marketNotDeployed(Types.MarketId marketIdFuzz) public {
+    function test_int_liquidate_marketNotDeployed(IDahlia.MarketId marketIdFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.expectRevert(Errors.MarketNotDeployed.selector);
         $.dahlia.liquidate(marketIdFuzz, $.alice, TestConstants.EMPTY_CALLBACK);
@@ -93,9 +93,9 @@ contract LiquidateIntegrationTest is Test {
 
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
-        Types.Market memory market = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
 
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 totalBorrowShares = market.totalBorrowShares;
@@ -155,10 +155,10 @@ contract LiquidateIntegrationTest is Test {
         pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, TestConstants.MAX_TEST_LLTV);
 
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
-        Types.Market memory market = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
 
         uint256 totalLentInShares = pos.lent.toSharesDown(market.totalLendAssets, market.totalLendShares);
-        Types.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         (
             uint256 _borrowAssets,
@@ -202,9 +202,9 @@ contract LiquidateIntegrationTest is Test {
 
         vm.pauseGasMetering();
         uint256 expectedLeftCollateral = pos.collateral - _seizedCollateral;
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
-        Types.Market memory m = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory m = $.dahlia.getMarket($.marketId);
         assertEq(returnSeizedCollateral, _seizedCollateral, "returned seized collateral");
         assertEq(returnRepaidAssets, repaidAssets, "returned asset amount");
         assertEq(userPos.lendShares, 0, "lend shares");
@@ -232,9 +232,9 @@ contract LiquidateIntegrationTest is Test {
         // lend shares by reserve
         vm.dahliaLendBy(reserveAddress, reserveAssets, $);
 
-        Types.Market memory market = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         uint256 prevTotalLentShares = market.totalLendShares;
-        Types.MarketUserPosition memory userPos2 = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos2 = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         (
             uint256 _borrowAssets,
@@ -251,7 +251,7 @@ contract LiquidateIntegrationTest is Test {
             market.liquidationBonusRate
         );
 
-        Types.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, reserveAddress);
+        IDahlia.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, reserveAddress);
         (uint256 _rescueAssets, uint256 _rescueShares) = MarketMath.calcRescueAssets(
             market.totalLendAssets, market.totalLendShares, _badDebtAssets, userPos1.lendShares
         );
@@ -282,12 +282,12 @@ contract LiquidateIntegrationTest is Test {
 
         vm.pauseGasMetering();
         uint256 expectedLeftCollateral = pos.collateral - _seizedCollateral;
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
 
         uint256 lendBalance = pos.lent + reserveAssets - _badDebtAssets + _rescueAssets;
         uint256 dahliaLoanTokenBalance = pos.lent + reserveAssets - _badDebtAssets;
 
-        Types.Market memory m = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory m = $.dahlia.getMarket($.marketId);
         assertEq(returnSeizedCollateral, _seizedCollateral, "returned seized collateral");
         assertEq(returnRepaidAssets, repaidAssets, "returned asset amount");
         assertEq(userPos.lendShares, 0, "lend shares");

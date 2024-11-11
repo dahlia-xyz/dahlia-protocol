@@ -5,7 +5,7 @@ import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 
 /**
@@ -19,9 +19,9 @@ library InterestImpl {
     /// @dev Accrues interest for the given market `marketConfig`.
     /// @dev Assumes that the inputs `marketConfig` and `id` match.
     function executeMarketAccrueInterest(
-        Types.Market storage market,
-        Types.MarketUserPosition storage protocolFeeRecipientPosition,
-        Types.MarketUserPosition storage reserveFeeRecipientPosition
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage protocolFeeRecipientPosition,
+        IDahlia.MarketUserPosition storage reserveFeeRecipientPosition
     ) internal {
         if (address(market.irm) == address(0)) {
             return;
@@ -82,10 +82,10 @@ library InterestImpl {
 
     /// @notice Returns the expected market balances of a market after having accrued interest.
     /// @return market balances with update of interest
-    function getLastMarketState(Types.Market memory market, uint256 assets)
+    function getLastMarketState(IDahlia.Market memory market, uint256 assets)
         internal
         view
-        returns (Types.Market memory)
+        returns (IDahlia.Market memory)
     {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
 

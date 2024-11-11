@@ -7,7 +7,7 @@ import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {BorrowImpl} from "src/core/impl/BorrowImpl.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title BorrowImpl library
@@ -19,9 +19,9 @@ library LiquidationImpl {
     using MarketMath for uint256;
 
     function internalLiquidate(
-        Types.Market storage market,
-        Types.MarketUserPosition storage borrowerPosition,
-        Types.MarketUserPosition storage reservePosition,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage borrowerPosition,
+        IDahlia.MarketUserPosition storage reservePosition,
         address borrower
     ) internal returns (uint256, uint256, uint256) {
         uint256 rescueAssets;
@@ -101,10 +101,10 @@ library LiquidationImpl {
     }
 
     function internalReallocate(
-        Types.Market storage market,
-        Types.Market storage marketTo,
-        Types.MarketUserPosition storage borrowerPosition,
-        Types.MarketUserPosition storage borrowerPositionTo,
+        IDahlia.Market storage market,
+        IDahlia.Market storage marketTo,
+        IDahlia.MarketUserPosition storage borrowerPosition,
+        IDahlia.MarketUserPosition storage borrowerPositionTo,
         address borrower
     ) internal returns (uint256, uint256, uint256, uint256) {
         // get collateral price from oracle

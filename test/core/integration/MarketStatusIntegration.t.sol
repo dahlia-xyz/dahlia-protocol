@@ -7,7 +7,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -43,9 +43,9 @@ contract MarketStatusIntegrationTest is Test {
         // pause
         vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(Types.MarketStatus.Active, Types.MarketStatus.Paused);
+        emit Events.MarketStatusChanged(IMarketStorage.MarketStatus.Active, IMarketStorage.MarketStatus.Paused);
         $.dahlia.pauseMarket($.marketId);
-        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(Types.MarketStatus.Paused));
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IMarketStorage.MarketStatus.Paused));
 
         // check is forbidden to lend, borrow, supply
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketPaused.selector));
@@ -57,9 +57,9 @@ contract MarketStatusIntegrationTest is Test {
         // unpause
         vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(Types.MarketStatus.Paused, Types.MarketStatus.Active);
+        emit Events.MarketStatusChanged(IMarketStorage.MarketStatus.Paused, IMarketStorage.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
-        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(Types.MarketStatus.Active));
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IMarketStorage.MarketStatus.Active));
     }
 
     function test_int_marketStatus_unpause() public usePermittedOwners {
@@ -79,9 +79,9 @@ contract MarketStatusIntegrationTest is Test {
         // unpause
         vm.startPrank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(Types.MarketStatus.Paused, Types.MarketStatus.Active);
+        emit Events.MarketStatusChanged(IMarketStorage.MarketStatus.Paused, IMarketStorage.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
-        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(Types.MarketStatus.Active));
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IMarketStorage.MarketStatus.Active));
         vm.stopPrank();
     }
 
@@ -93,9 +93,9 @@ contract MarketStatusIntegrationTest is Test {
         // deprecate
         vm.startPrank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(Types.MarketStatus.Active, Types.MarketStatus.Deprecated);
+        emit Events.MarketStatusChanged(IMarketStorage.MarketStatus.Active, IMarketStorage.MarketStatus.Deprecated);
         $.dahlia.deprecateMarket($.marketId);
-        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(Types.MarketStatus.Deprecated));
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IMarketStorage.MarketStatus.Deprecated));
         vm.stopPrank();
 
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketDeprecated.selector));

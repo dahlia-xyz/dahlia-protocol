@@ -5,7 +5,7 @@ import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
 import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
 
 /// @title MarketMath
@@ -147,8 +147,8 @@ library MarketMath {
 
     /// @notice Returns current and maximum assets for borrow (by market LLTV)
     function calcMaxBorrowAssets(
-        Types.Market memory market,
-        Types.MarketUserPosition memory position,
+        IDahlia.Market memory market,
+        IDahlia.MarketUserPosition memory position,
         uint256 collateralPrice
     ) internal view returns (uint256 borrowedAssets, uint256 maxBorrowAssets) {
         // if sent 0 price, get it from oracle (for gas saving purposes)
@@ -167,7 +167,7 @@ library MarketMath {
     function getLTV(
         uint256 totalBorrowAssets,
         uint256 totalBorrowShares,
-        Types.MarketUserPosition memory position,
+        IDahlia.MarketUserPosition memory position,
         uint256 collateralPrice
     ) internal pure returns (uint256) {
         // decrease collateral value by market LLTV for getting max borrow amount

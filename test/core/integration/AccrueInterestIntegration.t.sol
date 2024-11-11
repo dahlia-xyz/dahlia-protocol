@@ -10,7 +10,7 @@ import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {InterestImpl} from "src/core/impl/InterestImpl.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
@@ -33,7 +33,7 @@ contract AccrueInterestIntegrationTest is Test {
 
     function _checkInterestDidntChange() internal {
         vm.pauseGasMetering();
-        Types.Market memory state = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 totalBorrowBeforeAccrued = state.totalBorrowAssets;
         uint256 totalLendBeforeAccrued = state.totalLendAssets;
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
@@ -42,15 +42,15 @@ contract AccrueInterestIntegrationTest is Test {
         $.dahlia.accrueMarketInterest($.marketId);
         vm.pauseGasMetering();
 
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.owner);
-        Types.Market memory stateAfter = $.dahlia.getMarket($.marketId);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.owner);
+        IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued, "total borrow");
         assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued, "total supply");
         assertEq(stateAfter.totalLendShares, totalLendSharesBeforeAccrued, "total supply shares");
         assertEq(userPos.lendShares, 0, "feeRecipient's supply shares");
     }
 
-    function test_int_accrueInterest_marketNotDeployed(Types.MarketId marketIdFuzz) public {
+    function test_int_accrueInterest_marketNotDeployed(IDahlia.MarketId marketIdFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.resumeGasMetering();
         vm.expectRevert(Errors.MarketNotDeployed.selector);
@@ -88,7 +88,7 @@ contract AccrueInterestIntegrationTest is Test {
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
         blocks = vm.boundBlocks(blocks);
-        Types.Market memory state = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
 
         IIrm irm = ctx.createTestIrm();
@@ -104,7 +104,7 @@ contract AccrueInterestIntegrationTest is Test {
         vm.resumeGasMetering();
         $.dahlia.accrueMarketInterest($.marketId);
         vm.pauseGasMetering();
-        Types.Market memory stateAfter = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         assertEq(
             stateAfter.totalLendShares, state.totalLendShares, "total lend shares stay the same if no protocol fee"
         );
@@ -131,7 +131,7 @@ contract AccrueInterestIntegrationTest is Test {
 
         blocks = vm.boundBlocks(blocks);
 
-        Types.Market memory state = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 totalBorrowBeforeAccrued = state.totalBorrowAssets;
         uint256 totalLendBeforeAccrued = state.totalLendAssets;
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
@@ -158,7 +158,7 @@ contract AccrueInterestIntegrationTest is Test {
 
         $.dahlia.accrueMarketInterest($.marketId);
 
-        Types.Market memory stateAfter = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued + interestEarnedAssets, "total supply");
         assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued + interestEarnedAssets, "total borrow");
         assertEq(
@@ -167,9 +167,9 @@ contract AccrueInterestIntegrationTest is Test {
             "total lend shares"
         );
 
-        Types.MarketUserPosition memory userPos1 =
+        IDahlia.MarketUserPosition memory userPos1 =
             $.dahlia.getMarketUserPosition($.marketId, ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
-        Types.MarketUserPosition memory userPos =
+        IDahlia.MarketUserPosition memory userPos =
             $.dahlia.getMarketUserPosition($.marketId, ctx.wallets("RESERVE_FEE_RECIPIENT"));
         assertEq(userPos1.lendShares, protocolFeeShares, "protocolFeeRecipient's lend shares");
         assertEq(userPos.lendShares, reserveFeeShares, "reserveFeeRecipient's lend shares");
@@ -197,7 +197,7 @@ contract AccrueInterestIntegrationTest is Test {
 
         blocks = vm.boundBlocks(blocks);
 
-        Types.Market memory state = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 totalBorrowBeforeAccrued = state.totalBorrowAssets;
         uint256 totalLendBeforeAccrued = state.totalLendAssets;
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
@@ -211,7 +211,7 @@ contract AccrueInterestIntegrationTest is Test {
         );
         vm.forward(blocks);
         vm.resumeGasMetering();
-        Types.Market memory m = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory m = $.dahlia.getMarket($.marketId);
 
         assertEq(m.totalLendAssets, totalLendBeforeAccrued + interestEarnedAssets, "total supply");
         assertEq(m.totalBorrowAssets, totalBorrowBeforeAccrued + interestEarnedAssets, "total borrow");
@@ -222,7 +222,7 @@ contract AccrueInterestIntegrationTest is Test {
     function printMarketState(string memory suffix, string memory title) public view {
         console.log("");
         console.log("#### BLOCK:", block.number, title);
-        Types.Market memory state = $.dahlia.getMarket($.marketId);
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         console.log(suffix, "market.totalLendAssets", state.totalLendAssets);
         console.log(suffix, "market.totalLendShares", state.totalLendShares);
         console.log(suffix, "market.totalBorrowShares", state.totalBorrowShares);
@@ -234,14 +234,14 @@ contract AccrueInterestIntegrationTest is Test {
     }
 
     function printUserPos(string memory suffix, address user) public view {
-        Types.MarketUserPosition memory pos = $.dahlia.getMarketUserPosition($.marketId, user);
+        IDahlia.MarketUserPosition memory pos = $.dahlia.getMarketUserPosition($.marketId, user);
         console.log(suffix, ".lendAssets", pos.lendAssets);
         console.log(suffix, ".lendShares", pos.lendShares);
         console.log(suffix, ".usdc.balance", $.loanToken.balanceOf(user));
     }
 
     function test_previewLendRateAfterDeposit_wrong_market() public view {
-        assertEq($.dahlia.previewLendRateAfterDeposit(Types.MarketId.wrap(0), 0), 0);
+        assertEq($.dahlia.previewLendRateAfterDeposit(IMarketStorage.MarketId.wrap(0), 0), 0);
     }
 
     function test_previewLendRateAfterDeposit_no_borrow_position() public view {
@@ -315,7 +315,7 @@ contract AccrueInterestIntegrationTest is Test {
         uint256 interest7 = vm.dahliaClaimInterestBy($.carol, $);
         printMarketState("5.1", "interest claimed by carol and 1/2 of shares withdrawn");
         console.log("5.1 interest claimed by carol: ", interest7);
-        Types.MarketUserPosition memory alicePos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory alicePos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         vm.dahliaRepayByShares($.alice, alicePos.borrowShares, $.dahlia.getMarket($.marketId).totalBorrowAssets, $);
         printMarketState("6", "repay by alice");
         vm.forward(blocks);

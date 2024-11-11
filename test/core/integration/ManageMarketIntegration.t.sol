@@ -7,9 +7,7 @@ import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
-
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -25,8 +23,8 @@ contract ManageMarketIntegrationTest is Test {
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_manage_isMarketDeployed(Types.MarketId marketId) public view {
-        vm.assume(Types.MarketId.unwrap(marketId) != Types.MarketId.unwrap($.marketId));
+    function test_int_manage_isMarketDeployed(IDahlia.MarketId marketId) public view {
+        vm.assume(IMarketStorage.MarketId.unwrap(marketId) != IMarketStorage.MarketId.unwrap($.marketId));
         assertEq($.dahlia.isMarketDeployed(marketId), false);
         assertEq($.dahlia.isMarketDeployed($.marketId), true);
     }
@@ -37,27 +35,27 @@ contract ManageMarketIntegrationTest is Test {
 
         // firstly check onlyOwner protection
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, maxLltvFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minLltvFuzz, maxLltvFuzz));
 
         vm.startPrank($.owner);
         // check is range valid
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 1e6, maxLltvFuzz));
-        $.dahlia.setLltvRange(Types.RateRange(uint24(1e6), maxLltvFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(uint24(1e6), maxLltvFuzz));
 
         // check is range valid
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minLltvFuzz, 1e6));
-        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, uint24(1e6)));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minLltvFuzz, uint24(1e6)));
 
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minLltvFuzz, Constants.LLTV_100_PERCENT));
-        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, uint24(Constants.LLTV_100_PERCENT)));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minLltvFuzz, uint24(Constants.LLTV_100_PERCENT)));
 
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 0, maxLltvFuzz));
-        $.dahlia.setLltvRange(Types.RateRange(0, maxLltvFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(0, maxLltvFuzz));
 
         // check success
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.SetLLTVRange(minLltvFuzz, maxLltvFuzz);
-        $.dahlia.setLltvRange(Types.RateRange(minLltvFuzz, maxLltvFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minLltvFuzz, maxLltvFuzz));
 
         (uint24 newMin, uint24 newMax) = $.dahlia.lltvRange();
         assertEq(newMin, minLltvFuzz);
@@ -71,27 +69,27 @@ contract ManageMarketIntegrationTest is Test {
 
         // firstly check onlyOwner protection
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        $.dahlia.setLltvRange(Types.RateRange(minFuzz, maxFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minFuzz, maxFuzz));
 
         vm.startPrank($.owner);
         // check is range valid
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 1e6, maxFuzz));
-        $.dahlia.setLltvRange(Types.RateRange(uint24(1e6), maxFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(uint24(1e6), maxFuzz));
 
         // check is range valid
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minFuzz, 1e6));
-        $.dahlia.setLltvRange(Types.RateRange(minFuzz, uint24(1e6)));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minFuzz, uint24(1e6)));
 
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, minFuzz, Constants.LLTV_100_PERCENT));
-        $.dahlia.setLltvRange(Types.RateRange(minFuzz, uint24(Constants.LLTV_100_PERCENT)));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(minFuzz, uint24(Constants.LLTV_100_PERCENT)));
 
         vm.expectRevert(abi.encodeWithSelector(Errors.RangeNotValid.selector, 0, maxFuzz));
-        $.dahlia.setLltvRange(Types.RateRange(0, maxFuzz));
+        $.dahlia.setLltvRange(IMarketStorage.RateRange(0, maxFuzz));
 
         // check success
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit Events.SetLiquidationBonusRateRange(minFuzz, maxFuzz);
-        $.dahlia.setLiquidationBonusRateRange(Types.RateRange(minFuzz, maxFuzz));
+        $.dahlia.setLiquidationBonusRateRange(IMarketStorage.RateRange(minFuzz, maxFuzz));
 
         (uint24 newMin, uint24 newMax) = $.dahlia.liquidationBonusRateRange();
         assertEq(newMin, minFuzz);
@@ -99,9 +97,10 @@ contract ManageMarketIntegrationTest is Test {
         vm.stopPrank();
     }
 
-    function test_int_manage_setProtocolFeeRateWhenMarketNotDeployed(Types.MarketId marketIdFuzz, uint32 feeFuzz)
-        public
-    {
+    function test_int_manage_setProtocolFeeRateWhenMarketNotDeployed(
+        IMarketStorage.MarketId marketIdFuzz,
+        uint32 feeFuzz
+    ) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.owner);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
@@ -131,7 +130,7 @@ contract ManageMarketIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).protocolFeeRate, feeFuzz);
     }
 
-    function test_int_manage_setReserveFeeRateWhenMarketNotDeployed(Types.MarketId marketIdFuzz, uint32 feeFuzz)
+    function test_int_manage_setReserveFeeRateWhenMarketNotDeployed(IDahlia.MarketId marketIdFuzz, uint32 feeFuzz)
         public
     {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
@@ -231,9 +230,9 @@ contract ManageMarketIntegrationTest is Test {
         IDahlia.MarketConfig memory marketConfig =
             ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(70), MarketMath.toPercent(80));
         marketConfig.owner = ownerFuzz;
-        Types.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
-        assertEq(Types.MarketId.unwrap(marketId), 2);
-        Types.Market memory market = $.dahlia.getMarket(marketId);
+        IMarketStorage.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
+        assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);
+        IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq(market.vault.vaultOwner(), ownerFuzz);
     }
 
@@ -245,9 +244,9 @@ contract ManageMarketIntegrationTest is Test {
         $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
         vm.stopPrank();
         vm.startPrank($.marketAdmin);
-        Types.MarketId marketId = $.dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
-        assertEq(Types.MarketId.unwrap(marketId), 2);
-        Types.Market memory market = $.dahlia.getMarket(marketId);
+        IDahlia.MarketId marketId = $.dahlia.deployMarket(marketConfig, TestConstants.EMPTY_CALLBACK);
+        assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);
+        IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);
         assertEq(market.vault.vaultOwner(), $.marketAdmin);
         vm.stopPrank();

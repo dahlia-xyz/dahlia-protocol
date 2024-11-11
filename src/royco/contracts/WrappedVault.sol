@@ -10,7 +10,6 @@ import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
@@ -119,7 +118,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     mapping(address => mapping(address => uint256)) public rewardToClaimantToFees;
 
     IDahlia public immutable dahlia;
-    Types.MarketId public immutable marketId; // 4 bytes
+    IDahlia.MarketId public immutable marketId; // 4 bytes
 
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
@@ -139,7 +138,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         string memory _symbol,
         address _dahlia,
         uint8 _decimals,
-        Types.MarketId _marketId,
+        IDahlia.MarketId _marketId,
         address _asset,
         uint256 initialFrontendFee,
         address pointsFactory
@@ -724,7 +723,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewDeposit(uint256 assets) public view returns (uint256 shares) {
-        Types.Market memory market = dahlia.getMarket(marketId);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
         return SharesMathLib.toSharesDown(assets, market.totalLendAssets, market.totalLendShares);
     }
 
@@ -735,7 +734,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewMint(uint256 shares) public view returns (uint256 assets) {
-        Types.Market memory market = dahlia.getMarket(marketId);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
         return SharesMathLib.toAssetsUp(shares, market.totalLendAssets, market.totalLendShares);
     }
 
@@ -746,7 +745,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewWithdraw(uint256 assets) public view virtual returns (uint256 shares) {
-        Types.Market memory market = dahlia.getMarket(marketId);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
         return SharesMathLib.toSharesUp(assets, market.totalLendAssets, market.totalLendShares);
     }
 
@@ -757,7 +756,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function previewRedeem(uint256 shares) public view returns (uint256 assets) {
-        Types.Market memory market = dahlia.getMarket(marketId);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
         return SharesMathLib.toAssetsDown(shares, market.totalLendAssets, market.totalLendShares);
     }
 

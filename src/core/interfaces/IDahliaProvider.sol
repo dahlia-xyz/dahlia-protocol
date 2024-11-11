@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 
 /// @title IDahliaProvider
 /// @notice Interface for the Dahlia integrations with external contracts.
@@ -12,5 +12,6 @@ interface IDahliaProvider {
     /// @param marketProxy The ERC4626Proxy vault for the newly deployed market.
     /// @param sender The market deployer address.
     /// @param data Additional arbitrary data for future use.
-    function onMarketDeployed(Types.MarketId id, IERC4626 marketProxy, address sender, bytes calldata data) external;
+    function onMarketDeployed(IDahlia.MarketId id, IERC4626 marketProxy, address sender, bytes calldata data)
+        external;
 }

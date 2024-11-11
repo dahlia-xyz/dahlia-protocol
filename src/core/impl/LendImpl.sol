@@ -6,7 +6,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title LendImpl library
@@ -17,8 +17,8 @@ library LendImpl {
     using SharesMathLib for uint256;
 
     function internalLend(
-        Types.Market storage market,
-        Types.MarketUserPosition storage marketOnBehalfOfPosition,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage marketOnBehalfOfPosition,
         uint256 assets,
         address onBehalfOf
     ) internal returns (uint256 shares) {
@@ -33,8 +33,8 @@ library LendImpl {
     }
 
     function internalWithdraw(
-        Types.Market storage market,
-        Types.MarketUserPosition storage marketOnBehalfOfPosition,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage marketOnBehalfOfPosition,
         uint256 shares,
         address onBehalfOf,
         address receiver

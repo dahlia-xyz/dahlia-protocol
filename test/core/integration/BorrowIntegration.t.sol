@@ -7,7 +7,7 @@ import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants, TestContext} from "test/common/TestContext.sol";
@@ -29,7 +29,7 @@ contract BorrowIntegrationTest is Test {
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_borrow_marketNotDeployed(Types.MarketId marketIdFuzz, uint256 assets) public {
+    function test_int_borrow_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
@@ -172,7 +172,7 @@ contract BorrowIntegrationTest is Test {
         uint256 amountBorrowed,
         uint256 expectedBorrowShares
     ) internal view {
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");

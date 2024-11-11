@@ -8,8 +8,7 @@ import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestContext} from "test/common/TestContext.sol";
@@ -56,7 +55,7 @@ contract MarketStatusIntegrationTest is Test {
             vm.resumeGasMetering();
             $.dahlia.updateMarketBonusRates($.marketId, liquidationBonusRate, reallocationBonusRate);
             vm.pauseGasMetering();
-            Types.Market memory market = $.dahlia.getMarket($.marketId);
+            IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
             assertEq(market.liquidationBonusRate, liquidationBonusRate);
             assertEq(market.reallocationBonusRate, reallocationBonusRate);
         }

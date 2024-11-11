@@ -28,7 +28,6 @@ import {
     IDahliaSupplyCollateralCallback
 } from "src/core/interfaces/IDahliaCallbacks.sol";
 import {IDahliaRegistry} from "src/core/interfaces/IDahliaRegistry.sol";
-import {Types} from "src/core/types/Types.sol";
 import {WrappedVaultFactory} from "src/royco/contracts/WrappedVaultFactory.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 //TODO: protect some methods by ReentrancyGuard
@@ -41,8 +40,8 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     using SharesMathLib for uint256;
     using FixedPointMathLib for uint256;
 
-    Types.RateRange public lltvRange;
-    Types.RateRange public liquidationBonusRateRange;
+    RateRange public lltvRange;
+    RateRange public liquidationBonusRateRange;
 
     uint32 internal marketSequence; // 4 bytes
     address public proxyFactory; // 20 bytes
@@ -56,14 +55,14 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         require(addressRegistry != address(0), Errors.ZeroAddress());
         dahliaRegistry = IDahliaRegistry(addressRegistry);
         protocolFeeRecipient = _owner;
-        lltvRange = Types.RateRange(Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
-        liquidationBonusRateRange = Types.RateRange(
+        lltvRange = RateRange(Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        liquidationBonusRateRange = RateRange(
             uint24(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE), uint24(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE)
         );
     }
 
     /// @inheritdoc IDahlia
-    function setLltvRange(Types.RateRange memory range) external onlyOwner {
+    function setLltvRange(RateRange memory range) external onlyOwner {
         // percent should be always between 0 and 100% and min ltv should be <= max ltv
         require(
             range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max,
@@ -75,7 +74,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function setLiquidationBonusRateRange(Types.RateRange memory range) external onlyOwner {
+    function setLiquidationBonusRateRange(RateRange memory range) external onlyOwner {
         // percent should be always between 0 and 100% and range.min should be <= range.max
         require(
             range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE
@@ -88,9 +87,9 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function setProtocolFeeRate(Types.MarketId id, uint32 newFeeRate) external onlyOwner {
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
+    function setProtocolFeeRate(MarketId id, uint32 newFeeRate) external onlyOwner {
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
         _validateMarket(market.status, false);
         _accrueMarketInterest(marketData.userPositions, market);
 
@@ -98,9 +97,9 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function setReserveFeeRate(Types.MarketId id, uint32 newFeeRate) external onlyOwner {
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
+    function setReserveFeeRate(MarketId id, uint32 newFeeRate) external onlyOwner {
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
         _validateMarket(market.status, false);
         _accrueMarketInterest(marketData.userPositions, market);
 
@@ -134,13 +133,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
     /// @inheritdoc IDahlia
     // TODO: remove calldata?
-    function deployMarket(MarketConfig memory marketConfig, bytes calldata) external returns (Types.MarketId id) {
+    function deployMarket(MarketConfig memory marketConfig, bytes calldata) external returns (MarketId id) {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
         require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
         require(marketConfig.rltv < marketConfig.lltv, Errors.RltvNotAllowed());
         _validateLiquidationBonusRate(marketConfig.liquidationBonusRate, marketConfig.lltv);
 
-        id = Types.MarketId.wrap(++marketSequence);
+        id = MarketId.wrap(++marketSequence);
 
         IERC20Metadata loanToken = IERC20Metadata(marketConfig.loanToken);
         string memory loanTokenSymbol = loanToken.symbol();
@@ -164,14 +163,14 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function lend(Types.MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
+    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
         external
         returns (uint256 shares)
     {
         require(onBehalfOf != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
 
@@ -189,18 +188,18 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(Types.MarketId id, uint256 shares, address onBehalfOf, address receiver)
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
         external
         isSenderPermitted(onBehalfOf)
         returns (uint256 assets)
     {
         require(receiver != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
-        Types.MarketUserPosition storage userPosition = positions[onBehalfOf];
+        MarketUserPosition storage userPosition = positions[onBehalfOf];
 
         assets = LendImpl.internalWithdraw(market, userPosition, shares, onBehalfOf, receiver);
         uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
@@ -214,18 +213,18 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function claimInterest(Types.MarketId id, address onBehalfOf, address receiver)
+    function claimInterest(MarketId id, address onBehalfOf, address receiver)
         external
         isSenderPermitted(onBehalfOf)
         returns (uint256 assets)
     {
         require(receiver != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
-        Types.MarketUserPosition storage position = positions[onBehalfOf];
+        MarketUserPosition storage position = positions[onBehalfOf];
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
         uint256 lendShares = position.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
@@ -240,8 +239,8 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function previewLendRateAfterDeposit(Types.MarketId id, uint256 assets) external view returns (uint256) {
-        Types.Market memory market = InterestImpl.getLastMarketState(markets[id].market, assets);
+    function previewLendRateAfterDeposit(MarketId id, uint256 assets) external view returns (uint256) {
+        Market memory market = InterestImpl.getLastMarketState(markets[id].market, assets);
         if (market.totalLendAssets == 0) {
             return 0;
         }
@@ -249,15 +248,15 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function borrow(Types.MarketId id, uint256 assets, uint256 shares, address onBehalfOf, address receiver)
+    function borrow(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, address receiver)
         external
         isSenderPermitted(onBehalfOf)
         returns (uint256, uint256)
     {
         require(receiver != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
 
@@ -270,7 +269,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
     // @inheritdoc IDahlia
     function supplyAndBorrow(
-        Types.MarketId id,
+        MarketId id,
         uint256 collateralAssets,
         uint256 borrowAssets,
         address onBehalfOf,
@@ -278,9 +277,9 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     ) external isSenderPermitted(onBehalfOf) returns (uint256 borrowedAssets, uint256 borrowedShares) {
         require(collateralAssets > 0 && borrowAssets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, true);
 
         BorrowImpl.internalSupplyCollateral(market, positions[onBehalfOf], collateralAssets, onBehalfOf);
@@ -296,7 +295,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
     // @inheritdoc IDahlia
     function repayAndWithdraw(
-        Types.MarketId id,
+        MarketId id,
         uint256 collateralAssets,
         uint256 repayAssets,
         uint256 repayShares,
@@ -305,9 +304,9 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     ) external isSenderPermitted(onBehalfOf) returns (uint256 repaidAssets, uint256 repaidShares) {
         require(collateralAssets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
 
@@ -320,14 +319,14 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function repay(Types.MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
+    function repay(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
         external
         returns (uint256, uint256)
     {
         require(onBehalfOf != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
 
@@ -341,14 +340,14 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function liquidate(Types.MarketId id, address borrower, bytes calldata callbackData)
+    function liquidate(MarketId id, address borrower, bytes calldata callbackData)
         external
         returns (uint256 repaidAssets, uint256 repaidShares, uint256 seizedCollateral)
     {
         require(borrower != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
 
@@ -368,15 +367,15 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function reallocate(Types.MarketId marketId, Types.MarketId marketIdTo, address borrower)
+    function reallocate(MarketId marketId, MarketId marketIdTo, address borrower)
         external
         returns (uint256 newAssets, uint256 newShares, uint256 newCollateral, uint256 bonusCollateral)
     {
-        Types.MarketData storage marketData = markets[marketId];
-        Types.MarketData storage marketDataTo = markets[marketIdTo];
+        MarketData storage marketData = markets[marketId];
+        MarketData storage marketDataTo = markets[marketIdTo];
 
-        Types.Market storage market = marketData.market;
-        Types.Market storage marketTo = marketDataTo.market;
+        Market storage market = marketData.market;
+        Market storage marketTo = marketDataTo.market;
         //TODO: compute hash instead of this complex condition or maybe we need to
         // check owner of the market not deployer?
         require(
@@ -387,8 +386,8 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         require(market.rltv < marketTo.rltv, Errors.MarketReallocationLtvInsufficient());
 
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
-        mapping(address => Types.MarketUserPosition) storage positionsTo = marketDataTo.userPositions;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
+        mapping(address => MarketUserPosition) storage positionsTo = marketDataTo.userPositions;
 
         _validateMarket(market.status, true);
         _validateMarket(marketTo.status, true);
@@ -406,13 +405,11 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function supplyCollateral(Types.MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
-        external
-    {
+    function supplyCollateral(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData) external {
         require(assets > 0, Errors.ZeroAssets());
         require(onBehalfOf != address(0), Errors.ZeroAddress());
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
         _validateMarket(market.status, true);
         ///@dev not needed accrue interest here
 
@@ -426,16 +423,16 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function withdrawCollateral(Types.MarketId id, uint256 assets, address onBehalfOf, address receiver)
+    function withdrawCollateral(MarketId id, uint256 assets, address onBehalfOf, address receiver)
         external
         isSenderPermitted(onBehalfOf)
     {
         require(assets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
 
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
 
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
@@ -459,18 +456,17 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function accrueMarketInterest(Types.MarketId id) external {
-        Types.MarketData storage marketData = markets[id];
-        Types.Market storage market = marketData.market;
-        mapping(address => Types.MarketUserPosition) storage positions = marketData.userPositions;
+    function accrueMarketInterest(MarketId id) external {
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _validateMarket(market.status, false);
         _accrueMarketInterest(positions, market);
     }
 
-    function _accrueMarketInterest(
-        mapping(address => Types.MarketUserPosition) storage positions,
-        Types.Market storage market
-    ) internal {
+    function _accrueMarketInterest(mapping(address => MarketUserPosition) storage positions, Market storage market)
+        internal
+    {
         InterestImpl.executeMarketAccrueInterest(
             market, positions[protocolFeeRecipient], positions[reserveFeeRecipient]
         );

@@ -8,13 +8,13 @@ import {Events} from "src/core/helpers/Events.sol";
 import {ManageMarketImpl} from "src/core/impl/ManageMarketImpl.sol";
 
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 import {TestContext} from "test/common/TestContext.sol";
 
 contract ManageMarketImplUnitTest is Test {
     TestContext ctx;
-    mapping(Types.MarketId => Types.MarketData) internal markets;
+    mapping(IDahlia.MarketId => IDahlia.MarketData) internal markets;
 
     function setUp() public {
         ctx = new TestContext(vm);
@@ -27,12 +27,12 @@ contract ManageMarketImplUnitTest is Test {
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
 
-        Types.MarketId marketParamsFuzzId = Types.MarketId.wrap(1);
+        IDahlia.MarketId marketParamsFuzzId = IMarketStorage.MarketId.wrap(1);
         vm.expectEmit(true, true, true, true, address(this));
         emit Events.DeployMarket(marketParamsFuzzId, vault, marketParamsFuzz);
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
 
-        Types.Market memory market = markets[marketParamsFuzzId].market;
+        IDahlia.Market memory market = markets[marketParamsFuzzId].market;
         assertEq(market.collateralToken, marketParamsFuzz.collateralToken);
         assertEq(market.loanToken, marketParamsFuzz.loanToken);
         assertEq(address(market.irm), address(marketParamsFuzz.irm));
@@ -55,7 +55,7 @@ contract ManageMarketImplUnitTest is Test {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv =
             bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
-        Types.MarketId marketParamsFuzzId = Types.MarketId.wrap(1);
+        IDahlia.MarketId marketParamsFuzzId = IMarketStorage.MarketId.wrap(1);
 
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
 

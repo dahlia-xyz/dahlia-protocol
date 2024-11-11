@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
@@ -14,12 +14,12 @@ library Events {
     /// @notice Emitted when setting a new protocol fee.
     /// @param id The market id.
     /// @param newFee The new fee.
-    event SetProtocolFeeRate(Types.MarketId indexed id, uint256 newFee);
+    event SetProtocolFeeRate(IDahlia.MarketId indexed id, uint256 newFee);
 
     /// @notice Emitted when setting a new reserve fee.
     /// @param id The market id.
     /// @param newFee The new fee.
-    event SetReserveFeeRate(Types.MarketId indexed id, uint256 newFee);
+    event SetReserveFeeRate(IDahlia.MarketId indexed id, uint256 newFee);
 
     /// @notice Emitted when setting a new protocol fee recipient.
     /// @param newProtocolFeeRecipient The new protocol fee recipient.
@@ -42,7 +42,7 @@ library Events {
     /// @notice Emitted when market status changed.
     /// @param from previous status.
     /// @param to new status.
-    event MarketStatusChanged(Types.MarketStatus from, Types.MarketStatus to);
+    event MarketStatusChanged(IDahlia.MarketStatus from, IDahlia.MarketStatus to);
 
     /// @notice Emitted when market bonus rate changed.
     /// @param liquidationBonusRate The new liquidation bonus rate.
@@ -53,7 +53,7 @@ library Events {
     /// @param id The market id.
     /// @param vault The vault address.
     /// @param marketConfig The market parameters.
-    event DeployMarket(Types.MarketId indexed id, IWrappedVault indexed vault, IDahlia.MarketConfig marketConfig);
+    event DeployMarket(IDahlia.MarketId indexed id, IWrappedVault indexed vault, IDahlia.MarketConfig marketConfig);
 
     /// @notice Emitted when setting an authorization.
     /// @param sender The sender.
@@ -70,7 +70,7 @@ library Events {
     /// @param onBehalfOf The owner on behalf of whom the collateral is supplied.
     /// @param assets The amount of supplied assets.
     event SupplyCollateral(
-        Types.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets
+        IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets
     );
 
     /// @notice Emitted when collateral is withdrawn.
@@ -80,7 +80,11 @@ library Events {
     /// @param receiver The owner of the modified position.
     /// @param assets The amount of assets withdrawn.
     event WithdrawCollateral(
-        Types.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets
+        IDahlia.MarketId indexed id,
+        address caller,
+        address indexed onBehalfOf,
+        address indexed receiver,
+        uint256 assets
     );
 
     /// @notice Emitted on supply of assets.
@@ -91,7 +95,7 @@ library Events {
     /// @param assets The amount of assets supplied.
     /// @param shares The amount of shares minted.
     event Lend(
-        Types.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares
+        IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares
     );
 
     /// @notice Emitted on withdrawal of assets.
@@ -102,7 +106,7 @@ library Events {
     /// @param assets The amount of assets withdrawn.
     /// @param shares The amount of shares burned.
     event Withdraw(
-        Types.MarketId indexed id,
+        IDahlia.MarketId indexed id,
         address caller,
         address indexed onBehalfOf,
         address indexed receiver,
@@ -118,7 +122,7 @@ library Events {
     /// @param assets The amount of assets borrowed.
     /// @param shares The amount of shares minted.
     event DahliaBorrow(
-        Types.MarketId indexed id,
+        IDahlia.MarketId indexed id,
         address caller,
         address indexed onBehalfOf,
         address indexed receiver,
@@ -133,7 +137,7 @@ library Events {
     /// @param assets The amount of assets repaid. May be 1 over the corresponding market's `totalBorrowAssets`.
     /// @param shares The amount of shares burned.
     event DahliaRepay(
-        Types.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares
+        IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares
     );
 
     /// @notice Emitted on liquidation of a position.
@@ -148,7 +152,7 @@ library Events {
     /// @param rescuedAssets The amount of repaid bad assets from reserve wallet.
     /// @param rescuedShares The amount of repaid bad shares from reserve wallet.
     event DahliaLiquidate(
-        Types.MarketId indexed id,
+        IDahlia.MarketId indexed id,
         address indexed caller,
         address indexed borrower,
         uint256 repaidAssets,
@@ -171,8 +175,8 @@ library Events {
     /// @param collateralAfter The amount of collateral seized.
     /// @param collateralBonus The amount of collateral seized.
     event DahliaReallocate(
-        Types.MarketId indexed fromMarketId,
-        Types.MarketId indexed toMarketId,
+        IDahlia.MarketId indexed fromMarketId,
+        IDahlia.MarketId indexed toMarketId,
         address caller,
         address indexed borrower,
         uint256 relocatedAssets,
@@ -189,7 +193,7 @@ library Events {
     /// @param protocolFeeShares The amount of shares minted as protocol fee shares.
     /// @param reserveFeeShares The amount of shares minted as reserve fee shares.
     event DahliaAccrueInterest(
-        Types.MarketId indexed id,
+        IDahlia.MarketId indexed id,
         uint256 prevBorrowRate,
         uint256 interest,
         uint256 protocolFeeShares,

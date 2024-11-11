@@ -9,7 +9,7 @@ import {Constants} from "src/core/helpers/Constants.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 
 import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {IrmFactory} from "src/irm/contracts/IrmFactory.sol";
 import {VariableIrm} from "src/irm/contracts/VariableIrm.sol";
 import {IrmConstants} from "src/irm/helpers/IrmConstants.sol";
@@ -30,7 +30,7 @@ interface IERC20Mint is IERC20 {
 contract DahliaExt is Dahlia {
     constructor(address _owner, address addressRegistry) Dahlia(_owner, addressRegistry) {}
 
-    // function forceChangeMarketLltv(Types.MarketId marketId, uint24 lltv) external {
+    // function forceChangeMarketLltv(IDahlia.MarketId marketId, uint24 lltv) external {
     //     markets[marketId].market.lltv = lltv;
     // }
 }
@@ -38,7 +38,7 @@ contract DahliaExt is Dahlia {
 contract TestContext {
     struct MarketContext {
         Dahlia.MarketConfig marketConfig;
-        Types.MarketId marketId;
+        IDahlia.MarketId marketId;
         DahliaExt dahlia;
         IDahliaRegistry dahliaRegistry;
         address alice;
@@ -272,7 +272,7 @@ contract TestContext {
         });
     }
 
-    function deployDahliaMarket(Dahlia.MarketConfig memory marketConfig) public returns (Types.MarketId id) {
+    function deployDahliaMarket(Dahlia.MarketConfig memory marketConfig) public returns (IDahlia.MarketId id) {
         Dahlia dahlia = createDahlia();
         vm.startPrank(wallets["OWNER"]);
         if (!dahlia.dahliaRegistry().isIrmAllowed(marketConfig.irm)) {

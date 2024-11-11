@@ -8,7 +8,7 @@ import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
 import {SharesMathLib} from "src/core/helpers/SharesMathLib.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title BorrowImpl library
@@ -21,8 +21,8 @@ library BorrowImpl {
     using MarketMath for uint256;
 
     function internalSupplyCollateral(
-        Types.Market storage market,
-        Types.MarketUserPosition storage onBehalfOfPosition,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage onBehalfOfPosition,
         uint256 assets,
         address onBehalfOf
     ) internal {
@@ -33,8 +33,8 @@ library BorrowImpl {
     }
 
     function internalWithdrawCollateral(
-        Types.Market storage market,
-        Types.MarketUserPosition storage position,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage position,
         uint256 assets,
         address onBehalfOf,
         address receiver
@@ -56,8 +56,8 @@ library BorrowImpl {
     }
 
     function internalBorrow(
-        Types.Market storage market,
-        Types.MarketUserPosition storage onBehalfOfPosition,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage onBehalfOfPosition,
         uint256 assets,
         uint256 shares,
         address onBehalfOf,
@@ -102,8 +102,8 @@ library BorrowImpl {
     }
 
     function internalRepay(
-        Types.Market storage market,
-        Types.MarketUserPosition storage position,
+        IDahlia.Market storage market,
+        IDahlia.MarketUserPosition storage position,
         uint256 assets,
         uint256 shares,
         address onBehalfOf

@@ -6,9 +6,7 @@ import {Constants} from "src/core/helpers/Constants.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
 import {MarketMath} from "src/core/helpers/MarketMath.sol";
-
-import {IDahlia} from "src/core/interfaces/IDahlia.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia, IMarketStorage} from "src/core/interfaces/IDahlia.sol";
 import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
@@ -18,7 +16,7 @@ import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 library ManageMarketImpl {
     using FixedPointMathLib for uint256;
 
-    function setProtocolFeeRate(Types.Market storage market, uint256 newFee) internal {
+    function setProtocolFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.protocolFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxProtocolFeeExceeded());
 
@@ -26,7 +24,7 @@ library ManageMarketImpl {
         emit Events.SetProtocolFeeRate(market.id, newFee);
     }
 
-    function setReserveFeeRate(Types.Market storage market, uint256 newFee) internal {
+    function setReserveFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.reserveFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxProtocolFeeExceeded());
 
@@ -35,12 +33,12 @@ library ManageMarketImpl {
     }
 
     function deployMarket(
-        mapping(Types.MarketId => Types.MarketData) storage markets,
-        Types.MarketId id,
+        mapping(IDahlia.MarketId => IDahlia.MarketData) storage markets,
+        IDahlia.MarketId id,
         IDahlia.MarketConfig memory marketConfig,
         IWrappedVault vault
     ) internal {
-        Types.Market storage market = markets[id].market;
+        IDahlia.Market storage market = markets[id].market;
         require(market.updatedAt == 0, Errors.MarketAlreadyDeployed());
 
         market.id = id;
@@ -54,7 +52,7 @@ library ManageMarketImpl {
         market.lltv = uint24(marketConfig.lltv);
         market.rltv = uint24(marketConfig.rltv);
         market.updatedAt = uint48(block.timestamp);
-        market.status = Types.MarketStatus.Active;
+        market.status = IMarketStorage.MarketStatus.Active;
         market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
         market.reallocationBonusRate = uint24(MarketMath.calcReallocationBonusRate(market.lltv));
         market.vault = vault;

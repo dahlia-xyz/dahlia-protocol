@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/interfaces/IERC20Metadata.
 import {Owned} from "@solmate/auth/Owned.sol";
 import {ERC4626} from "@solmate/tokens/ERC4626.sol";
 import {LibString} from "@solmate/utils/LibString.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {WrappedVault} from "src/royco/contracts/WrappedVault.sol";
 
 /// @title WrappedVaultFactory
@@ -115,7 +115,7 @@ contract WrappedVaultFactory is Owned {
     /// @param name The name of the dahlia market
     /// @param initialFrontendFee The initial frontend fee for the wrapped vault ()
     function wrapVault(
-        Types.MarketId marketId,
+        IDahlia.MarketId marketId,
         address loanToken,
         address owner,
         string calldata name,

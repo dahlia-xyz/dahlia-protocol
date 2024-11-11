@@ -5,7 +5,7 @@ import {Test, Vm} from "@forge-std/Test.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {Errors} from "src/core/helpers/Errors.sol";
 import {Events} from "src/core/helpers/Events.sol";
-import {Types} from "src/core/types/Types.sol";
+import {IDahlia} from "src/core/interfaces/IDahlia.sol";
 import {BoundUtils} from "test/common/BoundUtils.sol";
 import {DahliaTransUtils} from "test/common/DahliaTransUtils.sol";
 import {TestConstants} from "test/common/TestConstants.sol";
@@ -22,7 +22,7 @@ contract SupplyCollateralIntegrationTest is Test {
         $ = (new TestContext(vm)).bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
 
-    function test_int_supplyCollateral_marketNotDeployed(Types.MarketId marketIdFuzz, uint256 assets) public {
+    function test_int_supplyCollateral_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.assume(assets > 0);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
@@ -67,7 +67,7 @@ contract SupplyCollateralIntegrationTest is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        Types.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
         assertEq($.collateralToken.balanceOf($.alice), 0);
         assertEq($.collateralToken.balanceOf(address($.dahlia)), assets);
         assertEq(userPos.collateral, assets);

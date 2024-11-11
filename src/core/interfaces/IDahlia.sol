@@ -1,26 +1,81 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {Types} from "src/core/types/Types.sol";
-
 import {IIrm} from "src/irm/interfaces/IIrm.sol";
 import {IDahliaOracle} from "src/oracles/interfaces/IDahliaOracle.sol";
+import {IWrappedVault} from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title IMarketStorage
 /// @notice Interface for the market storage functions
 interface IMarketStorage {
-    /// @notice Returns the user position for a given market ID and address.
-    /// @param marketId The unique market id.
-    /// @param userAddress User address.
-    function getMarketUserPosition(Types.MarketId marketId, address userAddress)
-        external
-        view
-        returns (Types.MarketUserPosition memory position);
+    type MarketId is uint32;
+
+    enum MarketStatus {
+        None,
+        Active,
+        Paused,
+        Deprecated
+    }
+
+    struct RateRange {
+        uint24 min;
+        uint24 max;
+    }
+
+    struct Market {
+        // --- 31 bytes
+        MarketId id; // 4 bytes
+        uint24 lltv; // 3 bytes
+        uint24 rltv; // 3 bytes
+        MarketStatus status; // 1 byte
+        address loanToken; // 20 bytes
+        // --- 32 bytes
+        address collateralToken; // 20 bytes
+        uint48 updatedAt; // 6 bytes // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers#understanding-the-optimization
+        uint24 protocolFeeRate; // 3 bytes // taken from interest
+        uint24 reserveFeeRate; // 3 bytes // taken from interest
+        // --- 31 bytes
+        IDahliaOracle oracle; // 20 bytes
+        uint64 fullUtilizationRate; // 3 bytes
+        uint64 ratePerSec; // 8 bytes // store refreshed rate per second
+        // --- 26 bytes
+        IIrm irm; // 20 bytes
+        uint24 liquidationBonusRate; // 3 bytes
+        uint24 reallocationBonusRate; // 3 bytes
+        // --- 20 bytes
+        IWrappedVault vault; // 20 bytes
+        address marketDeployer; // 20 bytes // TODO: remove if relocation removed
+        // --- having all 256 bytes at the end make deployment size smaller
+        uint256 totalLendAssets; // 32 bytes
+        uint256 totalLendShares; // 32 bytes
+        uint256 totalBorrowAssets; // 32 bytes
+        uint256 totalBorrowShares; // 32 bytes
+    }
+
+    struct MarketUserPosition {
+        uint256 lendShares;
+        uint256 lendAssets; // store user initial lend assets
+        uint256 borrowShares;
+        uint256 collateral;
+    }
+
+    struct MarketData {
+        Market market;
+        mapping(address => MarketUserPosition) userPositions;
+    }
 
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.
     /// @param userAddress User address.
-    function marketUserMaxBorrows(Types.MarketId marketId, address userAddress)
+    function getMarketUserPosition(MarketId marketId, address userAddress)
+        external
+        view
+        returns (MarketUserPosition memory position);
+
+    /// @notice Returns the user position for a given market ID and address.
+    /// @param marketId The unique market id.
+    /// @param userAddress User address.
+    function marketUserMaxBorrows(MarketId marketId, address userAddress)
         external
         view
         returns (uint256 maxBorrowAssets, uint256 borrowAssets, uint256 collateralPrice);
@@ -28,34 +83,34 @@ interface IMarketStorage {
     /// @notice Returns the user position for a given market ID and address.
     /// @param marketId The unique market id.
     /// @param userAddress User address.
-    function getPositionLTV(Types.MarketId marketId, address userAddress) external view returns (uint256);
+    function getPositionLTV(MarketId marketId, address userAddress) external view returns (uint256);
 
     /// @notice Returns market params.
     /// @param marketId The unique market id.
-    function getMarket(Types.MarketId marketId) external view returns (Types.Market memory);
+    function getMarket(MarketId marketId) external view returns (Market memory);
 
     /// @notice Checks existence of the market for the given market ID.
     /// @param marketId The unique market id.
-    function isMarketDeployed(Types.MarketId marketId) external view returns (bool);
+    function isMarketDeployed(MarketId marketId) external view returns (bool);
 
     /// @notice Pause market.
     /// @param id of the market.
-    function pauseMarket(Types.MarketId id) external;
+    function pauseMarket(MarketId id) external;
 
     /// @notice UnpPause market.
     /// @param id of the market.
-    function unpauseMarket(Types.MarketId id) external;
+    function unpauseMarket(MarketId id) external;
 
     /// @notice Update liquidationBonusRate and reallocationBonusRate for given market.
     /// @param id of the market.
     /// @param liquidationBonusRate The new liquidationBonusRate where 100% is LLTV_100_PERCENT
     /// @param reallocationBonusRate The new reallocationBonusRate where 100% is LLTV_100_PERCENT.
-    function updateMarketBonusRates(Types.MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate)
+    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate, uint256 reallocationBonusRate)
         external;
 
     /// @notice Deprecate market.
     /// @param id of the market.
-    function deprecateMarket(Types.MarketId id) external;
+    function deprecateMarket(MarketId id) external;
 }
 
 /// @title IDahlia
@@ -69,11 +124,11 @@ interface IDahlia is IMarketStorage {
 
     /// @notice Sets a possible LLTV range for market creation.
     /// @param range min max range.
-    function setLltvRange(Types.RateRange memory range) external;
+    function setLltvRange(RateRange memory range) external;
 
     /// @notice Sets a possible liquidation bonus rate range for market creation.
     /// @param range min max range.
-    function setLiquidationBonusRateRange(Types.RateRange memory range) external;
+    function setLiquidationBonusRateRange(RateRange memory range) external;
 
     /// @notice Sets the protocol fee recipient address for all markets
     /// @param newProtocolFeeRecipient The new protocol fee recipient address
@@ -100,17 +155,17 @@ interface IDahlia is IMarketStorage {
     /// @notice Deploys a new market with the given parameters and returns its id.
     /// @param marketConfig The parameters of the market.
     /// @param data Additional data for market creation.
-    function deployMarket(MarketConfig memory marketConfig, bytes calldata data) external returns (Types.MarketId id);
+    function deployMarket(MarketConfig memory marketConfig, bytes calldata data) external returns (MarketId id);
 
     /// @notice Sets a new protocol fee for a given market.
     /// @param id of the market.
     /// @param newFee The new fee, scaled by WAD.
-    function setProtocolFeeRate(Types.MarketId id, uint32 newFee) external;
+    function setProtocolFeeRate(MarketId id, uint32 newFee) external;
 
     /// @notice Sets a new reserve fee for a given market.
     /// @param id of the market.
     /// @param newFee The new fee, scaled by WAD.
-    function setReserveFeeRate(Types.MarketId id, uint32 newFee) external;
+    function setReserveFeeRate(MarketId id, uint32 newFee) external;
 
     /// @notice Lends `assets` on behalf of a user, with an optional callback.
     /// @dev This function designed to be called by ERC4626Proxy contract.
@@ -119,7 +174,7 @@ interface IDahlia is IMarketStorage {
     /// @param onBehalfOf The address that will own the increased lend position.
     /// @param callbackData Arbitrary data to pass to the `onDahliaLend` callback. Pass empty data if not needed.
     /// @return sharesSupplied The amount of shares minted.
-    function lend(Types.MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
+    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
         external
         returns (uint256 sharesSupplied);
 
@@ -130,16 +185,13 @@ interface IDahlia is IMarketStorage {
     /// @param onBehalfOf The address of the owner of the supply position.
     /// @param receiver The address that will receive the withdrawn assets.
     /// @return assetsWithdrawn The amount of assets withdrawn.
-    function withdraw(Types.MarketId id, uint256 shares, address onBehalfOf, address receiver)
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
         external
         returns (uint256 assetsWithdrawn);
 
-    function claimInterest(Types.MarketId id, address onBehalfOf, address receiver) external returns (uint256 assets);
+    function claimInterest(MarketId id, address onBehalfOf, address receiver) external returns (uint256 assets);
 
-    function previewLendRateAfterDeposit(Types.MarketId id, uint256 assets)
-        external
-        view
-        returns (uint256 ratePerSec);
+    function previewLendRateAfterDeposit(MarketId id, uint256 assets) external view returns (uint256 ratePerSec);
 
     /// @notice Borrows `assets` or `shares` on behalf of a user and sends the assets to a receiver.
     /// @dev either the `assets` or the `shares` must be set to zero.
@@ -150,7 +202,7 @@ interface IDahlia is IMarketStorage {
     /// @param receiver The address that will receive the borrowed assets.
     /// @return assetsBorrowed The amount of assets borrowed.
     /// @return sharesBorrowed The amount of shares minted.
-    function borrow(Types.MarketId id, uint256 assets, uint256 shares, address onBehalfOf, address receiver)
+    function borrow(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, address receiver)
         external
         returns (uint256 assetsBorrowed, uint256 sharesBorrowed);
 
@@ -164,7 +216,7 @@ interface IDahlia is IMarketStorage {
     /// @return borrowedAssets The amount of assets borrowed.
     /// @return borrowedShares The amount of shares minted.
     function supplyAndBorrow(
-        Types.MarketId id,
+        MarketId id,
         uint256 collateralAssets,
         uint256 borrowAssets,
         address onBehalfOf,
@@ -182,7 +234,7 @@ interface IDahlia is IMarketStorage {
     /// @return repaidAssets The amount of shares minted.
     /// @return repaidShares The amount of shares minted.
     function repayAndWithdraw(
-        Types.MarketId id,
+        MarketId id,
         uint256 collateralAssets,
         uint256 repayAssets,
         uint256 repayShares,
@@ -199,7 +251,7 @@ interface IDahlia is IMarketStorage {
     /// @param callbackData Arbitrary data to pass to the `onDahliaRepay` callback. Pass empty data if not needed.
     /// @return assetsRepaid The amount of assets repaid.
     /// @return sharesRepaid The amount of shares burned.
-    function repay(Types.MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
+    function repay(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
         external
         returns (uint256 assetsRepaid, uint256 sharesRepaid);
 
@@ -210,7 +262,7 @@ interface IDahlia is IMarketStorage {
     /// @return collateralSeized The amount of assets seized.
     /// @return assetsRepaid The amount of assets repaid.
     /// @return sharesRepaid The amount of shares repaid.
-    function liquidate(Types.MarketId id, address borrower, bytes calldata callbackData)
+    function liquidate(MarketId id, address borrower, bytes calldata callbackData)
         external
         returns (uint256 collateralSeized, uint256 assetsRepaid, uint256 sharesRepaid);
 
@@ -222,7 +274,7 @@ interface IDahlia is IMarketStorage {
     /// @return reallocatedShares The amount of reallocated shares.
     /// @return reallocatedCollateral The amount of reallocated collateral.
     /// @return bonusCollateral The amount of collateral bonus for reallocator.
-    function reallocate(Types.MarketId marketId, Types.MarketId marketIdTo, address borrower)
+    function reallocate(MarketId marketId, MarketId marketIdTo, address borrower)
         external
         returns (
             uint256 reallocatedAssets,
@@ -237,15 +289,14 @@ interface IDahlia is IMarketStorage {
     /// @param onBehalfOf The address that will own the increased collateral position.
     /// @param callbackData Arbitrary data to pass to the `onDahliaSupplyCollateral` callback.
     ///        Pass empty data if not needed.
-    function supplyCollateral(Types.MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData)
-        external;
+    function supplyCollateral(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData) external;
 
     /// @notice Withdraws collateral on behalf of a user and sends the assets to a receiver.
     /// @param id of the market.
     /// @param assets The amount of collateral to withdraw.
     /// @param onBehalfOf The address of the owner of the collateral position.
     /// @param receiver The address that will receive the collateral assets.
-    function withdrawCollateral(Types.MarketId id, uint256 assets, address onBehalfOf, address receiver) external;
+    function withdrawCollateral(MarketId id, uint256 assets, address onBehalfOf, address receiver) external;
 
     /// @notice Executes a flash loan.
     /// @param token The token to flash loan.
@@ -255,5 +306,5 @@ interface IDahlia is IMarketStorage {
 
     /// @notice Accrues interest for the given market parameters.
     /// @param id of the market.
-    function accrueMarketInterest(Types.MarketId id) external;
+    function accrueMarketInterest(MarketId id) external;
 }
