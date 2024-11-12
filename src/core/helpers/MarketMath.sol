@@ -104,6 +104,7 @@ library MarketMath {
 
     /// @notice Get max liquidation bonus rate
     /// @dev This should protect from case lltv + bonus > 100%
+    //  @dev example: if lltv 90%, max liquidation rate wiil be (100 - 90) * 3 / 4 = 7.5
     function getMaxLiquidationBonusRate(uint256 lltv) public pure returns (uint256) {
         return FixedPointMathLib.min(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE, (Constants.LLTV_100_PERCENT - lltv) * 3 / 4);
     }

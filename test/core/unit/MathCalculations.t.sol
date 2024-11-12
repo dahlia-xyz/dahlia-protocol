@@ -16,6 +16,5 @@ contract MathCalculationsTest is Test {
         assertEq(InterestImpl.calcFeeSharesFromInterest(1e18, 1e24, 100, 0.02e5), 1_999_999);
         assertEq(InterestImpl.calcFeeSharesFromInterest(1e6, 1e12, 1, 0.02e5), 19_999);
         assertEq(InterestImpl.calcFeeSharesFromInterest(1e2, 1e8, 1, 0.002e5), 1980);
-        // TODO: add more tests
     }
 }

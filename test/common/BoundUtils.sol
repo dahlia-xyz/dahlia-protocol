@@ -110,8 +110,7 @@ library BoundUtils {
 
         vm.assume(pos.collateral < type(uint256).max / pos.price);
         logPosition(pos);
-        vm.assume(pos.ltv == MarketMath.getLTV(pos.borrowed, pos.collateral, pos.price)); //TODO; this is temporary
-        // require(pos.ltv == MarketMath.getLTV(pos.borrowed, pos.collateral, pos.price), "LTV NOT GOOD"); TODO; this is temporary
+        vm.assume(pos.ltv == MarketMath.getLTV(pos.borrowed, pos.collateral, pos.price));
         return pos;
     }
 

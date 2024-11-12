@@ -89,12 +89,6 @@ library BorrowImpl {
             revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
         }
 
-        // TODO: decide if need to check by borrowedAssets or lltv bottom,
-        // uint256 positionLltv = MarketMath.getLTV(market, onBehalfOfPosition, collateralPrice);
-        // if (positionLltv > market.lltv) {
-        //     revert Errors.InsufficientCollateral(positionLltv, market.lltv);
-        // }
-
         emit Events.DahliaBorrow(market.id, msg.sender, onBehalfOf, receiver, assets, shares);
         return (assets, shares);
     }
