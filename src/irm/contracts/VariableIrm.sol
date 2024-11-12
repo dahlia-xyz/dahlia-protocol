@@ -67,15 +67,12 @@ contract VariableIrm is IIrm {
         rateHalfLife = uint24(_config.rateHalfLife);
     }
 
-    /// @notice The ```name``` function returns the name of the rate contract
-    /// @return memory name of contract
+    /// @inheritdoc IIrm
     function name() external pure returns (string memory) {
         return string(abi.encodePacked("Dahlia Variable Interest Rate"));
     }
 
-    /// @notice Returns the semantic version of the rate contract
-    /// @dev Follows semantic versioning
-    /// @return version
+    /// @inheritdoc IIrm
     function version() external pure returns (uint256) {
         return 1;
     }
@@ -85,11 +82,11 @@ contract VariableIrm is IIrm {
     /// @param deltaTime The elapsed time since last update given in seconds
     /// @param utilization The utilization %, given with 5 decimals of precision
     /// @param fullUtilizationRate The interest value when utilization is 100%, given with 18 decimals of precision
-    /// @return _newFullUtilizationRate The new maximum interest rate
+    /// @return newFullUtilizationRate The new maximum interest rate
     function getFullUtilizationInterest(uint256 deltaTime, uint256 utilization, uint256 fullUtilizationRate)
         internal
         view
-        returns (uint256 _newFullUtilizationRate)
+        returns (uint256 newFullUtilizationRate)
     {
         uint256 _minTargetUtilization = minTargetUtilization;
         uint256 _maxTargetUtilization = maxTargetUtilization;
@@ -102,7 +99,7 @@ contract VariableIrm is IIrm {
             // 36 decimals
             uint256 _decayGrowth = _rateHalfLife + (_deltaUtilization * _deltaUtilization * deltaTime / _minTargetUtilization / _minTargetUtilization);
             // 18 decimals
-            _newFullUtilizationRate = (fullUtilizationRate * _rateHalfLife) / _decayGrowth;
+            newFullUtilizationRate = (fullUtilizationRate * _rateHalfLife) / _decayGrowth;
         } else if (utilization > _maxTargetUtilization) {
             uint256 _rateHalfLife = rateHalfLife;
             uint256 _leftUtilization = IrmConstants.UTILIZATION_100_PERCENT - _maxTargetUtilization;
@@ -110,71 +107,55 @@ contract VariableIrm is IIrm {
             // 36 decimals
             uint256 _decayGrowth = _rateHalfLife + (_deltaUtilization * _deltaUtilization * deltaTime) / _leftUtilization / _leftUtilization;
             // 18 decimals
-            _newFullUtilizationRate = (fullUtilizationRate * _decayGrowth) / _rateHalfLife;
+            newFullUtilizationRate = (fullUtilizationRate * _decayGrowth) / _rateHalfLife;
         } else {
-            _newFullUtilizationRate = fullUtilizationRate;
+            newFullUtilizationRate = fullUtilizationRate;
         }
-        return _newFullUtilizationRate.min(_maxFullUtilizationRate).max(_minFullUtilizationRate);
+        return newFullUtilizationRate.min(_maxFullUtilizationRate).max(_minFullUtilizationRate);
     }
 
-    /// @notice Function calculates interest rates using two linear functions f(utilization)
-    /// @param deltaTime The elapsed time since last update, given in seconds
-    /// @param utilization The utilization %, given with 5 decimals of precision
-    /// @param oldFullUtilizationRate The interest value when utilization is 100%, given with 18 decimals of precision
-    /// @return _newRatePerSec The new interest rate, 18 decimals of precision
-    /// @return _newFullUtilizationInterest The new max interest rate, 18 decimals of precision
+    /// @inheritdoc IIrm
     function getNewRate(uint256 deltaTime, uint256 utilization, uint256 oldFullUtilizationRate)
         external
         view
-        returns (uint256 _newRatePerSec, uint256 _newFullUtilizationInterest)
+        returns (uint256 newRatePerSec, uint256 newFullUtilizationRate)
     {
         return _getNewRate(deltaTime, utilization, oldFullUtilizationRate);
     }
 
-    /// @notice Function calculates interest rates using two linear functions f(utilization)
-    /// @param _deltaTime The elapsed time since last update, given in seconds
-    /// @param _utilization The utilization %, given with 5 decimals of precision
-    /// @param _oldFullUtilizationRate The interest value when utilization is 100%, given with 18 decimals of precision
-    /// @return _newRatePerSec The new interest rate, 18 decimals of precision
-    /// @return _newFullUtilizationRate The new max interest rate, 18 decimals of precision
-    function _getNewRate(uint256 _deltaTime, uint256 _utilization, uint256 _oldFullUtilizationRate)
+    function _getNewRate(uint256 deltaTime, uint256 utilization, uint256 oldFullUtilizationRate)
         internal
         view
-        returns (uint256 _newRatePerSec, uint256 _newFullUtilizationRate)
+        returns (uint256 newRatePerSec, uint256 newFullUtilizationRate)
     {
         uint256 _zeroUtilizationRate = zeroUtilizationRate;
         uint256 _targetUtilization = targetUtilization;
 
-        _newFullUtilizationRate = getFullUtilizationInterest(_deltaTime, _utilization, _oldFullUtilizationRate);
+        newFullUtilizationRate = getFullUtilizationInterest(deltaTime, utilization, oldFullUtilizationRate);
 
-        // _targetInterest is calculated as the percentage of the delta between min and max interest
-        uint256 _targetInterest = _zeroUtilizationRate + FixedPointMathLib.mulWad(_newFullUtilizationRate - _zeroUtilizationRate, targetRatePercent);
+        // _targetRate is calculated as the percentage of the delta between min and max interest
+        uint256 _targetRate = _zeroUtilizationRate + FixedPointMathLib.mulWad(newFullUtilizationRate - _zeroUtilizationRate, targetRatePercent);
 
-        if (_utilization < _targetUtilization) {
+        if (utilization < _targetUtilization) {
             // For readability, the following formula is equivalent to:
-            // uint256 _slope = ((_targetInterest - zeroUtilizationRate) * Constants.UTILIZATION_100_PERCENT) / targetUtilization;
-            // _newRatePerSec = uint64(zeroUtilizationRate + ((_utilization * _slope) / Constants.UTILIZATION_100_PERCENT));
+            // slope = ((_targetRate - zeroUtilizationRate) * Constants.UTILIZATION_100_PERCENT) / targetUtilization;
+            // newRatePerSec = uint64(zeroUtilizationRate + ((utilization * slope) / Constants.UTILIZATION_100_PERCENT));
 
             // 18 decimals
-            _newRatePerSec = _zeroUtilizationRate + (_utilization * (_targetInterest - _zeroUtilizationRate)) / _targetUtilization;
+            newRatePerSec = _zeroUtilizationRate + (utilization * (_targetRate - _zeroUtilizationRate)) / _targetUtilization;
         } else {
             // For readability, the following formula is equivalent to:
-            // uint256 _slope = (((_newFullUtilizationInterest - _targetInterest) * Constants.UTILIZATION_100_PERCENT) / (Constants.UTILIZATION_100_PERCENT -
+            // slope = (((_newFullUtilizationInterest - _targetRate) * Constants.UTILIZATION_100_PERCENT) / (Constants.UTILIZATION_100_PERCENT -
             // _targetUtilization));
-            // _newRatePerSec = uint64(_targetInterest + (((_utilization - _targetUtilization) * _slope) / Constants.UTILIZATION_100_PERCENT));
+            // newRatePerSec = uint64(_targetRate + (((_utilization - _targetUtilization) * slope) / Constants.UTILIZATION_100_PERCENT));
 
             // 18 decimals
-            _newRatePerSec = _targetInterest
-                + ((_utilization - _targetUtilization) * (_newFullUtilizationRate - _targetInterest)) / (IrmConstants.UTILIZATION_100_PERCENT - _targetUtilization);
+            newRatePerSec = _targetRate
+                + ((utilization - _targetUtilization) * (newFullUtilizationRate - _targetRate)) / (IrmConstants.UTILIZATION_100_PERCENT - _targetUtilization);
         }
     }
 
-    struct InterestCalculationResults {
-        uint256 interestEarnedAssets;
-        uint256 newRate;
-        uint256 newFullUtilizationRate;
-    }
-
+    /// @inheritdoc IIrm
     function calculateInterest(uint256 deltaTime, uint256 totalLendAssets, uint256 totalBorrowAssets, uint256 fullUtilizationRate)
         external
         view
