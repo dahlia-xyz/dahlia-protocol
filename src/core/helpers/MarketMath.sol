@@ -111,6 +111,8 @@ library MarketMath {
     //     return Constants.MAX_LIQUIDATION_BONUS_RATE.min(factor);
     // }
 
+    /// @notice Get max liquidation bonus rate
+    // TODO: give examples
     function getMaxLiquidationBonusRate(uint256 lltv) public pure returns (uint256) {
         return FixedPointMathLib.min(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE, (Constants.LLTV_100_PERCENT - lltv) * 3 / 4);
     }
