@@ -620,7 +620,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxDeposit(address) external pure returns (uint256 maxAssets) {
-        maxAssets = type(uint256).max; // TODO this should 1e26
+        maxAssets = type(uint128).max;
     }
 
     /// @inheritdoc IWrappedVault
@@ -631,7 +631,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxMint(address) external pure returns (uint256 maxShares) {
-        maxShares = type(uint256).max; // TODO 1e32?
+        maxShares = type(uint128).max;
     }
 
     /// @inheritdoc IWrappedVault

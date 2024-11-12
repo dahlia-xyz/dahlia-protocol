@@ -14,6 +14,7 @@ import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 library MarketMath {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
+    using SharesMathLib for uint128;
 
     function collateralToLendUp(uint256 collateral, uint256 collateralPrice) internal pure returns (uint256) {
         return collateral.mulDivUp(collateralPrice, Constants.ORACLE_PRICE_SCALE);

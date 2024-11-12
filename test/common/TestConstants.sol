@@ -6,12 +6,11 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 
 library TestConstants {
     uint256 internal constant BLOCK_TIME = 1;
-    uint256 internal constant HIGH_COLLATERAL_AMOUNT = 1e35;
     uint256 internal constant MAX_COLLATERAL_ASSETS = type(uint128).max;
     uint256 internal constant MIN_COLLATERAL_PRICE = 1e10;
     uint256 internal constant MAX_COLLATERAL_PRICE = 1e26;
     uint256 internal constant MIN_TEST_AMOUNT = 1e5;
-    uint256 internal constant MAX_TEST_AMOUNT = 1e28;
+    uint256 internal constant MAX_TEST_AMOUNT = 1e32;
     uint256 internal constant MIN_TEST_SHARES = MIN_TEST_AMOUNT * SharesMathLib.SHARES_OFFSET;
     uint256 internal constant MAX_TEST_SHARES = MAX_TEST_AMOUNT * SharesMathLib.SHARES_OFFSET;
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
@@ -16,6 +17,7 @@ library LiquidationImpl {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using MarketMath for uint256;
+    using SafeCastLib for uint256;
 
     function internalLiquidate(
         IDahlia.Market storage market,
@@ -47,7 +49,7 @@ library LiquidationImpl {
         // remove all shares from position
         borrowerPosition.borrowShares = 0;
         // remove all seizedCollateral from position, always seizedCollateral <= collateral
-        borrowerPosition.collateral -= seizedCollateral;
+        borrowerPosition.collateral -= seizedCollateral.toUint128();
         // remove all position assets from market
         market.totalBorrowAssets -= borrowAssets;
         // remove all position shares from market
@@ -61,7 +63,7 @@ library LiquidationImpl {
                 // calc rescue assets and  shares by total lends
                 (rescueAssets, rescueShares) = MarketMath.calcRescueAssets(market.totalLendAssets, market.totalLendShares, badDebtAssets, reserveShares);
                 // decrease reserve lend shares
-                reservePosition.lendShares -= rescueShares;
+                reservePosition.lendShares -= rescueShares.toUint128();
                 // decrease total lend shares
                 market.totalLendShares -= rescueShares;
             }

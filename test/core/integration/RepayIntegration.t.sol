@@ -123,7 +123,7 @@ contract RepayIntegrationTest is Test {
         uint256 assets = shares.toAssetsUp(0, 0);
 
         vm.dahliaLendBy($.carol, assets, $);
-        vm.dahliaSupplyCollateralBy($.alice, TestConstants.HIGH_COLLATERAL_AMOUNT, $);
+        vm.dahliaSupplyCollateralBy($.alice, TestConstants.MAX_COLLATERAL_ASSETS, $);
         vm.dahliaBorrowBy($.alice, assets, $);
 
         $.loanToken.setBalance($.bob, assets);

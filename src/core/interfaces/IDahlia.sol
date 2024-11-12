@@ -51,10 +51,10 @@ interface IMarketStorage {
     }
 
     struct MarketUserPosition {
-        uint256 lendShares;
-        uint256 lendAssets; // store user initial lend assets
-        uint256 borrowShares;
-        uint256 collateral;
+        uint128 lendShares;
+        uint128 lendAssets; // store user initial lend assets
+        uint128 borrowShares;
+        uint128 collateral;
     }
 
     struct MarketData {

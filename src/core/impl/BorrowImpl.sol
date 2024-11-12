@@ -4,6 +4,7 @@ pragma solidity ^0.8.27;
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
@@ -18,13 +19,14 @@ library BorrowImpl {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
+    using SafeCastLib for uint256;
     using MarketMath for uint256;
 
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.MarketUserPosition storage onBehalfOfPosition, uint256 assets, address onBehalfOf)
         internal
     {
         // increase collateral value in position
-        onBehalfOfPosition.collateral += assets;
+        onBehalfOfPosition.collateral += assets.toUint128();
 
         emit Events.SupplyCollateral(market.id, msg.sender, onBehalfOf, assets);
     }
@@ -37,7 +39,7 @@ library BorrowImpl {
         address receiver
     ) internal {
         // decrease collateral value in position
-        position.collateral -= assets;
+        position.collateral -= assets.toUint128();
 
         // check is collateral sufficient for withdraw. If borrowShares == 0, skip for gas saving
         if (position.borrowShares > 0) {
@@ -71,7 +73,7 @@ library BorrowImpl {
         }
 
         // in create borrow values in totals and position
-        onBehalfOfPosition.borrowShares += shares;
+        onBehalfOfPosition.borrowShares += shares.toUint128();
         market.totalBorrowAssets += assets;
         market.totalBorrowShares += shares;
 
@@ -110,7 +112,7 @@ library BorrowImpl {
         }
 
         // decrease borrow values in totals and position
-        position.borrowShares -= shares;
+        position.borrowShares -= shares.toUint128();
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
@@ -15,6 +16,7 @@ import { IIrm } from "src/irm/interfaces/IIrm.sol";
 library InterestImpl {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
+    using SafeCastLib for uint256;
 
     /// @dev Accrues interest for the given market `marketConfig`.
     /// @dev Assumes that the inputs `marketConfig` and `id` match.
@@ -48,7 +50,7 @@ library InterestImpl {
             uint256 protocolFeeRate = market.protocolFeeRate;
             if (protocolFeeRate > 0) {
                 protocolFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
-                protocolFeeRecipientPosition.lendShares += protocolFeeShares;
+                protocolFeeRecipientPosition.lendShares += protocolFeeShares.toUint128();
                 market.totalLendShares += protocolFeeShares;
             }
 
@@ -57,7 +59,7 @@ library InterestImpl {
             uint256 reserveFeeRate = market.reserveFeeRate;
             if (reserveFeeRate > 0) {
                 reserveFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
-                reserveFeeRecipientPosition.lendShares += reserveFeeShares;
+                reserveFeeRecipientPosition.lendShares += reserveFeeShares.toUint128();
                 market.totalLendShares += reserveFeeShares;
             }
 

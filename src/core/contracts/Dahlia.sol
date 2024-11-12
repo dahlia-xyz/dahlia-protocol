@@ -6,6 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { MarketStorage } from "src/core/abstracts/MarketStorage.sol";
 import { Permitted } from "src/core/abstracts/Permitted.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
@@ -38,6 +39,8 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 contract Dahlia is Permitted, MarketStorage, IDahlia {
     using SafeERC20 for IERC20;
     using SharesMathLib for uint256;
+    using SharesMathLib for uint128;
+    using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
 
     RateRange public lltvRange;
@@ -195,7 +198,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
 
         assets = LendImpl.internalWithdraw(market, userPosition, shares, onBehalfOf, receiver);
         uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
-        userPosition.lendAssets -= adjustedAssets;
+        userPosition.lendAssets -= adjustedAssets.toUint128();
 
         // remove isPermitted if user withdraw all money by proxy
         if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
