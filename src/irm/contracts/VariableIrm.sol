@@ -4,12 +4,16 @@ pragma solidity ^0.8.27;
 // Adapted from https://github.com/FraxFinance/fraxlend/
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 /// @title A formula for calculating interest rates as a function of utilization and time
 /// @notice A Contract for calculating interest rates as a function of utilization and time
 contract VariableIrm is IIrm {
+    using FixedPointMathLib for uint256;
+    using SafeCastLib for uint256;
+
     struct Config {
         /// @notice The minimum utilization wherein no adjustment to the full utilization and target rates occurs
         /// @dev Is smaller than targetUtilization,
@@ -33,7 +37,7 @@ contract VariableIrm is IIrm {
         /// example 1582470460, (~5% yearly) 18 decimals
         uint256 minFullUtilizationRate;
         /// @notice The maximum interest rate (per second) when utilization is 100%
-        /// example 3164940920000, (~10000% yearly) 18 decimals
+        /// example 3_164_940_920_000, (~10000% yearly) 18 decimals
         uint256 maxFullUtilizationRate;
         /// @notice The interest rate (per second) when utilization is 0%
         /// example 158247046, (~0.5% yearly) 18 decimals
@@ -43,17 +47,14 @@ contract VariableIrm is IIrm {
         uint256 targetRatePercent;
     }
 
-    using FixedPointMathLib for uint256;
-
     uint256 public immutable minFullUtilizationRate;
     uint256 public immutable maxFullUtilizationRate;
-    // TODO: make uint64
     uint256 public immutable zeroUtilizationRate;
     uint256 public immutable targetRatePercent;
-    uint24 public immutable minTargetUtilization;
-    uint24 public immutable maxTargetUtilization;
-    uint24 public immutable targetUtilization;
-    uint24 public immutable rateHalfLife;
+    uint24 public immutable minTargetUtilization; // 3 bytes
+    uint24 public immutable maxTargetUtilization; // 3 bytes
+    uint24 public immutable targetUtilization; // 3 bytes
+    uint24 public immutable rateHalfLife; // 3 bytes
 
     /// @param _config variable interest rate parameters
     constructor(Config memory _config) {
@@ -61,10 +62,10 @@ contract VariableIrm is IIrm {
         maxFullUtilizationRate = _config.maxFullUtilizationRate;
         zeroUtilizationRate = _config.zeroUtilizationRate;
         targetRatePercent = _config.targetRatePercent;
-        minTargetUtilization = uint24(_config.minTargetUtilization);
-        maxTargetUtilization = uint24(_config.maxTargetUtilization);
-        targetUtilization = uint24(_config.targetUtilization);
-        rateHalfLife = uint24(_config.rateHalfLife);
+        minTargetUtilization = _config.minTargetUtilization.toUint24();
+        maxTargetUtilization = _config.maxTargetUtilization.toUint24();
+        targetUtilization = _config.targetUtilization.toUint24();
+        rateHalfLife = _config.rateHalfLife.toUint24();
     }
 
     /// @inheritdoc IIrm
