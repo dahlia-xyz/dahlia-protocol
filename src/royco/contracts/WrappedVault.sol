@@ -150,8 +150,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
     }
 
-    // TODO: add external rewardToInterval to fake end to be block.timestamp + MIN_CAMPAIGN_DURATION for the loan asset only
-    // if there are some borrowers
+    // TODO: add tests with VaultMarketHub to see if interest increase will trigger royco order without any rewards
     function rewardToInterval(address reward) external view returns (uint32 start, uint32 end, uint96 rate) {
         start = rewardToIntervalData[reward].start;
         end = rewardToIntervalData[reward].end;
@@ -344,7 +343,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @notice Update the rewards per token accumulator according to the rate, the time elapsed since the last update, and the current total staked amount.
-    function _calculateRewardsPerToken(RewardsPerToken memory rewardsPerTokenIn, RewardsInterval memory rewardsInterval_)
+    function _calculateRewardsPerToken(RewardsPerToken memory rewardsPerTokenIn, RewardsInterval memory rewardsInterval_, uint256 decimalOffset)
         internal
         view
         returns (RewardsPerToken memory)
@@ -367,7 +366,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
 
-        uint256 elapsedWAD = elapsed * 1e18 * SharesMathLib.SHARES_OFFSET;
+        uint256 elapsedWAD = elapsed * 10 ** decimalOffset;
         // Calculate and update the new value of the accumulator.
         rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDiv(rewardsInterval_.rate, totalSupply))); // The
             // rewards per token are scaled up for precision
@@ -376,8 +375,16 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @notice Calculate the rewards accumulated by a stake between two checkpoints.
-    function _calculateUserRewards(uint256 stake_, uint256 earlierCheckpoint, uint256 latterCheckpoint) internal pure returns (uint256) {
-        return stake_ * (latterCheckpoint - earlierCheckpoint) / 1e18 / SharesMathLib.SHARES_OFFSET; // We must scale down the rewards by the precision factor
+    function _calculateUserRewards(uint256 stake_, uint256 earlierCheckpoint, uint256 latterCheckpoint, uint256 decimalOffset)
+        internal
+        pure
+        returns (uint256)
+    {
+        return stake_ * (latterCheckpoint - earlierCheckpoint) / 10 ** decimalOffset; // We must scale down the rewards by the precision factor
+    }
+
+    function rewardDecimalOffset(address reward) internal view returns (uint256) {
+        return 18 + FixedPointMathLib.zeroFloorSub(18, ERC20(reward).decimals());
     }
 
     /// @notice Update and return the rewards per token accumulator according to the rate, the time elapsed since the last update, and the current total staked
@@ -385,7 +392,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function _updateRewardsPerToken(address reward) internal returns (RewardsPerToken memory) {
         RewardsInterval storage rewardsInterval = rewardToIntervalData[reward];
         RewardsPerToken memory rewardsPerTokenIn = rewardToRPT[reward];
-        RewardsPerToken memory rewardsPerTokenOut = _calculateRewardsPerToken(rewardsPerTokenIn, rewardsInterval);
+        RewardsPerToken memory rewardsPerTokenOut = _calculateRewardsPerToken(rewardsPerTokenIn, rewardsInterval, rewardDecimalOffset(reward));
 
         // We skip the storage changes if already updated in the same block, or if the program has ended and was updated at the end
         if (rewardsPerTokenIn.lastUpdated == rewardsPerTokenOut.lastUpdated) return rewardsPerTokenOut;
@@ -415,7 +422,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         if (userRewards_.checkpoint == rewardsPerToken_.accumulated) return userRewards_;
 
         // Calculate and update the new value user reserves.
-        userRewards_.accumulated += _calculateUserRewards(balanceOf[user], userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
+        userRewards_.accumulated +=
+            _calculateUserRewards(balanceOf[user], userRewards_.checkpoint, rewardsPerToken_.accumulated, rewardDecimalOffset(reward)).toUint128();
         userRewards_.checkpoint = rewardsPerToken_.accumulated;
 
         rewardToUserToAR[reward][user] = userRewards_;
@@ -487,15 +495,17 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @notice Calculate and return current rewards per token.
     function currentRewardsPerToken(address reward) public view returns (uint256) {
-        return _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]).accumulated;
+        return _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward], rewardDecimalOffset(reward)).accumulated;
     }
 
     /// @notice Calculate and return current rewards for a user.
     /// @dev This repeats the logic used on transactions, but doesn't update the storage.
     function currentUserRewards(address reward, address user) public view returns (uint256) {
         UserRewards memory accumulatedRewards_ = rewardToUserToAR[reward][user];
-        RewardsPerToken memory rewardsPerToken_ = _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward]);
-        return accumulatedRewards_.accumulated + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
+        uint256 decimalOffset = rewardDecimalOffset(reward);
+        RewardsPerToken memory rewardsPerToken_ = _calculateRewardsPerToken(rewardToRPT[reward], rewardToIntervalData[reward], decimalOffset);
+        return accumulatedRewards_.accumulated
+            + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated, decimalOffset);
     }
 
     /// @notice Calculates the rate a user would receive in rewards after depositing assets
