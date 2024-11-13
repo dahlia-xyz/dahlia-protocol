@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { LibString } from "@solady/utils/LibString.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
@@ -13,7 +13,7 @@ contract VariableIrmTest is Test {
     VariableIrm internal rate;
 
     using BoundUtils for Vm;
-    using Strings for uint256;
+    using LibString for uint256;
     using SharesMathLib for uint256;
 
     uint64 constant ZERO_UTIL_RATE = 158_247_046;

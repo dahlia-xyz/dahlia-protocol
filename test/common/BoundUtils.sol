@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Vm, console } from "@forge-std/Test.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { LibString } from "@solady/utils/LibString.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
 import { Constants } from "src/core/helpers/Constants.sol";
@@ -14,7 +14,7 @@ import { TestTypes } from "test/common/TestTypes.sol";
 library BoundUtils {
     using MarketMath for uint256;
     using FixedPointMathLib for uint256;
-    using Strings for uint256;
+    using LibString for uint256;
 
     uint256 private constant UINT256_MAX = 115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_935;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { LibString } from "@solady/utils/LibString.sol";
 import { Test } from "forge-std/Test.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
@@ -10,7 +10,7 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 contract MarketMathTest is Test {
     using MarketMath for uint256;
     using SharesMathLib for uint256;
-    using Strings for uint256;
+    using LibString for uint256;
 
     struct MarketData {
         uint256 ta;

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: ISC
 pragma solidity >=0.8.0;
 
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { LibString } from "@solady/utils/LibString.sol";
 import { Script } from "forge-std/Script.sol";
 import { console2 as console } from "forge-std/Test.sol";
 
 abstract contract BaseScript is Script {
-    using Strings for *;
+    using LibString for *;
 
     address internal deployer;
     uint256 internal privateKey;
