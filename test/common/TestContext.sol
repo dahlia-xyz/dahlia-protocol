@@ -161,6 +161,9 @@ contract TestContext {
     }
 
     function createTestIrm() public virtual returns (IIrm irm) {
+        if (contracts["Irm"] != address(0)) {
+            return IIrm(contracts["Irm"]);
+        }
         if (contracts["IrmFactory"] == address(0)) {
             contracts["IrmFactory"] = address(new IrmFactory());
         }
@@ -176,6 +179,7 @@ contract TestContext {
                 targetRatePercent: 0.2e18
             })
         );
+        contracts["Irm"] = address(irm);
     }
 
     function createDahliaRegistry(address owner) public returns (address dahliaRegistry) {

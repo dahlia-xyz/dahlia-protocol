@@ -148,10 +148,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
             loanTokenSymbol, "/", IERC20Metadata(marketConfig.collateralToken).symbol(), " (", MarketMath.toPercentString(marketConfig.lltv), "% LLTV)"
         );
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
-        address owner = msg.sender;
-        if (marketConfig.owner != address(0)) {
-            owner = marketConfig.owner;
-        }
+        address owner = marketConfig.owner == address(0) ? msg.sender : marketConfig.owner;
         IWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
             id, marketConfig.loanToken, owner, name, fee
         );

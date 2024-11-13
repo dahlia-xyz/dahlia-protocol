@@ -10,10 +10,16 @@ contract IrmFactory {
 
     error IncorrectConfig();
 
+    uint256 internal constant CONFIG_PARAMS_BYTES_LENGTH = 8 * 32;
+
     function createVariableIrm(VariableIrm.Config memory config) external returns (IIrm) {
+        bytes32 salt;
+        assembly ("memory-safe") {
+            salt := keccak256(config, CONFIG_PARAMS_BYTES_LENGTH)
+        }
         require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, IncorrectConfig());
         require(config.minTargetUtilization < config.maxTargetUtilization, IncorrectConfig());
-        VariableIrm irm = new VariableIrm(config);
+        VariableIrm irm = new VariableIrm{ salt: salt }(config);
         emit VariableIrmCreated(address(irm), config);
         return irm;
     }

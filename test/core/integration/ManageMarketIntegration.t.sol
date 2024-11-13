@@ -254,9 +254,6 @@ contract ManageMarketIntegrationTest is Test {
     function test_int_royco_deployWithNoOwner() public {
         IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", BoundUtils.toPercent(80));
         marketConfig.owner = address(0);
-        vm.startPrank(ctx.createWallet("OWNER"));
-        $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
-        vm.stopPrank();
         vm.startPrank($.marketAdmin);
         IDahlia.MarketId marketId = $.dahlia.deployMarket(marketConfig);
         assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);

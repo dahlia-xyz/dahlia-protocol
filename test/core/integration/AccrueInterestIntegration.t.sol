@@ -90,9 +90,8 @@ contract AccrueInterestIntegrationTest is Test {
         IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
 
-        IIrm irm = ctx.createTestIrm();
         (uint256 interestEarnedAssets, uint256 newRatePerSec,) =
-            irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
+            $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
 
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
@@ -134,9 +133,8 @@ contract AccrueInterestIntegrationTest is Test {
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
 
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
-        IIrm irm = ctx.createTestIrm();
         (uint256 interestEarnedAssets, uint256 newRatePerSec,) =
-            irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
+            $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
 
         uint256 protocolFeeShares = InterestImpl.calcFeeSharesFromInterest(state.totalLendAssets, state.totalLendShares, interestEarnedAssets, protocolFee);
         uint256 reserveFeeShares = InterestImpl.calcFeeSharesFromInterest(state.totalLendAssets, state.totalLendShares, interestEarnedAssets, reserveFee);
@@ -184,8 +182,8 @@ contract AccrueInterestIntegrationTest is Test {
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
 
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
-        IIrm irm = ctx.createTestIrm();
-        (uint256 interestEarnedAssets,,) = irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
+        (uint256 interestEarnedAssets,,) =
+            $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
         uint256 protocolFeeShares = InterestImpl.calcFeeSharesFromInterest(state.totalLendAssets, state.totalLendShares, interestEarnedAssets, fee);
         vm.forward(blocks);
         vm.resumeGasMetering();
