@@ -36,8 +36,7 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 /// @notice The Dahlia contract.
 contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
     using SafeERC20 for IERC20;
-    using SharesMathLib for uint256;
-    using SharesMathLib for uint128;
+    using SharesMathLib for *;
     using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
 

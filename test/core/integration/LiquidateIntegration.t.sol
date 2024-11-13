@@ -15,8 +15,7 @@ import { TestTypes } from "test/common/TestTypes.sol";
 
 contract LiquidateIntegrationTest is Test {
     using FixedPointMathLib for uint256;
-    using SharesMathLib for uint256;
-    using SharesMathLib for uint128;
+    using SharesMathLib for *;
     using MarketMath for uint256;
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
