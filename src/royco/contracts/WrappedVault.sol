@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { Points } from "@royco/Points.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { SafeCast } from "@royco/libraries/SafeCast.sol";
-
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
