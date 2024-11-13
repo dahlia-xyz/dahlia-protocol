@@ -11,6 +11,18 @@ contract Timelock is Ownable2Step {
     error DelayMustExceedMinimumDelay();
     /// @notice Delay must exceed maximum delay."
     error DelayMustExceedMaximumDelay();
+    /// @notice Call must come from Timelock.
+    error CallMustComeFromTimelock();
+    /// @notice Estimated execution block must satisfy delay.
+    error EstimatedExecutionBlockMustSatisfyDelay();
+    /// @notice Transaction hasn't been queued.
+    error TransactionHasNotBeenQueued();
+    /// @notice Transaction hasn't surpassed time lock
+    error TransactionHasNotSurpassedTimeLock();
+    /// @notice Transaction is stale
+    error TransactionIsStale();
+    /// @notice Transaction execution reverted.
+    error TransactionExecutionReverted();
 
     event NewDelay(uint256 indexed newDelay);
     event CancelTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
@@ -38,13 +50,13 @@ contract Timelock is Ownable2Step {
     }
 
     function setDelay(uint256 delay_) public {
-        require(msg.sender == address(this), "Timelock::setDelay: Call must come from Timelock."); // TODO check if we need address(this) instead onlyOwner
+        require(msg.sender == address(this), CallMustComeFromTimelock());
 
         _setDelay(delay_);
     }
 
     function queueTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta) public onlyOwner returns (bytes32) {
-        require(getBlockTimestamp() + delay < eta, "Timelock::queueTransaction: Estimated execution block must satisfy delay.");
+        require(getBlockTimestamp() + delay < eta, EstimatedExecutionBlockMustSatisfyDelay());
 
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         queuedTransactions[txHash] = true;
@@ -67,9 +79,9 @@ contract Timelock is Ownable2Step {
         returns (bytes memory)
     {
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
-        require(queuedTransactions[txHash], "Timelock::executeTransaction: Transaction hasn't been queued.");
-        require(getBlockTimestamp() >= eta, "Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
-        require(getBlockTimestamp() <= eta + GRACE_PERIOD, "Timelock::executeTransaction: Transaction is stale.");
+        require(queuedTransactions[txHash], TransactionHasNotBeenQueued());
+        require(getBlockTimestamp() >= eta, TransactionHasNotSurpassedTimeLock());
+        require(getBlockTimestamp() <= eta + GRACE_PERIOD, TransactionIsStale());
 
         queuedTransactions[txHash] = false;
 
@@ -83,7 +95,7 @@ contract Timelock is Ownable2Step {
 
         // Execute the call
         (bool success, bytes memory returnData) = target.call{ value: value }(callData);
-        require(success, "Timelock::executeTransaction: Transaction execution reverted.");
+        require(success, TransactionExecutionReverted());
 
         emit ExecuteTransaction(txHash, target, value, signature, data, eta);
 
