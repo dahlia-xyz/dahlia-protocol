@@ -19,29 +19,29 @@ interface IWrappedVault {
     /// @return assets The value of the given shares in assets
     function convertToAssets(uint256 shares) external view returns (uint256 assets);
 
-    /// @param reciever The address in question of who would be depositing, doesn't matter in this case
+    /// @param receiver The address in question of who would be depositing, doesn't matter in this case
     /// @return maxAssets The maximum amount of assets that can be deposited
-    function maxDeposit(address reciever) external view returns (uint256 maxAssets);
+    function maxDeposit(address receiver) external view returns (uint256 maxAssets);
 
     /// @param assets The amount of assets that would be deposited
     /// @return shares The amount of shares that would be minted, *under ideal conditions* only
     function previewDeposit(uint256 assets) external view returns (uint256 shares);
 
-    /// @param assets The amount of WETH which should be deposited
-    /// @param receiver The address user whom should recieve the mevEth out
+    /// @param assets The amount of assets which should be deposited
+    /// @param receiver The address user whom should receive the mevEth out
     /// @return shares The amount of shares minted
     function deposit(uint256 assets, address receiver) external returns (uint256 shares);
 
-    /// @param reciever The address in question of who would be minting, doesn't matter in this case
+    /// @param receiver The address in question of who would be minting, doesn't matter in this case
     /// @return maxShares The maximum amount of shares that can be minted
-    function maxMint(address reciever) external view returns (uint256 maxShares);
+    function maxMint(address receiver) external view returns (uint256 maxShares);
 
     /// @param shares The amount of shares that would be minted
     /// @return assets The amount of assets that would be required, *under ideal conditions* only
     function previewMint(uint256 shares) external view returns (uint256 assets);
 
     /// @param shares The amount of shares that should be minted
-    /// @param receiver The address user whom should recieve the mevEth out
+    /// @param receiver The address user whom should receive the mevEth out
     /// @return assets The amount of assets deposited
     function mint(uint256 shares, address receiver) external returns (uint256 assets);
 
@@ -54,7 +54,7 @@ interface IWrappedVault {
     function previewWithdraw(uint256 assets) external view returns (uint256 shares);
 
     /// @param assets The amount of assets that should be withdrawn
-    /// @param receiver The address user whom should recieve the mevEth out
+    /// @param receiver The address user whom should receive the mevEth out
     /// @param owner The address of the owner of the mevEth
     /// @return shares The amount of shares burned
     function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares);
@@ -68,7 +68,7 @@ interface IWrappedVault {
     function previewRedeem(uint256 shares) external view returns (uint256 assets);
 
     /// @param shares The amount of shares that should be burned
-    /// @param receiver The address user whom should recieve the wETH out
+    /// @param receiver The address user whom should receive the wETH out
     /// @param owner The address of the owner of the mevEth
     /// @return assets The amount of assets withdrawn
     function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);

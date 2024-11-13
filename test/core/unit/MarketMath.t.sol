@@ -44,7 +44,7 @@ contract MarketMathTest is Test {
         assertEq(shares, s.rs, index);
     }
 
-    function test_math_getPositiontLtv() public pure {
+    function test_math_getPositionLtv() public pure {
         assertEq(MarketMath.getLTV(2000, 1000, 10e36), 0.2e5); // 20% LTV
         assertEq(MarketMath.getLTV(1000, 2000, 10e36), 0.05e5); // 5% LTV
         assertEq(MarketMath.getLTV(1000, 2000, 1e36), 0.5e5); // 50% LTV
