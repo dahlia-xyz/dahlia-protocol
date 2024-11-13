@@ -5,7 +5,6 @@ import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
-import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -86,7 +85,7 @@ contract BorrowIntegrationTest is Test {
 
     function test_int_borrow_unhealthyPosition(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, MarketMath.toPercent(100), MarketMath.toPercent(150));
+        pos = vm.generatePositionInLtvRange(pos, BoundUtils.toPercent(100), BoundUtils.toPercent(150));
 
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);

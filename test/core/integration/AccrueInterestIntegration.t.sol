@@ -7,7 +7,6 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
-import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
@@ -115,8 +114,8 @@ contract AccrueInterestIntegrationTest is Test {
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
-        uint32 protocolFee = uint32(bound(uint256(fee), MarketMath.toPercent(2), MarketMath.toPercent(5)));
-        uint32 reserveFee = uint32(bound(uint256(fee), MarketMath.toPercent(1), MarketMath.toPercent(2)));
+        uint32 protocolFee = uint32(bound(uint256(fee), BoundUtils.toPercent(2), BoundUtils.toPercent(5)));
+        uint32 reserveFee = uint32(bound(uint256(fee), BoundUtils.toPercent(1), BoundUtils.toPercent(2)));
 
         vm.startPrank($.owner);
         if (protocolFee != $.dahlia.getMarket($.marketId).protocolFeeRate) {
@@ -236,10 +235,10 @@ contract AccrueInterestIntegrationTest is Test {
             lent: 10_000e6,
             borrowed: 1000e6, // 10%
             price: 1e34,
-            ltv: MarketMath.toPercent(80)
+            ltv: BoundUtils.toPercent(80)
         });
-        uint32 protocolFee = MarketMath.toPercent(0);
-        uint32 reserveFee = MarketMath.toPercent(0);
+        uint32 protocolFee = BoundUtils.toPercent(0);
+        uint32 reserveFee = BoundUtils.toPercent(0);
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaLendBy($.bob, pos.lent, $);

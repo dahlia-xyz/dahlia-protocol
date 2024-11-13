@@ -65,7 +65,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
 
     function test_int_supplyAndBorrow_unhealthyPosition(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, MarketMath.toPercent(100), MarketMath.toPercent(150));
+        pos = vm.generatePositionInLtvRange(pos, BoundUtils.toPercent(100), BoundUtils.toPercent(150));
 
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);

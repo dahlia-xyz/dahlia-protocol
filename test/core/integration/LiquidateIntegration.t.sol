@@ -84,7 +84,7 @@ contract LiquidateIntegrationTest is Test {
 
     function test_int_liquidate_mathematics(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, MarketMath.toPercent(130));
+        pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, BoundUtils.toPercent(130));
 
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
@@ -276,7 +276,7 @@ contract LiquidateIntegrationTest is Test {
 
     function test_int_liquidate_seizedAssetsRoundUp() public {
         vm.pauseGasMetering();
-        uint256 lltv = MarketMath.toPercent(75);
+        uint256 lltv = BoundUtils.toPercent(75);
         TestContext.MarketContext memory $m1 = ctx.bootstrapMarket("USDC", "WBTC", lltv);
         uint256 amountCollateral = 400;
         uint256 amountBorrowed = 300;

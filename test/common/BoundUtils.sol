@@ -4,6 +4,8 @@ pragma solidity ^0.8.27;
 import { Vm, console } from "@forge-std/Test.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+
+import { Constants } from "src/core/helpers/Constants.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -83,8 +85,17 @@ library BoundUtils {
         return amount = bound(amount, TestConstants.MIN_TEST_SHARES, TestConstants.MAX_TEST_SHARES);
     }
 
+    function roundLltv(uint256 lltv) public pure returns (uint256) {
+        return lltv / 100 * 100;
+    }
+
     function randomLltv(Vm vm) public returns (uint256) {
-        return vm.randomUint(TestConstants.MIN_TEST_LLTV, TestConstants.MAX_TEST_LLTV);
+        return roundLltv(vm.randomUint(TestConstants.MIN_TEST_LLTV, TestConstants.MAX_TEST_LLTV));
+    }
+
+    /// @notice get percentage down (x * 100) / %
+    function toPercent(uint24 value) internal pure returns (uint24) {
+        return uint24(value * Constants.LLTV_100_PERCENT / 100);
     }
 
     function randomLiquidationBonusRate(Vm vm, uint256 lltv) public returns (uint256) {
@@ -96,7 +107,7 @@ library BoundUtils {
         pure
         returns (TestTypes.MarketPosition memory)
     {
-        pos.ltv = uint24(bound(pos.ltv, minLtv, maxLtv));
+        pos.ltv = uint24(roundLltv(bound(pos.ltv, minLtv, maxLtv)));
         pos.price = bound(pos.price, TestConstants.MIN_COLLATERAL_PRICE, TestConstants.MAX_COLLATERAL_PRICE);
         pos.borrowed = bound(pos.borrowed, TestConstants.MIN_TEST_AMOUNT, TestConstants.MAX_TEST_AMOUNT);
         pos.collateral = pos.borrowed.divPercentUp(pos.ltv).lendToCollateralUp(pos.price);

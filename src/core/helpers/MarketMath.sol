@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { LibString } from "@solady/utils/LibString.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
@@ -13,8 +14,8 @@ import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 
 library MarketMath {
     using FixedPointMathLib for uint256;
-    using SharesMathLib for uint256;
-    using SharesMathLib for uint128;
+    using SharesMathLib for *;
+    using LibString for uint256;
 
     function collateralToLendUp(uint256 collateral, uint256 collateralPrice) internal pure returns (uint256) {
         return collateral.mulDivUp(collateralPrice, Constants.ORACLE_PRICE_SCALE);
@@ -52,9 +53,17 @@ library MarketMath {
         return value.mulDivUp(Constants.LLTV_100_PERCENT, percent);
     }
 
-    /// @notice get percentage down (x * 100) / %
-    function toPercent(uint24 value) internal pure returns (uint24) {
-        return uint24(value * Constants.LLTV_100_PERCENT / 100);
+    /// @notice Converts a uint256 value to a string representation of percent with 1 decimal.
+    /// @param value The uint256 value to convert.
+    /// @return The string representation of the value in ether with two decimal places.
+    function toPercentString(uint256 value) public pure returns (string memory) {
+        uint256 integerPart = value * 100 / Constants.LLTV_100_PERCENT; // Get the whole number part
+        uint256 fractionalValue = value * 100 % Constants.LLTV_100_PERCENT;
+        uint256 divider = Constants.LLTV_100_PERCENT / 10;
+        uint256 fractionalPart = fractionalValue / divider; // Get the fractional part (1 decimal places)
+        require(fractionalValue % divider == 0, Errors.LltvInvalidPrecision());
+        string memory integerString = integerPart.toString();
+        return fractionalPart == 0 ? integerString : string(abi.encodePacked(integerString, ".", fractionalPart.toString()));
     }
 
     function calcLiquidation(

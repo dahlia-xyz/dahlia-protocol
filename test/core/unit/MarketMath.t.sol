@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Test } from "forge-std/Test.sol";
+import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 
@@ -51,5 +52,15 @@ contract MarketMathTest is Test {
         assertEq(MarketMath.getLTV(2000, 2000, 1e36), 1e5); // 100% LTV
         assertEq(MarketMath.getLTV(4000, 2000, 1e36), 2e5); // 200% LTV
     }
-    // todo add more tests for math
+
+    function test_toPercentString() public {
+        assertEq(MarketMath.toPercentString(100_000), "100");
+        assertEq(MarketMath.toPercentString(83_100), "83.1");
+        vm.expectRevert(abi.encodeWithSelector(Errors.LltvInvalidPrecision.selector));
+        MarketMath.toPercentString(83_110);
+        vm.expectRevert(abi.encodeWithSelector(Errors.LltvInvalidPrecision.selector));
+        MarketMath.toPercentString(83_445);
+        vm.expectRevert(abi.encodeWithSelector(Errors.LltvInvalidPrecision.selector));
+        MarketMath.toPercentString(81_052);
+    }
 }

@@ -6,7 +6,6 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
-import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -244,7 +243,7 @@ contract ManageMarketIntegrationTest is Test {
 
     function test_int_royco_deployWithOwner(address ownerFuzz) public {
         vm.assume(ownerFuzz != address(0));
-        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(80));
+        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", BoundUtils.toPercent(80));
         marketConfig.owner = ownerFuzz;
         IMarketStorage.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(IMarketStorage.MarketId.unwrap(marketId), 2);
@@ -253,7 +252,7 @@ contract ManageMarketIntegrationTest is Test {
     }
 
     function test_int_royco_deployWithNoOwner() public {
-        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", MarketMath.toPercent(80));
+        IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", BoundUtils.toPercent(80));
         marketConfig.owner = address(0);
         vm.startPrank(ctx.createWallet("OWNER"));
         $.dahlia.dahliaRegistry().allowIrm(marketConfig.irm);

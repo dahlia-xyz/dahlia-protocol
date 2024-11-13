@@ -6,7 +6,6 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
-import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -24,7 +23,7 @@ contract MarketStatusIntegrationTest is Test {
 
     function setUp() public {
         ctx = new TestContext(vm);
-        $ = ctx.bootstrapMarket("USDC", "WBTC", MarketMath.toPercent(80));
+        $ = ctx.bootstrapMarket("USDC", "WBTC", BoundUtils.toPercent(80));
     }
 
     function test_updateMarketBonusRates_by_attacker(address attacker) public {

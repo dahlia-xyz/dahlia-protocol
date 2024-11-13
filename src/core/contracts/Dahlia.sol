@@ -14,7 +14,6 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { StringUtilsLib } from "src/core/helpers/StringUtilsLib.sol";
 import { BorrowImpl } from "src/core/impl/BorrowImpl.sol";
 import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { LendImpl } from "src/core/impl/LendImpl.sol";
@@ -146,12 +145,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         IERC20Metadata loanToken = IERC20Metadata(marketConfig.loanToken);
         string memory loanTokenSymbol = loanToken.symbol();
         string memory name = string.concat(
-            loanTokenSymbol,
-            "/",
-            IERC20Metadata(marketConfig.collateralToken).symbol(),
-            " (",
-            StringUtilsLib.toPercentString(marketConfig.lltv, Constants.LLTV_100_PERCENT),
-            "% LLTV)"
+            loanTokenSymbol, "/", IERC20Metadata(marketConfig.collateralToken).symbol(), " (", MarketMath.toPercentString(marketConfig.lltv), "% LLTV)"
         );
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
         address owner = msg.sender;
