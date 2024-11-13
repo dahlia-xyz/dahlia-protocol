@@ -10,6 +10,7 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 library SharesMathLib {
     using FixedPointMathLib for uint256;
 
+    uint8 internal constant VIRTUAL_SHARES_DECIMALS = 6;
     uint256 internal constant SHARES_OFFSET = 1e6;
 
     /// @dev Calculates the value of `assets` quoted in shares, rounding down.

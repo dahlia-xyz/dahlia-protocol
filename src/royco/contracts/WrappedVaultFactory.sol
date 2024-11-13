@@ -5,6 +5,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadat
 import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
 import { LibString } from "@solmate/utils/LibString.sol";
+import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 
@@ -117,7 +118,7 @@ contract WrappedVaultFactory is Owned {
     {
         string memory newSymbol = getNextSymbol();
         bytes32 salt = keccak256(abi.encodePacked(marketId, owner, name, initialFrontendFee));
-        uint8 decimals = IERC20Metadata(loanToken).decimals() + 6; // TODO use Constants
+        uint8 decimals = IERC20Metadata(loanToken).decimals() + SharesMathLib.VIRTUAL_SHARES_DECIMALS;
         wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, marketId, loanToken, initialFrontendFee, pointsFactory);
 
         incentivizedVaults.push(address(wrappedVault));
@@ -128,6 +129,7 @@ contract WrappedVaultFactory is Owned {
 
     /// @dev Helper function to get the symbol for a new incentivized vault, ROY-0, ROY-1, etc.
     function getNextSymbol() internal view returns (string memory) {
+        // TODO: decide if this should stay ROY or should be DHL ?
         return string.concat("ROY-", LibString.toString(incentivizedVaults.length));
     }
 }

@@ -143,8 +143,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         DEPOSIT_ASSET = ERC20(_asset);
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
-        // TODO: why do we need this? should we dynamically compute base on difference between _asset decimals and
-        // _decimals?
         _mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
@@ -575,7 +573,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @inheritdoc IWrappedVault
     function mint(uint256 shares, address receiver) public returns (uint256 assets) {
         assets = previewMint(shares);
-        _deposit(msg.sender, receiver, assets); // TODO: should we compare shares with actual shares?
+        _deposit(msg.sender, receiver, assets);
     }
 
     /// @inheritdoc IWrappedVault
