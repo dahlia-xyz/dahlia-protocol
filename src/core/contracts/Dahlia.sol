@@ -5,6 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { MarketStorage } from "src/core/abstracts/MarketStorage.sol";
@@ -30,12 +31,10 @@ import {
 import { IDahliaRegistry } from "src/core/interfaces/IDahliaRegistry.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
-//TODO: protect some methods by ReentrancyGuard
-//import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Dahlia
 /// @notice The Dahlia contract.
-contract Dahlia is Permitted, MarketStorage, IDahlia {
+contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SharesMathLib for uint256;
     using SharesMathLib for uint128;
@@ -178,7 +177,12 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external isSenderPermitted(onBehalfOf) returns (uint256 assets) {
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
+        external
+        nonReentrant
+        isSenderPermitted(onBehalfOf)
+        returns (uint256 assets)
+    {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -199,7 +203,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function claimInterest(MarketId id, address onBehalfOf, address receiver) external isSenderPermitted(onBehalfOf) returns (uint256 assets) {
+    function claimInterest(MarketId id, address onBehalfOf, address receiver) external nonReentrant isSenderPermitted(onBehalfOf) returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -274,6 +278,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia {
     // @inheritdoc IDahlia
     function repayAndWithdraw(MarketId id, uint256 collateralAssets, uint256 repayAssets, uint256 repayShares, address onBehalfOf, address receiver)
         external
+        nonReentrant
         isSenderPermitted(onBehalfOf)
         returns (uint256 repaidAssets, uint256 repaidShares)
     {
