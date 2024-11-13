@@ -178,9 +178,9 @@ interface IDahlia is IMarketStorage {
     /// @param onBehalfOf The address of the owner of the supply position.
     /// @param receiver The address that will receive the withdrawn assets.
     /// @return assetsWithdrawn The amount of assets withdrawn.
-    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external returns (uint256 assetsWithdrawn);
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external payable returns (uint256 assetsWithdrawn);
 
-    function claimInterest(MarketId id, address onBehalfOf, address receiver) external returns (uint256 assets);
+    function claimInterest(MarketId id, address onBehalfOf, address receiver) external payable returns (uint256 assets);
 
     function previewLendRateAfterDeposit(MarketId id, uint256 assets) external view returns (uint256 ratePerSec);
 

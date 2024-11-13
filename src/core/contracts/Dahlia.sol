@@ -179,6 +179,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
     /// @inheritdoc IDahlia
     function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
         external
+        payable
         nonReentrant
         isSenderPermitted(onBehalfOf)
         returns (uint256 assets)
@@ -203,7 +204,13 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function claimInterest(MarketId id, address onBehalfOf, address receiver) external nonReentrant isSenderPermitted(onBehalfOf) returns (uint256 assets) {
+    function claimInterest(MarketId id, address onBehalfOf, address receiver)
+        external
+        payable
+        nonReentrant
+        isSenderPermitted(onBehalfOf)
+        returns (uint256 assets)
+    {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
