@@ -58,7 +58,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         dahliaRegistry = IDahliaRegistry(addressRegistry);
         protocolFeeRecipient = _owner;
         lltvRange = RateRange(Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
-        liquidationBonusRateRange = RateRange(uint24(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE), uint24(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE));
+        liquidationBonusRateRange = RateRange(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE);
     }
 
     /// @inheritdoc IDahlia
