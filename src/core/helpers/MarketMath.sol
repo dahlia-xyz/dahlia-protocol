@@ -21,14 +21,6 @@ library MarketMath {
         return collateral.mulDivUp(collateralPrice, Constants.ORACLE_PRICE_SCALE);
     }
 
-    function collateralToLendDown(uint256 collateral, uint256 collateralPrice) internal pure returns (uint256) {
-        return collateral.mulDiv(collateralPrice, Constants.ORACLE_PRICE_SCALE);
-    }
-
-    function lendToCollateralDown(uint256 assets, uint256 collateralPrice) internal pure returns (uint256) {
-        return assets.mulDiv(Constants.ORACLE_PRICE_SCALE, collateralPrice);
-    }
-
     function lendToCollateralUp(uint256 assets, uint256 collateralPrice) internal pure returns (uint256) {
         return assets.mulDiv(Constants.ORACLE_PRICE_SCALE, collateralPrice);
     }
