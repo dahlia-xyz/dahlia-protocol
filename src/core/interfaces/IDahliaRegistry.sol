@@ -4,56 +4,57 @@ pragma solidity ^0.8.27;
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 /// @title IDahliaRegistry
-/// @notice Interface for managing addresses and values associated with specific IDs.
+/// @notice Interface for managing addresses and values linked to specific IDs.
 
 interface IDahliaRegistry {
-    /// @notice Emitted when adding an IRM to the registry.
-    /// @param irm The IRM added to the registry.
+    /// @notice Emitted when an IRM is added to the registry.
+    /// @param irm The IRM added.
     event AllowIrm(IIrm indexed irm);
 
-    /// @notice Emitted when an address is set for a specific ID.
-    /// @param setter The address setting the new address.
-    /// @param id The ID associated with the new address.
-    /// @param newAddress The new address being set.
+    /// @notice Emitted when an address is set for an ID.
+    /// @param setter Who set the new address.
+    /// @param id The ID linked to the new address.
+    /// @param newAddress The new address.
     event SetAddress(address indexed setter, uint256 indexed id, address newAddress);
 
-    /// @notice Emitted when a value is set for a specific ID.
-    /// @param setter The address setting the new value.
-    /// @param id The ID associated with the new value.
-    /// @param newValue The new value being set.
+    /// @notice Emitted when a value is set for an ID.
+    /// @param setter Who set the new value.
+    /// @param id The ID linked to the new value.
+    /// @param newValue The new value.
     event SetValue(address indexed setter, uint256 indexed id, uint256 newValue);
 
-    /// @notice Returns the address associated with a specific ID.
-    /// @param id The ID for which to return the associated address.
-    /// @return address The address associated with the given ID.
+    /// @notice Get the address linked to an ID.
+    /// @param id The ID to check.
+    /// @return address The linked address.
     function getAddress(uint256 id) external view returns (address);
 
-    /// @notice Sets a new address for a specific ID.
-    /// @param id The ID for which to set the new address.
-    /// @param _addr The new address to associate with the given ID.
+    /// @notice Set a new address for an ID.
+    /// @param id The ID to update.
+    /// @param _addr The new address.
     function setAddress(uint256 id, address _addr) external;
 
-    /// @notice Sets a new value for a specific ID.
-    /// @param id The ID for which to set the new value.
-    /// @param _val The new value to associate with the given ID.
+    /// @notice Set a new value for an ID.
+    /// @param id The ID to update.
+    /// @param _val The new value.
     function setValue(uint256 id, uint256 _val) external;
 
-    /// @notice Returns the value associated with a specific ID, or a default value if not set.
-    /// @param id The ID for which to retrieve the associated value.
-    /// @param _def The default value to return if no value is set for the given ID.
-    /// @return The value associated with the given ID, or the default value if not set.
+    /// @notice Get the value linked to an ID, or a default if not set.
+    /// @param id The ID to check.
+    /// @param _def Default value if none is set.
+    /// @return The linked value or default.
     function getValue(uint256 id, uint256 _def) external view returns (uint256);
 
-    /// @notice Retrieves the value associated with a specific ID.
-    /// @param id The ID for which to retrieve the associated value.
-    /// @return The value associated with the given ID.
+    /// @notice Get the value linked to an ID.
+    /// @param id The ID to check.
+    /// @return The linked value.
     function getValue(uint256 id) external view returns (uint256);
 
-    /// @notice Adds an IRM contract address to the registry.
-    /// @param irm IRM address.
+    /// @notice Add an IRM address to the registry.
+    /// @param irm The IRM address.
     function allowIrm(IIrm irm) external;
 
-    /// @notice Checks if an IRM contract address is allowed to be used for the market deployment.
-    /// @param irm IRM address.
+    /// @notice Check if an IRM address is allowed for market deployment.
+    /// @param irm The IRM address.
+    /// @return True if allowed, false otherwise.
     function isIrmAllowed(IIrm irm) external view returns (bool);
 }

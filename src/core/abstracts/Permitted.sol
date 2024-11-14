@@ -8,6 +8,8 @@ import { Events } from "src/core//helpers/Events.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { IPermitted } from "src/core/interfaces/IPermitted.sol";
 
+/// @title Permitted
+/// @notice Handles permission management using signatures and nonces.
 abstract contract Permitted is IPermitted, EIP712, Nonces {
     mapping(address => mapping(address => bool)) public isPermitted;
 
@@ -50,7 +52,9 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
         emit Events.updatePermission(msg.sender, recoveredSigner, data.onBehalfOf, data.isPermitted);
     }
 
-    /// @dev Returns whether the sender is permitted to manage `onBehalfOf`'s positions.
+    /// @notice Checks if the sender is allowed to manage the positions of `onBehalfOf`.
+    /// @param onBehalfOf The address to check permission for.
+    /// @return True if permitted, false otherwise.
     function _isSenderPermitted(address onBehalfOf) internal view returns (bool) {
         return msg.sender == onBehalfOf || isPermitted[onBehalfOf][msg.sender];
     }

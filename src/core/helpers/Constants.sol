@@ -1,47 +1,54 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+/// @title Constants Library
+/// @dev Contains various constant values used across the Dahlia protocol
 library Constants {
+    /// @dev Represents 100% for LLTV values, using 5 decimal precision.
+    /// Examples: 100% = 100_000, 10% = 10_000, etc.
     uint256 internal constant LLTV_100_PERCENT = 1e5;
 
+    /// @dev Precision factor for fees, using 5 decimal precision.
     uint256 internal constant FEE_PRECISION = 1e5;
 
-    /// @dev The maximum fee a market can have (25%).
-    uint256 internal constant MAX_FEE_RATE = 0.25e5;
+    /// @dev The maximum fee rate for a market, set at 30% of FEE_PRECISION.
+    uint256 internal constant MAX_FEE_RATE = 0.3e5;
 
-    /// @dev The maximum fee a market can have (3%).
+    /// @dev The maximum fee rate for flash loans, capped at 3% of FEE_PRECISION.
     uint256 internal constant MAX_FLASH_LOAN_FEE_RATE = 0.03e5;
 
-    /// @dev Oracle price scale.
+    /// @dev Scale factor for oracle prices, using 36 decimal precision to handle large price values.
     uint256 internal constant ORACLE_PRICE_SCALE = 1e36;
 
-    /// @dev Minimal LLTV range.
-    uint24 internal constant DEFAULT_MIN_LLTV_RANGE = uint24(1 * Constants.LLTV_100_PERCENT / 100);
+    /// @dev Default minimum LLTV value, set at 30%.
+    uint24 internal constant DEFAULT_MIN_LLTV = uint24(30 * Constants.LLTV_100_PERCENT / 100);
 
-    /// @dev Maximum LLTV range.
-    uint24 internal constant DEFAULT_MAX_LLTV_RANGE = uint24(99 * Constants.LLTV_100_PERCENT / 100);
+    /// @dev Default maximum LLTV value, set at 99%.
+    uint24 internal constant DEFAULT_MAX_LLTV = uint24(99 * Constants.LLTV_100_PERCENT / 100);
 
-    /// @dev Max liquidation bonus rate.
+    /// @dev Minimum liquidation bonus rate, set to 1% as the default.
     uint24 internal constant DEFAULT_MIN_LIQUIDATION_BONUS_RATE = uint24(1);
 
-    /// @dev Max liquidation bonus rate.
+    /// @dev Maximum liquidation bonus rate, set to 15%.
     uint24 internal constant DEFAULT_MAX_LIQUIDATION_BONUS_RATE = uint24(15 * Constants.LLTV_100_PERCENT / 100);
 
-    /// @dev `Dahlia` contract address position in DahliaRegistry.
+    // Contract address IDs in DahliaRegistry
+    /// @notice Address ID for the `Dahlia` contract in the registry.
     uint256 internal constant ADDRESS_ID_DAHLIA = 1;
 
-    /// @dev `DahliaProvider` contract address position in DahliaRegistry.
+    /// @notice Address ID for the `DahliaProvider` contract in the registry.
     uint256 internal constant ADDRESS_ID_DAHLIA_PROVIDER = 2;
 
-    /// @dev `OracleFactory` contract address position in DahliaRegistry.
+    /// @notice Address ID for the `DahliaOracleFactory.sol` contract in the registry.
     uint256 internal constant ADDRESS_ID_ORACLE_FACTORY = 4;
 
-    /// @dev `IRMFactory` contract address position in DahliaRegistry.
+    /// @notice Address ID for the `IRMFactory` contract in the registry.
     uint256 internal constant ADDRESS_ID_IRM_FACTORY = 5;
 
-    /// @dev `RoycoERC4626IFactory` contract address position in DahliaRegistry.
+    /// @notice Address ID for the Royco `WrappedVaultFactory` contract in the registry.
     uint256 internal constant ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY = 10;
 
-    /// @dev `initialFrontendFee` value position in DahliaRegistry.
+    // Value IDs in DahliaRegistry
+    /// @dev Initial frontend fee value for Royco's wrapped vaults.
     uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE = 10;
 }

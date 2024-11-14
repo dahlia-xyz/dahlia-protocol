@@ -13,7 +13,7 @@ import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
-import { OracleFactory } from "src/oracles/contracts/OracleFactory.sol";
+import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -277,7 +277,7 @@ contract TestContext {
             return contracts["oracleFactory"];
         }
         address owner = createWallet("OWNER");
-        OracleFactory factory = new OracleFactory(owner, Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS);
+        DahliaOracleFactory factory = new DahliaOracleFactory(owner, Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS);
         contracts["oracleFactory"] = address(factory);
         return address(factory);
     }

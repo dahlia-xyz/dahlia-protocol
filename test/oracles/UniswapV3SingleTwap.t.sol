@@ -2,26 +2,26 @@
 pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
-import { UniswapV3SingleTwapBase } from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
-import { Ownable, UniswapV3SingleTwap } from "src/oracles/contracts/UniswapV3SingleTwap.sol";
+import { UniswapOracleV3SingleTwapBase } from "src/oracles/abstracts/UniswapOracleV3SingleTwapBase.sol";
+import { Ownable, UniswapOracleV3SingleTwap } from "src/oracles/contracts/UniswapOracleV3SingleTwap.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { Mainnet } from "test/oracles/Constants.sol";
 
-contract UniswapV3SingleTwapTest is Test {
+contract UniswapOracleV3SingleTwapTest is Test {
     using BoundUtils for Vm;
 
     TestContext ctx;
-    UniswapV3SingleTwap oracle;
+    UniswapOracleV3SingleTwap oracle;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
         address owner = ctx.createWallet("OWNER");
 
-        oracle = new UniswapV3SingleTwap(
+        oracle = new UniswapOracleV3SingleTwap(
             owner,
-            UniswapV3SingleTwapBase.OracleParams({
+            UniswapOracleV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.UNI_ERC20,
                 uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,

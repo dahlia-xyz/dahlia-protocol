@@ -3,10 +3,10 @@ pragma solidity ^0.8.27;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { Test, Vm } from "@forge-std/Test.sol";
-import { ChainlinkWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
-import { UniswapV3SingleTwapBase } from "src/oracles/abstracts/UniswapV3SingleTwapBase.sol";
-import { ChainlinkWithMaxDelay, DualOracleChainlinkUniV3, OracleFactory } from "src/oracles/contracts/OracleFactory.sol";
-import { UniswapV3SingleTwap } from "src/oracles/contracts/UniswapV3SingleTwap.sol";
+import { ChainlinkOracleWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkOracleWithMaxDelayBase.sol";
+import { UniswapOracleV3SingleTwapBase } from "src/oracles/abstracts/UniswapOracleV3SingleTwapBase.sol";
+import { ChainlinkOracleWithMaxDelay, DahliaOracleFactory, DualOracleChainlinkUniV3 } from "src/oracles/contracts/DahliaOracleFactory.sol";
+import { UniswapOracleV3SingleTwap } from "src/oracles/contracts/UniswapOracleV3SingleTwap.sol";
 import { IChainlinkOracleWithMaxDelay } from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
@@ -27,8 +27,8 @@ contract OracleFactoryTest is Test {
 
     function test_oracleFactory_chainlink() public {
         /// @dev USDC is collateral, WBTC is loan, then result is 0.000016xxx
-        ChainlinkWithMaxDelay oracle = OracleFactory(oracleFactory).createChainlinkOracle(
-            ChainlinkWithMaxDelayBase.Params({
+        ChainlinkOracleWithMaxDelay oracle = DahliaOracleFactory(oracleFactory).createChainlinkOracle(
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.USDC_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
                 baseFeedSecondary: AggregatorV3Interface(address(0)),
@@ -50,8 +50,8 @@ contract OracleFactoryTest is Test {
 
     function test_oracleFactory_paxg_chainlink() public {
         /// @dev PAXG is collateral, USDC is loan, then result is 2617
-        ChainlinkWithMaxDelay oracle = OracleFactory(oracleFactory).createChainlinkOracle(
-            ChainlinkWithMaxDelayBase.Params({
+        ChainlinkOracleWithMaxDelay oracle = DahliaOracleFactory(oracleFactory).createChainlinkOracle(
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: 0x45804880De22913dAFE09f4980848ECE6EcbAf78,
                 baseFeedPrimary: AggregatorV3Interface(0x7C4561Bb0F2d6947BeDA10F667191f6026E7Ac0c),
                 baseFeedSecondary: AggregatorV3Interface(address(0)),
@@ -73,8 +73,8 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_wethUsdc() public {
-        ChainlinkWithMaxDelay oracle = OracleFactory(oracleFactory).createChainlinkOracle(
-            ChainlinkWithMaxDelayBase.Params({
+        ChainlinkOracleWithMaxDelay oracle = DahliaOracleFactory(oracleFactory).createChainlinkOracle(
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
                 baseFeedSecondary: AggregatorV3Interface(address(0)),
@@ -96,8 +96,8 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_uniswap_wethUsdc() public {
-        UniswapV3SingleTwap oracle = OracleFactory(oracleFactory).createUniswapOracle(
-            UniswapV3SingleTwapBase.OracleParams({
+        UniswapOracleV3SingleTwap oracle = DahliaOracleFactory(oracleFactory).createUniswapOracle(
+            UniswapOracleV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.USDC_ERC20,
                 uniswapV3PairAddress: Mainnet.WETH_USDC_UNI_V3_POOL,
@@ -111,8 +111,8 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUsdc() public {
-        DualOracleChainlinkUniV3 oracle = OracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
-            ChainlinkWithMaxDelayBase.Params({
+        DualOracleChainlinkUniV3 oracle = DahliaOracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
                 baseFeedSecondary: AggregatorV3Interface(address(0)),
@@ -126,7 +126,7 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelayPrimary: 86_400,
                 quoteMaxDelaySecondary: 0
             }),
-            UniswapV3SingleTwapBase.OracleParams({
+            UniswapOracleV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.USDC_ERC20,
                 uniswapV3PairAddress: Mainnet.WETH_USDC_UNI_V3_POOL,
@@ -140,8 +140,8 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUniFromChainlink() public {
-        DualOracleChainlinkUniV3 oracle = OracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
-            ChainlinkWithMaxDelayBase.Params({
+        DualOracleChainlinkUniV3 oracle = DahliaOracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(address(0)),
                 baseFeedSecondary: AggregatorV3Interface(address(0)),
@@ -150,7 +150,7 @@ contract OracleFactoryTest is Test {
                 quoteFeedSecondary: AggregatorV3Interface(address(0))
             }),
             IChainlinkOracleWithMaxDelay.Delays({ baseMaxDelayPrimary: 0, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 }),
-            UniswapV3SingleTwapBase.OracleParams({
+            UniswapOracleV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.UNI_ERC20,
                 uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,
@@ -164,8 +164,8 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUniWithBadDataFromUni() public {
-        DualOracleChainlinkUniV3 oracle = OracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
-            ChainlinkWithMaxDelayBase.Params({
+        DualOracleChainlinkUniV3 oracle = DahliaOracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(address(0)),
                 baseFeedSecondary: AggregatorV3Interface(address(0)),
@@ -174,7 +174,7 @@ contract OracleFactoryTest is Test {
                 quoteFeedSecondary: AggregatorV3Interface(address(0))
             }),
             IChainlinkOracleWithMaxDelay.Delays({ baseMaxDelayPrimary: 0, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 10, quoteMaxDelaySecondary: 0 }),
-            UniswapV3SingleTwapBase.OracleParams({
+            UniswapOracleV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.UNI_ERC20,
                 uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,

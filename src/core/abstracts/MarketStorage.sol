@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
 import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
@@ -9,51 +9,52 @@ import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { IMarketStorage } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
-/**
- * @title MarketStorage
- * @notice Contract used as market storage for the Dahlia contract.
- * @dev It defines the storage layout of the Dahlia contract.
- */
+/// @title MarketStorage
+/// @notice Manages market data and storage for protocol.
+
 abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     mapping(MarketId => MarketData) internal markets;
 
-    /**
-     * @dev Throws if the sender is not the owner.
-     */
+    /// @notice Checks if the sender is the market or the wrapped vault owner.
+    /// @param vault The wrapped vault associated with the market.
     function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
         address sender = _msgSender();
         require(sender == owner() || sender == vault.vaultOwner(), Errors.NotPermitted(sender));
     }
 
+    /// @inheritdoc IMarketStorage
     function getMarket(MarketId id) external view returns (Market memory) {
         return InterestImpl.getLastMarketState(markets[id].market, 0);
     }
 
-    function getMarketUserPosition(MarketId marketId, address userAddress) external view returns (MarketUserPosition memory) {
-        return markets[marketId].userPositions[userAddress];
+    /// @inheritdoc IMarketStorage
+    function getMarketUserPosition(MarketId id, address userAddress) external view returns (MarketUserPosition memory) {
+        return markets[id].userPositions[userAddress];
     }
 
-    function marketUserMaxBorrows(MarketId marketId, address userAddress)
+    /// @inheritdoc IMarketStorage
+    function marketUserMaxBorrows(MarketId id, address userAddress)
         external
         view
         returns (uint256 borrowAssets, uint256 maxBorrowAssets, uint256 collateralPrice)
     {
-        MarketUserPosition memory position = markets[marketId].userPositions[userAddress];
-        Market memory market = markets[marketId].market;
+        MarketUserPosition memory position = markets[id].userPositions[userAddress];
+        Market memory market = markets[id].market;
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         (borrowAssets, maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, collateralPrice);
     }
 
-    function getPositionLTV(MarketId marketId, address userAddress) external view returns (uint256 ltv) {
-        MarketUserPosition memory position = markets[marketId].userPositions[userAddress];
-        Market memory market = markets[marketId].market;
+    /// @inheritdoc IMarketStorage
+    function getPositionLTV(MarketId id, address userAddress) external view returns (uint256 ltv) {
+        MarketUserPosition memory position = markets[id].userPositions[userAddress];
+        Market memory market = markets[id].market;
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         return MarketMath.getLTV(market.totalBorrowAssets, market.totalBorrowShares, position, collateralPrice);
     }
 
     /// @inheritdoc IMarketStorage
-    function isMarketDeployed(MarketId marketId) external view virtual returns (bool) {
-        return markets[marketId].market.status != MarketStatus.None;
+    function isMarketDeployed(MarketId id) external view virtual returns (bool) {
+        return markets[id].market.status != MarketStatus.None;
     }
 
     /// @inheritdoc IMarketStorage
@@ -85,14 +86,17 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     }
 
     /// @inheritdoc IMarketStorage
-    function updateMarketBonusRates(MarketId id, uint256 liquidationBonusRate) external {
+    function updateLiquidationBonusRate(MarketId id, uint256 liquidationBonusRate) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
-        emit Events.MarketBonusRatesChanged(liquidationBonusRate);
+        emit Events.LiquidationBonusChanged(liquidationBonusRate);
         market.liquidationBonusRate = uint24(liquidationBonusRate);
     }
 
+    /// @notice Validates the current market status and optionally checks market is paused or deprecated.
+    /// @param status The current market status.
+    /// @param checkIsSupplyAndBorrowForbidden If true, checks if market is paused or deprecated.
     function _validateMarket(MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {
         require(status != MarketStatus.None, Errors.MarketNotDeployed());
         if (checkIsSupplyAndBorrowForbidden && status != MarketStatus.Active) {
@@ -104,5 +108,8 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         }
     }
 
+    /// @notice Validates the liquidation bonus rate, ensuring it is within acceptable limits based on the market's LLTV.
+    /// @param liquidationBonusRate The liquidation bonus rate to validate.
+    /// @param lltv Liquidation loan-to-value for the market.
     function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view virtual;
 }

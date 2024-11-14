@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-/**
- * @title Errors library
- * @author Dahlia
- * @notice Defines oracle error messages.
- */
+/// @title Errors library
 library Errors {
-    /// @notice Negative answer.
+    /// @dev Thrown when a negative value is encountered.
     error NegativeAnswer(int256 value);
 
-    /// @notice Zero address passed as input.
+    /// @dev Thrown when a zero address is provided.
     error ZeroAddress();
 }

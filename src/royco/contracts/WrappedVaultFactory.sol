@@ -10,6 +10,7 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 
+/// TODO update comments
 /// @title WrappedVaultFactory
 /// @author CopyPaste, Jack Corddry, Shivaansh Kapoor
 /// @dev A factory for deploying wrapped vaults, and managing protocol or other fees
@@ -130,7 +131,6 @@ contract WrappedVaultFactory is Owned {
 
     /// @dev Helper function to get the symbol for a new incentivized vault, ROY-0, ROY-1, etc.
     function getNextSymbol() internal view returns (string memory) {
-        // TODO: decide if this should stay ROY or should be DHL ?
-        return string.concat("ROY-", LibString.toString(incentivizedVaults.length));
+        return string.concat("DROY-", LibString.toString(incentivizedVaults.length));
     }
 }

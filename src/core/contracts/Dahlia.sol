@@ -51,18 +51,18 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
     address public reserveFeeRecipient; // 20 bytes
     uint24 public flashLoanFeeRate; // 3 bytes
 
-    /// @dev the owner should be used by governance controller to control the call of each onlyOwner function
+    /// @dev The owner is used by the governance controller to manage the execution of each `onlyOwner` function.
     constructor(address _owner, address addressRegistry) Ownable(_owner) {
         require(addressRegistry != address(0), Errors.ZeroAddress());
         dahliaRegistry = IDahliaRegistry(addressRegistry);
         protocolFeeRecipient = _owner;
-        lltvRange = RateRange(Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        lltvRange = RateRange(Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
         liquidationBonusRateRange = RateRange(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE);
     }
 
     /// @inheritdoc IDahlia
     function setLltvRange(RateRange memory range) external onlyOwner {
-        // percent should be always between 0 and 100% and min ltv should be <= max ltv
+        // The percentage must always be between 0 and 100%, and min LTV should be <= max LTV.
         require(range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max, Errors.RangeNotValid(range.min, range.max));
         lltvRange = range;
 
@@ -71,7 +71,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
 
     /// @inheritdoc IDahlia
     function setLiquidationBonusRateRange(RateRange memory range) external onlyOwner {
-        // percent should be always between 0 and 100% and range.min should be <= range.max
+        // The percentage must always be between 0 and 100%, and range.min should be <= range.max.
         require(
             range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE && range.max <= Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE && range.min <= range.max,
             Errors.RangeNotValid(range.min, range.max)
@@ -162,7 +162,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         _validateMarket(market.status, true);
         _accrueMarketInterest(positions, market);
 
-        // Set isPermitted permission for ERC4626Proxy if it sent transaction
+        // Grant isPermitted permission for the wrapped vault if it initiated the transaction.
         if (msg.sender == address(market.vault)) {
             isPermitted[onBehalfOf][msg.sender] = true;
         }
@@ -195,7 +195,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
         userPosition.lendAssets -= adjustedAssets.toUint128();
 
-        // remove isPermitted if user withdraw all money by proxy
+        // Revoke isPermitted if the user withdraws all funds via wrapped vault.
         if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
         }
@@ -223,7 +223,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         uint256 sharesInterest = position.lendShares - lendShares;
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
-        // remove isPermitted if user withdraw all money by proxy
+        // Revoke isPermitted if the user withdraws all funds via wrapped vault.
         if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
             isPermitted[onBehalfOf][msg.sender] = false;
         }
@@ -336,15 +336,15 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         (repaidAssets, repaidShares, seizedCollateral) =
             LiquidationImpl.internalLiquidate(market, positions[borrower], positions[reserveFeeRecipient], borrower);
 
-        // transfer  collateral (seized) to liquidator wallet from Dahlia wallet
+        // Transfer seized collateral from Dahlia to the liquidator's wallet.
         IERC20(market.collateralToken).safeTransfer(msg.sender, seizedCollateral);
 
-        // this callback is for smart contract to receive repaid amount before they approve in collateral token
+        // This callback allows a smart contract to receive the repaid amount before approving in collateral token.
         if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
             IDahliaLiquidateCallback(msg.sender).onDahliaLiquidate(repaidAssets, callbackData);
         }
 
-        // transfer (repaid) assets from liquidator wallet to Dahlia wallet
+        // Transfer repaid assets from the liquidator's wallet to Dahlia.
         IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
     }
 
@@ -355,7 +355,7 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarket(market.status, true);
-        ///@dev not needed accrue interest here
+        ///@dev accrueInterest is not needed here.
 
         BorrowImpl.internalSupplyCollateral(market, marketData.userPositions[onBehalfOf], assets, onBehalfOf);
 
