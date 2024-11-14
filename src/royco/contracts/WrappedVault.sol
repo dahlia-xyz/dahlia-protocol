@@ -564,7 +564,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function _deposit(address caller, address receiver, uint256 assets) internal returns (uint256 shares) {
         DEPOSIT_ASSET.safeTransferFrom(caller, address(this), assets);
 
-        (shares) = dahlia.lend(marketId, assets, receiver, bytes(""));
+        (shares) = dahlia.lend(marketId, assets, receiver);
         _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);

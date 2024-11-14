@@ -21,16 +21,6 @@ interface IDahliaRepayCallback {
     function onDahliaRepay(uint256 assets, bytes calldata data) external;
 }
 
-/// @title IDahliaLendCallback
-/// @notice Interface that must be implemented by contracts that wish to receive a callback after a lending operation occurs.
-/// @dev The callback is triggered only if the `data` parameter in the `lend` function is not empty.
-interface IDahliaLendCallback {
-    /// @notice Function to be called when a lending operation occurs.
-    /// @param assets The amount of assets that were lent.
-    /// @param data Arbitrary data passed to the `lend` function.
-    function onDahliaLend(uint256 assets, bytes calldata data) external;
-}
-
 /// @title IDahliaSupplyCollateralCallback
 /// @notice Interface that must be implemented by contracts that wish to receive a callback after collateral is supplied.
 /// @dev The callback is triggered only if the `data` parameter in the `supplyCollateral` function is not empty.

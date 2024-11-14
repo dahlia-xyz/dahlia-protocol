@@ -4,14 +4,14 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { IDahliaLendCallback, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback } from "src/core/interfaces/IDahliaCallbacks.sol";
+import { IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback } from "src/core/interfaces/IDahliaCallbacks.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { TestTypes } from "test/common/TestTypes.sol";
 
-contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaLendCallback, IDahliaSupplyCollateralCallback {
+contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
@@ -23,14 +23,6 @@ contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepa
     function setUp() public {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
-    }
-
-    function onDahliaLend(uint256 amount, bytes memory data) external {
-        assertEq(msg.sender, address($.dahlia));
-        bytes4 selector = abi.decode(data, (bytes4));
-        if (selector == this.test_int_callback_lend.selector) {
-            $.loanToken.approve(address($.dahlia), amount);
-        }
     }
 
     function onDahliaSupplyCollateral(uint256 amount, bytes memory data) external {
@@ -55,21 +47,6 @@ contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepa
         if (selector == this.test_int_callback_liquidate.selector) {
             $.loanToken.approve(address($.dahlia), repaid);
         }
-    }
-
-    function test_int_callback_lend(uint256 amount) public {
-        vm.pauseGasMetering();
-        amount = vm.boundAmount(amount);
-
-        $.loanToken.setBalance(address(this), amount);
-
-        vm.resumeGasMetering();
-        vm.expectRevert();
-        $.dahlia.lend($.marketId, amount, address(this), TestConstants.EMPTY_CALLBACK);
-
-        $.dahlia.lend($.marketId, amount, address(this), abi.encode(this.test_int_callback_lend.selector));
-
-        assertEq($.loanToken.balanceOf(address($.dahlia)), amount);
     }
 
     function test_int_callback_supplyCollateral(uint256 amount) public {
@@ -117,6 +94,6 @@ contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepa
         vm.expectRevert();
         $.dahlia.liquidate($.marketId, address(this), TestConstants.EMPTY_CALLBACK);
         // Check success by callback approvement
-        $.dahlia.liquidate($.marketId, address(this), abi.encode(this.test_int_callback_liquidate.selector, hex""));
+        $.dahlia.liquidate($.marketId, address(this), abi.encode(this.test_int_callback_liquidate.selector));
     }
 }
