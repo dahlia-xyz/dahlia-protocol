@@ -11,7 +11,6 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title MarketStorage
 /// @notice Manages market data and storage for protocol.
-
 abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     mapping(MarketId => MarketData) internal markets;
 
