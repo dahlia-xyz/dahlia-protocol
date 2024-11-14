@@ -97,14 +97,12 @@ library BorrowImpl {
         returns (uint256, uint256)
     {
         MarketMath.validateExactlyOneZero(assets, shares);
-
         // Calculate assets or shares
         if (assets > 0) {
             shares = assets.toSharesDown(market.totalBorrowAssets, market.totalBorrowShares);
         } else {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
         }
-
         // Update borrow values in totals and position
         position.borrowShares -= shares.toUint128();
         market.totalBorrowShares -= shares;
