@@ -10,7 +10,7 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
  * @title ManageMarketImpl library
- * @notice Implements functions to validate the different actions of the protocol
+ * @notice Implements market deployment and protocol fee
  */
 library ManageMarketImpl {
     using FixedPointMathLib for uint256;

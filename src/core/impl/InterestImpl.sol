@@ -11,15 +11,14 @@ import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 /**
  * @title InterestImpl library
- * @notice Implements functions to validate the different actions of the protocol
+ * @notice Implements protocol interest and fee accrual
  */
 library InterestImpl {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using SafeCastLib for uint256;
 
-    /// @dev Accrues interest for the given market `marketConfig`.
-    /// @dev Assumes that the inputs `marketConfig` and `id` match.
+    /// @dev Accrues interest for the specified market.
     function executeMarketAccrueInterest(
         IDahlia.Market storage market,
         IDahlia.MarketUserPosition storage protocolFeeRecipientPosition,
@@ -44,7 +43,7 @@ library InterestImpl {
             market.totalBorrowAssets += interestEarnedAssets;
             market.totalLendAssets += interestEarnedAssets;
 
-            // calculate protocol fee
+            // Calculate protocol fee
             uint256 totalLendShares = market.totalLendShares;
             uint256 protocolFeeShares = 0;
             uint256 protocolFeeRate = market.protocolFeeRate;
@@ -54,7 +53,7 @@ library InterestImpl {
                 market.totalLendShares += protocolFeeShares;
             }
 
-            // calculate reserve fee
+            // Calculate reserve fee
             uint256 reserveFeeShares = 0;
             uint256 reserveFeeRate = market.reserveFeeRate;
             if (reserveFeeRate > 0) {
@@ -68,6 +67,7 @@ library InterestImpl {
         }
     }
 
+    /// @dev Calculates fee shares from earned interest.
     function calcFeeSharesFromInterest(uint256 totalLendAssets, uint256 totalLendShares, uint256 interestEarnedAssets, uint256 feeRate)
         internal
         pure
@@ -76,12 +76,12 @@ library InterestImpl {
         feeShares = (interestEarnedAssets * feeRate * totalLendShares) / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets));
     }
 
-    /// @notice Returns the expected market balances of a market after having accrued interest.
-    /// @return market balances with update of interest
+    /// @notice Gets the expected market balances after interest accrual.
+    /// @return Updated market balances
     function getLastMarketState(IDahlia.Market memory market, uint256 assets) internal view returns (IDahlia.Market memory) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
 
-        // Skipped if elapsed == 0 or totalBorrowAssets == 0 because interest would be null, or if irm == address(0).
+        // Skip if no time has passed, no borrow assets, or no IRM.
         if (totalBorrowAssets != 0 && address(market.irm) != address(0)) {
             uint256 totalLendAssets = market.totalLendAssets + assets;
             uint256 totalLendShares = market.totalLendShares;

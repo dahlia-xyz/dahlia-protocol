@@ -4,27 +4,27 @@ pragma solidity ^0.8.27;
 import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { Test, Vm } from "@forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ChainlinkWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkWithMaxDelayBase.sol";
-import { ChainlinkWithMaxDelay } from "src/oracles/contracts/ChainlinkWithMaxDelay.sol";
+import { ChainlinkOracleWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkOracleWithMaxDelayBase.sol";
+import { ChainlinkOracleWithMaxDelay } from "src/oracles/contracts/ChainlinkOracleWithMaxDelay.sol";
 import { IChainlinkOracleWithMaxDelay } from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { Mainnet } from "test/oracles/Constants.sol";
 
-contract ChainlinkWithMaxDelayTest is Test {
+contract ChainlinkOracleWithMaxDelayTest is Test {
     using BoundUtils for Vm;
 
     TestContext ctx;
-    ChainlinkWithMaxDelay oracle;
+    ChainlinkOracleWithMaxDelay oracle;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
         address owner = ctx.createWallet("OWNER");
 
-        oracle = new ChainlinkWithMaxDelay(
+        oracle = new ChainlinkOracleWithMaxDelay(
             owner,
-            ChainlinkWithMaxDelayBase.Params({
+            ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WBTC_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.BTC_USD_CHAINLINK_ORACLE),
                 baseFeedSecondary: AggregatorV3Interface(Mainnet.WBTC_BTC_CHAINLINK_ORACLE),
@@ -67,9 +67,9 @@ contract ChainlinkWithMaxDelayTest is Test {
         );
 
         vm.stopPrank();
-        (uint256 baseMaxDelayPrimary, uint256 baseMaxDelaySecondary,,) = oracle.maxDelays();
-        assertEq(baseMaxDelayPrimary, 1);
-        assertEq(baseMaxDelaySecondary, 2);
+        IChainlinkOracleWithMaxDelay.Delays memory delays = oracle.maxDelays();
+        assertEq(delays.baseMaxDelayPrimary, 1);
+        assertEq(delays.baseMaxDelaySecondary, 2);
     }
 
     function test_oracle_chainlinkWithMaxDelay_checkBadData() public {

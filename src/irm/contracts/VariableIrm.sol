@@ -8,42 +8,39 @@ import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
-/// @title A formula for calculating interest rates as a function of utilization and time
-/// @notice A Contract for calculating interest rates as a function of utilization and time
+/// @title Variable Interest Rate Model
+/// @notice Calculates interest rates based on utilization and time
 contract VariableIrm is IIrm {
     using FixedPointMathLib for uint256;
     using SafeCastLib for uint256;
 
     struct Config {
-        /// @notice The minimum utilization wherein no adjustment to the full utilization and target rates occurs
-        /// @dev Is smaller than targetUtilization,
-        /// example 0.75 * Constants.UTILIZATION_100_PERCENT
+        /// @notice Min utilization where no rate adjustment happens
+        /// @dev Should be less than `targetUtilization`, e.g., 0.75 * Constants.UTILIZATION_100_PERCENT
         uint256 minTargetUtilization;
-        /// @notice The maximum utilization wherein no adjustment to the full utilization and vertex rates occurs
-        /// @dev Is larger than targetUtilization
-        /// example 0.85 * Constants.UTILIZATION_100_PERCENT
+        /// @notice Max utilization where no rate adjustment happens
+        /// @dev Should be more than `targetUtilization`, e.g., 0.80 * Constants.UTILIZATION_100_PERCENT
         uint256 maxTargetUtilization;
-        /// @notice The utilization at which the slope of the IR curve increases
-        /// example 0.85 * Constants.UTILIZATION_100_PERCENT
+        /// @notice Utilization level where IR curve slope increases
+        /// e.g., 0.80 * Constants.UTILIZATION_100_PERCENT
         uint256 targetUtilization;
-        /// @notice The interest rate half life in seconds, determines the speed at which the IR curve adjusts to over and under-utilization
-        /// At a 100% utilization, the full_utilization_rate, and hence the target rate too, doubles at this rate
-        /// At a 0% utilization, the full_utilization_rate, and hence the target rate too, halves at this rate
-        /// example 172800, 2 days
-        /// @dev max supported value is 194.18 days
+        /// @notice Half-life of interest rate in seconds, affects adjustment speed
+        /// At 100% utilization, rates double at this rate; at 0%, they halve
+        /// e.g., 172,800 seconds (2 days)
+        /// @dev Max value is 194.18 days
         uint256 rateHalfLife;
-        // Interest Rate Settings (all rates are per second), 365.24 days per year
-        /// @notice The minimum interest rate (per second) when utilization is 100%
-        /// example 1582470460, (~5% yearly) 18 decimals
+        // Interest Rate Settings (per second), 365.24 days/year
+        /// @notice Min interest rate at 100% utilization
+        /// e.g., 1582470460 (~5% yearly), 18 decimals
         uint256 minFullUtilizationRate;
-        /// @notice The maximum interest rate (per second) when utilization is 100%
-        /// example 3_164_940_920_000, (~10000% yearly) 18 decimals
+        /// @notice Max interest rate at 100% utilization
+        /// e.g., 3_164_940_920_000 (~10000% yearly), 18 decimals
         uint256 maxFullUtilizationRate;
-        /// @notice The interest rate (per second) when utilization is 0%
-        /// example 158247046, (~0.5% yearly) 18 decimals
+        /// @notice Interest rate at 0% utilization
+        /// e.g., 158247046 (~0.5% yearly), 18 decimals
         uint256 zeroUtilizationRate;
-        /// @notice The percent of the delta between the full utilization rate and the zeroUtilizationRate
-        /// example 0.2e18, 18 decimals
+        /// @notice Percent of delta between full and zero utilization rates
+        /// e.g., 0.2e18, 18 decimals
         uint256 targetRatePercent;
     }
 
@@ -56,7 +53,7 @@ contract VariableIrm is IIrm {
     uint24 public immutable targetUtilization; // 3 bytes
     uint24 public immutable rateHalfLife; // 3 bytes
 
-    /// @param _config variable interest rate parameters
+    /// @param _config Config parameters for variable interest rate
     constructor(Config memory _config) {
         minFullUtilizationRate = _config.minFullUtilizationRate;
         maxFullUtilizationRate = _config.maxFullUtilizationRate;
@@ -70,7 +67,7 @@ contract VariableIrm is IIrm {
 
     /// @inheritdoc IIrm
     function name() external pure returns (string memory) {
-        return string(abi.encodePacked("Dahlia Variable Interest Rate"));
+        return string(abi.encodePacked("Dahlia VariableIRM"));
     }
 
     /// @inheritdoc IIrm
@@ -78,12 +75,12 @@ contract VariableIrm is IIrm {
         return 1;
     }
 
-    /// @notice Function calculate the new maximum interest rate, i.e. rate when utilization is 100%
-    /// @dev Given in interest per second
-    /// @param deltaTime The elapsed time since last update given in seconds
-    /// @param utilization The utilization %, given with 5 decimals of precision
-    /// @param fullUtilizationRate The interest value when utilization is 100%, given with 18 decimals of precision
-    /// @return newFullUtilizationRate The new maximum interest rate
+    /// @notice Calculate new max interest rate at 100% utilization
+    /// @dev Interest is per second
+    /// @param deltaTime Time since last update in seconds
+    /// @param utilization Utilization % with 5 decimals precision
+    /// @param fullUtilizationRate Interest at 100% utilization, 18 decimals
+    /// @return newFullUtilizationRate New max interest rate
     function getFullUtilizationInterest(uint256 deltaTime, uint256 utilization, uint256 fullUtilizationRate)
         internal
         view
@@ -134,7 +131,7 @@ contract VariableIrm is IIrm {
 
         newFullUtilizationRate = getFullUtilizationInterest(deltaTime, utilization, oldFullUtilizationRate);
 
-        // _targetRate is calculated as the percentage of the delta between min and max interest
+        // Calculate target rate as a percentage of the delta between min and max interest
         uint256 _targetRate = _zeroUtilizationRate + FixedPointMathLib.mulWad(newFullUtilizationRate - _zeroUtilizationRate, targetRatePercent);
 
         if (utilization < _targetUtilization) {
@@ -162,13 +159,13 @@ contract VariableIrm is IIrm {
         view
         returns (uint256 _interestEarnedAssets, uint256 _newRatePerSec, uint256 _newFullUtilizationRate)
     {
-        // Get the utilization rate
+        // Calculate utilization rate
         uint256 _utilizationRate = totalLendAssets == 0 ? 0 : (IrmConstants.UTILIZATION_100_PERCENT * totalBorrowAssets) / totalLendAssets;
 
-        // Request new interest rate and full utilization rate from the rate calculator
+        // Get new interest rate and full utilization rate
         (_newRatePerSec, _newFullUtilizationRate) = _getNewRate(deltaTime, _utilizationRate, fullUtilizationRate);
 
-        // Calculate interest accrued
+        // Calculate accrued interest
         _interestEarnedAssets = (deltaTime * totalBorrowAssets * _newRatePerSec) / FixedPointMathLib.WAD;
     }
 }

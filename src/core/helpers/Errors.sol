@@ -3,85 +3,75 @@ pragma solidity ^0.8.27;
 
 /**
  * @title Errors library
- * @author Dahlia
- * @notice Defines protocol error messages.
+ * @notice Contains error messages for the protocol.
  */
 library Errors {
-    /// @notice Insufficient liquidity for borrow, collateral withdrawal, or loan withdrawal.
+    /// @notice Not enough liquidity for borrowing, collateral withdrawal, or loan withdrawal.
     error InsufficientLiquidity(uint256 totalBorrowAssets, uint256 totalLendAssets);
 
-    /// @notice Insufficient collateral to borrow.
+    /// @notice Not enough collateral to borrow.
     error InsufficientCollateral(uint256 borrowedAssets, uint256 maxBorrowAssets);
 
-    /// @notice Trying to liquidate a healthy position.
+    /// @notice Can't liquidate a healthy position.
     error HealthyPositionLiquidation(uint256 ltv, uint256 lltv);
 
-    /// @notice Trying to reallocate a healthy position.
-    error HealthyPositionReallocation(uint256 ltv);
-
-    /// @notice Trying to reallocate a bad posttion, need to liquidate.
-    error BadPositionReallocation(uint256 ltv, uint256 lltv);
-
-    /// @notice NotPermitted address calling function `onBehalfOf` another address.
+    /// @notice Address not permitted to call function on behalf of another.
     error NotPermitted(address sender);
 
-    /// @notice Zero assets passed as input.
+    /// @notice Input assets are zero.
     error ZeroAssets();
 
-    /// @notice Zero address passed as input.
+    /// @notice Input address is zero.
     error ZeroAddress();
 
-    /// @notice Market is not deployed.
+    /// @notice Market hasn't been deployed.
     error MarketNotDeployed();
 
-    /// @notice Market is paused.
+    /// @notice Market is currently paused.
     error MarketPaused();
 
-    /// @notice Market is paused.
+    /// @notice Can't change the market status.
     error CannotChangeMarketStatus();
 
     /// @notice Market is deprecated.
     error MarketDeprecated();
 
-    /// @notice Trying to deploy an existing market.
+    /// @notice Attempting to deploy a market that already exists.
     error MarketAlreadyDeployed();
 
-    /// @notice Inconsistent input of assets or shares.
+    /// @notice Assets or shares input is inconsistent.
     error InconsistentAssetsOrSharesInput();
 
-    /// @notice Inconsistent markets
+    /// @notice Markets are inconsistent.
     error MarketsDiffer();
 
-    /// @notice Value is already set.
+    /// @notice Value has already been set.
     error AlreadySet();
 
-    /// @notice Range is not valid.
+    /// @notice Range provided is not valid.
     error RangeNotValid(uint256, uint256);
 
-    /// @notice Max fee exceeded.
+    /// @notice Maximum fee has been exceeded.
     error MaxFeeExceeded();
 
-    /// @notice Interest Rate Model not allowed in the registry.
+    /// @notice Interest Rate Model isn't allowed in the registry.
     error IrmNotAllowed();
 
-    /// @notice Liquidation LTV not allowed from range.
+    /// @notice Liquidation LTV is not within the allowed range.
     error LltvNotAllowed();
 
-    /// @notice Liquidation LTV can have only 1 decimal, like 80.1 (80100) , but not 80.15 (80150).
+    /// @notice Liquidation LTV must have only 1 decimal, e.g., 80.1 (80100), not 80.15 (80150).
     error LltvInvalidPrecision();
 
-    /// @notice Liquidation bonus rate not allowed.
+    /// @notice Liquidation bonus rate isn't allowed.
     error LiquidationBonusRateNotAllowed();
 
-    /// @notice Relocation bonus rate not allowed.
-    error RelocationBonusRateNotAllowed();
-
-    /// @notice Liquidation LTV not allowed in the registry.
+    /// @notice Oracle price data is bad.
     error OraclePriceBadData();
 
-    /// @notice Signature expired.
+    /// @notice Signature has expired.
     error SignatureExpired();
 
-    /// @notice Invalid signature.
+    /// @notice Signature is invalid.
     error InvalidSignature();
 }

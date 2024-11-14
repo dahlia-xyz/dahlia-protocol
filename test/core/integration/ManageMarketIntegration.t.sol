@@ -225,7 +225,7 @@ contract ManageMarketIntegrationTest is Test {
 
     function test_int_manage_deployMarketWhenIrmNotAllowed(IDahlia.MarketConfig memory marketParamsFuzz) public {
         vm.assume(!$.dahliaRegistry.isIrmAllowed(marketParamsFuzz.irm));
-        marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV_RANGE, Constants.DEFAULT_MAX_LLTV_RANGE);
+        marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
 
         vm.expectRevert(Errors.IrmNotAllowed.selector);
         $.dahlia.deployMarket(marketParamsFuzz);

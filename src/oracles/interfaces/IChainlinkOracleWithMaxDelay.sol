@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+/// @title Chainlink Oracle Interface with Max Delay
+/// @notice Interface to manage maximum delays for Chainlink oracle data
 interface IChainlinkOracleWithMaxDelay {
+    /// @notice Struct to hold max delay settings for primary and secondary data sources
     struct Delays {
-        uint256 baseMaxDelayPrimary;
-        uint256 baseMaxDelaySecondary;
-        uint256 quoteMaxDelayPrimary;
-        uint256 quoteMaxDelaySecondary;
+        uint256 baseMaxDelayPrimary; // Max delay for primary base data
+        uint256 baseMaxDelaySecondary; // Max delay for secondary base data
+        uint256 quoteMaxDelayPrimary; // Max delay for primary quote data
+        uint256 quoteMaxDelaySecondary; // Max delay for secondary quote data
     }
 
-    // function maxDelays() external view returns (ChainlinkOracleMaxDelayParams memory maxDelays);
+    /// @notice Returns current max delay
+    function maxDelays() external view returns (Delays memory maxDelays);
 
-    /// @notice The ```setMaximumOracleDelays``` function sets the max oracle delay to determine if Chainlink data is stale
-    /// @dev Requires msg.sender to be the timelock address
-    /// @param _newMaxOracleDelays The new max oracle delay
+    /// @notice Set new max delays for oracle data to check if it's stale
+    /// @dev Only callable by the timelock address
+    /// @param _newMaxOracleDelays New max delay settings
     function setMaximumOracleDelays(Delays memory _newMaxOracleDelays) external;
 }

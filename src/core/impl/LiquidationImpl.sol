@@ -10,8 +10,8 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
 /**
- * @title BorrowImpl library
- * @notice Implements functions to validate the different actions of the protocol
+ * @title LiquidationImpl library
+ * @notice Implements position liquidation
  */
 library LiquidationImpl {
     using FixedPointMathLib for uint256;
@@ -30,11 +30,11 @@ library LiquidationImpl {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 totalBorrowShares = market.totalBorrowShares;
 
-        // get collateral price from oracle
+        // Get collateral price from oracle
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
-        // calc current loan-to-value of borrower position
+        // Calculate current loan-to-value (LTV) of borrower's position
         uint256 positionLTV = MarketMath.getLTV(totalBorrowAssets, totalBorrowShares, borrowerPosition, collateralPrice);
-        // check is borrower not healthy
+        // Check if borrower's position is not healthy
         if (positionLTV < market.lltv) {
             revert Errors.HealthyPositionLiquidation(positionLTV, market.lltv);
         }
@@ -42,36 +42,35 @@ library LiquidationImpl {
         uint256 collateral = borrowerPosition.collateral;
         uint256 liquidationBonusRate = market.liquidationBonusRate;
 
-        // calculate collateral to seize and bad data
+        // Calculate collateral to seize and bad debt
         (uint256 borrowAssets, uint256 seizedCollateral, uint256 bonusCollateral, uint256 badDebtAssets, uint256 badDebtShares) =
             MarketMath.calcLiquidation(totalBorrowAssets, totalBorrowShares, collateral, collateralPrice, borrowShares, liquidationBonusRate);
 
-        // remove all shares from position
+        // Remove all shares from borrower's position
         borrowerPosition.borrowShares = 0;
-        // remove all seizedCollateral from position, always seizedCollateral <= collateral
+        // Remove seized collateral from borrower's position
         borrowerPosition.collateral -= seizedCollateral.toUint128();
-        // remove all position assets from market
+        // Remove borrower's assets from market
         market.totalBorrowAssets -= borrowAssets;
-        // remove all position shares from market
+        // Remove borrower's shares from market
         market.totalBorrowShares -= borrowShares;
 
         if (badDebtAssets > 0) {
-            // calc available rescue shares from reserved position
+            // Calculate available shares from reserves
             uint256 reserveShares = reservePosition.lendShares;
-            // if we have reserves for bad debt lend shares we need to calculate them with borrow shares
+            // Calculate rescue assets and shares if reserve funds are available for covering the bad debt
             if (reserveShares > 0) {
-                // calc rescue assets and  shares by total lends
                 (rescueAssets, rescueShares) = MarketMath.calcRescueAssets(market.totalLendAssets, market.totalLendShares, badDebtAssets, reserveShares);
-                // decrease reserve lend shares
+                // Decrease reserve lend shares
                 reservePosition.lendShares -= rescueShares.toUint128();
-                // decrease total lend shares
+                // Decrease total lend shares
                 market.totalLendShares -= rescueShares;
             }
-            // decrease total lend assets without rescueAssets
+            // Decrease total lend assets by bad debt minus rescue assets
             market.totalLendAssets -= (badDebtAssets - rescueAssets);
         }
 
-        // calc repaid assets and shares
+        // Calculate repaid assets and shares
         uint256 repaidAssets = borrowAssets - badDebtAssets;
         uint256 repaidShares = borrowShares - badDebtShares;
 

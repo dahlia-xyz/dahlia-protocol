@@ -33,7 +33,7 @@ contract MarketStatusIntegrationTest is Test {
         vm.prank(attacker);
         vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, attacker));
-        $.dahlia.updateMarketBonusRates($.marketId, 1);
+        $.dahlia.updateLiquidationBonusRate($.marketId, 1);
     }
 
     function test_updateMarketBonusRates_by_owner(uint256 liquidationBonusRate) public {
@@ -43,9 +43,9 @@ contract MarketStatusIntegrationTest is Test {
             address permitted = $.permitted[i];
             vm.prank(permitted);
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit Events.MarketBonusRatesChanged(liquidationBonusRate);
+            emit Events.LiquidationBonusRateChanged(liquidationBonusRate);
             vm.resumeGasMetering();
-            $.dahlia.updateMarketBonusRates($.marketId, liquidationBonusRate);
+            $.dahlia.updateLiquidationBonusRate($.marketId, liquidationBonusRate);
             vm.pauseGasMetering();
             IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
             assertEq(market.liquidationBonusRate, liquidationBonusRate);

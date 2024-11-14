@@ -11,7 +11,7 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title LendImpl library
- * @notice Implements functions to validate the different actions of the protocol
+ * @notice Implements protocol lending functions
  */
 library LendImpl {
     using SafeERC20 for IERC20;

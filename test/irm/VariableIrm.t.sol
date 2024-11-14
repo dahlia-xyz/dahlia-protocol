@@ -76,7 +76,7 @@ contract VariableIrmTest is Test {
 
     function test_version_name() external view {
         assertEq(rate.version(), 1);
-        assertEq(rate.name(), "Dahlia Variable Interest Rate");
+        assertEq(rate.name(), "Dahlia VariableIRM");
     }
 
     function test_VariableIrm_zeroUtilization() public returns (uint256 deltaTime) {

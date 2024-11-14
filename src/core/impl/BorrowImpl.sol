@@ -13,7 +13,7 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
 /**
  * @title BorrowImpl library
- * @notice Implements functions to validate the different actions of the protocol
+ * @notice Implements borrowing protocol functions
  */
 library BorrowImpl {
     using SafeERC20 for IERC20;
@@ -22,15 +22,16 @@ library BorrowImpl {
     using SafeCastLib for uint256;
     using MarketMath for uint256;
 
+    // Add collateral to a borrower's position
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.MarketUserPosition storage onBehalfOfPosition, uint256 assets, address onBehalfOf)
         internal
     {
-        // increase collateral value in position
         onBehalfOfPosition.collateral += assets.toUint128();
 
         emit Events.SupplyCollateral(market.id, msg.sender, onBehalfOf, assets);
     }
 
+    // Withdraw collateral from borrower's position
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
         IDahlia.MarketUserPosition storage position,
@@ -38,14 +39,11 @@ library BorrowImpl {
         address onBehalfOf,
         address receiver
     ) internal {
-        // decrease collateral value in position
-        position.collateral -= assets.toUint128();
+        position.collateral -= assets.toUint128(); // Decrease collateral
 
-        // check is collateral sufficient for withdraw. If borrowShares == 0, skip for gas saving
+        // Check if there's enough collateral for withdrawal
         if (position.borrowShares > 0) {
-            // get current and  max borrow assets
             (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, 0);
-            // if current is more then max, then revert
             if (borrowedAssets > maxBorrowAssets) {
                 revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
             }
@@ -54,6 +52,7 @@ library BorrowImpl {
         emit Events.WithdrawCollateral(market.id, msg.sender, onBehalfOf, receiver, assets);
     }
 
+    // Borrow assets from the market
     function internalBorrow(
         IDahlia.Market storage market,
         IDahlia.MarketUserPosition storage onBehalfOfPosition,
@@ -61,30 +60,29 @@ library BorrowImpl {
         uint256 shares,
         address onBehalfOf,
         address receiver,
-        // can be zero, if 0 it will fill by function (for gas saving)
-        uint256 collateralPrice
+        uint256 collateralPrice // Can be 0, will be filled by function if so
     ) internal returns (uint256, uint256) {
         MarketMath.validateExactlyOneZero(assets, shares);
-        // calculate assets or shares
+
+        // Calculate assets or shares
         if (assets > 0) {
             shares = assets.toSharesUp(market.totalBorrowAssets, market.totalBorrowShares);
         } else {
             assets = shares.toAssetsDown(market.totalBorrowAssets, market.totalBorrowShares);
         }
 
-        // in create borrow values in totals and position
+        // Update borrow values in totals and position
         onBehalfOfPosition.borrowShares += shares.toUint128();
         market.totalBorrowAssets += assets;
         market.totalBorrowShares += shares;
 
-        // revert if not sufficient liquidity in total lends
+        // Check for sufficient liquidity
         if (market.totalBorrowAssets > market.totalLendAssets) {
             revert Errors.InsufficientLiquidity(market.totalBorrowAssets, market.totalLendAssets);
         }
 
-        // get current and  max borrow assets
+        // Check if user has enough collateral
         (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, onBehalfOfPosition, collateralPrice);
-        // revert if user overflowed borrow amount, need to supply more collateral
         if (borrowedAssets > maxBorrowAssets) {
             revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
         }
@@ -93,19 +91,19 @@ library BorrowImpl {
         return (assets, shares);
     }
 
+    // Repay borrowed assets
     function internalRepay(IDahlia.Market storage market, IDahlia.MarketUserPosition storage position, uint256 assets, uint256 shares, address onBehalfOf)
         internal
         returns (uint256, uint256)
     {
         MarketMath.validateExactlyOneZero(assets, shares);
-        // calculate assets or shares
+        // Calculate assets or shares
         if (assets > 0) {
             shares = assets.toSharesDown(market.totalBorrowAssets, market.totalBorrowShares);
         } else {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
         }
-
-        // decrease borrow values in totals and position
+        // Update borrow values in totals and position
         position.borrowShares -= shares.toUint128();
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);

@@ -5,34 +5,41 @@ import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
 import { IUniswapV3SingleTwapOracle } from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
 
-/// @title UniswapV3SingleTwapBase
-/// @notice  An oracle for UniV3 Twap prices
-abstract contract UniswapV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle {
+/// @title UniswapOracleV3SingleTwapBase.sol
+/// @notice A base contract for getting TWAP prices from Uniswap V3
+abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle {
+    /// @dev Parameters for the oracle setup
     struct OracleParams {
-        address uniswapV3PairAddress;
-        uint32 twapDuration;
-        address baseToken;
-        address quoteToken;
+        address uniswapV3PairAddress; // Address of the Uniswap V3 pair
+        uint32 twapDuration; // Duration for the TWAP calculation
+        address baseToken; // Base token address
+        address quoteToken; // Quote token address
     }
 
+    /// @dev Emitted when the TWAP duration is updated
     event SetTwapDuration(uint256 oldTwapDuration, uint256 newTwapDuration);
 
-    /// @notice address of the Uniswap V3 pair
+    /// @notice Address of the Uniswap V3 pair
     address public immutable UNI_V3_PAIR_ADDRESS;
 
-    /// @notice The precision of the twap
+    /// @notice Precision used for TWAP calculations
     uint128 public constant TWAP_PRECISION = 1e36;
 
-    /// @notice The base token of the twap
+    /// @notice Base token used in the TWAP
     address public immutable UNISWAP_V3_TWAP_BASE_TOKEN;
 
-    /// @notice The quote token of the twap
+    /// @notice Quote token used in the TWAP
     address public immutable UNISWAP_V3_TWAP_QUOTE_TOKEN;
 
-    /// @notice The duration of the twap
+    /// @notice Duration for the TWAP calculation
     uint32 public twapDuration;
+
+    /// @notice Address of the static oracle used for TWAP
     address public immutable UNISWAP_STATIC_ORACLE_ADDRESS;
 
+    /// @dev Constructor to initialize the oracle parameters
+    /// @param _params Struct containing oracle parameters
+    /// @param _uniswapStaticOracle Address of the static oracle
     constructor(OracleParams memory _params, address _uniswapStaticOracle) {
         UNI_V3_PAIR_ADDRESS = _params.uniswapV3PairAddress;
         twapDuration = _params.twapDuration;
@@ -41,17 +48,19 @@ abstract contract UniswapV3SingleTwapBase is ERC165, IUniswapV3SingleTwapOracle 
         UNISWAP_V3_TWAP_QUOTE_TOKEN = _params.quoteToken;
     }
 
-    /// @notice The ```_setTwapDuration``` function sets duration of the twap
-    /// @param _newTwapDuration The new twap duration
+    /// @dev Internal function to update the TWAP duration
+    /// @param _newTwapDuration The new TWAP duration
     function _setTwapDuration(uint32 _newTwapDuration) internal {
         emit SetTwapDuration({ oldTwapDuration: twapDuration, newTwapDuration: _newTwapDuration });
         twapDuration = _newTwapDuration;
     }
 
+    /// @notice External function to set a new TWAP duration
+    /// @param _newTwapDuration The new TWAP duration
     function setTwapDuration(uint32 _newTwapDuration) external virtual;
 
-    /// @notice The ```_getUniswapV3Twap``` function is called to get the twap
-    /// @return price The twap price
+    /// @dev Internal function to get the TWAP price from Uniswap V3
+    /// @return price The calculated TWAP price
     function _getUniswapV3Twap() internal view returns (uint256 price) {
         address[] memory _pools = new address[](1);
         _pools[0] = UNI_V3_PAIR_ADDRESS;

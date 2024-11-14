@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 /// @title IPermitted
-/// @notice Interface for managing protocol permission
+/// @notice Interface for handling permissions in the protocol
 interface IPermitted {
     struct Data {
         address signer;
@@ -12,14 +12,14 @@ interface IPermitted {
         uint256 deadline;
     }
 
-    /// @notice Allows setting or revoking permission for another address
-    /// @param onBehalfOf The address to be permitted or not permitted
-    /// @param newIsPermitted `True` to grant permission, `false` to revoke
+    /// @notice Set or revoke permission for an address
+    /// @param onBehalfOf The address to grant or revoke permission
+    /// @param newIsPermitted `True` to allow, `false` to disallow
     function updatePermission(address onBehalfOf, bool newIsPermitted) external;
 
-    /// @notice Allows setting or revoking permission using an EIP-712 signature
-    /// @dev Reverts if the signature has already been used or is invalid
-    /// @param data The Permission struct containing the permission details
-    /// @param signature The Signature struct containing the EIP-712 signature components
+    /// @notice Set or revoke permission using an EIP-712 signature
+    /// @dev Fails if the signature is reused or invalid
+    /// @param data The permission details
+    /// @param signature The EIP-712 signature
     function updatePermissionWithSig(Data calldata data, bytes memory signature) external;
 }
