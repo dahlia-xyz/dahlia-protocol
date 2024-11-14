@@ -12,7 +12,6 @@ import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 /// @title MarketMath
 /// @notice Math utilities for the Dahlia protocol, handling collateral, loan calculations, and liquidation logic
 /// @dev Provides safe math operations for lending and borrowing calculations
-
 library MarketMath {
     using FixedPointMathLib for uint256;
     using SharesMathLib for *;

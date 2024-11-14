@@ -10,7 +10,7 @@ import { IMarketStorage } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title MarketStorage
-/// @notice Manages market data and storage for protocol.
+/// @notice Manages market data storage for the protocol.
 abstract contract MarketStorage is Ownable2Step, IMarketStorage {
     mapping(MarketId => MarketData) internal markets;
 
@@ -89,7 +89,7 @@ abstract contract MarketStorage is Ownable2Step, IMarketStorage {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
-        emit Events.LiquidationBonusChanged(liquidationBonusRate);
+        emit Events.LiquidationBonusRateChanged(liquidationBonusRate);
         market.liquidationBonusRate = uint24(liquidationBonusRate);
     }
 

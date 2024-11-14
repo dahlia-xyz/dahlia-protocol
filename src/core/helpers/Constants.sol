@@ -26,7 +26,7 @@ library Constants {
     /// @dev Default maximum LLTV value, set at 99%.
     uint24 internal constant DEFAULT_MAX_LLTV = uint24(99 * Constants.LLTV_100_PERCENT / 100);
 
-    /// @dev Minimum liquidation bonus rate, set to 1% as the default.
+    /// @dev Minimum liquidation bonus rate, set to 0.001% as the default.
     uint24 internal constant DEFAULT_MIN_LIQUIDATION_BONUS_RATE = uint24(1);
 
     /// @dev Maximum liquidation bonus rate, set to 15%.
@@ -49,6 +49,6 @@ library Constants {
     uint256 internal constant ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY = 10;
 
     // Value IDs in DahliaRegistry
-    /// @dev Initial frontend fee value for Royco's wrapped vaults.
+    /// @notice Initial frontend fee value for Royco's wrapped vaults.
     uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE = 10;
 }

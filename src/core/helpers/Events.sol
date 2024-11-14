@@ -49,7 +49,7 @@ library Events {
 
     /// @dev Emitted when the liquidation bonus rate changes.
     /// @param liquidationBonusRate The updated liquidation bonus rate.
-    event LiquidationBonusChanged(uint256 liquidationBonusRate);
+    event LiquidationBonusRateChanged(uint256 liquidationBonusRate);
 
     /// @dev Emitted when a new market is deployed.
     /// @param id Market id.
