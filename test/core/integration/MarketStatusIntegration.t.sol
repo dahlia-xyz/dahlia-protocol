@@ -120,9 +120,10 @@ contract MarketStatusIntegrationTest is Test {
         // check lend
         ERC20Mock($.marketConfig.loanToken).setBalance($.alice, assets);
         vm.startPrank($.alice);
-        IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        IERC20($.marketConfig.loanToken).approve(address(market.vault), assets);
         vm.expectRevert(revertData);
-        $.dahlia.lend($.marketId, assets, $.alice, TestConstants.EMPTY_CALLBACK);
+        market.vault.deposit(assets, $.alice);
         vm.stopPrank();
 
         // check BorrowImpl

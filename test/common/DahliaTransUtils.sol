@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Vm } from "@forge-std/Test.sol";
 import { console } from "@forge-std/console.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { TestTypes } from "test/common/TestTypes.sol";
@@ -14,8 +15,9 @@ library DahliaTransUtils {
         ERC20Mock($.marketConfig.loanToken).setBalance(lender, previousBalance + assets);
 
         vm.startPrank(lender);
-        IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);
-        $.dahlia.lend($.marketId, assets, lender, TestConstants.EMPTY_CALLBACK);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        IERC20($.marketConfig.loanToken).approve(address(market.vault), assets);
+        market.vault.deposit(assets, lender);
         vm.stopPrank();
     }
 
@@ -27,7 +29,8 @@ library DahliaTransUtils {
 
     function dahliaWithdrawBy(Vm vm, address lender, uint256 shares, TestContext.MarketContext memory $) internal returns (uint256 assets) {
         vm.startPrank(lender);
-        assets = $.dahlia.withdraw($.marketId, shares, lender, lender);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        assets = market.vault.redeem(shares, lender, lender);
         vm.stopPrank();
     }
 

@@ -2,14 +2,16 @@
 pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+
 import { Test, Vm } from "forge-std/Test.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
-import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestContext } from "test/common/TestContext.sol";
 
 contract LendIntegrationTest is Test {
     using FixedPointMathLib for uint256;
@@ -25,18 +27,28 @@ contract LendIntegrationTest is Test {
 
     function test_int_lend_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
-        $.dahlia.lend(marketIdFuzz, assets, $.alice, TestConstants.EMPTY_CALLBACK);
+        vm.startPrank($.alice);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
+        $.dahlia.lend(marketIdFuzz, assets, $.alice);
     }
 
     function test_int_lend_zeroAmount() public {
-        //        vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
-        $.dahlia.lend($.marketId, 0, $.alice, TestConstants.EMPTY_CALLBACK);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        market.vault.deposit(0, $.alice);
+    }
+
+    function test_int_lend_directCallNotPermitted(uint256 assets) public {
+        IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);
+        vm.startPrank($.alice);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
+        $.dahlia.lend($.marketId, assets, $.alice);
     }
 
     function test_int_lend_zeroAddress(uint256 assets) public {
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        vm.startPrank(address(market.vault));
         vm.expectRevert(Errors.ZeroAddress.selector);
-        $.dahlia.lend($.marketId, assets, address(0), TestConstants.EMPTY_CALLBACK);
+        $.dahlia.lend($.marketId, assets, address(0));
     }
 
     function test_int_lend_byAssets(uint256 amount) public {
@@ -47,12 +59,13 @@ contract LendIntegrationTest is Test {
         $.loanToken.setBalance($.alice, amount);
 
         vm.startPrank($.alice);
-        $.loanToken.approve(address($.dahlia), amount);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        $.loanToken.approve(address(market.vault), amount);
 
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Lend($.marketId, $.alice, $.bob, amount, expectedLendShares);
+        emit Events.Lend($.marketId, address(market.vault), $.bob, amount, expectedLendShares);
         vm.resumeGasMetering();
-        (uint256 _shares) = $.dahlia.lend($.marketId, amount, $.bob, TestConstants.EMPTY_CALLBACK);
+        (uint256 _shares) = market.vault.deposit(amount, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
 

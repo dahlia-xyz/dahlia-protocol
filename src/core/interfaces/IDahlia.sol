@@ -167,9 +167,8 @@ interface IDahlia {
     /// @param id Market id.
     /// @param assets Amount of assets to lend.
     /// @param onBehalfOf Owner of the increased lend position.
-    /// @param callbackData Data for `onDahliaLend` callback. Empty if not needed.
     /// @return sharesSupplied Amount of shares minted.
-    function lend(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData) external returns (uint256 sharesSupplied);
+    function lend(MarketId id, uint256 assets, address onBehalfOf) external returns (uint256 sharesSupplied);
 
     /// TODO add permissions
     /// @notice Withdraw `assets` by `shares` on behalf of a user, sending to a receiver.
