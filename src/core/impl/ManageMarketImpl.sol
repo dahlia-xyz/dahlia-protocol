@@ -5,7 +5,7 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
-import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /**
@@ -49,7 +49,7 @@ library ManageMarketImpl {
         market.ratePerSec = uint64(marketConfig.irm.zeroUtilizationRate());
         market.lltv = uint24(marketConfig.lltv);
         market.updatedAt = uint48(block.timestamp);
-        market.status = IMarketStorage.MarketStatus.Active;
+        market.status = IDahlia.MarketStatus.Active;
         market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
         market.vault = vault;
         emit Events.DeployMarket(id, vault, marketConfig);

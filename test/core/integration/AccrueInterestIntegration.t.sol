@@ -9,7 +9,7 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { InterestImpl } from "src/core/impl/InterestImpl.sol";
-import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
@@ -217,7 +217,7 @@ contract AccrueInterestIntegrationTest is Test {
     }
 
     function test_previewLendRateAfterDeposit_wrong_market() public view {
-        assertEq($.dahlia.previewLendRateAfterDeposit(IMarketStorage.MarketId.wrap(0), 0), 0);
+        assertEq($.dahlia.previewLendRateAfterDeposit(IDahlia.MarketId.wrap(0), 0), 0);
     }
 
     function test_previewLendRateAfterDeposit_no_borrow_position() public view {

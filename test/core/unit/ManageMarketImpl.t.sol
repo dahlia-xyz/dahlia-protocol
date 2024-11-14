@@ -8,7 +8,7 @@ import { Events } from "src/core/helpers/Events.sol";
 import { ManageMarketImpl } from "src/core/impl/ManageMarketImpl.sol";
 
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 import { TestContext } from "test/common/TestContext.sol";
 
@@ -24,7 +24,7 @@ contract ManageMarketImplUnitTest is Test {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
 
-        IDahlia.MarketId marketParamsFuzzId = IMarketStorage.MarketId.wrap(1);
+        IDahlia.MarketId marketParamsFuzzId = IDahlia.MarketId.wrap(1);
         vm.expectEmit(true, true, true, true, address(this));
         emit Events.DeployMarket(marketParamsFuzzId, vault, marketParamsFuzz);
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
@@ -48,7 +48,7 @@ contract ManageMarketImplUnitTest is Test {
     function test_unit_manage_deployMarket_alreadyDeployed(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
-        IDahlia.MarketId marketParamsFuzzId = IMarketStorage.MarketId.wrap(1);
+        IDahlia.MarketId marketParamsFuzzId = IDahlia.MarketId.wrap(1);
 
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
 

@@ -7,7 +7,7 @@ import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
 import { Constants } from "src/core/helpers/Constants.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
-import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 import { TestTypes } from "test/common/TestTypes.sol";
 
@@ -70,7 +70,7 @@ library BoundUtils {
      * Utils
      */
     function marketsEq(Vm, IDahlia.MarketId a, IDahlia.MarketId b) public pure returns (bool) {
-        return (IMarketStorage.MarketId.unwrap(a) == IMarketStorage.MarketId.unwrap(b));
+        return (IDahlia.MarketId.unwrap(a) == IDahlia.MarketId.unwrap(b));
     }
 
     function boundBlocks(Vm, uint256 blocks) public pure returns (uint256) {

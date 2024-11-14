@@ -7,7 +7,7 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { IDahlia, IMarketStorage } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -39,10 +39,10 @@ contract WrappedVaultIntegration is Test {
 
     function test_int_proxy_name() public {
         TestContext.MarketContext memory ctx2 = ctx.bootstrapMarket("USDC", "WBTC", 81 * Constants.LLTV_100_PERCENT / 100);
-        assertEq(IMarketStorage.MarketId.unwrap(ctx2.marketId), 2);
+        assertEq(IDahlia.MarketId.unwrap(ctx2.marketId), 2);
         assertEq(IERC4626(address(ctx2.dahlia.getMarket(ctx2.marketId).vault)).name(), "USDC/WBTC (81% LLTV)");
         TestContext.MarketContext memory ctx3 = ctx.bootstrapMarket("USDC", "WBTC", 815 * Constants.LLTV_100_PERCENT / 1000);
-        assertEq(IMarketStorage.MarketId.unwrap(ctx3.marketId), 3);
+        assertEq(IDahlia.MarketId.unwrap(ctx3.marketId), 3);
         assertEq(IERC4626(address(ctx3.dahlia.getMarket(ctx3.marketId).vault)).name(), "USDC/WBTC (81.5% LLTV)");
     }
 

@@ -5,9 +5,9 @@ import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
-/// @title IMarketStorage
-/// @notice Interface for market storage functions
-interface IMarketStorage {
+/// @title IDahlia
+/// @notice Interface for main Dahlia protocol functions
+interface IDahlia {
     type MarketId is uint32;
 
     enum MarketStatus {
@@ -104,16 +104,9 @@ interface IMarketStorage {
     /// @notice Deprecate a market.
     /// @param id Market id.
     function deprecateMarket(MarketId id) external;
-}
 
-/// @title IDahlia
-/// @notice Interface for main Dahlia protocol functions
-interface IDahlia is IMarketStorage {
     /// @notice Get protocol fee recipient address.
     function protocolFeeRecipient() external view returns (address);
-
-    /// @notice Get proxy factory address.
-    function proxyFactory() external view returns (address);
 
     /// @notice Set LLTV range for market creation.
     /// @param range Min-max range.

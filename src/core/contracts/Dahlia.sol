@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { MarketStorage } from "src/core/abstracts/MarketStorage.sol";
 import { Permitted } from "src/core/abstracts/Permitted.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
@@ -34,22 +33,21 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
 /// @title Dahlia
 /// @notice The Dahlia contract.
-contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
+contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SharesMathLib for *;
     using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
 
-    RateRange public lltvRange;
-    RateRange public liquidationBonusRateRange;
-
     uint32 internal marketSequence; // 4 bytes
-    address public proxyFactory; // 20 bytes
     IDahliaRegistry public dahliaRegistry; // 20 bytes
+    RateRange public lltvRange; // 6 bytes
+    RateRange public liquidationBonusRateRange; // 6 bytes
 
     address public protocolFeeRecipient; // 20 bytes
     address public reserveFeeRecipient; // 20 bytes
     uint24 public flashLoanFeeRate; // 3 bytes
+    mapping(MarketId => MarketData) internal markets;
 
     /// @dev The owner is used by the governance controller to manage the execution of each `onlyOwner` function.
     constructor(address _owner, address addressRegistry) Ownable(_owner) {
@@ -124,7 +122,10 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
         emit Events.SetFlashLoanFeeRate(newFlashLoanFeeRate);
     }
 
-    function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view override {
+    /// @notice Validates the liquidation bonus rate, ensuring it is within acceptable limits based on the market's LLTV.
+    /// @param liquidationBonusRate The liquidation bonus rate to validate.
+    /// @param lltv Liquidation loan-to-value for the market.
+    function _validateLiquidationBonusRate(uint256 liquidationBonusRate, uint256 lltv) internal view {
         require(
             liquidationBonusRate >= liquidationBonusRateRange.min && liquidationBonusRate <= liquidationBonusRateRange.max
                 && liquidationBonusRate <= MarketMath.getMaxLiquidationBonusRate(lltv),
@@ -412,5 +413,98 @@ contract Dahlia is Permitted, MarketStorage, IDahlia, ReentrancyGuard {
 
     function _accrueMarketInterest(mapping(address => MarketUserPosition) storage positions, Market storage market) internal {
         InterestImpl.executeMarketAccrueInterest(market, positions[protocolFeeRecipient], positions[reserveFeeRecipient]);
+    }
+
+    /// @notice Checks if the sender is the market or the wrapped vault owner.
+    /// @param vault The wrapped vault associated with the market.
+    function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
+        address sender = _msgSender();
+        require(sender == owner() || sender == vault.vaultOwner(), Errors.NotPermitted(sender));
+    }
+
+    /// @inheritdoc IDahlia
+    function getMarket(MarketId id) external view returns (Market memory) {
+        return InterestImpl.getLastMarketState(markets[id].market, 0);
+    }
+
+    /// @inheritdoc IDahlia
+    function getMarketUserPosition(MarketId id, address userAddress) external view returns (MarketUserPosition memory) {
+        return markets[id].userPositions[userAddress];
+    }
+
+    /// @inheritdoc IDahlia
+    function marketUserMaxBorrows(MarketId id, address userAddress)
+        external
+        view
+        returns (uint256 borrowAssets, uint256 maxBorrowAssets, uint256 collateralPrice)
+    {
+        MarketUserPosition memory position = markets[id].userPositions[userAddress];
+        Market memory market = markets[id].market;
+        collateralPrice = MarketMath.getCollateralPrice(market.oracle);
+        (borrowAssets, maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, collateralPrice);
+    }
+
+    /// @inheritdoc IDahlia
+    function getPositionLTV(MarketId id, address userAddress) external view returns (uint256 ltv) {
+        MarketUserPosition memory position = markets[id].userPositions[userAddress];
+        Market memory market = markets[id].market;
+        uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
+        return MarketMath.getLTV(market.totalBorrowAssets, market.totalBorrowShares, position, collateralPrice);
+    }
+
+    /// @inheritdoc IDahlia
+    function isMarketDeployed(MarketId id) external view virtual returns (bool) {
+        return markets[id].market.status != MarketStatus.None;
+    }
+
+    /// @inheritdoc IDahlia
+    function pauseMarket(MarketId id) external {
+        Market storage market = markets[id].market;
+        _checkDahliaOwnerOrVaultOwner(market.vault);
+        _validateMarket(market.status, false);
+        require(market.status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
+        emit Events.MarketStatusChanged(market.status, MarketStatus.Paused);
+        market.status = MarketStatus.Paused;
+    }
+
+    /// @inheritdoc IDahlia
+    function unpauseMarket(MarketId id) external {
+        Market storage market = markets[id].market;
+        _checkDahliaOwnerOrVaultOwner(market.vault);
+        _validateMarket(market.status, false);
+        require(market.status == MarketStatus.Paused, Errors.CannotChangeMarketStatus());
+        emit Events.MarketStatusChanged(market.status, MarketStatus.Active);
+        market.status = MarketStatus.Active;
+    }
+
+    /// @inheritdoc IDahlia
+    function deprecateMarket(MarketId id) external onlyOwner {
+        Market storage market = markets[id].market;
+        _validateMarket(market.status, false);
+        emit Events.MarketStatusChanged(market.status, MarketStatus.Deprecated);
+        market.status = MarketStatus.Deprecated;
+    }
+
+    /// @inheritdoc IDahlia
+    function updateLiquidationBonusRate(MarketId id, uint256 liquidationBonusRate) external {
+        Market storage market = markets[id].market;
+        _checkDahliaOwnerOrVaultOwner(market.vault);
+        _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
+        emit Events.LiquidationBonusRateChanged(liquidationBonusRate);
+        market.liquidationBonusRate = uint24(liquidationBonusRate);
+    }
+
+    /// @notice Validates the current market status and optionally checks market is paused or deprecated.
+    /// @param status The current market status.
+    /// @param checkIsSupplyAndBorrowForbidden If true, checks if market is paused or deprecated.
+    function _validateMarket(MarketStatus status, bool checkIsSupplyAndBorrowForbidden) internal pure {
+        require(status != MarketStatus.None, Errors.MarketNotDeployed());
+        if (checkIsSupplyAndBorrowForbidden && status != MarketStatus.Active) {
+            if (status == MarketStatus.Deprecated) {
+                revert Errors.MarketDeprecated();
+            } else {
+                revert Errors.MarketPaused();
+            }
+        }
     }
 }
