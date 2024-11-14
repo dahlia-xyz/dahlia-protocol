@@ -33,19 +33,9 @@ library MarketMath {
         return assets.mulDiv(Constants.ORACLE_PRICE_SCALE, collateralPrice);
     }
 
-    /// @notice get percentage down (x * %) / 100
-    function mulPercentDown(uint256 value, uint256 percent) internal pure returns (uint256) {
-        return value.mulDiv(percent, Constants.LLTV_100_PERCENT);
-    }
-
     /// @notice get percentage up (x * %) / 100
     function mulPercentUp(uint256 value, uint256 percent) internal pure returns (uint256) {
         return value.mulDivUp(percent, Constants.LLTV_100_PERCENT);
-    }
-
-    /// @notice get percentage down (x * 100) / %
-    function divPercentDown(uint256 value, uint256 percent) internal pure returns (uint256) {
-        return value.mulDiv(Constants.LLTV_100_PERCENT, percent);
     }
 
     /// @notice get percentage down (x * 100) / %
