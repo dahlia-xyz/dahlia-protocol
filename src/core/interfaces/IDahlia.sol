@@ -180,17 +180,17 @@ interface IDahlia {
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
     /// @param shares Amount of shares to burn.
-    /// @param owner Owner of the lend position.
     /// @param receiver Address receiving the assets.
+    /// @param owner Owner of the lend position.
     /// @return assetsWithdrawn Amount of assets withdrawn.
-    function withdraw(MarketId id, uint256 shares, address owner, address receiver) external payable returns (uint256 assetsWithdrawn);
+    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable returns (uint256 assetsWithdrawn);
 
     /// @notice Claim accrued interest for the position.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
-    /// @param owner Owner of the lend position.
     /// @param receiver Address receiving the assets.
-    function claimInterest(MarketId id, address owner, address receiver) external payable returns (uint256 assets);
+    /// @param owner Owner of the lend position.
+    function claimInterest(MarketId id, address receiver, address owner) external payable returns (uint256 assets);
 
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.

@@ -447,7 +447,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         _updateUserRewards(reward, from);
         rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
         if (reward == address(DEPOSIT_ASSET)) {
-            dahlia.claimInterest(marketId, from, to);
+            dahlia.claimInterest(marketId, to, from);
         }
         pushReward(reward, to, amount);
         emit Claimed(reward, from, to, amount);
@@ -602,7 +602,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         _burn(owner, shares);
 
-        (_assets) = dahlia.withdraw(marketId, shares, owner, receiver);
+        (_assets) = dahlia.withdraw(marketId, shares, receiver, owner);
     }
 
     /// @inheritdoc IWrappedVault
