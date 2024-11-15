@@ -34,16 +34,16 @@ library BorrowImpl {
     // Withdraw collateral from borrower's position
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage position,
+        IDahlia.MarketUserPosition storage ownerPosition,
         uint256 assets,
         address owner,
         address receiver
     ) internal {
-        position.collateral -= assets.toUint128(); // Decrease collateral
+        ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
 
         // Check if there's enough collateral for withdrawal
-        if (position.borrowShares > 0) {
-            (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, 0);
+        if (ownerPosition.borrowShares > 0) {
+            (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, ownerPosition, 0);
             if (borrowedAssets > maxBorrowAssets) {
                 revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
             }
@@ -92,7 +92,7 @@ library BorrowImpl {
     }
 
     // Repay borrowed assets
-    function internalRepay(IDahlia.Market storage market, IDahlia.MarketUserPosition storage position, uint256 assets, uint256 shares, address owner)
+    function internalRepay(IDahlia.Market storage market, IDahlia.MarketUserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
         internal
         returns (uint256, uint256)
     {
@@ -104,7 +104,7 @@ library BorrowImpl {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
         }
         // Update borrow values in totals and position
-        position.borrowShares -= shares.toUint128();
+        ownerPosition.borrowShares -= shares.toUint128();
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 

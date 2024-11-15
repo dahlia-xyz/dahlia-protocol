@@ -90,11 +90,11 @@ library Events {
     /// @dev Emitted when assets are withdrawn.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param owner Address of the position owner.
     /// @param receiver Address receiving the withdrawn assets.
+    /// @param owner Address of the position owner.
     /// @param assets Amount of assets withdrawn.
     /// @param shares Amount of shares burned.
-    event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed owner, address indexed receiver, uint256 assets, uint256 shares);
+    event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
 
     /// @dev Emitted when assets are borrowed.
     /// @param id Market id.

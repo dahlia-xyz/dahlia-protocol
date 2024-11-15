@@ -95,7 +95,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, amountWithdrawn, expectedWithdrawnShares);
+        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, amountWithdrawn, expectedWithdrawnShares);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(expectedWithdrawnShares, $.bob, $.alice);
         vm.pauseGasMetering();
@@ -128,7 +128,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, expectedAmountWithdrawn, sharesWithdrawn);
+        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, expectedAmountWithdrawn, sharesWithdrawn);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(sharesWithdrawn, $.bob, $.alice);
         vm.pauseGasMetering();
@@ -163,7 +163,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank(ALICE_MONEY_MANAGER);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, amountWithdrawn, expectedWithdrawnShares);
+        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, amountWithdrawn, expectedWithdrawnShares);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(expectedWithdrawnShares, $.bob, $.alice);
         vm.pauseGasMetering();
@@ -203,7 +203,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank(ALICE_MONEY_MANAGER);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, expectedAmountWithdrawn, sharesWithdrawn);
+        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, expectedAmountWithdrawn, sharesWithdrawn);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(sharesWithdrawn, $.bob, $.alice);
         vm.pauseGasMetering();

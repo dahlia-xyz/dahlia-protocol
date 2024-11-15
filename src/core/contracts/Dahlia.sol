@@ -177,14 +177,14 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
         mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
-        MarketUserPosition storage userPosition = positions[owner];
+        MarketUserPosition storage ownerPosition = positions[owner];
 
-        assets = LendImpl.internalWithdraw(market, userPosition, shares, owner, receiver);
+        assets = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
 
-        uint256 userLendAssets = userPosition.lendAssets;
+        uint256 userLendAssets = ownerPosition.lendAssets;
         uint256 adjustedAssets = FixedPointMathLib.min(assets, userLendAssets);
-        uint256 resultingLendAssets = userPosition.lendShares == 0 ? 0 : userLendAssets - adjustedAssets;
-        userPosition.lendAssets = resultingLendAssets.toUint128();
+        uint256 resultingLendAssets = ownerPosition.lendShares == 0 ? 0 : userLendAssets - adjustedAssets;
+        ownerPosition.lendAssets = resultingLendAssets.toUint128();
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
@@ -198,14 +198,14 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
         mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
-        MarketUserPosition storage position = positions[owner];
+        MarketUserPosition storage ownerPosition = positions[owner];
 
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
-        uint256 lendShares = position.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
-        uint256 sharesInterest = position.lendShares - lendShares;
+        uint256 lendShares = ownerPosition.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
+        uint256 sharesInterest = ownerPosition.lendShares - lendShares;
 
-        assets = LendImpl.internalWithdraw(market, position, sharesInterest, owner, receiver);
+        assets = LendImpl.internalWithdraw(market, ownerPosition, sharesInterest, owner, receiver);
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
@@ -275,11 +275,11 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _validateMarketDeployedAndActive(market.status);
         mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
-
-        (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, positions[owner], repayAssets, repayShares, owner);
+        MarketUserPosition storage ownerPosition = positions[owner];
+        (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, ownerPosition, repayAssets, repayShares, owner);
         IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
 
-        BorrowImpl.internalWithdrawCollateral(market, positions[owner], collateralAssets, owner, receiver);
+        BorrowImpl.internalWithdrawCollateral(market, ownerPosition, collateralAssets, owner, receiver);
         IERC20(market.collateralToken).safeTransfer(receiver, collateralAssets);
     }
 
