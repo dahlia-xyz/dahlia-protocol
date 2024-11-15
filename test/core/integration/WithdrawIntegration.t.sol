@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
+import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
@@ -28,7 +29,7 @@ contract WithdrawIntegrationTest is Test {
     function test_int_withdraw_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.withdraw(marketIdFuzz, assets, $.alice, $.alice);
     }
 
@@ -38,8 +39,15 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank($.alice);
         vm.resumeGasMetering();
-        uint256 assets = $.dahlia.withdraw($.marketId, 0, $.alice, $.alice);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        uint256 assets = market.vault.withdraw(0, $.alice, $.alice);
         assertEq(assets, 0);
+    }
+
+    function test_int_lend_directCallNotPermitted(uint256 shares) public {
+        vm.startPrank($.alice);
+        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
+        $.dahlia.withdraw($.marketId, shares, $.alice, $.alice);
     }
 
     function test_int_withdraw_zeroAddress(uint256 lent) public {
@@ -65,11 +73,13 @@ contract WithdrawIntegrationTest is Test {
         uint256 expectedSupplyShares = pos.lent.toSharesDown(0, 0);
         uint256 expectedWithdrawnShares = pos.lent.toSharesUp(pos.lent, expectedSupplyShares);
 
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+
         // Carol cannot withdraw own assets, because alice already borrowed part
         vm.prank($.carol);
         vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientLiquidity.selector, pos.borrowed, 0));
-        $.dahlia.withdraw($.marketId, expectedWithdrawnShares, $.carol, $.carol);
+        market.vault.redeem(expectedWithdrawnShares, $.carol, $.carol);
     }
 
     function test_int_withdraw_byAssets(TestTypes.MarketPosition memory pos, uint256 amountWithdrawn) public {
@@ -81,11 +91,13 @@ contract WithdrawIntegrationTest is Test {
         uint256 expectedSupplyShares = pos.lent.toSharesDown(0, 0);
         uint256 expectedWithdrawnShares = amountWithdrawn.toSharesUp(pos.lent, expectedSupplyShares);
 
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, $.alice, $.alice, $.bob, amountWithdrawn, expectedWithdrawnShares);
+        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, amountWithdrawn, expectedWithdrawnShares);
         vm.resumeGasMetering();
-        uint256 returnAssets = $.dahlia.withdraw($.marketId, expectedWithdrawnShares, $.alice, $.bob);
+        uint256 returnAssets = market.vault.redeem(expectedWithdrawnShares, $.bob, $.alice);
         vm.pauseGasMetering();
 
         expectedSupplyShares -= expectedWithdrawnShares;
@@ -106,17 +118,19 @@ contract WithdrawIntegrationTest is Test {
 
         uint256 expectedSupplyShares = pos.lent.toSharesDown(0, 0);
         uint256 availableLiquidity = pos.lent - pos.borrowed;
-        uint256 withdrawableShares = availableLiquidity.toSharesDown(pos.lent, expectedSupplyShares);
-        vm.assume(withdrawableShares != 0);
+        uint256 withdrawalShares = availableLiquidity.toSharesDown(pos.lent, expectedSupplyShares);
+        vm.assume(withdrawalShares != 0);
 
-        sharesWithdrawn = bound(sharesWithdrawn, 1, withdrawableShares);
+        sharesWithdrawn = bound(sharesWithdrawn, 1, withdrawalShares);
         uint256 expectedAmountWithdrawn = sharesWithdrawn.toAssetsDown(pos.lent, expectedSupplyShares);
+
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
 
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, $.alice, $.alice, $.bob, expectedAmountWithdrawn, sharesWithdrawn);
+        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, expectedAmountWithdrawn, sharesWithdrawn);
         vm.resumeGasMetering();
-        uint256 returnAssets = $.dahlia.withdraw($.marketId, sharesWithdrawn, $.alice, $.bob);
+        uint256 returnAssets = market.vault.redeem(sharesWithdrawn, $.bob, $.alice);
         vm.pauseGasMetering();
 
         expectedSupplyShares -= sharesWithdrawn;
@@ -136,18 +150,22 @@ contract WithdrawIntegrationTest is Test {
 
         amountWithdrawn = bound(amountWithdrawn, 1, pos.lent - pos.borrowed);
 
-        address ALICE_MONEY_MANAGER = makeAddr("ALICE_MONEY_MANAGER");
-        vm.prank($.alice);
-        $.dahlia.updatePermission(ALICE_MONEY_MANAGER, true);
-
         uint256 expectedSupplyShares = pos.lent.toSharesDown(0, 0);
         uint256 expectedWithdrawnShares = amountWithdrawn.toSharesUp(pos.lent, expectedSupplyShares);
 
+        address ALICE_MONEY_MANAGER = makeAddr("ALICE_MONEY_MANAGER");
+        //        vm.prank($.alice);
+        //        $.dahlia.updatePermission(ALICE_MONEY_MANAGER, true);
+
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        vm.prank($.alice);
+        IERC20(address(market.vault)).approve(ALICE_MONEY_MANAGER, expectedWithdrawnShares);
+
         vm.prank(ALICE_MONEY_MANAGER);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, ALICE_MONEY_MANAGER, $.alice, $.bob, amountWithdrawn, expectedWithdrawnShares);
+        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, amountWithdrawn, expectedWithdrawnShares);
         vm.resumeGasMetering();
-        uint256 returnAssets = $.dahlia.withdraw($.marketId, expectedWithdrawnShares, $.alice, $.bob);
+        uint256 returnAssets = market.vault.redeem(expectedWithdrawnShares, $.bob, $.alice);
         vm.pauseGasMetering();
 
         expectedSupplyShares -= expectedWithdrawnShares;
@@ -169,22 +187,25 @@ contract WithdrawIntegrationTest is Test {
 
         uint256 expectedSupplyShares = pos.lent.toSharesDown(0, 0);
         uint256 availableLiquidity = pos.lent - pos.borrowed;
-        uint256 withdrawableShares = availableLiquidity.toSharesDown(pos.lent, expectedSupplyShares);
-        vm.assume(withdrawableShares != 0);
+        uint256 withdrawalShares = availableLiquidity.toSharesDown(pos.lent, expectedSupplyShares);
+        vm.assume(withdrawalShares != 0);
 
-        sharesWithdrawn = bound(sharesWithdrawn, 1, withdrawableShares);
+        sharesWithdrawn = bound(sharesWithdrawn, 1, withdrawalShares);
         uint256 expectedAmountWithdrawn = sharesWithdrawn.toAssetsDown(pos.lent, expectedSupplyShares);
 
-        // SET authorization for manager
         address ALICE_MONEY_MANAGER = makeAddr("ALICE_MONEY_MANAGER");
+        //        vm.prank($.alice);
+        //        $.dahlia.updatePermission(ALICE_MONEY_MANAGER, true);
 
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         vm.prank($.alice);
-        $.dahlia.updatePermission(ALICE_MONEY_MANAGER, true);
+        IERC20(address(market.vault)).approve(ALICE_MONEY_MANAGER, sharesWithdrawn);
+
         vm.prank(ALICE_MONEY_MANAGER);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, ALICE_MONEY_MANAGER, $.alice, $.bob, expectedAmountWithdrawn, sharesWithdrawn);
+        emit Events.Withdraw($.marketId, address(market.vault), $.alice, $.bob, expectedAmountWithdrawn, sharesWithdrawn);
         vm.resumeGasMetering();
-        uint256 returnAssets = $.dahlia.withdraw($.marketId, sharesWithdrawn, $.alice, $.bob);
+        uint256 returnAssets = market.vault.redeem(sharesWithdrawn, $.bob, $.alice);
         vm.pauseGasMetering();
 
         expectedSupplyShares -= sharesWithdrawn;

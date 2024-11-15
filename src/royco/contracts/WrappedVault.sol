@@ -446,7 +446,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function _claim(address reward, address from, address to, uint256 amount) internal virtual {
         _updateUserRewards(reward, from);
         rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
-        // TODO: make sure we have a test to cover this if after xoseny merge royco tests
         if (reward == address(DEPOSIT_ASSET)) {
             dahlia.claimInterest(marketId, from, to);
         }
