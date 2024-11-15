@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { ChainlinkOracleWithMaxDelay } from "./ChainlinkOracleWithMaxDelay.sol";
 import { DualOracleChainlinkUniV3 } from "./DualOracleChainlinkUniV3.sol";
+import { StablePriceOracle } from "./StablePriceOracle.sol";
 import { UniswapOracleV3SingleTwap } from "./UniswapOracleV3SingleTwap.sol";
 
 contract DahliaOracleFactory {
@@ -14,6 +15,7 @@ contract DahliaOracleFactory {
         ChainlinkOracleWithMaxDelay.Delays chainlinkMaxDelays,
         UniswapOracleV3SingleTwap.OracleParams uniswapParams
     );
+    event StablePriceOracleCreated(address indexed oracleAddress, uint256 price);
 
     address public immutable timelockAddress;
     address public immutable uniswapStaticOracleAddress;
@@ -46,6 +48,12 @@ contract DahliaOracleFactory {
         DualOracleChainlinkUniV3 oracle =
             new DualOracleChainlinkUniV3(timelockAddress, chainlinkParams, chainlinkMaxDelays, uniswapParams, uniswapStaticOracleAddress);
         emit DualOracleChainlinkUniV3Created(address(oracle), chainlinkParams, chainlinkMaxDelays, uniswapParams);
+        return oracle;
+    }
+
+    function createStableOracle(uint256 price) external returns (StablePriceOracle) {
+        StablePriceOracle oracle = new StablePriceOracle(price);
+        emit StablePriceOracleCreated(address(oracle), price);
         return oracle;
     }
 }
