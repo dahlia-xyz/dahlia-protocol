@@ -59,59 +59,59 @@ library Events {
 
     /// @dev Emitted when permissions are updated.
     /// @param sender Address of the sender.
-    /// @param signer Address of the signer.
-    /// @param onBehalfOf Address that is permitted.
+    /// @param owner Address of the owner.
+    /// @param permitted Address that is permitted.
     /// @param newIsPermitted New permission status.
-    event updatePermission(address indexed sender, address indexed signer, address indexed onBehalfOf, bool newIsPermitted);
+    event updatePermission(address indexed sender, address indexed owner, address indexed permitted, bool newIsPermitted);
 
     /// @dev Emitted when collateral is supplied.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param onBehalfOf Address of the position owner.
+    /// @param owner Address of the position owner.
     /// @param assets Amount of assets supplied as collateral.
-    event SupplyCollateral(IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets);
+    event SupplyCollateral(IDahlia.MarketId indexed id, address indexed caller, address indexed owner, uint256 assets);
 
     /// @dev Emitted when collateral is withdrawn.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param onBehalfOf Address of the position owner.
+    /// @param owner Address of the position owner.
     /// @param receiver Address receiving the withdrawn assets.
     /// @param assets Amount of assets withdrawn.
-    event WithdrawCollateral(IDahlia.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets);
+    event WithdrawCollateral(IDahlia.MarketId indexed id, address caller, address indexed owner, address indexed receiver, uint256 assets);
 
     /// @dev Emitted when assets are supplied.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param onBehalfOf Address of the position owner.
+    /// @param owner Address of the position owner.
     /// @param assets Amount of assets supplied.
     /// @param shares Amount of shares minted.
-    event Lend(IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares);
+    event Lend(IDahlia.MarketId indexed id, address indexed caller, address indexed owner, uint256 assets, uint256 shares);
 
     /// @dev Emitted when assets are withdrawn.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param onBehalfOf Address of the position owner.
+    /// @param owner Address of the position owner.
     /// @param receiver Address receiving the withdrawn assets.
     /// @param assets Amount of assets withdrawn.
     /// @param shares Amount of shares burned.
-    event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets, uint256 shares);
+    event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed owner, address indexed receiver, uint256 assets, uint256 shares);
 
     /// @dev Emitted when assets are borrowed.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param onBehalfOf Address of the position owner.
+    /// @param owner Address of the position owner.
     /// @param receiver Address receiving the borrowed assets.
     /// @param assets Amount of assets borrowed.
     /// @param shares Amount of shares minted.
-    event DahliaBorrow(IDahlia.MarketId indexed id, address caller, address indexed onBehalfOf, address indexed receiver, uint256 assets, uint256 shares);
+    event DahliaBorrow(IDahlia.MarketId indexed id, address caller, address indexed owner, address indexed receiver, uint256 assets, uint256 shares);
 
     /// @dev Emitted when assets are repaid.
     /// @param id Market id.
     /// @param caller Address of the caller.
-    /// @param onBehalfOf Address of the position owner.
+    /// @param owner Address of the position owner.
     /// @param assets Amount of assets repaid.
     /// @param shares Amount of shares burned.
-    event DahliaRepay(IDahlia.MarketId indexed id, address indexed caller, address indexed onBehalfOf, uint256 assets, uint256 shares);
+    event DahliaRepay(IDahlia.MarketId indexed id, address indexed caller, address indexed owner, uint256 assets, uint256 shares);
 
     /// @dev Emitted when a position is liquidated.
     /// @param id Market id.

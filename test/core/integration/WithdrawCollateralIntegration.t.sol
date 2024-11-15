@@ -33,7 +33,7 @@ contract WithdrawCollateralIntegrationTest is Test {
 
         vm.resumeGasMetering();
         vm.startPrank($.alice);
-        // check zero onBehalfOf address
+        // check zero owner address
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
         $.dahlia.withdrawCollateral($.marketId, assets, address(0), $.alice);
 
