@@ -181,14 +181,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         assets = LendImpl.internalWithdraw(market, userPosition, shares, onBehalfOf, receiver);
 
-        uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
-        if (adjustedAssets != 0) {
-            userPosition.lendAssets -= adjustedAssets.toUint128();
-        }
-
-        if (positions[onBehalfOf].lendShares == 0) {
-            positions[onBehalfOf].lendAssets = 0; // write off single asset if 0 shares
-        }
+        uint256 userLendAssets = userPosition.lendAssets;
+        uint256 adjustedAssets = FixedPointMathLib.min(assets, userLendAssets);
+        uint256 resultingLendAssets = userPosition.lendShares == 0 ? 0 : userLendAssets - adjustedAssets;
+        userPosition.lendAssets = resultingLendAssets.toUint128();
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
