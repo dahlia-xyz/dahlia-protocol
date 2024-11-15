@@ -80,6 +80,13 @@ interface IDahlia {
     /// @param userAddress User address.
     function getPositionLTV(MarketId id, address userAddress) external view returns (uint256);
 
+    /// @notice Get user's earned interest for a market.
+    /// @param id Market id.
+    /// @param userAddress User address.
+    /// @return assets number of assets earned as interest
+    /// @return shares number of shares earned as interest
+    function getPositionInterest(MarketId id, address userAddress) external view returns (uint256 assets, uint256 shares);
+
     /// @notice Get market parameters.
     /// @param id Market id.
     function getMarket(MarketId id) external view returns (Market memory);
@@ -161,7 +168,6 @@ interface IDahlia {
     /// @param newFee New fee, precision: Constants.FEE_PRECISION.
     function setReserveFeeRate(MarketId id, uint32 newFee) external;
 
-    /// TODO add permissions
     /// @notice Lend `assets` on behalf of a user, with optional callback.
     /// @dev Should be called via wrapped vault.
     /// @param id Market id.
@@ -170,7 +176,6 @@ interface IDahlia {
     /// @return sharesSupplied Amount of shares minted.
     function lend(MarketId id, uint256 assets, address onBehalfOf) external returns (uint256 sharesSupplied);
 
-    /// TODO add permissions
     /// @notice Withdraw `assets` by `shares` on behalf of a user, sending to a receiver.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
@@ -180,7 +185,6 @@ interface IDahlia {
     /// @return assetsWithdrawn Amount of assets withdrawn.
     function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external payable returns (uint256 assetsWithdrawn);
 
-    /// TODO add permissions
     /// @notice Claim accrued interest for the position.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
@@ -188,7 +192,6 @@ interface IDahlia {
     /// @param receiver Address receiving the assets.
     function claimInterest(MarketId id, address onBehalfOf, address receiver) external payable returns (uint256 assets);
 
-    /// TODO add permissions
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.

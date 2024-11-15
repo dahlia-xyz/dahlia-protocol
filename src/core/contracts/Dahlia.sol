@@ -162,21 +162,13 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
-        // Grant isPermitted permission for the wrapped vault if it initiated the transaction.
-        isPermitted[onBehalfOf][address(vault)] = true;
         shares = LendImpl.internalLend(market, positions[onBehalfOf], assets, onBehalfOf);
 
         IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), assets);
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver)
-        external
-        payable
-        nonReentrant
-        isSenderPermitted(onBehalfOf)
-        returns (uint256 assets)
-    {
+    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external payable nonReentrant returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -188,41 +180,36 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketUserPosition storage userPosition = positions[onBehalfOf];
 
         assets = LendImpl.internalWithdraw(market, userPosition, shares, onBehalfOf, receiver);
-        uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
-        userPosition.lendAssets -= adjustedAssets.toUint128();
 
-        // Revoke isPermitted if the user withdraws all funds via wrapped vault.
+        uint256 adjustedAssets = FixedPointMathLib.min(assets, userPosition.lendAssets);
+        if (adjustedAssets != 0) {
+            userPosition.lendAssets -= adjustedAssets.toUint128();
+        }
+
         if (positions[onBehalfOf].lendShares == 0) {
-            isPermitted[onBehalfOf][address(vault)] = false;
+            positions[onBehalfOf].lendAssets = 0; // write off single asset if 0 shares
         }
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function claimInterest(MarketId id, address onBehalfOf, address receiver)
-        external
-        payable
-        nonReentrant
-        isSenderPermitted(onBehalfOf)
-        returns (uint256 assets)
-    {
+    function claimInterest(MarketId id, address onBehalfOf, address receiver) external payable nonReentrant returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
+        IWrappedVault vault = market.vault;
+        _permittedByWrappedVault(vault);
+        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
         mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
-        _validateMarketDeployed(market.status);
         _accrueMarketInterest(positions, market);
         MarketUserPosition storage position = positions[onBehalfOf];
+
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
         uint256 lendShares = position.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
         uint256 sharesInterest = position.lendShares - lendShares;
 
         assets = LendImpl.internalWithdraw(market, positions[onBehalfOf], sharesInterest, onBehalfOf, receiver);
-        // Revoke isPermitted if the user withdraws all funds via wrapped vault.
-        if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
-            isPermitted[onBehalfOf][msg.sender] = false;
-        }
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
@@ -444,6 +431,16 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market memory market = markets[id].market;
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         return MarketMath.getLTV(market.totalBorrowAssets, market.totalBorrowShares, position, collateralPrice);
+    }
+
+    /// @inheritdoc IDahlia
+    function getPositionInterest(MarketId id, address userAddress) external view returns (uint256 assets, uint256 shares) {
+        MarketData storage marketData = markets[id];
+        MarketUserPosition memory position = marketData.userPositions[userAddress];
+        Market memory state = InterestImpl.getLastMarketState(marketData.market, 0);
+        uint256 lendShares = position.lendAssets.toSharesDown(state.totalLendAssets, state.totalLendShares);
+        shares = position.lendShares - lendShares;
+        assets = shares.toAssetsDown(state.totalLendAssets, state.totalLendShares);
     }
 
     /// @inheritdoc IDahlia

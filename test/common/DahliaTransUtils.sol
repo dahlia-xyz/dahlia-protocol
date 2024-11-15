@@ -21,9 +21,10 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaClaimInterestBy(Vm vm, address lender, TestContext.MarketContext memory $) internal returns (uint256 interest) {
+    function dahliaClaimInterestBy(Vm vm, address lender, TestContext.MarketContext memory $) internal {
         vm.startPrank(lender);
-        interest = $.dahlia.claimInterest($.marketId, lender, lender);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        market.vault.claim(lender, address($.loanToken));
         vm.stopPrank();
     }
 
