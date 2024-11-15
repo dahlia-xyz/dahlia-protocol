@@ -180,8 +180,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
+        IWrappedVault vault = market.vault;
+        _permittedByWrappedVault(vault);
+        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
         mapping(address => MarketUserPosition) storage positions = marketData.userPositions;
-        _validateMarketDeployed(market.status);
         _accrueMarketInterest(positions, market);
         MarketUserPosition storage userPosition = positions[onBehalfOf];
 
@@ -190,8 +192,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         userPosition.lendAssets -= adjustedAssets.toUint128();
 
         // Revoke isPermitted if the user withdraws all funds via wrapped vault.
-        if (msg.sender == address(market.vault) && positions[onBehalfOf].lendShares == 0) {
-            isPermitted[onBehalfOf][msg.sender] = false;
+        if (positions[onBehalfOf].lendShares == 0) {
+            isPermitted[onBehalfOf][address(vault)] = false;
         }
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
