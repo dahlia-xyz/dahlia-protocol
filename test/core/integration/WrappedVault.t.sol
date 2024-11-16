@@ -36,6 +36,8 @@ contract WrappedVaultTest is Test {
 
     uint256 constant WAD = 1e18;
 
+    uint256 private constant MAX_REWARDS = 20; // copied from WrappedVault
+    uint256 private constant MIN_CAMPAIGN_DURATION = 1 weeks; // copied from WrappedVault
     uint256 constant DEFAULT_REFERRAL_FEE = 0.025e18;
     uint256 constant DEFAULT_FRONTEND_FEE = 0.025e18;
     uint256 constant DEFAULT_PROTOCOL_FEE = 0.05e18;
@@ -129,7 +131,7 @@ contract WrappedVaultTest is Test {
     }
 
     function testAddRewardTokenMaxReached() public {
-        for (uint256 i = 0; i < testIncentivizedVault.MAX_REWARDS(); i++) {
+        for (uint256 i = 0; i < MAX_REWARDS; i++) {
             testIncentivizedVault.addRewardsToken(address(new MockERC20("", "", 6)));
         }
 
@@ -151,7 +153,7 @@ contract WrappedVaultTest is Test {
     }
 
     function testSetRewardsInterval(uint32 start, uint32 duration, uint256 totalRewards) public {
-        vm.assume(duration >= testIncentivizedVault.MIN_CAMPAIGN_DURATION());
+        vm.assume(duration >= MIN_CAMPAIGN_DURATION);
         vm.assume(duration <= type(uint32).max - start); //If this is not here, then 'end' variable will overflow
         vm.assume(totalRewards > 0 && totalRewards < type(uint96).max);
         vm.assume(totalRewards / duration > 1e6);
@@ -182,7 +184,7 @@ contract WrappedVaultTest is Test {
         uint256 remainingSpace = type(uint32).max - start;
 
         // Get the minimum campaign duration
-        uint256 minCampaignDuration = testIncentivizedVault.MIN_CAMPAIGN_DURATION();
+        uint256 minCampaignDuration = MIN_CAMPAIGN_DURATION;
 
         // Ensure there is enough remaining space for the initial duration
         if (remainingSpace < minCampaignDuration) {
@@ -301,7 +303,7 @@ contract WrappedVaultTest is Test {
             start = uint32(block.timestamp + 10_000);
         }
 
-        vm.assume(duration >= testIncentivizedVault.MIN_CAMPAIGN_DURATION());
+        vm.assume(duration >= MIN_CAMPAIGN_DURATION);
         vm.assume(duration <= type(uint32).max - start); //If this is not here, then 'end' variable will overflow
         vm.assume(totalRewards > 0 && totalRewards < type(uint96).max);
         vm.assume(totalRewards / duration > 1e6);
@@ -319,7 +321,7 @@ contract WrappedVaultTest is Test {
         vm.stopPrank();
 
         uint256 initialBalance = rewardToken1.balanceOf(address(this));
-        assertEq(initialBalance, 0);
+        assertGt(initialBalance, 0);
         testIncentivizedVault.refundRewardsInterval(address(rewardToken1));
     }
 

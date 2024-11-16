@@ -13,7 +13,8 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
-/// TODO update comments
+/// @title WrappedVault
+/// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
@@ -79,14 +80,12 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @dev The max amount of reward campaigns a user can be involved in
-    uint256 public constant MAX_REWARDS = 20;
+    uint256 private constant MAX_REWARDS = 20;
     /// @dev The minimum duration a reward campaign must last
-    uint256 public constant MIN_CAMPAIGN_DURATION = 1 weeks;
-    /// @dev The minimum lifespan of an extended campaign
-    uint256 public constant MIN_CAMPAIGN_EXTENSION = 1 weeks;
+    uint256 private constant MIN_CAMPAIGN_DURATION = 1 weeks;
 
     /// @dev The underlying asset being deposited into the vault
-    ERC20 internal immutable DEPOSIT_ASSET;
+    ERC20 private immutable DEPOSIT_ASSET;
     /// @dev The address of the canonical points program factory
     PointsFactory public immutable POINTS_FACTORY;
     /// @dev The address of the canonical WrappedVault factory
@@ -233,10 +232,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         }
     }
 
-    /// @notice Extend the rewards interval for a given rewards campaign by adding more rewards
+    /// @notice Extend the rewards interval for a given rewards campaign by adding more rewards, must run for at least 1 more week
     /// @param reward The reward token / points campaign to extend rewards for
     /// @param rewardsAdded The amount of rewards to add to the campaign
-    /// @param newEnd The end date of the rewards campaign
+    /// @param newEnd The end date of the rewards campaign, must be more than 1 week after the updated campaign start
     /// @param frontendFeeRecipient The address to reward for directing IP flow
     function extendRewardsInterval(address reward, uint256 rewardsAdded, uint256 newEnd, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) revert InvalidReward();
@@ -254,14 +253,14 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         rewardToClaimantToFees[reward][ERC4626I_FACTORY.protocolFeeRecipient()] += protocolFeeTaken;
 
         // Calculate the new rate
-        uint256 rewardsAfterFee = rewardsAdded - frontendFeeTaken - protocolFeeTaken;
 
         uint32 newStart = block.timestamp > uint256(rewardsInterval.start) ? block.timestamp.toUint32() : rewardsInterval.start;
 
-        if ((newEnd - newStart) < MIN_CAMPAIGN_EXTENSION) revert InvalidIntervalDuration();
+        if ((newEnd - newStart) < MIN_CAMPAIGN_DURATION) revert InvalidIntervalDuration();
 
         uint256 remainingRewards = rewardsInterval.rate * (rewardsInterval.end - newStart);
-        uint256 rate = (rewardsAfterFee + remainingRewards) / (newEnd - newStart);
+        uint256 rate = (rewardsAdded - frontendFeeTaken - protocolFeeTaken + remainingRewards) / (newEnd - newStart);
+        rewardsAdded = (rate - rewardsInterval.rate) * (newEnd - newStart) + frontendFeeTaken + protocolFeeTaken;
 
         if (rate < rewardsInterval.rate) revert RateCannotDecrease();
 
@@ -269,15 +268,16 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         rewardsInterval.end = newEnd.toUint32();
         rewardsInterval.rate = rate.toUint96();
 
-        emit RewardsSet(reward, newStart, newEnd.toUint32(), rate, (rewardsAfterFee + remainingRewards), protocolFeeTaken, frontendFeeTaken);
+        emit RewardsSet(reward, newStart, newEnd.toUint32(), rate, (rate * (newEnd - newStart)), protocolFeeTaken, frontendFeeTaken);
 
         pullReward(reward, msg.sender, rewardsAdded);
     }
 
     /// @dev Set a rewards schedule
+    /// @notice Starts a rewards schedule, must run for at least 1 week
     /// @param reward The reward token or points program to set the interval for
     /// @param start The start timestamp of the interval
-    /// @param end The end timestamp of the interval
+    /// @param end The end timestamp of the interval, interval must be more than 1 week long
     /// @param totalRewards The amount of rewards to distribute over the interval
     /// @param frontendFeeRecipient The address to reward the frontendFee
     function setRewardsInterval(address reward, uint256 start, uint256 end, uint256 totalRewards, address frontendFeeRecipient) external payable onlyOwner {
@@ -306,10 +306,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         rewardToClaimantToFees[reward][ERC4626I_FACTORY.protocolFeeRecipient()] += protocolFeeTaken;
 
         // Calculate the rate
-        uint256 rewardsAfterFee = totalRewards - frontendFeeTaken - protocolFeeTaken;
-        uint256 rate = rewardsAfterFee / (end - start);
+        uint256 rate = (totalRewards - frontendFeeTaken - protocolFeeTaken) / (end - start);
 
         if (rate == 0) revert NoZeroRateAllowed();
+        totalRewards = rate * (end - start) + frontendFeeTaken + protocolFeeTaken;
 
         rewardsInterval.start = start.toUint32();
         rewardsInterval.end = end.toUint32();
@@ -321,7 +321,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         // Any unclaimed rewards can still be claimed
         rewardsPerToken.lastUpdated = start.toUint32();
 
-        emit RewardsSet(reward, block.timestamp.toUint32(), rewardsInterval.end, rate, rewardsAfterFee, protocolFeeTaken, frontendFeeTaken);
+        emit RewardsSet(reward, block.timestamp.toUint32(), rewardsInterval.end, rate, (rate * (end - start)), protocolFeeTaken, frontendFeeTaken);
 
         pullReward(reward, msg.sender, totalRewards);
     }
@@ -364,10 +364,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
 
+        // The rewards per token are scaled up for precision
         uint256 elapsedWAD = elapsed * 10 ** decimalOffset;
         // Calculate and update the new value of the accumulator.
-        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDiv(rewardsInterval_.rate, totalSupply))); // The
-            // rewards per token are scaled up for precision
+        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedWAD.mulDiv(rewardsInterval_.rate, totalSupply)));
 
         return rewardsPerTokenOut;
     }
