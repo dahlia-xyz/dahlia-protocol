@@ -18,7 +18,7 @@ library LendImpl {
     using SharesMathLib for uint256;
     using SafeCastLib for uint256;
 
-    function internalLend(IDahlia.Market storage market, IDahlia.MarketUserPosition storage ownerPosition, uint256 assets, address owner)
+    function internalLend(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner)
         internal
         returns (uint256 shares)
     {
@@ -32,7 +32,7 @@ library LendImpl {
         emit Events.Lend(market.id, msg.sender, owner, assets, shares);
     }
 
-    function internalWithdraw(IDahlia.Market storage market, IDahlia.MarketUserPosition storage ownerPosition, uint256 shares, address owner, address receiver)
+    function internalWithdraw(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 shares, address owner, address receiver)
         internal
         returns (uint256)
     {

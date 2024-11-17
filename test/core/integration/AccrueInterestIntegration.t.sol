@@ -46,7 +46,7 @@ contract AccrueInterestIntegrationTest is Test {
         $.dahlia.accrueMarketInterest($.marketId);
         vm.pauseGasMetering();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.owner);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.owner);
         IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued, "total borrow");
         assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued, "total supply");
@@ -157,8 +157,8 @@ contract AccrueInterestIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued + interestEarnedAssets, "total borrow");
         assertEq(stateAfter.totalLendShares, totalLendSharesBeforeAccrued + protocolFeeShares + reserveFeeShares, "total lend shares");
 
-        IDahlia.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, ctx.wallets("RESERVE_FEE_RECIPIENT"));
+        IDahlia.UserPosition memory userPos1 = $.dahlia.getPosition($.marketId, ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, ctx.wallets("RESERVE_FEE_RECIPIENT"));
         assertEq(userPos1.lendShares, protocolFeeShares, "protocolFeeRecipient's lend shares");
         assertEq(userPos.lendShares, reserveFeeShares, "reserveFeeRecipient's lend shares");
         if (interestEarnedAssets > 0) {
@@ -215,7 +215,7 @@ contract AccrueInterestIntegrationTest is Test {
     }
 
     function printUserPos(string memory suffix, address user) public view {
-        IDahlia.MarketUserPosition memory pos = $.dahlia.getMarketUserPosition($.marketId, user);
+        IDahlia.UserPosition memory pos = $.dahlia.getPosition($.marketId, user);
         console.log(suffix, ".lendAssets", pos.lendAssets);
         console.log(suffix, ".lendShares", pos.lendShares);
         console.log(suffix, ".usdc.balance", $.loanToken.balanceOf(user));
@@ -306,22 +306,22 @@ contract AccrueInterestIntegrationTest is Test {
         printMarketState("3", "carol lending again");
         //        vm.dahliaLendBy($.bob, pos.lent, $);
         //        printMarketState("4.1", "bob lending again");
-        uint256 assets = vm.dahliaWithdrawBy($.bob, $.dahlia.getMarketUserPosition($.marketId, $.bob).lendShares, $);
+        uint256 assets = vm.dahliaWithdrawBy($.bob, $.dahlia.getPosition($.marketId, $.bob).lendShares, $);
         validateUserPos("4 after bob withdraw all shares", 0, 1_000_000, 0, 1);
         printMarketState("4", "after bob withdraw all shares");
         console.log("4 bob assets withdrawn: ", assets);
-        vm.dahliaWithdrawBy($.carol, $.dahlia.getMarketUserPosition($.marketId, $.carol).lendShares / 2, $);
+        vm.dahliaWithdrawBy($.carol, $.dahlia.getPosition($.marketId, $.carol).lendShares / 2, $);
         validateUserPos("5 carol withdraw 1/2 of shares", 0, 1_000_000, 0, 1);
         printMarketState("5", "carol withdraw 1/2 of shares");
         vm.dahliaClaimInterestBy($.carol, $);
         validateUserPos("5 carol claim interest", 0, 0, 0, 0);
         printMarketState("5.1", "interest claimed by carol and 1/2 of shares withdrawn");
-        IDahlia.MarketUserPosition memory alicePos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory alicePos = $.dahlia.getPosition($.marketId, $.alice);
         vm.dahliaRepayByShares($.alice, alicePos.borrowShares, $.dahlia.getMarket($.marketId).totalBorrowAssets, $);
         validateUserPos("6 repay by alice", 0, 0, 0, 0);
         printMarketState("6", "repay by alice");
         vm.forward(blocks);
-        uint256 assets2 = vm.dahliaWithdrawBy($.carol, $.dahlia.getMarketUserPosition($.marketId, $.carol).lendShares, $);
+        uint256 assets2 = vm.dahliaWithdrawBy($.carol, $.dahlia.getPosition($.marketId, $.carol).lendShares, $);
         validateUserPos("8 carol withdraw all shares", 0, 0, 0, 0);
         printMarketState("8", "after carol withdraw all shares");
         console.log("8 carol assets withdrawn: ", assets2);

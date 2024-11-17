@@ -60,7 +60,7 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.bob);
         assertEq(shares, expectedLendShares);
         assertEq(userPos.lendShares, shares);
 
@@ -87,7 +87,7 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.bob);
         assertEq(assets, resAssets);
         assertEq(userPos.lendShares, shares);
 
@@ -120,7 +120,7 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.bob);
         assertEq(shares, sharesWithdrawn);
         assertEq(shares, expectedLendShares);
         assertEq(userPos.lendShares, 0);
@@ -156,7 +156,7 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.bob);
         assertEq(resAssets, assets);
         assertEq(assetsRedeemed, assets);
         assertEq(userPos.lendShares, 0);

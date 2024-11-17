@@ -124,7 +124,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         internal
         view
     {
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");

@@ -30,8 +30,8 @@ interface IDahlia {
         address loanToken; // 20 bytes
         // --- 32 bytes
         address collateralToken; // 20 bytes
-        uint48 updatedAt; // 6 bytes //
-            // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers#understanding-the-optimization
+        // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers
+        uint48 updatedAt; // 6 bytes
         uint24 protocolFeeRate; // 3 bytes // taken from interest
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
@@ -50,7 +50,7 @@ interface IDahlia {
         uint256 totalBorrowShares; // 32 bytes
     }
 
-    struct MarketUserPosition {
+    struct UserPosition {
         uint128 lendShares;
         uint128 lendAssets; // store user initial lend assets
         uint128 borrowShares;
@@ -59,18 +59,18 @@ interface IDahlia {
 
     struct MarketData {
         Market market;
-        mapping(address => MarketUserPosition) userPositions;
+        mapping(address => UserPosition) userPositions;
     }
 
-    /// @notice Get user position for a market id and address.
+    /// @notice Get user position for a market id and address with accrued interest.
     /// @param id Market id.
     /// @param userAddress User address.
-    function getMarketUserPosition(MarketId id, address userAddress) external view returns (MarketUserPosition memory position);
+    function getPosition(MarketId id, address userAddress) external view returns (UserPosition memory position);
 
     /// @notice Get max borrowable assets for a user in a market.
     /// @param id Market id.
     /// @param userAddress User address.
-    function marketUserMaxBorrows(MarketId id, address userAddress)
+    function getMaxBorrowableAmount(MarketId id, address userAddress)
         external
         view
         returns (uint256 maxBorrowAssets, uint256 borrowAssets, uint256 collateralPrice);

@@ -21,8 +21,8 @@ library LiquidationImpl {
 
     function internalLiquidate(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage borrowerPosition,
-        IDahlia.MarketUserPosition storage reservePosition,
+        IDahlia.UserPosition storage borrowerPosition,
+        IDahlia.UserPosition storage reservePosition,
         address borrower
     ) internal returns (uint256, uint256, uint256) {
         uint256 rescueAssets;

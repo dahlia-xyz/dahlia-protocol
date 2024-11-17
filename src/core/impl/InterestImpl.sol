@@ -21,8 +21,8 @@ library InterestImpl {
     /// @dev Accrues interest for the specified market.
     function executeMarketAccrueInterest(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage protocolFeeRecipientPosition,
-        IDahlia.MarketUserPosition storage reserveFeeRecipientPosition
+        IDahlia.UserPosition storage protocolFeeRecipientPosition,
+        IDahlia.UserPosition storage reserveFeeRecipientPosition
     ) internal {
         if (address(market.irm) == address(0)) {
             return;

@@ -23,9 +23,7 @@ library BorrowImpl {
     using MarketMath for uint256;
 
     // Add collateral to a borrower's position
-    function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.MarketUserPosition storage ownerPosition, uint256 assets, address owner)
-        internal
-    {
+    function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
         ownerPosition.collateral += assets.toUint128();
 
         emit Events.SupplyCollateral(market.id, msg.sender, owner, assets);
@@ -34,7 +32,7 @@ library BorrowImpl {
     // Withdraw collateral from borrower's position
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage ownerPosition,
+        IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
         address owner,
         address receiver
@@ -55,7 +53,7 @@ library BorrowImpl {
     // Borrow assets from the market
     function internalBorrow(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage ownerPosition,
+        IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
         uint256 shares,
         address owner,
@@ -92,7 +90,7 @@ library BorrowImpl {
     }
 
     // Repay borrowed assets
-    function internalRepay(IDahlia.Market storage market, IDahlia.MarketUserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
+    function internalRepay(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
         internal
         returns (uint256, uint256)
     {

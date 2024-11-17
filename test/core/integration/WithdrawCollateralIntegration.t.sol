@@ -89,7 +89,7 @@ contract WithdrawCollateralIntegrationTest is Test {
         $.dahlia.withdrawCollateral($.marketId, amountCollateralExcess, $.alice, $.bob);
         vm.pauseGasMetering();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(userPos.collateral, pos.collateral - amountCollateralExcess, "collateral balance");
         assertEq($.collateralToken.balanceOf($.bob), amountCollateralExcess, "receiver balance");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance");
@@ -119,7 +119,7 @@ contract WithdrawCollateralIntegrationTest is Test {
         $.dahlia.withdrawCollateral($.marketId, amountCollateralExcess, $.alice, $.alice);
         vm.pauseGasMetering();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(userPos.collateral, pos.collateral - amountCollateralExcess, "collateral balance");
         assertEq($.collateralToken.balanceOf($.alice), amountCollateralExcess, "lender balance");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateralExcess, "Dahlia balance");

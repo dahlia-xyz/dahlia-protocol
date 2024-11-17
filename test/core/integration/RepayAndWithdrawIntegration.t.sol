@@ -86,7 +86,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         expectedBorrowShares -= expectedRepaidShares;
 
         IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(returnAssets, amountRepaid, "returned asset amount");
         assertEq(returnShares, expectedRepaidShares, "returned shares amount");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow shares");
@@ -122,7 +122,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         expectedBorrowShares -= sharesRepaid;
 
         IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(returnAssets, expectedAmountRepaid, "returned asset amount");
         assertEq(returnShares, sharesRepaid, "returned shares amount");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow shares");

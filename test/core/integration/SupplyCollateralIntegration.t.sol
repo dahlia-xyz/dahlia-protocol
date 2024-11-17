@@ -67,7 +67,7 @@ contract SupplyCollateralIntegrationTest is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq($.collateralToken.balanceOf($.alice), 0);
         assertEq($.collateralToken.balanceOf(address($.dahlia)), assets);
         assertEq(userPos.collateral, assets);
