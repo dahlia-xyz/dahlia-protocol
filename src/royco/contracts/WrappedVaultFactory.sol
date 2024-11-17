@@ -129,8 +129,8 @@ contract WrappedVaultFactory is Owned {
         emit WrappedVaultCreated(ERC4626(address(wrappedVault)), wrappedVault, owner, address(wrappedVault.asset()), initialFrontendFee, name, newSymbol);
     }
 
-    /// @dev Helper function to get the symbol for a new incentivized vault, ROY-0, ROY-1, etc.
+    /// @dev Helper function to get the symbol for a new incentivized vault, ROY-DAH-0, ROY-DAH-1, etc.
     function getNextSymbol() internal view returns (string memory) {
-        return string.concat("DROY-", LibString.toString(incentivizedVaults.length));
+        return string.concat("ROY-DAH-", LibString.toString(incentivizedVaults.length));
     }
 }
