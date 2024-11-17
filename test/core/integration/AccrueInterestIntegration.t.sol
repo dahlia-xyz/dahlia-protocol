@@ -9,7 +9,6 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { Events } from "src/core/helpers/Events.sol";
-
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -262,7 +261,6 @@ contract AccrueInterestIntegrationTest is Test {
         uint256 ltv = $.dahlia.getPositionLTV($.marketId, $.alice);
         console.log("ltv: ", ltv);
         console.log("usdc.decimals(): ", $.loanToken.decimals());
-        uint256 blocks = 100;
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         WrappedVault vault = WrappedVault(address(market.vault));
         vm.prank(vault.owner());
@@ -277,10 +275,14 @@ contract AccrueInterestIntegrationTest is Test {
         }
         vm.stopPrank();
         printMarketState("0", "carol and bob has equal position with 10% ltv");
-        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_130, "initial lend rate");
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 7_912_352, "initial lend rate");
         validateUserPos("0", 0, 0, 0, 0);
 
-        vm.forward(blocks);
+        vm.forward(1);
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_130, "rate after 1 block");
+
+        uint256 blocks = 100;
+        vm.forward(blocks - 1);
         validateUserPos("1 ", 8_500_000, 8_500_000, 8, 8);
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_130, "lend rate after 100 blocks");
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 8_470_815, "lend rate if deposit more assets");

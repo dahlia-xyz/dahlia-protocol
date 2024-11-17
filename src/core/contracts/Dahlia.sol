@@ -210,8 +210,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    function previewLendRateAfterDeposit(MarketId id, uint256 assets) external view returns (uint256) {
-        Market memory market = InterestImpl.getLastMarketState(markets[id].market, assets);
+    function previewLendRateAfterDeposit(MarketId id, uint256 lendAssets) external view returns (uint256) {
+        Market memory market = InterestImpl.getLastMarketState(markets[id].market, lendAssets);
         if (market.totalLendAssets == 0) {
             return 0;
         }
@@ -401,6 +401,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
+    // TODO: add lendAssets and borrowAssets to provide adjusted market state
     function getMarket(MarketId id) external view returns (Market memory) {
         return InterestImpl.getLastMarketState(markets[id].market, 0);
     }
@@ -416,18 +417,20 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         view
         returns (uint256 borrowAssets, uint256 maxBorrowAssets, uint256 collateralPrice)
     {
-        // TODO: use get latest market state
-        UserPosition memory position = markets[id].userPositions[userAddress];
-        Market memory market = markets[id].market;
+        MarketData storage marketData = markets[id];
+        Market memory market = InterestImpl.getLastMarketState(marketData.market, 0);
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
+        UserPosition memory position = marketData.userPositions[userAddress];
         (borrowAssets, maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, collateralPrice);
     }
 
     /// @inheritdoc IDahlia
+    // TODO: add borrowAssets to provide adjusted LTV to show what LTV will be with changed borrowAssets
     function getPositionLTV(MarketId id, address userAddress) external view returns (uint256 ltv) {
-        UserPosition memory position = markets[id].userPositions[userAddress];
-        Market memory market = markets[id].market;
+        MarketData storage marketData = markets[id];
+        Market memory market = InterestImpl.getLastMarketState(marketData.market, 0);
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
+        UserPosition memory position = marketData.userPositions[userAddress];
         return MarketMath.getLTV(market.totalBorrowAssets, market.totalBorrowShares, position, collateralPrice);
     }
 
