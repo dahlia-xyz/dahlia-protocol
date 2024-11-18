@@ -131,6 +131,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function deployMarket(MarketConfig memory marketConfig) external returns (MarketId id) {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
         require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
+        MarketMath.getCollateralPrice(marketConfig.oracle); // validate oracle
         _validateLiquidationBonusRate(marketConfig.liquidationBonusRate, marketConfig.lltv);
 
         id = MarketId.wrap(++marketSequence);
