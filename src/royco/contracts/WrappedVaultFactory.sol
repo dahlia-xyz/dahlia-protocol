@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-
 import { LibString } from "@solady/utils/LibString.sol";
 import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
@@ -10,7 +9,6 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 
-/// TODO update comments
 /// @title WrappedVaultFactory
 /// @author CopyPaste, Jack Corddry, Shivaansh Kapoor
 /// @dev A factory for deploying wrapped vaults, and managing protocol or other fees
@@ -22,12 +20,8 @@ contract WrappedVaultFactory is Owned {
         payable
         Owned(_owner)
     {
-        if (_protocolFee > MAX_PROTOCOL_FEE) {
-            revert ProtocolFeeTooHigh();
-        }
-        if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) {
-            revert ReferralFeeTooHigh();
-        }
+        if (_protocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
+        if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
 
         protocolFeeRecipient = _protocolFeeRecipient;
         protocolFee = _protocolFee;
@@ -40,8 +34,8 @@ contract WrappedVaultFactory is Owned {
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    uint256 public constant MAX_PROTOCOL_FEE = 0.3e18;
-    uint256 public constant MAX_MIN_REFERRAL_FEE = 0.3e18;
+    uint256 private constant MAX_PROTOCOL_FEE = 0.3e18;
+    uint256 private constant MAX_MIN_REFERRAL_FEE = 0.3e18;
 
     address public immutable pointsFactory;
 
@@ -80,20 +74,16 @@ contract WrappedVaultFactory is Owned {
                              OWNER CONTROLS
     //////////////////////////////////////////////////////////////*/
 
-    /// @param newProtocolFee The new protocol fee to set for a given vault
+    /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
     function updateProtocolFee(uint256 newProtocolFee) external payable onlyOwner {
-        if (newProtocolFee > MAX_PROTOCOL_FEE) {
-            revert ProtocolFeeTooHigh();
-        }
+        if (newProtocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
         protocolFee = newProtocolFee;
         emit ProtocolFeeUpdated(newProtocolFee);
     }
 
-    /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults
+    /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults, must be less than MAX_MIN_REFERRAL_FEE
     function updateMinimumReferralFee(uint256 newMinimumReferralFee) external payable onlyOwner {
-        if (newMinimumReferralFee > MAX_MIN_REFERRAL_FEE) {
-            revert ReferralFeeTooHigh();
-        }
+        if (newMinimumReferralFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
         minimumFrontendFee = newMinimumReferralFee;
         emit ReferralFeeUpdated(newMinimumReferralFee);
     }
@@ -108,24 +98,25 @@ contract WrappedVaultFactory is Owned {
                              VAULT CREATION
     //////////////////////////////////////////////////////////////*/
 
-    /// @param marketId The market id in dahlia
+    /// @param id Dahlia market id
     /// @param loanToken The address of the loan token
     /// @param owner The address of the wrapped vault owner
-    /// @param name The name of the dahlia market
+    /// @param name The name of the wrapped vault
     /// @param initialFrontendFee The initial frontend fee for the wrapped vault ()
-    function wrapVault(IDahlia.MarketId marketId, address loanToken, address owner, string calldata name, uint256 initialFrontendFee)
+    function wrapVault(IDahlia.MarketId id, address loanToken, address owner, string calldata name, uint256 initialFrontendFee)
         external
         payable
         returns (WrappedVault wrappedVault)
     {
         string memory newSymbol = getNextSymbol();
-        bytes32 salt = keccak256(abi.encodePacked(marketId, owner, name, initialFrontendFee));
+        bytes32 salt = keccak256(abi.encodePacked(id, owner, name, initialFrontendFee));
         uint8 decimals = IERC20Metadata(loanToken).decimals() + SharesMathLib.VIRTUAL_SHARES_DECIMALS;
-        wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, marketId, loanToken, initialFrontendFee, pointsFactory);
+        wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, id, loanToken, initialFrontendFee, pointsFactory);
 
         incentivizedVaults.push(address(wrappedVault));
         isVault[address(wrappedVault)] = true;
 
+        // Emit wrapped vault address as both `underlyingVaultAddress` and `incentivizedVaultAddress`
         emit WrappedVaultCreated(ERC4626(address(wrappedVault)), wrappedVault, owner, address(wrappedVault.asset()), initialFrontendFee, name, newSymbol);
     }
 

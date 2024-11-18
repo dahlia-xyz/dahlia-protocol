@@ -38,6 +38,8 @@ contract WrappedVaultTest is Test {
 
     uint256 private constant MAX_REWARDS = 20; // copied from WrappedVault
     uint256 private constant MIN_CAMPAIGN_DURATION = 1 weeks; // copied from WrappedVault
+    uint256 private constant MAX_PROTOCOL_FEE = 0.3e18; // copied from WrappedVaultFactory
+    uint256 private constant MAX_MIN_REFERRAL_FEE = 0.3e18; // copied from WrappedVault WrappedVaultFactory
     uint256 constant DEFAULT_REFERRAL_FEE = 0.025e18;
     uint256 constant DEFAULT_FRONTEND_FEE = 0.025e18;
     uint256 constant DEFAULT_PROTOCOL_FEE = 0.05e18;
@@ -82,7 +84,7 @@ contract WrappedVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(testFactory.owner());
-        uint256 maxProtocolFee = testFactory.MAX_PROTOCOL_FEE();
+        uint256 maxProtocolFee = MAX_PROTOCOL_FEE;
         vm.expectRevert(WrappedVaultFactory.ProtocolFeeTooHigh.selector);
         testFactory.updateProtocolFee(maxProtocolFee + 1);
 
@@ -97,7 +99,7 @@ contract WrappedVaultTest is Test {
         vm.stopPrank();
 
         vm.startPrank(testFactory.owner());
-        uint256 maxMinFee = testFactory.MAX_MIN_REFERRAL_FEE();
+        uint256 maxMinFee = MAX_MIN_REFERRAL_FEE;
         vm.expectRevert(WrappedVaultFactory.ReferralFeeTooHigh.selector);
         testFactory.updateMinimumReferralFee(maxMinFee + 1);
 
