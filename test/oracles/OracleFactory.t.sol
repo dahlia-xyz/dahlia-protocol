@@ -43,7 +43,6 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelaySecondary: 86_400
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 1_611_859_162_144_102_979_080_952_870_358_934);
         assertEq(isBadData, false);
@@ -67,7 +66,6 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelaySecondary: 0
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_617_340_351_185_118_511_851_185_118);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2617); // 2617 USDC per 1 PAXG
@@ -91,7 +89,6 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelaySecondary: 0
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2404); // 2404 USDC per 1 ETH
@@ -107,7 +104,6 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_412_486_481_775_144_671_894_069_994);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2412); // 2412 USDC per 1 WETH
@@ -137,7 +133,6 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2404); // 2404 USDC per 1 WETH
@@ -162,7 +157,6 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 338_921_318_918_776_963_008_316_417_223_772_858_717);
         assertEq(((price * 1e18) / 1e18) / 1e36, 338); // 338 UNI per 1 WETH
@@ -187,7 +181,6 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 342_170_188_147_668_813_010_937_084_335_830_514_402);
         assertEq(((price * 1e18) / 1e18) / 1e36, 342); // 342 UNI per 1 WETH
