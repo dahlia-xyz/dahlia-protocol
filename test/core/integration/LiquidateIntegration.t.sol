@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "forge-std/Test.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -155,7 +154,7 @@ contract LiquidateIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaLiquidate(
+        emit IDahlia.DahliaLiquidate(
             $.marketId, $.bob, $.alice, repaidAssets, repaidShares, _seizedCollateral, _bonusCollateral, _badDebtAssets, _badDebtShares, 0, 0
         );
         vm.resumeGasMetering();
@@ -211,7 +210,7 @@ contract LiquidateIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaLiquidate(
+        emit IDahlia.DahliaLiquidate(
             $.marketId,
             $.bob,
             $.alice,

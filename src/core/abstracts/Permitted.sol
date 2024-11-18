@@ -4,8 +4,8 @@ pragma solidity ^0.8.27;
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 import { ECDSA } from "@solady/utils/ECDSA.sol";
 import { EIP712 } from "@solady/utils/EIP712.sol";
-import { Events } from "src/core//helpers/Events.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IPermitted } from "src/core/interfaces/IPermitted.sol";
 
 /// @title Permitted
@@ -36,7 +36,7 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
         }
         isPermitted[msg.sender][permitted] = newIsPermitted;
 
-        emit Events.updatePermission(msg.sender, msg.sender, permitted, newIsPermitted);
+        emit IDahlia.UpdatePermission(msg.sender, msg.sender, permitted, newIsPermitted);
     }
 
     /// @inheritdoc IPermitted
@@ -49,7 +49,7 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
 
         isPermitted[data.signer][data.permitted] = data.isPermitted;
 
-        emit Events.updatePermission(msg.sender, recoveredSigner, data.permitted, data.isPermitted);
+        emit IDahlia.UpdatePermission(msg.sender, recoveredSigner, data.permitted, data.isPermitted);
     }
 
     /// @notice Checks if the sender is allowed to manage the positions of `permitted`.

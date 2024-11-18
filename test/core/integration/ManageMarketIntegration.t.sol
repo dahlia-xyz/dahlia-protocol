@@ -5,7 +5,6 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -53,7 +52,7 @@ contract ManageMarketIntegrationTest is Test {
 
         // check success
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetLLTVRange(minLltvFuzz, maxLltvFuzz);
+        emit IDahlia.SetLLTVRange(minLltvFuzz, maxLltvFuzz);
         $.dahlia.setLltvRange(IDahlia.RateRange(minLltvFuzz, maxLltvFuzz));
 
         (uint24 newMin, uint24 newMax) = $.dahlia.lltvRange();
@@ -87,7 +86,7 @@ contract ManageMarketIntegrationTest is Test {
 
         // check success
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetLiquidationBonusRateRange(minFuzz, maxFuzz);
+        emit IDahlia.SetLiquidationBonusRateRange(minFuzz, maxFuzz);
         $.dahlia.setLiquidationBonusRateRange(IDahlia.RateRange(minFuzz, maxFuzz));
 
         (uint24 newMin, uint24 newMax) = $.dahlia.liquidationBonusRateRange();
@@ -120,7 +119,7 @@ contract ManageMarketIntegrationTest is Test {
 
         vm.prank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetProtocolFeeRate($.marketId, feeFuzz);
+        emit IDahlia.SetProtocolFeeRate($.marketId, feeFuzz);
         $.dahlia.setProtocolFeeRate($.marketId, feeFuzz);
 
         assertEq($.dahlia.getMarket($.marketId).protocolFeeRate, feeFuzz);
@@ -146,7 +145,7 @@ contract ManageMarketIntegrationTest is Test {
 
         // success
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetProtocolFeeRecipient(protocolFuzz);
+        emit IDahlia.SetProtocolFeeRecipient(protocolFuzz);
         $.dahlia.setProtocolFeeRecipient(protocolFuzz);
         assertEq($.dahlia.protocolFeeRecipient(), protocolFuzz);
 
@@ -168,7 +167,7 @@ contract ManageMarketIntegrationTest is Test {
 
         // success
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetReserveFeeRecipient(recipientFuzz);
+        emit IDahlia.SetReserveFeeRecipient(recipientFuzz);
         $.dahlia.setReserveFeeRecipient(recipientFuzz);
         assertEq($.dahlia.reserveFeeRecipient(), recipientFuzz);
 
@@ -194,7 +193,7 @@ contract ManageMarketIntegrationTest is Test {
         // success
         vm.prank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetReserveFeeRate($.marketId, feeFuzz);
+        emit IDahlia.SetReserveFeeRate($.marketId, feeFuzz);
         $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
 
         assertEq($.dahlia.getMarket($.marketId).reserveFeeRate, feeFuzz);
@@ -217,7 +216,7 @@ contract ManageMarketIntegrationTest is Test {
         // success
         vm.prank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SetFlashLoanFeeRate(feeFuzz);
+        emit IDahlia.SetFlashLoanFeeRate(feeFuzz);
         $.dahlia.setFlashLoanFeeRate(feeFuzz);
 
         assertEq($.dahlia.flashLoanFeeRate(), feeFuzz);

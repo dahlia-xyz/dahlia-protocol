@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -67,7 +66,7 @@ contract RepayIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaRepay($.marketId, $.bob, $.alice, amountRepaid, expectedRepaidShares);
+        emit IDahlia.DahliaRepay($.marketId, $.bob, $.alice, amountRepaid, expectedRepaidShares);
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) = $.dahlia.repay($.marketId, amountRepaid, 0, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
@@ -98,7 +97,7 @@ contract RepayIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaRepay($.marketId, $.bob, $.alice, expectedAmountRepaid, sharesRepaid);
+        emit IDahlia.DahliaRepay($.marketId, $.bob, $.alice, expectedAmountRepaid, sharesRepaid);
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) = $.dahlia.repay($.marketId, 0, sharesRepaid, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();

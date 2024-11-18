@@ -5,7 +5,6 @@ import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -43,7 +42,7 @@ contract MarketStatusIntegrationTest is Test {
             address permitted = $.permitted[i];
             vm.prank(permitted);
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit Events.LiquidationBonusRateChanged(liquidationBonusRate);
+            emit IDahlia.LiquidationBonusRateChanged(liquidationBonusRate);
             vm.resumeGasMetering();
             $.dahlia.updateLiquidationBonusRate($.marketId, liquidationBonusRate);
             vm.pauseGasMetering();

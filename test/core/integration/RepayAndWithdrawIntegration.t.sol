@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -74,9 +73,9 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.startPrank($.alice);
         $.loanToken.approve(address($.dahlia), amountRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaRepay($.marketId, $.alice, $.alice, amountRepaid, expectedRepaidShares);
+        emit IDahlia.DahliaRepay($.marketId, $.alice, $.alice, amountRepaid, expectedRepaidShares);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
+        emit IDahlia.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
 
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) = $.dahlia.repayAndWithdraw($.marketId, amountCollateral, amountRepaid, 0, $.alice, $.alice);
@@ -111,9 +110,9 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.startPrank($.alice);
         $.loanToken.approve(address($.dahlia), expectedAmountRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaRepay($.marketId, $.alice, $.alice, expectedAmountRepaid, sharesRepaid);
+        emit IDahlia.DahliaRepay($.marketId, $.alice, $.alice, expectedAmountRepaid, sharesRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
+        emit IDahlia.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) = $.dahlia.repayAndWithdraw($.marketId, amountCollateral, 0, sharesRepaid, $.alice, $.alice);
         vm.pauseGasMetering();

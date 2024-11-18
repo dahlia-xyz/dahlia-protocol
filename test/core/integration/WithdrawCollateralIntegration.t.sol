@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "forge-std/Test.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -84,7 +83,7 @@ contract WithdrawCollateralIntegrationTest is Test {
 
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.WithdrawCollateral($.marketId, $.alice, $.alice, $.bob, amountCollateralExcess);
+        emit IDahlia.WithdrawCollateral($.marketId, $.alice, $.alice, $.bob, amountCollateralExcess);
         vm.resumeGasMetering();
         $.dahlia.withdrawCollateral($.marketId, amountCollateralExcess, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -114,7 +113,7 @@ contract WithdrawCollateralIntegrationTest is Test {
         // Bob makes withdraw on behalf Alice
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.WithdrawCollateral($.marketId, $.bob, $.alice, $.alice, amountCollateralExcess);
+        emit IDahlia.WithdrawCollateral($.marketId, $.bob, $.alice, $.alice, amountCollateralExcess);
         vm.resumeGasMetering();
         $.dahlia.withdrawCollateral($.marketId, amountCollateralExcess, $.alice, $.alice);
         vm.pauseGasMetering();

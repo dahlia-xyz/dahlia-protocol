@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -74,7 +73,7 @@ library LiquidationImpl {
         uint256 repaidAssets = borrowAssets - badDebtAssets;
         uint256 repaidShares = borrowShares - badDebtShares;
 
-        emit Events.DahliaLiquidate(
+        emit IDahlia.DahliaLiquidate(
             market.id,
             msg.sender,
             borrower,

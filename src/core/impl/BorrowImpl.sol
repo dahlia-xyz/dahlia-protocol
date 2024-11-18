@@ -6,7 +6,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -26,7 +25,7 @@ library BorrowImpl {
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
         ownerPosition.collateral += assets.toUint128();
 
-        emit Events.SupplyCollateral(market.id, msg.sender, owner, assets);
+        emit IDahlia.SupplyCollateral(market.id, msg.sender, owner, assets);
     }
 
     // Withdraw collateral from borrower's position
@@ -47,7 +46,7 @@ library BorrowImpl {
             }
         }
 
-        emit Events.WithdrawCollateral(market.id, msg.sender, owner, receiver, assets);
+        emit IDahlia.WithdrawCollateral(market.id, msg.sender, owner, receiver, assets);
     }
 
     // Borrow assets from the market
@@ -85,7 +84,7 @@ library BorrowImpl {
             revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
         }
 
-        emit Events.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
+        emit IDahlia.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
         return (assets, shares);
     }
 
@@ -106,7 +105,7 @@ library BorrowImpl {
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 
-        emit Events.DahliaRepay(market.id, msg.sender, owner, assets, shares);
+        emit IDahlia.DahliaRepay(market.id, msg.sender, owner, assets, shares);
         return (assets, shares);
     }
 }

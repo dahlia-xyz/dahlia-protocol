@@ -6,7 +6,6 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -63,7 +62,7 @@ contract LendIntegrationTest is Test {
         $.loanToken.approve(address(market.vault), amount);
 
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Lend($.marketId, address(market.vault), $.bob, amount, expectedLendShares);
+        emit IDahlia.Lend($.marketId, address(market.vault), $.bob, amount, expectedLendShares);
         vm.resumeGasMetering();
         (uint256 _shares) = market.vault.deposit(amount, $.bob);
         vm.pauseGasMetering();
