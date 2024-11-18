@@ -153,8 +153,9 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         end = _rewardToInterval[reward].end;
         rate = _rewardToInterval[reward].rate;
         if (reward == address(DEPOSIT_ASSET)) {
-            if (dahlia.getMarket(marketId).totalBorrowAssets > 0) {
-                end = uint32(block.timestamp + MIN_CAMPAIGN_DURATION);
+            uint256 minDuration = block.timestamp + MIN_CAMPAIGN_DURATION;
+            if (end < minDuration && dahlia.getMarket(marketId).totalBorrowAssets > 0) {
+                end = uint32(minDuration);
             }
         }
     }

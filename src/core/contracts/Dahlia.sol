@@ -401,7 +401,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    // TODO: add lendAssets and borrowAssets to provide adjusted market state
     function getMarket(MarketId id) external view returns (Market memory) {
         return InterestImpl.getLastMarketState(markets[id].market, 0);
     }
@@ -425,7 +424,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    // TODO: add borrowAssets to provide adjusted LTV to show what LTV will be with changed borrowAssets
     function getPositionLTV(MarketId id, address userAddress) external view returns (uint256 ltv) {
         MarketData storage marketData = markets[id];
         Market memory market = InterestImpl.getLastMarketState(marketData.market, 0);
