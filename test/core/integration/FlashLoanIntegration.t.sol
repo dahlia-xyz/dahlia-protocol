@@ -122,12 +122,12 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
 
         vm.resumeGasMetering();
         $.dahlia.supplyCollateral($.marketId, pos.collateral, address(this), abi.encode(this.test_int_flashActions.selector, abi.encode(pos.borrowed)));
-        IDahlia.MarketUserPosition memory userPos1 = $.dahlia.getMarketUserPosition($.marketId, address(this));
+        IDahlia.UserPosition memory userPos1 = $.dahlia.getPosition($.marketId, address(this));
 
         assertGt(userPos1.borrowShares, 0, "no borrow");
 
         $.dahlia.repay($.marketId, pos.borrowed, 0, address(this), abi.encode(this.test_int_flashActions.selector, abi.encode(pos.collateral)));
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, address(this));
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, address(this));
         assertEq(userPos.collateral, 0, "no withdraw collateral");
     }
 }

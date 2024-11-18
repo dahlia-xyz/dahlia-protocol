@@ -30,8 +30,8 @@ interface IDahlia {
         address loanToken; // 20 bytes
         // --- 32 bytes
         address collateralToken; // 20 bytes
-        uint48 updatedAt; // 6 bytes //
-            // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers#understanding-the-optimization
+        // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers
+        uint48 updatedAt; // 6 bytes
         uint24 protocolFeeRate; // 3 bytes // taken from interest
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
@@ -50,7 +50,7 @@ interface IDahlia {
         uint256 totalBorrowShares; // 32 bytes
     }
 
-    struct MarketUserPosition {
+    struct UserPosition {
         uint128 lendShares;
         uint128 lendAssets; // store user initial lend assets
         uint128 borrowShares;
@@ -59,18 +59,18 @@ interface IDahlia {
 
     struct MarketData {
         Market market;
-        mapping(address => MarketUserPosition) userPositions;
+        mapping(address => UserPosition) userPositions;
     }
 
-    /// @notice Get user position for a market id and address.
+    /// @notice Get user position for a market id and address with accrued interest.
     /// @param id Market id.
     /// @param userAddress User address.
-    function getMarketUserPosition(MarketId id, address userAddress) external view returns (MarketUserPosition memory position);
+    function getPosition(MarketId id, address userAddress) external view returns (UserPosition memory position);
 
     /// @notice Get max borrowable assets for a user in a market.
     /// @param id Market id.
     /// @param userAddress User address.
-    function marketUserMaxBorrows(MarketId id, address userAddress)
+    function getMaxBorrowableAmount(MarketId id, address userAddress)
         external
         view
         returns (uint256 maxBorrowAssets, uint256 borrowAssets, uint256 collateralPrice);
@@ -79,6 +79,13 @@ interface IDahlia {
     /// @param id Market id.
     /// @param userAddress User address.
     function getPositionLTV(MarketId id, address userAddress) external view returns (uint256);
+
+    /// @notice Get user's earned interest for a market.
+    /// @param id Market id.
+    /// @param userAddress User address.
+    /// @return assets number of assets earned as interest
+    /// @return shares number of shares earned as interest
+    function getPositionInterest(MarketId id, address userAddress) external view returns (uint256 assets, uint256 shares);
 
     /// @notice Get market parameters.
     /// @param id Market id.
@@ -161,34 +168,30 @@ interface IDahlia {
     /// @param newFee New fee, precision: Constants.FEE_PRECISION.
     function setReserveFeeRate(MarketId id, uint32 newFee) external;
 
-    /// TODO add permissions
     /// @notice Lend `assets` on behalf of a user, with optional callback.
     /// @dev Should be called via wrapped vault.
     /// @param id Market id.
     /// @param assets Amount of assets to lend.
-    /// @param onBehalfOf Owner of the increased lend position.
+    /// @param owner Owner of the increased lend position.
     /// @return sharesSupplied Amount of shares minted.
-    function lend(MarketId id, uint256 assets, address onBehalfOf) external returns (uint256 sharesSupplied);
+    function lend(MarketId id, uint256 assets, address owner) external returns (uint256 sharesSupplied);
 
-    /// TODO add permissions
     /// @notice Withdraw `assets` by `shares` on behalf of a user, sending to a receiver.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
     /// @param shares Amount of shares to burn.
-    /// @param onBehalfOf Owner of the lend position.
     /// @param receiver Address receiving the assets.
+    /// @param owner Owner of the lend position.
     /// @return assetsWithdrawn Amount of assets withdrawn.
-    function withdraw(MarketId id, uint256 shares, address onBehalfOf, address receiver) external payable returns (uint256 assetsWithdrawn);
+    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable returns (uint256 assetsWithdrawn);
 
-    /// TODO add permissions
     /// @notice Claim accrued interest for the position.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
-    /// @param onBehalfOf Owner of the lend position.
     /// @param receiver Address receiving the assets.
-    function claimInterest(MarketId id, address onBehalfOf, address receiver) external payable returns (uint256 assets);
+    /// @param owner Owner of the lend position.
+    function claimInterest(MarketId id, address receiver, address owner) external payable returns (uint256 assets);
 
-    /// TODO add permissions
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
@@ -201,11 +204,11 @@ interface IDahlia {
     /// @param id Market id.
     /// @param assets Amount of assets to borrow.
     /// @param shares Amount of shares to mint.
-    /// @param onBehalfOf Address owning the increased borrow position.
+    /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the borrowed assets.
     /// @return assetsBorrowed Amount of assets borrowed.
     /// @return sharesBorrowed Amount of shares minted.
-    function borrow(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, address receiver)
+    function borrow(MarketId id, uint256 assets, uint256 shares, address owner, address receiver)
         external
         returns (uint256 assetsBorrowed, uint256 sharesBorrowed);
 
@@ -214,11 +217,11 @@ interface IDahlia {
     /// @param id Market id.
     /// @param collateralAssets Amount of assets for collateral.
     /// @param borrowAssets Amount of assets to borrow.
-    /// @param onBehalfOf Address owning the increased borrow position.
+    /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the borrowed assets.
     /// @return borrowedAssets Amount of assets borrowed.
     /// @return borrowedShares Amount of shares minted.
-    function supplyAndBorrow(MarketId id, uint256 collateralAssets, uint256 borrowAssets, address onBehalfOf, address receiver)
+    function supplyAndBorrow(MarketId id, uint256 collateralAssets, uint256 borrowAssets, address owner, address receiver)
         external
         returns (uint256 borrowedAssets, uint256 borrowedShares);
 
@@ -228,11 +231,11 @@ interface IDahlia {
     /// @param collateralAssets Amount of assets for collateral.
     /// @param repayAssets Amount of borrow assets to repay.
     /// @param repayShares Amount of borrow shares to burn.
-    /// @param onBehalfOf Owner of the debt position.
+    /// @param owner Owner of the debt position.
     /// @param receiver Address receiving the withdrawn collateral.
     /// @return repaidAssets Amount of assets repaid.
     /// @return repaidShares Amount of shares burned.
-    function repayAndWithdraw(MarketId id, uint256 collateralAssets, uint256 repayAssets, uint256 repayShares, address onBehalfOf, address receiver)
+    function repayAndWithdraw(MarketId id, uint256 collateralAssets, uint256 repayAssets, uint256 repayShares, address owner, address receiver)
         external
         returns (uint256 repaidAssets, uint256 repaidShares);
 
@@ -241,15 +244,14 @@ interface IDahlia {
     /// @param id Market id.
     /// @param assets Amount of assets to repay.
     /// @param shares Amount of shares to burn.
-    /// @param onBehalfOf Owner of the debt position.
+    /// @param owner Owner of the debt position.
     /// @param callbackData Data for `onDahliaRepay` callback. Empty if not needed.
     /// @return assetsRepaid Amount of assets repaid.
     /// @return sharesRepaid Amount of shares burned.
-    function repay(MarketId id, uint256 assets, uint256 shares, address onBehalfOf, bytes calldata callbackData)
+    function repay(MarketId id, uint256 assets, uint256 shares, address owner, bytes calldata callbackData)
         external
         returns (uint256 assetsRepaid, uint256 sharesRepaid);
 
-    /// TODO review comment
     /// @notice Liquidate a debt position by repaying shares or seizing collateral, with optional callback.
     /// @param id Market id.
     /// @param borrower Borrower's address.
@@ -264,17 +266,17 @@ interface IDahlia {
     /// @notice Supplies collateral on behalf of a user, with an optional callback.
     /// @param id of the market.
     /// @param assets The amount of collateral to supply.
-    /// @param onBehalfOf The address that will own the increased collateral position.
+    /// @param owner The address that will own the increased collateral position.
     /// @param callbackData Arbitrary data to pass to the `onDahliaSupplyCollateral` callback.
     ///        Pass empty data if not needed.
-    function supplyCollateral(MarketId id, uint256 assets, address onBehalfOf, bytes calldata callbackData) external;
+    function supplyCollateral(MarketId id, uint256 assets, address owner, bytes calldata callbackData) external;
 
     /// @notice Withdraw collateral on behalf of a user, sending to a receiver.
     /// @param id Market id.
     /// @param assets Amount of collateral to withdraw.
-    /// @param onBehalfOf Owner of the debt position.
+    /// @param owner Owner of the debt position.
     /// @param receiver Address receiving the collateral assets.
-    function withdrawCollateral(MarketId id, uint256 assets, address onBehalfOf, address receiver) external;
+    function withdrawCollateral(MarketId id, uint256 assets, address owner, address receiver) external;
 
     /// @notice Execute a flash loan.
     /// @param token Borrowed token address.

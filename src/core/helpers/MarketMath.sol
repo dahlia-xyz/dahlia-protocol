@@ -106,7 +106,7 @@ library MarketMath {
     }
 
     /// @dev Calculates the maximum amount of assets that can be borrowed based on collateral and LLTV
-    function calcMaxBorrowAssets(IDahlia.Market memory market, IDahlia.MarketUserPosition memory position, uint256 collateralPrice)
+    function calcMaxBorrowAssets(IDahlia.Market memory market, IDahlia.UserPosition memory position, uint256 collateralPrice)
         internal
         view
         returns (uint256 borrowedAssets, uint256 maxBorrowAssets)
@@ -120,7 +120,7 @@ library MarketMath {
     }
 
     /// @dev Calculates the current Loan-to-Value (LTV) of a borrow position
-    function getLTV(uint256 totalBorrowAssets, uint256 totalBorrowShares, IDahlia.MarketUserPosition memory position, uint256 collateralPrice)
+    function getLTV(uint256 totalBorrowAssets, uint256 totalBorrowShares, IDahlia.UserPosition memory position, uint256 collateralPrice)
         internal
         pure
         returns (uint256)

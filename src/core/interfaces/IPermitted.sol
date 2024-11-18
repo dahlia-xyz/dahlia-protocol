@@ -6,16 +6,16 @@ pragma solidity ^0.8.27;
 interface IPermitted {
     struct Data {
         address signer;
-        address onBehalfOf;
+        address permitted;
         bool isPermitted;
         uint256 nonce;
         uint256 deadline;
     }
 
     /// @notice Set or revoke permission for an address
-    /// @param onBehalfOf The address to grant or revoke permission
+    /// @param permitted The address to grant or revoke permission
     /// @param newIsPermitted `True` to allow, `false` to disallow
-    function updatePermission(address onBehalfOf, bool newIsPermitted) external;
+    function updatePermission(address permitted, bool newIsPermitted) external;
 
     /// @notice Set or revoke permission using an EIP-712 signature
     /// @dev Fails if the signature is reused or invalid

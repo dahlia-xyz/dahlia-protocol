@@ -13,7 +13,7 @@ import { IPermitted } from "src/core/interfaces/IPermitted.sol";
 abstract contract Permitted is IPermitted, EIP712, Nonces {
     mapping(address => mapping(address => bool)) public isPermitted;
 
-    bytes32 private constant HASH = keccak256("Permit(address signer,address onBehalfOf,bool isPermitted,uint256 nonce,uint256 deadline)");
+    bytes32 private constant HASH = keccak256("Permit(address signer,address permitted,bool isPermitted,uint256 nonce,uint256 deadline)");
 
     function hashTypedData(Data memory data) public view returns (bytes32) {
         return _hashTypedData(keccak256(abi.encode(HASH, data)));
@@ -23,20 +23,20 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
         return ("Dahlia", "1");
     }
 
-    modifier isSenderPermitted(address onBehalfOf) {
+    modifier isSenderPermitted(address permitted) {
         address sender = msg.sender;
-        require(_isSenderPermitted(onBehalfOf), Errors.NotPermitted(sender));
+        require(_isSenderPermitted(permitted), Errors.NotPermitted(sender));
         _;
     }
 
     /// @inheritdoc IPermitted
-    function updatePermission(address onBehalfOf, bool newIsPermitted) external {
-        if (newIsPermitted == isPermitted[msg.sender][onBehalfOf]) {
+    function updatePermission(address permitted, bool newIsPermitted) external {
+        if (newIsPermitted == isPermitted[msg.sender][permitted]) {
             revert Errors.AlreadySet();
         }
-        isPermitted[msg.sender][onBehalfOf] = newIsPermitted;
+        isPermitted[msg.sender][permitted] = newIsPermitted;
 
-        emit Events.updatePermission(msg.sender, msg.sender, onBehalfOf, newIsPermitted);
+        emit Events.updatePermission(msg.sender, msg.sender, permitted, newIsPermitted);
     }
 
     /// @inheritdoc IPermitted
@@ -47,15 +47,16 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
         require(data.signer == recoveredSigner, Errors.InvalidSignature());
         _useCheckedNonce(recoveredSigner, data.nonce);
 
-        isPermitted[data.signer][data.onBehalfOf] = data.isPermitted;
+        isPermitted[data.signer][data.permitted] = data.isPermitted;
 
-        emit Events.updatePermission(msg.sender, recoveredSigner, data.onBehalfOf, data.isPermitted);
+        emit Events.updatePermission(msg.sender, recoveredSigner, data.permitted, data.isPermitted);
     }
 
-    /// @notice Checks if the sender is allowed to manage the positions of `onBehalfOf`.
-    /// @param onBehalfOf The address to check permission for.
+    /// @notice Checks if the sender is allowed to manage the positions of `permitted`.
+    /// @param permitted The address to check permission for.
     /// @return True if permitted, false otherwise.
-    function _isSenderPermitted(address onBehalfOf) internal view returns (bool) {
-        return msg.sender == onBehalfOf || isPermitted[onBehalfOf][msg.sender];
+    function _isSenderPermitted(address permitted) internal view returns (bool) {
+        address sender = msg.sender;
+        return sender == permitted || isPermitted[permitted][sender];
     }
 }

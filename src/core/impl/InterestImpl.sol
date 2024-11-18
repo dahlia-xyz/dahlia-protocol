@@ -21,8 +21,8 @@ library InterestImpl {
     /// @dev Accrues interest for the specified market.
     function executeMarketAccrueInterest(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage protocolFeeRecipientPosition,
-        IDahlia.MarketUserPosition storage reserveFeeRecipientPosition
+        IDahlia.UserPosition storage protocolFeeRecipientPosition,
+        IDahlia.UserPosition storage reserveFeeRecipientPosition
     ) internal {
         if (address(market.irm) == address(0)) {
             return;
@@ -78,17 +78,15 @@ library InterestImpl {
 
     /// @notice Gets the expected market balances after interest accrual.
     /// @return Updated market balances
-    function getLastMarketState(IDahlia.Market memory market, uint256 assets) internal view returns (IDahlia.Market memory) {
+    function getLastMarketState(IDahlia.Market memory market, uint256 lendAssets) internal view returns (IDahlia.Market memory) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
-
-        // Skip if no time has passed, no borrow assets, or no IRM.
-        if (totalBorrowAssets != 0 && address(market.irm) != address(0)) {
-            uint256 totalLendAssets = market.totalLendAssets + assets;
+        uint256 deltaTime = block.timestamp - market.updatedAt;
+        if ((deltaTime != 0 || lendAssets != 0) && totalBorrowAssets != 0 && address(market.irm) != address(0)) {
+            uint256 totalLendAssets = market.totalLendAssets + lendAssets;
             uint256 totalLendShares = market.totalLendShares;
             uint256 fullUtilizationRate = market.fullUtilizationRate;
             uint256 reserveFeeRate = market.reserveFeeRate;
             uint256 protocolFeeRate = market.protocolFeeRate;
-            uint256 deltaTime = block.timestamp - market.updatedAt;
             (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
                 IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, fullUtilizationRate);
 

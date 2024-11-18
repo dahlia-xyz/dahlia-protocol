@@ -109,7 +109,7 @@ contract PermittedTest is Test {
 
         permitted.updatePermissionWithSig(data, sig);
 
-        assertEq(permitted.isPermitted(data.signer, data.onBehalfOf), true);
+        assertEq(permitted.isPermitted(data.signer, data.permitted), true);
         assertEq(permitted.nonces(data.signer), 1);
     }
 

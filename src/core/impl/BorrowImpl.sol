@@ -23,42 +23,40 @@ library BorrowImpl {
     using MarketMath for uint256;
 
     // Add collateral to a borrower's position
-    function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.MarketUserPosition storage onBehalfOfPosition, uint256 assets, address onBehalfOf)
-        internal
-    {
-        onBehalfOfPosition.collateral += assets.toUint128();
+    function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
+        ownerPosition.collateral += assets.toUint128();
 
-        emit Events.SupplyCollateral(market.id, msg.sender, onBehalfOf, assets);
+        emit Events.SupplyCollateral(market.id, msg.sender, owner, assets);
     }
 
     // Withdraw collateral from borrower's position
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage position,
+        IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
-        address onBehalfOf,
+        address owner,
         address receiver
     ) internal {
-        position.collateral -= assets.toUint128(); // Decrease collateral
+        ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
 
         // Check if there's enough collateral for withdrawal
-        if (position.borrowShares > 0) {
-            (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, 0);
+        if (ownerPosition.borrowShares > 0) {
+            (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, ownerPosition, 0);
             if (borrowedAssets > maxBorrowAssets) {
                 revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
             }
         }
 
-        emit Events.WithdrawCollateral(market.id, msg.sender, onBehalfOf, receiver, assets);
+        emit Events.WithdrawCollateral(market.id, msg.sender, owner, receiver, assets);
     }
 
     // Borrow assets from the market
     function internalBorrow(
         IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage onBehalfOfPosition,
+        IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
         uint256 shares,
-        address onBehalfOf,
+        address owner,
         address receiver,
         uint256 collateralPrice // Can be 0, will be filled by function if so
     ) internal returns (uint256, uint256) {
@@ -72,7 +70,7 @@ library BorrowImpl {
         }
 
         // Update borrow values in totals and position
-        onBehalfOfPosition.borrowShares += shares.toUint128();
+        ownerPosition.borrowShares += shares.toUint128();
         market.totalBorrowAssets += assets;
         market.totalBorrowShares += shares;
 
@@ -82,17 +80,17 @@ library BorrowImpl {
         }
 
         // Check if user has enough collateral
-        (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, onBehalfOfPosition, collateralPrice);
+        (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, ownerPosition, collateralPrice);
         if (borrowedAssets > maxBorrowAssets) {
             revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
         }
 
-        emit Events.DahliaBorrow(market.id, msg.sender, onBehalfOf, receiver, assets, shares);
+        emit Events.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
         return (assets, shares);
     }
 
     // Repay borrowed assets
-    function internalRepay(IDahlia.Market storage market, IDahlia.MarketUserPosition storage position, uint256 assets, uint256 shares, address onBehalfOf)
+    function internalRepay(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
         internal
         returns (uint256, uint256)
     {
@@ -104,11 +102,11 @@ library BorrowImpl {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
         }
         // Update borrow values in totals and position
-        position.borrowShares -= shares.toUint128();
+        ownerPosition.borrowShares -= shares.toUint128();
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 
-        emit Events.DahliaRepay(market.id, msg.sender, onBehalfOf, assets, shares);
+        emit Events.DahliaRepay(market.id, msg.sender, owner, assets, shares);
         return (assets, shares);
     }
 }

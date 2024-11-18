@@ -69,7 +69,7 @@ contract LendIntegrationTest is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.bob);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.bob);
 
         assertEq(_shares, expectedLendShares, "returned shares amount");
         assertEq(userPos.lendShares, expectedLendShares, "supply shares");

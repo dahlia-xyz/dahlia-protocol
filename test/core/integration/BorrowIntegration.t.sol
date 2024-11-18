@@ -91,7 +91,7 @@ contract BorrowIntegrationTest is Test {
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
 
-        (, uint256 maxBorrowAssets, uint256 collateralPrice) = $.dahlia.marketUserMaxBorrows($.marketId, $.alice);
+        (, uint256 maxBorrowAssets, uint256 collateralPrice) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
         assertEq(collateralPrice, pos.price);
 
         vm.prank($.alice);
@@ -166,7 +166,7 @@ contract BorrowIntegrationTest is Test {
         internal
         view
     {
-        IDahlia.MarketUserPosition memory userPos = $.dahlia.getMarketUserPosition($.marketId, $.alice);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");

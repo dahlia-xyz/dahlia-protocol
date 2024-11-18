@@ -18,37 +18,34 @@ library LendImpl {
     using SharesMathLib for uint256;
     using SafeCastLib for uint256;
 
-    function internalLend(IDahlia.Market storage market, IDahlia.MarketUserPosition storage marketOnBehalfOfPosition, uint256 assets, address onBehalfOf)
+    function internalLend(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner)
         internal
         returns (uint256 shares)
     {
         shares = assets.toSharesDown(market.totalLendAssets, market.totalLendShares);
 
-        marketOnBehalfOfPosition.lendShares += shares.toUint128();
-        marketOnBehalfOfPosition.lendAssets += assets.toUint128();
+        ownerPosition.lendShares += shares.toUint128();
+        ownerPosition.lendAssets += assets.toUint128();
         market.totalLendShares += shares;
         market.totalLendAssets += assets;
 
-        emit Events.Lend(market.id, msg.sender, onBehalfOf, assets, shares);
+        emit Events.Lend(market.id, msg.sender, owner, assets, shares);
     }
 
-    function internalWithdraw(
-        IDahlia.Market storage market,
-        IDahlia.MarketUserPosition storage marketOnBehalfOfPosition,
-        uint256 shares,
-        address onBehalfOf,
-        address receiver
-    ) internal returns (uint256) {
+    function internalWithdraw(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 shares, address owner, address receiver)
+        internal
+        returns (uint256)
+    {
         uint256 assets = shares.toAssetsDown(market.totalLendAssets, market.totalLendShares);
 
-        marketOnBehalfOfPosition.lendShares -= shares.toUint128();
+        ownerPosition.lendShares -= shares.toUint128();
         market.totalLendShares -= shares;
         market.totalLendAssets -= assets;
 
         if (market.totalBorrowAssets > market.totalLendAssets) {
             revert Errors.InsufficientLiquidity(market.totalBorrowAssets, market.totalLendAssets);
         }
-        emit Events.Withdraw(market.id, msg.sender, onBehalfOf, receiver, assets, shares);
+        emit Events.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
 
         return (assets);
     }
