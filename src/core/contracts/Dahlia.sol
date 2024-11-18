@@ -59,7 +59,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max, Errors.RangeNotValid(range.min, range.max));
         lltvRange = range;
 
-        emit IDahlia.SetLLTVRange(range.min, range.max);
+        emit SetLLTVRange(range.min, range.max);
     }
 
     /// @inheritdoc IDahlia
@@ -71,7 +71,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         );
         liquidationBonusRateRange = range;
 
-        emit IDahlia.SetLiquidationBonusRateRange(range.min, range.max);
+        emit SetLiquidationBonusRateRange(range.min, range.max);
     }
 
     /// @inheritdoc IDahlia
@@ -99,7 +99,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(newProtocolFeeRecipient != address(0), Errors.ZeroAddress());
         require(newProtocolFeeRecipient != protocolFeeRecipient, Errors.AlreadySet());
         protocolFeeRecipient = newProtocolFeeRecipient;
-        emit IDahlia.SetProtocolFeeRecipient(newProtocolFeeRecipient);
+        emit SetProtocolFeeRecipient(newProtocolFeeRecipient);
     }
 
     /// @inheritdoc IDahlia
@@ -107,14 +107,14 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(newReserveFeeRecipient != address(0), Errors.ZeroAddress());
         require(newReserveFeeRecipient != reserveFeeRecipient, Errors.AlreadySet());
         reserveFeeRecipient = newReserveFeeRecipient;
-        emit IDahlia.SetReserveFeeRecipient(newReserveFeeRecipient);
+        emit SetReserveFeeRecipient(newReserveFeeRecipient);
     }
 
     /// @inheritdoc IDahlia
     function setFlashLoanFeeRate(uint24 newFlashLoanFeeRate) external onlyOwner {
         require(newFlashLoanFeeRate <= Constants.MAX_FLASH_LOAN_FEE_RATE, Errors.MaxFeeExceeded());
         flashLoanFeeRate = uint24(newFlashLoanFeeRate);
-        emit IDahlia.SetFlashLoanFeeRate(newFlashLoanFeeRate);
+        emit SetFlashLoanFeeRate(newFlashLoanFeeRate);
     }
 
     /// @notice Validates the liquidation bonus rate, ensuring it is within acceptable limits based on the market's LLTV.
@@ -376,7 +376,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             IERC20(token).safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
         }
 
-        emit IDahlia.DahliaFlashLoan(msg.sender, token, assets, fee);
+        emit DahliaFlashLoan(msg.sender, token, assets, fee);
     }
 
     /// @inheritdoc IDahlia
@@ -452,7 +452,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateMarketDeployed(market.status);
         require(market.status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
-        emit IDahlia.MarketStatusChanged(market.status, MarketStatus.Paused);
+        emit MarketStatusChanged(market.status, MarketStatus.Paused);
         market.status = MarketStatus.Paused;
     }
 
@@ -462,7 +462,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateMarketDeployed(market.status);
         require(market.status == MarketStatus.Paused, Errors.CannotChangeMarketStatus());
-        emit IDahlia.MarketStatusChanged(market.status, MarketStatus.Active);
+        emit MarketStatusChanged(market.status, MarketStatus.Active);
         market.status = MarketStatus.Active;
     }
 
@@ -470,7 +470,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function deprecateMarket(MarketId id) external onlyOwner {
         Market storage market = markets[id].market;
         _validateMarketDeployed(market.status);
-        emit IDahlia.MarketStatusChanged(market.status, MarketStatus.Deprecated);
+        emit MarketStatusChanged(market.status, MarketStatus.Deprecated);
         market.status = MarketStatus.Deprecated;
     }
 
@@ -479,7 +479,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
-        emit IDahlia.LiquidationBonusRateChanged(liquidationBonusRate);
+        emit LiquidationBonusRateChanged(liquidationBonusRate);
         market.liquidationBonusRate = uint24(liquidationBonusRate);
     }
 

@@ -109,13 +109,6 @@ interface IDahlia {
     /// @param marketConfig Configuration parameters for the market.
     event DeployMarket(IDahlia.MarketId indexed id, IWrappedVault indexed vault, IDahlia.MarketConfig marketConfig);
 
-    /// @dev Emitted when permissions are updated.
-    /// @param sender Address of the sender.
-    /// @param owner Address of the owner.
-    /// @param permitted Address that is permitted.
-    /// @param newIsPermitted New permission status.
-    event UpdatePermission(address indexed sender, address indexed owner, address indexed permitted, bool newIsPermitted);
-
     /// @dev Emitted when collateral is supplied.
     /// @param id Market id.
     /// @param caller Address of the caller.
