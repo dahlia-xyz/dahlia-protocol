@@ -546,20 +546,18 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param receiver The address to mint the shares to
     /// @param minShares The minimum amount of shares to mint
     function safeDeposit(uint256 assets, address receiver, uint256 minShares) public returns (uint256 shares) {
-        shares = _deposit(msg.sender, receiver, assets);
+        shares = _deposit(receiver, assets);
         if (shares < minShares) revert TooFewShares();
     }
 
     /// @inheritdoc IWrappedVault
     function deposit(uint256 assets, address receiver) public returns (uint256 shares) {
-        shares = _deposit(msg.sender, receiver, assets);
+        shares = _deposit(receiver, assets);
     }
 
-    /**
-     * @dev Deposit/mint common workflow.
-     */
-    function _deposit(address caller, address receiver, uint256 assets) internal returns (uint256 shares) {
-        DEPOSIT_ASSET.safeTransferFrom(caller, address(this), assets);
+    /// @dev Deposit/mint common workflow.
+    function _deposit(address receiver, uint256 assets) internal returns (uint256 shares) {
+        DEPOSIT_ASSET.safeTransferFrom(msg.sender, address(this), assets);
 
         (shares) = dahlia.lend(marketId, assets, receiver);
         _mint(receiver, shares);
@@ -570,7 +568,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @inheritdoc IWrappedVault
     function mint(uint256 shares, address receiver) public returns (uint256 assets) {
         assets = previewMint(shares);
-        _deposit(msg.sender, receiver, assets);
+        _deposit(receiver, assets);
     }
 
     /// @inheritdoc IWrappedVault
