@@ -204,8 +204,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
-    /// @notice Returns the expected rate after depositing `lendAssets` into the market.
-    function previewLendRateAfterDeposit(MarketId id, uint256 lendAssets) external view returns (uint256) {
+    /// @param id The market id.
+    /// @param lendAssets The amount of assets to deposit into the market.
+    /// @return rate The expected rate after depositing `lendAssets` into the market.
+    function previewLendRateAfterDeposit(MarketId id, uint256 lendAssets) external view returns (uint256 rate) {
         Market memory market = InterestImpl.getLastMarketState(markets[id].market, lendAssets);
         if (market.totalLendAssets != 0) return market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets);
     }

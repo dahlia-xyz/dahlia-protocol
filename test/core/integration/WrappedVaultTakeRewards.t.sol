@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { Test, Vm, console } from "@forge-std/Test.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
-
 import { ERC4626 } from "@solady/tokens/ERC4626.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
