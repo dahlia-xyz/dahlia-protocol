@@ -6,6 +6,7 @@ import { Test, Vm } from "@forge-std/Test.sol";
 import { ChainlinkOracleWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkOracleWithMaxDelayBase.sol";
 import { UniswapOracleV3SingleTwapBase } from "src/oracles/abstracts/UniswapOracleV3SingleTwapBase.sol";
 import { ChainlinkOracleWithMaxDelay, DahliaOracleFactory, DualOracleChainlinkUniV3 } from "src/oracles/contracts/DahliaOracleFactory.sol";
+import { StablePriceOracle } from "src/oracles/contracts/StablePriceOracle.sol";
 import { UniswapOracleV3SingleTwap } from "src/oracles/contracts/UniswapOracleV3SingleTwap.sol";
 import { IChainlinkOracleWithMaxDelay } from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -17,17 +18,17 @@ contract OracleFactoryTest is Test {
 
     uint256 ORACLE_PRECISION = 1e18;
     TestContext ctx;
-    address oracleFactory;
+    DahliaOracleFactory oracleFactory;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
-        oracleFactory = ctx.createOracleFactory();
+        oracleFactory = DahliaOracleFactory(ctx.createOracleFactory());
     }
 
     function test_oracleFactory_chainlink() public {
         /// @dev USDC is collateral, WBTC is loan, then result is 0.000016xxx
-        ChainlinkOracleWithMaxDelay oracle = DahliaOracleFactory(oracleFactory).createChainlinkOracle(
+        ChainlinkOracleWithMaxDelay oracle = oracleFactory.createChainlinkOracle(
             ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.USDC_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
@@ -43,6 +44,7 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelaySecondary: 86_400
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 1_611_859_162_144_102_979_080_952_870_358_934);
         assertEq(isBadData, false);
@@ -50,7 +52,7 @@ contract OracleFactoryTest is Test {
 
     function test_oracleFactory_paxg_chainlink() public {
         /// @dev PAXG is collateral, USDC is loan, then result is 2617
-        ChainlinkOracleWithMaxDelay oracle = DahliaOracleFactory(oracleFactory).createChainlinkOracle(
+        ChainlinkOracleWithMaxDelay oracle = oracleFactory.createChainlinkOracle(
             ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: 0x45804880De22913dAFE09f4980848ECE6EcbAf78,
                 baseFeedPrimary: AggregatorV3Interface(0x7C4561Bb0F2d6947BeDA10F667191f6026E7Ac0c),
@@ -66,6 +68,7 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelaySecondary: 0
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_617_340_351_185_118_511_851_185_118);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2617); // 2617 USDC per 1 PAXG
@@ -73,7 +76,7 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_wethUsdc() public {
-        ChainlinkOracleWithMaxDelay oracle = DahliaOracleFactory(oracleFactory).createChainlinkOracle(
+        ChainlinkOracleWithMaxDelay oracle = oracleFactory.createChainlinkOracle(
             ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
@@ -89,6 +92,7 @@ contract OracleFactoryTest is Test {
                 quoteMaxDelaySecondary: 0
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2404); // 2404 USDC per 1 ETH
@@ -96,7 +100,7 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_uniswap_wethUsdc() public {
-        UniswapOracleV3SingleTwap oracle = DahliaOracleFactory(oracleFactory).createUniswapOracle(
+        UniswapOracleV3SingleTwap oracle = oracleFactory.createUniswapOracle(
             UniswapOracleV3SingleTwapBase.OracleParams({
                 baseToken: Mainnet.WETH_ERC20,
                 quoteToken: Mainnet.USDC_ERC20,
@@ -104,6 +108,7 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_412_486_481_775_144_671_894_069_994);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2412); // 2412 USDC per 1 WETH
@@ -111,7 +116,7 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUsdc() public {
-        DualOracleChainlinkUniV3 oracle = DahliaOracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
+        DualOracleChainlinkUniV3 oracle = oracleFactory.createDualOracleChainlinkUniV3(
             ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
@@ -133,6 +138,7 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2404); // 2404 USDC per 1 WETH
@@ -140,7 +146,7 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUniFromChainlink() public {
-        DualOracleChainlinkUniV3 oracle = DahliaOracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
+        DualOracleChainlinkUniV3 oracle = oracleFactory.createDualOracleChainlinkUniV3(
             ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(address(0)),
@@ -157,6 +163,7 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 338_921_318_918_776_963_008_316_417_223_772_858_717);
         assertEq(((price * 1e18) / 1e18) / 1e36, 338); // 338 UNI per 1 WETH
@@ -164,7 +171,7 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUniWithBadDataFromUni() public {
-        DualOracleChainlinkUniV3 oracle = DahliaOracleFactory(oracleFactory).createDualOracleChainlinkUniV3(
+        DualOracleChainlinkUniV3 oracle = oracleFactory.createDualOracleChainlinkUniV3(
             ChainlinkOracleWithMaxDelayBase.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(address(0)),
@@ -181,9 +188,18 @@ contract OracleFactoryTest is Test {
                 twapDuration: 900
             })
         );
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 342_170_188_147_668_813_010_937_084_335_830_514_402);
         assertEq(((price * 1e18) / 1e18) / 1e36, 342); // 342 UNI per 1 WETH
         assertEq(isBadData, false);
+    }
+
+    function test_oracleFactory_stablePriceOracle_success() public {
+        StablePriceOracle oracle = oracleFactory.createStableOracle(1e36);
+        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
+        (uint256 _price, bool _isBadData) = oracle.getPrice();
+        assertEq(_price, 1e36);
+        assertEq(_isBadData, false);
     }
 }
