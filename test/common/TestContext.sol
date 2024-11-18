@@ -2,11 +2,11 @@
 pragma solidity ^0.8.27;
 
 import { Vm } from "@forge-std/Test.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry, IDahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
-
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
@@ -216,6 +216,8 @@ contract TestContext {
 
     function createMarketConfig(address loanToken, address collateralToken, uint256 lltv) public returns (Dahlia.MarketConfig memory marketConfig) {
         address admin = createWallet("MARKET_ADMIN");
+        string memory loanTokenSymbol = IERC20Metadata(loanToken).symbol();
+        string memory name = string.concat(loanTokenSymbol, "/", IERC20Metadata(collateralToken).symbol(), " (", BoundUtils.toPercentString(lltv), "% LLTV)");
         marketConfig = IDahlia.MarketConfig({
             loanToken: loanToken,
             collateralToken: collateralToken,
@@ -223,6 +225,7 @@ contract TestContext {
             irm: createTestIrm(),
             lltv: lltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv),
+            name: name,
             owner: admin
         });
     }
@@ -233,6 +236,7 @@ contract TestContext {
             collateralToken: config.collateralToken,
             oracle: config.oracle,
             irm: config.irm,
+            name: config.name,
             owner: config.owner,
             lltv: lltv,
             liquidationBonusRate: BoundUtils.randomLiquidationBonusRate(vm, lltv)

@@ -36,18 +36,6 @@ library MarketMath {
         return value.mulDivUp(Constants.LLTV_100_PERCENT, percent);
     }
 
-    /// @dev Converts a uint256 to a percentage string with 1 decimal place
-    /// @notice Used for displaying values as percentages in the UI
-    function toPercentString(uint256 value) public pure returns (string memory) {
-        uint256 integerPart = value * 100 / Constants.LLTV_100_PERCENT; // Whole number part
-        uint256 fractionalValue = value * 100 % Constants.LLTV_100_PERCENT;
-        uint256 divider = Constants.LLTV_100_PERCENT / 10;
-        uint256 fractionalPart = fractionalValue / divider; // Fractional part (1 decimal place)
-        require(fractionalValue % divider == 0, Errors.LltvInvalidPrecision());
-        string memory integerString = integerPart.toString();
-        return fractionalPart == 0 ? integerString : string(abi.encodePacked(integerString, ".", fractionalPart.toString()));
-    }
-
     /// @dev Calculates liquidation details, including borrowed assets, collateral seized, bonuses, and any bad debt
     function calcLiquidation(
         uint256 totalBorrowAssets,

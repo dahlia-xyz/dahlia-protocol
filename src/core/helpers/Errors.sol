@@ -60,9 +60,6 @@ library Errors {
     /// @notice Liquidation LTV is not within the allowed range.
     error LltvNotAllowed();
 
-    /// @notice Liquidation LTV must have only 1 decimal, e.g., 80.1 (80100), not 80.15 (80150).
-    error LltvInvalidPrecision();
-
     /// @notice Liquidation bonus rate isn't allowed.
     error LiquidationBonusRateNotAllowed();
 

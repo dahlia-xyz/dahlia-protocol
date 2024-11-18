@@ -98,6 +98,17 @@ library BoundUtils {
         return uint24(value * Constants.LLTV_100_PERCENT / 100);
     }
 
+    /// @dev Converts a uint256 to a percentage string with 1 decimal place
+    /// @notice Used for displaying values as percentages in the UI
+    function toPercentString(uint256 value) public pure returns (string memory) {
+        uint256 integerPart = value * 100 / Constants.LLTV_100_PERCENT; // Whole number part
+        uint256 fractionalValue = value * 100 % Constants.LLTV_100_PERCENT;
+        uint256 divider = Constants.LLTV_100_PERCENT / 10;
+        uint256 fractionalPart = fractionalValue / divider; // Fractional part (1 decimal place)
+        string memory integerString = integerPart.toString();
+        return fractionalPart == 0 ? integerString : string(abi.encodePacked(integerString, ".", fractionalPart.toString()));
+    }
+
     function randomLiquidationBonusRate(Vm vm, uint256 lltv) public returns (uint256) {
         return vm.randomUint(1, MarketMath.getMaxLiquidationBonusRate(lltv));
     }

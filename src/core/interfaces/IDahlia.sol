@@ -279,6 +279,7 @@ interface IDahlia {
     /// @param irm The interest rate model contract.
     /// @param lltv Liquidation loan-to-value ratio for the market.
     /// @param liquidationBonusRate Bonus rate for liquidations.
+    /// @param name Name of the deployed market.
     /// @param owner The owner of the deployed market.
     struct MarketConfig {
         address loanToken;
@@ -287,7 +288,7 @@ interface IDahlia {
         IIrm irm;
         uint256 lltv;
         uint256 liquidationBonusRate;
-        /// @dev Owner of the deployed market
+        string name;
         address owner;
     }
 

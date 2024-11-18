@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
@@ -136,15 +135,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         id = MarketId.wrap(++marketSequence);
 
-        IERC20Metadata loanToken = IERC20Metadata(marketConfig.loanToken);
-        string memory loanTokenSymbol = loanToken.symbol();
-        string memory name = string.concat(
-            loanTokenSymbol, "/", IERC20Metadata(marketConfig.collateralToken).symbol(), " (", MarketMath.toPercentString(marketConfig.lltv), "% LLTV)"
-        );
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
         address owner = marketConfig.owner == address(0) ? msg.sender : marketConfig.owner;
         IWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
-            id, marketConfig.loanToken, owner, name, fee
+            id, marketConfig.loanToken, owner, marketConfig.name, fee
         );
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
     }
@@ -209,12 +203,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
+    /// @notice Returns the expected rate after depositing `lendAssets` into the market.
     function previewLendRateAfterDeposit(MarketId id, uint256 lendAssets) external view returns (uint256) {
         Market memory market = InterestImpl.getLastMarketState(markets[id].market, lendAssets);
-        if (market.totalLendAssets == 0) {
-            return 0;
-        }
-        return market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets);
+        if (market.totalLendAssets != 0) return market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets);
     }
 
     /// @inheritdoc IDahlia
