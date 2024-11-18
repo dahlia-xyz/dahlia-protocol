@@ -150,6 +150,11 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     // TODO: add tests with VaultMarketHub to see if interest increase will trigger royco order without any rewards
+    /// @notice Returns parameters of reward internal
+    /// @param reward The reward token / points program
+    /// @return start Start time in seconds
+    /// @return end End time in seconds
+    /// @return rate Rewards rate per second
     function rewardToInterval(address reward) external view returns (uint32 start, uint32 end, uint96 rate) {
         start = _rewardToInterval[reward].start;
         end = _rewardToInterval[reward].end;
@@ -506,6 +511,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         uint256 rewardsRate = (uint256(rewardsInterval.rate) * shares / (totalSupply + shares)) * 1e18 / assets;
         // TODO: make sure we cover by tests after xoseny merge Royco tests
+        // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(marketId, assets);
             rewardsRate += dahliaRate;

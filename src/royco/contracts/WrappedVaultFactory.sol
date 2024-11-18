@@ -9,7 +9,6 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 
-/// TODO update comments
 /// @title WrappedVaultFactory
 /// @author CopyPaste, Jack Corddry, Shivaansh Kapoor
 /// @dev A factory for deploying wrapped vaults, and managing protocol or other fees
@@ -99,24 +98,25 @@ contract WrappedVaultFactory is Owned {
                              VAULT CREATION
     //////////////////////////////////////////////////////////////*/
 
-    /// @param marketId The market id in dahlia
+    /// @param id Dahlia market id
     /// @param loanToken The address of the loan token
     /// @param owner The address of the wrapped vault owner
-    /// @param name The name of the dahlia market
+    /// @param name The name of the wrapped vault
     /// @param initialFrontendFee The initial frontend fee for the wrapped vault ()
-    function wrapVault(IDahlia.MarketId marketId, address loanToken, address owner, string calldata name, uint256 initialFrontendFee)
+    function wrapVault(IDahlia.MarketId id, address loanToken, address owner, string calldata name, uint256 initialFrontendFee)
         external
         payable
         returns (WrappedVault wrappedVault)
     {
         string memory newSymbol = getNextSymbol();
-        bytes32 salt = keccak256(abi.encodePacked(marketId, owner, name, initialFrontendFee));
+        bytes32 salt = keccak256(abi.encodePacked(id, owner, name, initialFrontendFee));
         uint8 decimals = IERC20Metadata(loanToken).decimals() + SharesMathLib.VIRTUAL_SHARES_DECIMALS;
-        wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, marketId, loanToken, initialFrontendFee, pointsFactory);
+        wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, id, loanToken, initialFrontendFee, pointsFactory);
 
         incentivizedVaults.push(address(wrappedVault));
         isVault[address(wrappedVault)] = true;
 
+        // Emit wrapped vault address as both `underlyingVaultAddress` and `incentivizedVaultAddress`
         emit WrappedVaultCreated(ERC4626(address(wrappedVault)), wrappedVault, owner, address(wrappedVault.asset()), initialFrontendFee, name, newSymbol);
     }
 

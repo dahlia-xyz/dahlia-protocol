@@ -252,7 +252,6 @@ interface IDahlia {
         external
         returns (uint256 assetsRepaid, uint256 sharesRepaid);
 
-    /// TODO review comment
     /// @notice Liquidate a debt position by repaying shares or seizing collateral, with optional callback.
     /// @param id Market id.
     /// @param borrower Borrower's address.

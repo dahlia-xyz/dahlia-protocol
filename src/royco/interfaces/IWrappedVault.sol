@@ -1,9 +1,8 @@
 /// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-/// TODO update comments
 interface IWrappedVault {
-    /// @return The address of the owner
+    /// @return The address of the vault owner
     function vaultOwner() external view returns (address);
 
     /// @param to The address to send the rewards to
