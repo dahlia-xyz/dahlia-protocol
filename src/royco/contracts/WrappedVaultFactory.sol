@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-
 import { LibString } from "@solady/utils/LibString.sol";
 import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
@@ -22,12 +21,8 @@ contract WrappedVaultFactory is Owned {
         payable
         Owned(_owner)
     {
-        if (_protocolFee > MAX_PROTOCOL_FEE) {
-            revert ProtocolFeeTooHigh();
-        }
-        if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) {
-            revert ReferralFeeTooHigh();
-        }
+        if (_protocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
+        if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
 
         protocolFeeRecipient = _protocolFeeRecipient;
         protocolFee = _protocolFee;
@@ -40,8 +35,8 @@ contract WrappedVaultFactory is Owned {
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    uint256 public constant MAX_PROTOCOL_FEE = 0.3e18;
-    uint256 public constant MAX_MIN_REFERRAL_FEE = 0.3e18;
+    uint256 private constant MAX_PROTOCOL_FEE = 0.3e18;
+    uint256 private constant MAX_MIN_REFERRAL_FEE = 0.3e18;
 
     address public immutable pointsFactory;
 
@@ -80,20 +75,16 @@ contract WrappedVaultFactory is Owned {
                              OWNER CONTROLS
     //////////////////////////////////////////////////////////////*/
 
-    /// @param newProtocolFee The new protocol fee to set for a given vault
+    /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
     function updateProtocolFee(uint256 newProtocolFee) external payable onlyOwner {
-        if (newProtocolFee > MAX_PROTOCOL_FEE) {
-            revert ProtocolFeeTooHigh();
-        }
+        if (newProtocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
         protocolFee = newProtocolFee;
         emit ProtocolFeeUpdated(newProtocolFee);
     }
 
-    /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults
+    /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults, must be less than MAX_MIN_REFERRAL_FEE
     function updateMinimumReferralFee(uint256 newMinimumReferralFee) external payable onlyOwner {
-        if (newMinimumReferralFee > MAX_MIN_REFERRAL_FEE) {
-            revert ReferralFeeTooHigh();
-        }
+        if (newMinimumReferralFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
         minimumFrontendFee = newMinimumReferralFee;
         emit ReferralFeeUpdated(newMinimumReferralFee);
     }
