@@ -6,7 +6,6 @@ import { Test, Vm } from "@forge-std/Test.sol";
 import { ChainlinkOracleWithMaxDelayBase } from "src/oracles/abstracts/ChainlinkOracleWithMaxDelayBase.sol";
 import { UniswapOracleV3SingleTwapBase } from "src/oracles/abstracts/UniswapOracleV3SingleTwapBase.sol";
 import { ChainlinkOracleWithMaxDelay, DahliaOracleFactory, DualOracleChainlinkUniV3 } from "src/oracles/contracts/DahliaOracleFactory.sol";
-import { StablePriceOracle } from "src/oracles/contracts/StablePriceOracle.sol";
 import { UniswapOracleV3SingleTwap } from "src/oracles/contracts/UniswapOracleV3SingleTwap.sol";
 import { IChainlinkOracleWithMaxDelay } from "src/oracles/interfaces/IChainlinkOracleWithMaxDelay.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -193,13 +192,5 @@ contract OracleFactoryTest is Test {
         assertEq(price, 342_170_188_147_668_813_010_937_084_335_830_514_402);
         assertEq(((price * 1e18) / 1e18) / 1e36, 342); // 342 UNI per 1 WETH
         assertEq(isBadData, false);
-    }
-
-    function test_oracleFactory_stablePriceOracle_success() public {
-        StablePriceOracle oracle = oracleFactory.createStableOracle(1e36);
-        assertTrue(oracleFactory.isDahliaOracle(address(oracle)));
-        (uint256 _price, bool _isBadData) = oracle.getPrice();
-        assertEq(_price, 1e36);
-        assertEq(_isBadData, false);
     }
 }
