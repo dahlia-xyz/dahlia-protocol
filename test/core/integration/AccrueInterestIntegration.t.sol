@@ -8,7 +8,6 @@ import { LibString } from "@solady/utils/LibString.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -100,7 +99,7 @@ contract AccrueInterestIntegrationTest is Test {
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit Events.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, 0, 0);
+            emit IDahlia.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, 0, 0);
         }
 
         vm.resumeGasMetering();
@@ -146,7 +145,7 @@ contract AccrueInterestIntegrationTest is Test {
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit Events.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+            emit IDahlia.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
         }
 
         $.dahlia.accrueMarketInterest($.marketId);

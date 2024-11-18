@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
@@ -20,7 +19,7 @@ library ManageMarketImpl {
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
 
         market.protocolFeeRate = uint24(newFee);
-        emit Events.SetProtocolFeeRate(market.id, newFee);
+        emit IDahlia.SetProtocolFeeRate(market.id, newFee);
     }
 
     function setReserveFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
@@ -28,7 +27,7 @@ library ManageMarketImpl {
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
 
         market.reserveFeeRate = uint24(newFee);
-        emit Events.SetReserveFeeRate(market.id, newFee);
+        emit IDahlia.SetReserveFeeRate(market.id, newFee);
     }
 
     function deployMarket(
@@ -52,6 +51,6 @@ library ManageMarketImpl {
         market.status = IDahlia.MarketStatus.Active;
         market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
         market.vault = vault;
-        emit Events.DeployMarket(id, vault, marketConfig);
+        emit IDahlia.DeployMarket(id, vault, marketConfig);
     }
 }

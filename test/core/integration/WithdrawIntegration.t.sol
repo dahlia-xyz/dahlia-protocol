@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -95,7 +94,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, amountWithdrawn, expectedWithdrawnShares);
+        emit IDahlia.Withdraw($.marketId, address(market.vault), $.bob, $.alice, amountWithdrawn, expectedWithdrawnShares);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(expectedWithdrawnShares, $.bob, $.alice);
         vm.pauseGasMetering();
@@ -128,7 +127,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, expectedAmountWithdrawn, sharesWithdrawn);
+        emit IDahlia.Withdraw($.marketId, address(market.vault), $.bob, $.alice, expectedAmountWithdrawn, sharesWithdrawn);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(sharesWithdrawn, $.bob, $.alice);
         vm.pauseGasMetering();
@@ -163,7 +162,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank(ALICE_MONEY_MANAGER);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, amountWithdrawn, expectedWithdrawnShares);
+        emit IDahlia.Withdraw($.marketId, address(market.vault), $.bob, $.alice, amountWithdrawn, expectedWithdrawnShares);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(expectedWithdrawnShares, $.bob, $.alice);
         vm.pauseGasMetering();
@@ -203,7 +202,7 @@ contract WithdrawIntegrationTest is Test {
 
         vm.prank(ALICE_MONEY_MANAGER);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.Withdraw($.marketId, address(market.vault), $.bob, $.alice, expectedAmountWithdrawn, sharesWithdrawn);
+        emit IDahlia.Withdraw($.marketId, address(market.vault), $.bob, $.alice, expectedAmountWithdrawn, sharesWithdrawn);
         vm.resumeGasMetering();
         uint256 returnAssets = market.vault.redeem(sharesWithdrawn, $.bob, $.alice);
         vm.pauseGasMetering();

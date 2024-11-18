@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -132,7 +131,7 @@ contract BorrowIntegrationTest is Test {
 
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         (uint256 _assets, uint256 _shares) = $.dahlia.borrow($.marketId, pos.borrowed, 0, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -153,7 +152,7 @@ contract BorrowIntegrationTest is Test {
 
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, sharesBorrowed);
+        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, sharesBorrowed);
         vm.resumeGasMetering();
         (uint256 _assets, uint256 _shares) = $.dahlia.borrow($.marketId, 0, sharesBorrowed, $.alice, $.bob);
         vm.pauseGasMetering();

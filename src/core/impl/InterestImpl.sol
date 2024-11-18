@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
@@ -62,7 +61,7 @@ library InterestImpl {
                 market.totalLendShares += reserveFeeShares;
             }
 
-            emit Events.DahliaAccrueInterest(market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+            emit IDahlia.DahliaAccrueInterest(market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
             market.updatedAt = uint48(block.timestamp);
         }
     }

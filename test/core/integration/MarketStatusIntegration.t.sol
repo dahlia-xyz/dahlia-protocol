@@ -5,7 +5,6 @@ import { Test, Vm } from "@forge-std/Test.sol";
 import { IERC20 } from "@forge-std/interfaces/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -43,7 +42,7 @@ contract MarketStatusIntegrationTest is Test {
         // pause
         vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Paused);
+        emit IDahlia.MarketStatusChanged(IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Paused);
         $.dahlia.pauseMarket($.marketId);
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Paused));
 
@@ -57,7 +56,7 @@ contract MarketStatusIntegrationTest is Test {
         // unpause
         vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Active);
+        emit IDahlia.MarketStatusChanged(IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Active));
     }
@@ -79,7 +78,7 @@ contract MarketStatusIntegrationTest is Test {
         // unpause
         vm.startPrank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Active);
+        emit IDahlia.MarketStatusChanged(IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Active));
         vm.stopPrank();
@@ -93,7 +92,7 @@ contract MarketStatusIntegrationTest is Test {
         // deprecate
         vm.startPrank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.MarketStatusChanged(IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Deprecated);
+        emit IDahlia.MarketStatusChanged(IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Deprecated);
         $.dahlia.deprecateMarket($.marketId);
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Deprecated));
         vm.stopPrank();

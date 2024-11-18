@@ -5,7 +5,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
@@ -29,7 +28,7 @@ library LendImpl {
         market.totalLendShares += shares;
         market.totalLendAssets += assets;
 
-        emit Events.Lend(market.id, msg.sender, owner, assets, shares);
+        emit IDahlia.Lend(market.id, msg.sender, owner, assets, shares);
     }
 
     function internalWithdraw(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 shares, address owner, address receiver)
@@ -45,7 +44,7 @@ library LendImpl {
         if (market.totalBorrowAssets > market.totalLendAssets) {
             revert Errors.InsufficientLiquidity(market.totalBorrowAssets, market.totalLendAssets);
         }
-        emit Events.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
+        emit IDahlia.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
 
         return (assets);
     }

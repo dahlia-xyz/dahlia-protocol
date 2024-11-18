@@ -12,6 +12,13 @@ interface IPermitted {
         uint256 deadline;
     }
 
+    /// @dev Emitted when permissions are updated.
+    /// @param sender Address of the sender.
+    /// @param owner Address of the owner.
+    /// @param permitted Address that is permitted.
+    /// @param newIsPermitted New permission status.
+    event UpdatePermission(address indexed sender, address indexed owner, address indexed permitted, bool newIsPermitted);
+
     /// @notice Set or revoke permission for an address
     /// @param permitted The address to grant or revoke permission
     /// @param newIsPermitted `True` to allow, `false` to disallow

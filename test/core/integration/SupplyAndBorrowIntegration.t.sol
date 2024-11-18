@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -109,9 +108,9 @@ contract SupplyAndBorrowIntegrationTest is Test {
 
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral);
+        emit IDahlia.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit Events.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         (uint256 _assets, uint256 _shares) = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();

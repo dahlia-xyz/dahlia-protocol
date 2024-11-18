@@ -4,9 +4,7 @@ pragma solidity ^0.8.27;
 import { Test } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
-import { Events } from "src/core/helpers/Events.sol";
 import { ManageMarketImpl } from "src/core/impl/ManageMarketImpl.sol";
-
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
@@ -26,7 +24,7 @@ contract ManageMarketImplUnitTest is Test {
 
         IDahlia.MarketId marketParamsFuzzId = IDahlia.MarketId.wrap(1);
         vm.expectEmit(true, true, true, true, address(this));
-        emit Events.DeployMarket(marketParamsFuzzId, vault, marketParamsFuzz);
+        emit IDahlia.DeployMarket(marketParamsFuzzId, vault, marketParamsFuzz);
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);
 
         IDahlia.Market memory market = markets[marketParamsFuzzId].market;
