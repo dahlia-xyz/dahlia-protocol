@@ -95,9 +95,10 @@ interface IDahlia {
     event SetLiquidationBonusRateRange(uint256 minLltv, uint256 maxLltv);
 
     /// @dev Emitted when the market status changes.
+    /// @param id Market id.
     /// @param from Previous market status.
     /// @param to New market status.
-    event MarketStatusChanged(IDahlia.MarketStatus from, IDahlia.MarketStatus to);
+    event MarketStatusChanged(IDahlia.MarketId indexed id, IDahlia.MarketStatus from, IDahlia.MarketStatus to);
 
     /// @dev Emitted when the liquidation bonus rate changes.
     /// @param liquidationBonusRate The updated liquidation bonus rate.
