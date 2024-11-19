@@ -446,7 +446,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         require(market.status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(market.status, MarketStatus.Paused);
+        emit MarketStatusChanged(id, market.status, MarketStatus.Paused);
         market.status = MarketStatus.Paused;
     }
 
@@ -455,7 +455,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         require(market.status == MarketStatus.Paused, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(market.status, MarketStatus.Active);
+        emit MarketStatusChanged(id, market.status, MarketStatus.Active);
         market.status = MarketStatus.Active;
     }
 
@@ -463,7 +463,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function deprecateMarket(MarketId id) external onlyOwner {
         Market storage market = markets[id].market;
         _validateMarketDeployed(market.status);
-        emit MarketStatusChanged(market.status, MarketStatus.Deprecated);
+        emit MarketStatusChanged(id, market.status, MarketStatus.Deprecated);
         market.status = MarketStatus.Deprecated;
     }
 
