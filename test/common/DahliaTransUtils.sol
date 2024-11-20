@@ -37,7 +37,7 @@ library DahliaTransUtils {
 
     function dahliaBorrowBy(Vm vm, address borrower, uint256 assets, TestContext.MarketContext memory $) internal {
         vm.prank(borrower);
-        $.dahlia.borrow($.marketId, assets, 0, borrower, borrower);
+        $.dahlia.borrow($.marketId, assets, borrower, borrower);
     }
 
     function dahliaRepayBy(Vm vm, address borrower, uint256 assets, TestContext.MarketContext memory $) internal {

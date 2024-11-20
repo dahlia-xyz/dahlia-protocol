@@ -36,7 +36,7 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
             uint256 toBorrow = abi.decode(data, (uint256));
             $.collateralToken.setBalance(address(this), amount);
             $.collateralToken.approve(address($.dahlia), amount);
-            $.dahlia.borrow($.marketId, toBorrow, 0, address(this), address(this));
+            $.dahlia.borrow($.marketId, toBorrow, address(this), address(this));
         }
     }
 

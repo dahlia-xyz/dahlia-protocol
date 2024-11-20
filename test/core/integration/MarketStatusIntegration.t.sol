@@ -128,7 +128,7 @@ contract MarketStatusIntegrationTest is Test {
         // check BorrowImpl
         vm.prank($.alice);
         vm.expectRevert(revertData);
-        $.dahlia.borrow($.marketId, assets, 0, $.alice, $.alice);
+        $.dahlia.borrow($.marketId, assets, $.alice, $.alice);
         vm.resumeGasMetering();
     }
 }

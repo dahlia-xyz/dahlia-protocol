@@ -31,40 +31,23 @@ contract BorrowIntegrationTest is Test {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
-        $.dahlia.borrow(marketIdFuzz, assets, 0, $.alice, $.alice);
+        $.dahlia.borrow(marketIdFuzz, assets, $.alice, $.alice);
     }
 
     function test_int_borrow_zeroAmount() public {
-        vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
+        //        vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
         vm.prank($.alice);
-        $.dahlia.borrow($.marketId, 0, 0, $.alice, $.alice);
-
-        vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
-        vm.prank($.alice);
-        $.dahlia.borrow($.marketId, 1, 1, $.alice, $.alice);
+        $.dahlia.borrow($.marketId, 0, $.alice, $.alice);
     }
 
     function test_int_borrow_zeroAddress(uint256 assets) public {
         vm.startPrank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
-        $.dahlia.borrow($.marketId, assets, 0, address(0), $.alice);
+        $.dahlia.borrow($.marketId, assets, address(0), $.alice);
 
         vm.expectRevert(Errors.ZeroAddress.selector);
-        $.dahlia.borrow($.marketId, assets, 0, $.alice, address(0));
+        $.dahlia.borrow($.marketId, assets, $.alice, address(0));
         vm.stopPrank();
-    }
-
-    function test_int_borrow_inconsistentInput(uint256 amount, uint256 shares) public {
-        vm.pauseGasMetering();
-
-        amount = vm.boundBlocks(amount);
-        amount = vm.boundAmount(amount);
-        shares = bound(shares, 1, TestConstants.MAX_TEST_SHARES);
-
-        vm.prank($.alice);
-        vm.expectRevert(Errors.InconsistentAssetsOrSharesInput.selector);
-        vm.resumeGasMetering();
-        $.dahlia.borrow($.marketId, amount, shares, $.alice, $.alice);
     }
 
     function test_int_borrow_unauthorized(TestTypes.MarketPosition memory pos, address supplier, address attacker) public {
@@ -79,7 +62,7 @@ contract BorrowIntegrationTest is Test {
         vm.prank(attacker);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, attacker));
         vm.resumeGasMetering();
-        $.dahlia.borrow($.marketId, pos.borrowed, 0, supplier, attacker);
+        $.dahlia.borrow($.marketId, pos.borrowed, supplier, attacker);
     }
 
     function test_int_borrow_unhealthyPosition(TestTypes.MarketPosition memory pos) public {
@@ -96,7 +79,7 @@ contract BorrowIntegrationTest is Test {
         vm.prank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientCollateral.selector, pos.borrowed, maxBorrowAssets));
         vm.resumeGasMetering();
-        $.dahlia.borrow($.marketId, pos.borrowed, 0, $.alice, $.alice);
+        $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.alice);
     }
 
     function test_int_borrow_insufficientLiquidity(TestTypes.MarketPosition memory pos) public {
@@ -117,7 +100,7 @@ contract BorrowIntegrationTest is Test {
         vm.prank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientLiquidity.selector, pos.borrowed, pos.lent));
         vm.resumeGasMetering();
-        $.dahlia.borrow($.marketId, pos.borrowed, 0, $.alice, $.alice);
+        $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.alice);
     }
 
     function test_int_borrow_byAssets(TestTypes.MarketPosition memory pos) public {
@@ -133,32 +116,11 @@ contract BorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
-        (uint256 _assets, uint256 _shares) = $.dahlia.borrow($.marketId, pos.borrowed, 0, $.alice, $.bob);
+        (uint256 _assets, uint256 _shares) = $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
 
         _checkMarketBorrowValid(_assets, _shares, pos.lent, pos.borrowed, expectedBorrowShares);
-    }
-
-    function test_int_borrow_byShares(TestTypes.MarketPosition memory pos) public {
-        vm.pauseGasMetering();
-
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
-        uint256 sharesBorrowed = pos.borrowed.toSharesUp(0, 0);
-
-        vm.dahliaLendBy($.carol, pos.lent, $);
-        $.oracle.setPrice(pos.price);
-        vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
-
-        vm.startPrank($.alice);
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, sharesBorrowed);
-        vm.resumeGasMetering();
-        (uint256 _assets, uint256 _shares) = $.dahlia.borrow($.marketId, 0, sharesBorrowed, $.alice, $.bob);
-        vm.pauseGasMetering();
-        vm.stopPrank();
-
-        _checkMarketBorrowValid(_assets, _shares, pos.lent, pos.borrowed, sharesBorrowed);
     }
 
     function _checkMarketBorrowValid(uint256 returnAssets, uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares)
