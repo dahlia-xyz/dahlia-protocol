@@ -338,18 +338,15 @@ interface IDahlia {
     /// @return ratePerSec The projected interest rate per second post-deposit.
     function previewLendRateAfterDeposit(MarketId id, uint256 assets) external view returns (uint256 ratePerSec);
 
-    /// @notice Borrow `assets` or `shares` on behalf of a user, sending to a receiver.
+    /// @notice Borrow `assets` on behalf of a user, sending to a receiver.
     /// @dev Either `assets` or `shares` must be zero.
     /// @param id Market id.
     /// @param assets Amount of assets to borrow.
-    /// @param shares Amount of shares to mint.
     /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the borrowed assets.
     /// @return assetsBorrowed Amount of assets borrowed.
     /// @return sharesBorrowed Amount of shares minted.
-    function borrow(MarketId id, uint256 assets, uint256 shares, address owner, address receiver)
-        external
-        returns (uint256 assetsBorrowed, uint256 sharesBorrowed);
+    function borrow(MarketId id, uint256 assets, address owner, address receiver) external returns (uint256 assetsBorrowed, uint256 sharesBorrowed);
 
     /// @notice Supply `collateralAssets` and borrow `borrowAssets` on behalf of a user, sending borrowed assets to a receiver.
     /// @dev Both `collateralAssets` and `borrowAssets` must not be zero.

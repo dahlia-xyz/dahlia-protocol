@@ -54,19 +54,11 @@ library BorrowImpl {
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
-        uint256 shares,
         address owner,
         address receiver,
         uint256 collateralPrice // Can be 0, will be filled by function if so
     ) internal returns (uint256, uint256) {
-        MarketMath.validateExactlyOneZero(assets, shares);
-
-        // Calculate assets or shares
-        if (assets > 0) {
-            shares = assets.toSharesUp(market.totalBorrowAssets, market.totalBorrowShares);
-        } else {
-            assets = shares.toAssetsDown(market.totalBorrowAssets, market.totalBorrowShares);
-        }
+        uint256 shares = assets.toSharesUp(market.totalBorrowAssets, market.totalBorrowShares);
 
         // Update borrow values in totals and position
         ownerPosition.borrowShares += shares.toUint128();
