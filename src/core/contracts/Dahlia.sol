@@ -162,7 +162,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable nonReentrant returns (uint256 assets) {
+    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable nonReentrant returns (uint256) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -173,14 +173,18 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
 
-        assets = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
+        (uint256 assets, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
 
-        uint256 userLendAssets = ownerPosition.lendAssets;
-        uint256 adjustedAssets = FixedPointMathLib.min(assets, userLendAssets);
-        uint256 resultingLendAssets = ownerPosition.lendShares == 0 ? 0 : userLendAssets - adjustedAssets;
-        ownerPosition.lendAssets = resultingLendAssets.toUint128();
+        // user lend assets should be 0 if not shares left (rounding issue)
+        if (ownerLendShares == 0) {
+            ownerPosition.lendAssets = 0;
+        } else {
+            uint256 userLendAssets = ownerPosition.lendAssets;
+            ownerPosition.lendAssets = (userLendAssets - FixedPointMathLib.min(assets, userLendAssets)).toUint128();
+        }
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
+        return assets;
     }
 
     function claimInterest(MarketId id, address receiver, address owner) external payable nonReentrant returns (uint256 assets) {
@@ -199,7 +203,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         uint256 lendShares = ownerPosition.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
         uint256 sharesInterest = ownerPosition.lendShares - lendShares;
 
-        assets = LendImpl.internalWithdraw(market, ownerPosition, sharesInterest, owner, receiver);
+        (assets,) = LendImpl.internalWithdraw(market, ownerPosition, sharesInterest, owner, receiver);
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
