@@ -77,11 +77,11 @@ library InterestImpl {
 
     /// @notice Gets the expected market balances after interest accrual.
     /// @return Updated market balances
-    function getLastMarketState(IDahlia.Market memory market, uint256 lendAssets) internal view returns (IDahlia.Market memory) {
+    function getLastMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 deltaTime = block.timestamp - market.updatedAt;
-        if ((deltaTime != 0 || lendAssets != 0) && totalBorrowAssets != 0 && address(market.irm) != address(0)) {
-            uint256 totalLendAssets = market.totalLendAssets + lendAssets;
+        if (deltaTime != 0 && totalBorrowAssets != 0 && address(market.irm) != address(0)) {
+            uint256 totalLendAssets = market.totalLendAssets;
             uint256 totalLendShares = market.totalLendShares;
             uint256 fullUtilizationRate = market.fullUtilizationRate;
             uint256 reserveFeeRate = market.reserveFeeRate;
@@ -97,6 +97,7 @@ library InterestImpl {
             market.ratePerSec = uint64(newRatePerSec);
             market.totalBorrowAssets += interestEarnedAssets;
             market.totalLendAssets += interestEarnedAssets;
+            market.updatedAt = uint48(block.timestamp);
         }
         return market;
     }
