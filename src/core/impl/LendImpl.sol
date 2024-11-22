@@ -33,19 +33,20 @@ library LendImpl {
 
     function internalWithdraw(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 shares, address owner, address receiver)
         internal
-        returns (uint256)
+        returns (uint256 assets, uint256 ownerLendShares)
     {
-        uint256 assets = shares.toAssetsDown(market.totalLendAssets, market.totalLendShares);
-
-        ownerPosition.lendShares -= shares.toUint128();
-        market.totalLendShares -= shares;
-        market.totalLendAssets -= assets;
-
-        if (market.totalBorrowAssets > market.totalLendAssets) {
-            revert Errors.InsufficientLiquidity(market.totalBorrowAssets, market.totalLendAssets);
+        uint256 totalLendAssets = market.totalLendAssets;
+        uint256 totalLendShares = market.totalLendShares;
+        assets = shares.toAssetsDown(totalLendAssets, totalLendShares);
+        totalLendAssets -= assets;
+        if (market.totalBorrowAssets > totalLendAssets) {
+            revert Errors.InsufficientLiquidity(market.totalBorrowAssets, totalLendAssets);
         }
-        emit IDahlia.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
+        ownerLendShares = ownerPosition.lendShares - shares;
+        ownerPosition.lendShares = ownerLendShares.toUint128();
+        market.totalLendShares = totalLendShares - shares;
+        market.totalLendAssets = totalLendAssets;
 
-        return (assets);
+        emit IDahlia.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
     }
 }
