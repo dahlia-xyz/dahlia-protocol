@@ -533,9 +533,8 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         return dahlia.getMarket(marketId).totalLendAssets;
     }
 
-    /**
-     * @dev See {IERC4626-balanceOf}.
-     */
+    /// @notice Get the amount of shares owned by an account in Dahlia
+    /// @param account The address of the user
     function balanceOfDahlia(address account) public view returns (uint256 lendShares) {
         return dahlia.getPosition(marketId, account).lendShares;
     }
