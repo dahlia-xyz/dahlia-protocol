@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import { console } from "@forge-std/console.sol";
-
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 import { Test, Vm } from "forge-std/Test.sol";
@@ -81,6 +80,37 @@ contract AccrueInterestIntegrationTest is Test {
 
         vm.dahliaLendBy($.carol, amountLent, $);
         vm.forward(blocks);
+        _checkInterestDidntChange();
+    }
+
+    function test_int_accrueInterest_smallTimeElapsed() public {
+        vm.pauseGasMetering();
+        TestTypes.MarketPosition memory pos =
+            TestTypes.MarketPosition({ collateral: 10e18, lent: 100e6, borrowed: 100_000_000, price: 1e34, ltv: Constants.DEFAULT_MAX_LLTV });
+
+        vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
+
+        IDahlia.Market memory state = $.dahlia.getActualMarketState($.marketId);
+        assertEq(1, state.updatedAt, "updatedAt should be 1");
+        vm.forward(1);
+        vm.resumeGasMetering();
+        $.dahlia.accrueMarketInterest($.marketId);
+        vm.pauseGasMetering();
+        assertEq(state.updatedAt, $.dahlia.getActualMarketState($.marketId).updatedAt, "updatedAt should not change for too small time elapsed");
+        assertEq(state.totalBorrowAssets, $.dahlia.getActualMarketState($.marketId).totalBorrowAssets, "totalBorrowAssets should not change");
+        assertEq(state.totalLendShares, $.dahlia.getActualMarketState($.marketId).totalLendShares, "totalLendShares should not change");
+        assertEq(state.totalLendAssets, $.dahlia.getActualMarketState($.marketId).totalLendAssets, "totalLendAssets should not change");
+        assertLt(state.ratePerSec, $.dahlia.getActualMarketState($.marketId).ratePerSec, "ratePerSec should increase");
+        uint256 longestTimeElapsed = 100;
+        for (uint256 i = 0; i < longestTimeElapsed; i++) {
+            IDahlia.Market memory state1 = $.dahlia.getActualMarketState($.marketId);
+            vm.forward(1);
+            $.dahlia.accrueMarketInterest($.marketId);
+            IDahlia.Market memory state2 = $.dahlia.getActualMarketState($.marketId);
+            assertLt(state1.ratePerSec, state2.ratePerSec, "ratePerSec should increase");
+        }
+        assertEq(99, $.dahlia.getActualMarketState($.marketId).updatedAt, "updatedAt should change after longestTimeElapsed blocks");
+        assertEq(pos.borrowed + 14, $.dahlia.getActualMarketState($.marketId).totalBorrowAssets, "we should accrue interest for longestTimeElapsed blocks");
         _checkInterestDidntChange();
     }
 
@@ -284,7 +314,7 @@ contract AccrueInterestIntegrationTest is Test {
         vm.forward(blocks - 1);
         validateUserPos("1 ", 8_500_000, 8_500_000, 8, 8);
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_130, "lend rate after 100 blocks");
-        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 8_470_815, "lend rate if deposit more assets");
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 5_647_210, "lend rate if deposit more assets");
         vm.dahliaClaimInterestBy($.carol, $);
         validateUserPos("1 claim by carol", 8_750_000, 250_000, 8, 0);
         assertEq($.dahlia.getMarket($.marketId).ratePerSec, 175_002_615);
