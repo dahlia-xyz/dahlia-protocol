@@ -36,9 +36,9 @@ library InterestImpl {
         (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
             IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, market.fullUtilizationRate);
 
+        market.fullUtilizationRate = uint64(newFullUtilizationRate);
+        market.ratePerSec = uint64(newRatePerSec);
         if (interestEarnedAssets > 0) {
-            market.fullUtilizationRate = uint64(newFullUtilizationRate);
-            market.ratePerSec = uint64(newRatePerSec);
             market.totalBorrowAssets += interestEarnedAssets;
             market.totalLendAssets += interestEarnedAssets;
 
@@ -89,13 +89,13 @@ library InterestImpl {
             (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
                 IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, fullUtilizationRate);
 
+            market.fullUtilizationRate = uint64(newFullUtilizationRate);
+            market.ratePerSec = uint64(newRatePerSec);
             if (interestEarnedAssets != 0) {
                 uint256 protocolFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
                 uint256 reserveFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
 
                 market.totalLendShares = totalLendShares + protocolFeeShares + reserveFeeShares;
-                market.fullUtilizationRate = uint64(newFullUtilizationRate);
-                market.ratePerSec = uint64(newRatePerSec);
                 market.totalBorrowAssets += interestEarnedAssets;
                 market.totalLendAssets += interestEarnedAssets;
                 market.updatedAt = uint48(block.timestamp);
