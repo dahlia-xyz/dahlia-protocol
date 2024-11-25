@@ -29,9 +29,9 @@ interface IERC20Mint is IERC20 {
 contract DahliaExt is Dahlia {
     constructor(address _owner, address addressRegistry) Dahlia(_owner, addressRegistry) { }
 
-    // function forceChangeMarketLltv(IDahlia.MarketId marketId, uint24 lltv) external {
-    //     markets[marketId].market.lltv = lltv;
-    // }
+    function getActualMarketState(IDahlia.MarketId marketId) external view returns (IDahlia.Market memory) {
+        return markets[marketId].market;
+    }
 }
 
 contract TestContext {
