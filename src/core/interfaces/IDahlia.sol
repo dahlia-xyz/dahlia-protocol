@@ -344,9 +344,8 @@ interface IDahlia {
     /// @param assets Amount of assets to borrow.
     /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the borrowed assets.
-    /// @return assetsBorrowed Amount of assets borrowed.
     /// @return sharesBorrowed Amount of shares minted.
-    function borrow(MarketId id, uint256 assets, address owner, address receiver) external returns (uint256 assetsBorrowed, uint256 sharesBorrowed);
+    function borrow(MarketId id, uint256 assets, address owner, address receiver) external returns (uint256 sharesBorrowed);
 
     /// @notice Supply `collateralAssets` and borrow `borrowAssets` on behalf of a user, sending borrowed assets to a receiver.
     /// @dev Both `collateralAssets` and `borrowAssets` must not be zero.
@@ -355,11 +354,10 @@ interface IDahlia {
     /// @param borrowAssets Amount of assets to borrow.
     /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the borrowed assets.
-    /// @return borrowedAssets Amount of assets borrowed.
     /// @return borrowedShares Amount of shares minted.
     function supplyAndBorrow(MarketId id, uint256 collateralAssets, uint256 borrowAssets, address owner, address receiver)
         external
-        returns (uint256 borrowedAssets, uint256 borrowedShares);
+        returns (uint256 borrowedShares);
 
     /// @notice Repay borrowed assets or shares on behalf of a user and withdraw collateral to a receiver.
     /// @dev Either `repayAssets` or `repayShares` must be zero.

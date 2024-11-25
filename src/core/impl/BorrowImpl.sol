@@ -40,7 +40,9 @@ library BorrowImpl {
 
         // Check if there's enough collateral for withdrawal
         if (ownerPosition.borrowShares > 0) {
-            (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, ownerPosition, 0);
+            uint256 borrowedAssets = SharesMathLib.toAssetsUp(ownerPosition.borrowShares, market.totalBorrowAssets, market.totalBorrowShares);
+            uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
+            uint256 maxBorrowAssets = MarketMath.calcMaxBorrowAssets(collateralPrice, ownerPosition.collateral, market.lltv);
             if (borrowedAssets > maxBorrowAssets) {
                 revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
             }
@@ -50,34 +52,35 @@ library BorrowImpl {
     }
 
     // Borrow assets from the market
-    function internalBorrow(
-        IDahlia.Market storage market,
-        IDahlia.UserPosition storage ownerPosition,
-        uint256 assets,
-        address owner,
-        address receiver,
-        uint256 collateralPrice // Can be 0, will be filled by function if so
-    ) internal returns (uint256, uint256) {
-        uint256 shares = assets.toSharesUp(market.totalBorrowAssets, market.totalBorrowShares);
-
-        // Update borrow values in totals and position
-        ownerPosition.borrowShares += shares.toUint128();
-        market.totalBorrowAssets += assets;
-        market.totalBorrowShares += shares;
+    function internalBorrow(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner, address receiver)
+        internal
+        returns (uint256)
+    {
+        uint256 totalBorrowAssets = market.totalBorrowAssets;
+        uint256 totalLendAssets = market.totalLendAssets;
+        uint256 totalBorrowShares = market.totalBorrowShares;
+        uint256 shares = assets.toSharesUp(totalBorrowAssets, totalBorrowShares);
+        totalBorrowAssets += assets;
 
         // Check for sufficient liquidity
-        if (market.totalBorrowAssets > market.totalLendAssets) {
-            revert Errors.InsufficientLiquidity(market.totalBorrowAssets, market.totalLendAssets);
-        }
+        require(totalBorrowAssets <= totalLendAssets, Errors.InsufficientLiquidity(totalBorrowAssets, totalLendAssets));
+
+        totalBorrowShares += shares;
+        uint256 ownerBorrowShares = ownerPosition.borrowShares + shares;
 
         // Check if user has enough collateral
-        (uint256 borrowedAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, ownerPosition, collateralPrice);
-        if (borrowedAssets > maxBorrowAssets) {
-            revert Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets);
-        }
+        uint256 borrowedAssets = SharesMathLib.toAssetsUp(ownerBorrowShares, totalBorrowAssets, totalBorrowShares);
+        uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
 
+        uint256 maxBorrowAssets = MarketMath.calcMaxBorrowAssets(collateralPrice, ownerPosition.collateral, market.lltv);
+        require(borrowedAssets <= maxBorrowAssets, Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets));
+
+        // Update borrow values in totals and position
+        ownerPosition.borrowShares = ownerBorrowShares.toUint128();
+        market.totalBorrowAssets = totalBorrowAssets;
+        market.totalBorrowShares = totalBorrowShares;
         emit IDahlia.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
-        return (assets, shares);
+        return shares;
     }
 
     // Repay borrowed assets
