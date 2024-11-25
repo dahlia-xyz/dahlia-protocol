@@ -253,10 +253,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         UserPosition storage ownerPosition = positions[owner];
         BorrowImpl.internalSupplyCollateral(market, ownerPosition, collateralAssets, owner);
 
-        IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
-
         borrowedShares = BorrowImpl.internalBorrow(market, ownerPosition, borrowAssets, owner, receiver);
 
+        IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
         IERC20(market.loanToken).safeTransfer(receiver, borrowAssets);
     }
 
