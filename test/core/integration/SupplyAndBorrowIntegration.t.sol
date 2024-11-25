@@ -114,19 +114,15 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
-        (uint256 _assets, uint256 _shares) = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
+        uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        _checkMarketBorrowValid(_assets, _shares, pos.lent, pos.borrowed, expectedBorrowShares);
+        _checkMarketBorrowValid(_shares, pos.lent, pos.borrowed, expectedBorrowShares);
     }
 
-    function _checkMarketBorrowValid(uint256 returnAssets, uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares)
-        internal
-        view
-    {
+    function _checkMarketBorrowValid(uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares) internal view {
         IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
-        assertEq(returnAssets, amountBorrowed, "returned asset amount");
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow share");
@@ -142,10 +138,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
-        IDahlia.UserPosition memory position = $.dahlia.getPosition($.marketId, $.alice);
-        position.collateral = pos.collateral.toUint128();
-        (uint256 borrowAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, pos.price);
-        assertEq(borrowAssets, 0, "no borrow assets");
+        uint256 maxBorrowAssets = MarketMath.calcMaxBorrowAssets(pos.price, pos.collateral, market.lltv);
         assertGt(pos.collateral, 0, "user has collateral");
         assertGt(maxBorrowAssets, 0, "allow to borrow");
         pos.borrowed = maxBorrowAssets;
@@ -158,8 +151,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed / 2, expectedBorrowShares / 2);
         vm.resumeGasMetering();
-        (uint256 _assets, uint256 _shares) = $.dahlia.supplyAndBorrow($.marketId, pos.collateral - 1, pos.borrowed / 2, $.alice, $.bob);
-        assertEq(_assets, pos.borrowed / 2, "returned asset amount");
+        uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral - 1, pos.borrowed / 2, $.alice, $.bob);
         assertEq(_shares, expectedBorrowShares / 2, "returned shares amount");
         vm.pauseGasMetering();
         vm.forward(1); // we expect accrue interest will not allow to borrow second initially allowed

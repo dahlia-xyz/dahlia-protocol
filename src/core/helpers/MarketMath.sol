@@ -94,17 +94,9 @@ library MarketMath {
     }
 
     /// @dev Calculates the maximum amount of assets that can be borrowed based on collateral and LLTV
-    function calcMaxBorrowAssets(IDahlia.Market memory market, IDahlia.UserPosition memory position, uint256 collateralPrice)
-        internal
-        view
-        returns (uint256 borrowedAssets, uint256 maxBorrowAssets)
-    {
-        if (collateralPrice == 0) {
-            collateralPrice = MarketMath.getCollateralPrice(market.oracle);
-        }
-        borrowedAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
-        uint256 totalCollateralCapacity = collateralToLendUp(position.collateral, collateralPrice);
-        maxBorrowAssets = mulPercentUp(totalCollateralCapacity, market.lltv);
+    function calcMaxBorrowAssets(uint256 collateralPrice, uint256 collateral, uint256 lltv) internal pure returns (uint256) {
+        uint256 totalCollateralCapacity = collateralToLendUp(collateral, collateralPrice);
+        return mulPercentUp(totalCollateralCapacity, lltv);
     }
 
     /// @dev Calculates the current Loan-to-Value (LTV) of a borrow position

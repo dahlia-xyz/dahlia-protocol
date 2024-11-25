@@ -223,11 +223,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function borrow(MarketId id, uint256 assets, address owner, address receiver)
-        external
-        isSenderPermitted(owner)
-        returns (uint256 assetsBorrowed, uint256 sharesBorrowed)
-    {
+    function borrow(MarketId id, uint256 assets, address owner, address receiver) external isSenderPermitted(owner) returns (uint256 sharesBorrowed) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -236,16 +232,16 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
-        (assetsBorrowed, sharesBorrowed) = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver, 0);
+        sharesBorrowed = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
 
-        IERC20(market.loanToken).safeTransfer(receiver, assetsBorrowed);
+        IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
 
     // @inheritdoc IDahlia
     function supplyAndBorrow(MarketId id, uint256 collateralAssets, uint256 borrowAssets, address owner, address receiver)
         external
         isSenderPermitted(owner)
-        returns (uint256 borrowedAssets, uint256 borrowedShares)
+        returns (uint256 borrowedShares)
     {
         require(collateralAssets > 0 && borrowAssets > 0, Errors.ZeroAssets());
         require(receiver != address(0), Errors.ZeroAddress());
@@ -259,10 +255,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), collateralAssets);
 
-        (borrowedAssets, borrowedShares) = BorrowImpl.internalBorrow(market, ownerPosition, borrowAssets, owner, receiver, 0);
+        borrowedShares = BorrowImpl.internalBorrow(market, ownerPosition, borrowAssets, owner, receiver);
 
-        IERC20(market.loanToken).safeTransfer(receiver, borrowedAssets);
-        return (borrowedAssets, borrowedShares);
+        IERC20(market.loanToken).safeTransfer(receiver, borrowAssets);
     }
 
     // @inheritdoc IDahlia
@@ -424,7 +419,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market memory market = InterestImpl.getLastMarketState(marketData.market);
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         UserPosition memory position = marketData.userPositions[userAddress];
-        (borrowAssets, maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, collateralPrice);
+        borrowAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
+        maxBorrowAssets = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral, market.lltv);
     }
 
     /// @inheritdoc IDahlia

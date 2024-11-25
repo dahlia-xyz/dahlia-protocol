@@ -116,11 +116,11 @@ contract BorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
-        (uint256 _assets, uint256 _shares) = $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
+        uint256 _shares = $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        _checkMarketBorrowValid(_assets, _shares, pos.lent, pos.borrowed, expectedBorrowShares);
+        _checkMarketBorrowValid(pos.borrowed, _shares, pos.lent, pos.borrowed, expectedBorrowShares);
     }
 
     function _checkMarketBorrowValid(uint256 returnAssets, uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares)
