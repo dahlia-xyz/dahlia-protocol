@@ -419,7 +419,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         UserPosition memory position = marketData.userPositions[userAddress];
         borrowAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
-        maxBorrowAssets = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral, market.lltv);
+        uint256 leftToBorrow = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral, market.lltv) - borrowAssets;
+        uint256 availableLendAssets = market.totalLendAssets - market.totalBorrowAssets;
+        maxBorrowAssets = availableLendAssets.min(leftToBorrow);
     }
 
     /// @inheritdoc IDahlia
