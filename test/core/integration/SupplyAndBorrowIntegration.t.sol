@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
@@ -14,6 +15,7 @@ import { TestTypes } from "test/common/TestTypes.sol";
 
 contract SupplyAndBorrowIntegrationTest is Test {
     using FixedPointMathLib for uint256;
+    using SafeCastLib for uint256;
     using SharesMathLib for uint256;
     using MarketMath for uint256;
     using BoundUtils for Vm;
@@ -26,7 +28,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
 
     function setUp() public {
         ctx = new TestContext(vm);
-        $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
+        $ = ctx.bootstrapMarket("USDC", "WBTC", 80_000);
     }
 
     function test_int_supplyAndBorrow_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
@@ -130,5 +132,44 @@ contract SupplyAndBorrowIntegrationTest is Test {
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow share");
         assertEq($.loanToken.balanceOf($.bob), amountBorrowed, "receiver balance");
         assertEq($.loanToken.balanceOf(address($.dahlia)), amountLent - amountBorrowed, "dahlia balance");
+    }
+
+    function test_int_supplyAndBorrow_WithInterest() public {
+        vm.pauseGasMetering();
+
+        TestTypes.MarketPosition memory pos = TestTypes.MarketPosition({ borrowed: 0, collateral: 1000e18, ltv: 80_000, price: 1e36, lent: 1000e18 });
+        $.oracle.setPrice(pos.price);
+        vm.dahliaLendBy($.carol, pos.lent, $);
+        vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        IDahlia.UserPosition memory position = $.dahlia.getPosition($.marketId, $.alice);
+        position.collateral = pos.collateral.toUint128();
+        (uint256 borrowAssets, uint256 maxBorrowAssets) = MarketMath.calcMaxBorrowAssets(market, position, pos.price);
+        assertEq(borrowAssets, 0, "no borrow assets");
+        assertGt(pos.collateral, 0, "user has collateral");
+        assertGt(maxBorrowAssets, 0, "allow to borrow");
+        pos.borrowed = maxBorrowAssets;
+
+        uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
+
+        vm.startPrank($.alice);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral - 1);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed / 2, expectedBorrowShares / 2);
+        vm.resumeGasMetering();
+        (uint256 _assets, uint256 _shares) = $.dahlia.supplyAndBorrow($.marketId, pos.collateral - 1, pos.borrowed / 2, $.alice, $.bob);
+        assertEq(_assets, pos.borrowed / 2, "returned asset amount");
+        assertEq(_shares, expectedBorrowShares / 2, "returned shares amount");
+        vm.pauseGasMetering();
+        vm.forward(1); // we expect accrue interest will not allow to borrow second initially allowed
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaAccrueInterest($.marketId, 292_291_602, 116_916_640_800, 0, 0);
+        vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientCollateral.selector, 800_000_000_116_916_640_800, 800e18)); // InsufficientCollateral
+        vm.resumeGasMetering();
+        $.dahlia.supplyAndBorrow($.marketId, 1, pos.borrowed / 2, $.alice, $.bob);
+        vm.pauseGasMetering();
+
+        vm.stopPrank();
     }
 }
