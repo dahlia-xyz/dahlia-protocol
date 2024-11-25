@@ -244,6 +244,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketDeployedAndActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
+        _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
         BorrowImpl.internalSupplyCollateral(market, ownerPosition, collateralAssets, owner);
 
