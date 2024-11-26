@@ -64,7 +64,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     /// @inheritdoc IDahlia
     function setLiquidationBonusRateRange(RateRange memory range) external onlyOwner {
-        // The percentage must always be between 0 and 100%, and range.min should be <= range.max.
         require(
             range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE && range.max <= Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE && range.min <= range.max,
             Errors.RangeNotValid(range.min, range.max)

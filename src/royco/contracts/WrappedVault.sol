@@ -289,7 +289,9 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param frontendFeeRecipient The address to reward the frontendFee
     function setRewardsInterval(address reward, uint256 start, uint256 end, uint256 totalRewards, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) revert InvalidReward();
-        if (start >= end || end <= block.timestamp) revert InvalidInterval();
+        if (start >= end) revert InvalidInterval();
+        if (end <= block.timestamp) revert InvalidInterval();
+        if (start == 0) revert InvalidInterval();
         if ((end - start) < MIN_CAMPAIGN_DURATION) revert InvalidIntervalDuration();
 
         RewardsInterval storage rewardsInterval = _rewardToInterval[reward];
