@@ -103,6 +103,44 @@ contract BorrowIntegrationTest is Test {
         $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.alice);
     }
 
+    function test_int_getMaxBorrowableAmount(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
+
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        $.oracle.setPrice(pos.price);
+
+        vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
+        (uint256 borrowAssets1, uint256 maxBorrowAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        assertEq(borrowAssets1, 0, "no borrowed assets yet");
+        assertEq(maxBorrowAssets1, 0, "user can not borrow because no lending assets");
+
+        vm.dahliaLendBy($.carol, 1, $);
+        (uint256 borrowAssets2, uint256 maxBorrowAssets2,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        assertEq(borrowAssets2, 0, "borrowAssets2 no borrowed assets yet");
+        assertEq(maxBorrowAssets2, 1, "user can borrow 1 asset only");
+
+        vm.dahliaLendBy($.carol, pos.lent - 1, $);
+
+        (uint256 borrowAssets3, uint256 maxBorrowAssets3,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        assertEq(borrowAssets3, 0, "borrowAssets3 no borrowed assets yet");
+        assertLe(maxBorrowAssets3, pos.lent, "user can borrow but still less then pos.lent");
+
+        uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
+
+        vm.startPrank($.alice);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        vm.resumeGasMetering();
+        uint256 _shares = $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        (uint256 borrowAssets4, uint256 maxBorrowAssets4,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        assertEq(borrowAssets4, pos.borrowed, "already borrowed asset");
+        assertEq(expectedBorrowShares, _shares, "check shares");
+        assertEq(maxBorrowAssets4, maxBorrowAssets3 - borrowAssets4, "still can borrow");
+    }
+
     function test_int_borrow_byAssets(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
