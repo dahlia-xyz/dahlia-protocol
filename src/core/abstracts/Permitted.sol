@@ -39,7 +39,7 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
     }
 
     /// @inheritdoc IPermitted
-    function updatePermissionWithSig(Data memory data, bytes memory signature) external {
+    function updatePermissionWithSig(Data memory data, bytes calldata signature) external {
         require(block.timestamp <= data.deadline, Errors.SignatureExpired());
         bytes32 digest = hashTypedData(data);
         address recoveredSigner = ECDSA.recover(digest, signature);
