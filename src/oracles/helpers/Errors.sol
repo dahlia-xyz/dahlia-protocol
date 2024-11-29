@@ -3,9 +3,12 @@ pragma solidity ^0.8.27;
 
 /// @title Errors library
 library Errors {
-    /// @dev Thrown when a negative value is encountered.
+    /// @notice Thrown when a negative value is encountered.
     error NegativeAnswer(int256 value);
 
-    /// @dev Thrown when a zero address is provided.
+    /// @notice Uniswap pair is not supported.
+    error PairNotSupported(address baseToken, address quoteToken);
+
+    /// @notice Thrown when a zero address is provided.
     error ZeroAddress();
 }

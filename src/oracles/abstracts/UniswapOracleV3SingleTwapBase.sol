@@ -3,6 +3,8 @@ pragma solidity ^0.8.27;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
+
+import { Errors } from "src/oracles/helpers/Errors.sol";
 import { IUniswapV3SingleTwapOracle } from "src/oracles/interfaces/IUniswapV3SingleTwapOracle.sol";
 
 /// @title UniswapOracleV3SingleTwapBase.sol
@@ -46,6 +48,10 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
         UNISWAP_STATIC_ORACLE_ADDRESS = _uniswapStaticOracle;
         UNISWAP_V3_TWAP_BASE_TOKEN = _params.baseToken;
         UNISWAP_V3_TWAP_QUOTE_TOKEN = _params.quoteToken;
+
+        bool pairSupported = IStaticOracle(UNISWAP_STATIC_ORACLE_ADDRESS).isPairSupported(UNISWAP_V3_TWAP_BASE_TOKEN, UNISWAP_V3_TWAP_QUOTE_TOKEN);
+
+        if (!pairSupported) revert Errors.PairNotSupported(UNISWAP_V3_TWAP_BASE_TOKEN, UNISWAP_V3_TWAP_QUOTE_TOKEN);
     }
 
     /// @dev Internal function to update the TWAP duration
