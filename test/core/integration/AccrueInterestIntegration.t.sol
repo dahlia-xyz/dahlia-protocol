@@ -143,6 +143,11 @@ contract AccrueInterestIntegrationTest is Test {
 
     function test_int_accrueInterest_withFees(TestTypes.MarketPosition memory pos, uint256 blocks, uint32 fee) public {
         vm.pauseGasMetering();
+
+        address reserveAddress = ctx.createWallet("RESERVE_FEE_RECIPIENT");
+        vm.prank($.owner);
+        $.dahlia.setReserveFeeRecipient(reserveAddress);
+
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
@@ -186,7 +191,7 @@ contract AccrueInterestIntegrationTest is Test {
         assertEq(stateAfter.totalLendShares, totalLendSharesBeforeAccrued + protocolFeeShares + reserveFeeShares, "total lend shares");
 
         IDahlia.UserPosition memory userPos1 = $.dahlia.getPosition($.marketId, ctx.wallets("PROTOCOL_FEE_RECIPIENT"));
-        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, ctx.wallets("RESERVE_FEE_RECIPIENT"));
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, reserveAddress);
         assertEq(userPos1.lendShares, protocolFeeShares, "protocolFeeRecipient's lend shares");
         assertEq(userPos.lendShares, reserveFeeShares, "reserveFeeRecipient's lend shares");
         if (interestEarnedAssets > 0) {

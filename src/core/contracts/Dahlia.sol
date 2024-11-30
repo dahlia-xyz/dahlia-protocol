@@ -85,6 +85,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     /// @inheritdoc IDahlia
     function setReserveFeeRate(MarketId id, uint32 newFeeRate) external onlyOwner {
+        require(reserveFeeRecipient != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketDeployed(market.status);

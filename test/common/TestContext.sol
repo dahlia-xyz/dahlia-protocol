@@ -204,7 +204,6 @@ contract TestContext {
         dahlia = new DahliaExt(owner, dahliaRegistry);
         vm.label(address(dahlia), "[ DAHLIA ]");
         dahlia.setProtocolFeeRecipient(createWallet("PROTOCOL_FEE_RECIPIENT"));
-        dahlia.setReserveFeeRecipient(createWallet("RESERVE_FEE_RECIPIENT"));
 
         vm.stopPrank();
         contracts["dahlia"] = address(dahlia);
