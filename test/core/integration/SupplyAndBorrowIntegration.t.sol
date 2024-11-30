@@ -121,6 +121,33 @@ contract SupplyAndBorrowIntegrationTest is Test {
         _checkMarketBorrowValid(_shares, pos.lent, pos.borrowed, expectedBorrowShares);
     }
 
+    function test_int_supplyAndBorrow_onBehalfOfOwner(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
+
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        $.oracle.setPrice(pos.price);
+        vm.dahliaLendBy($.carol, pos.lent, $);
+        vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);
+        uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
+
+        address caller = ctx.createWallet("CALLER");
+        vm.prank($.alice);
+        $.dahlia.updatePermission(caller, true);
+
+        // caller must have possibility to supplyAndBorrow on behalf of alice
+        vm.startPrank(caller);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.SupplyCollateral($.marketId, caller, $.alice, pos.collateral);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaBorrow($.marketId, caller, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        vm.resumeGasMetering();
+        uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        _checkMarketBorrowValid(_shares, pos.lent, pos.borrowed, expectedBorrowShares);
+    }
+
     function _checkMarketBorrowValid(uint256 returnShares, uint256 amountLent, uint256 amountBorrowed, uint256 expectedBorrowShares) internal view {
         IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
         assertEq(returnShares, expectedBorrowShares, "returned shares amount");
