@@ -324,6 +324,18 @@ interface IDahlia {
     /// @return assetsWithdrawn Amount of assets withdrawn.
     function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable returns (uint256 assetsWithdrawn);
 
+    /// @notice Withdraw all `assets` on behalf of a protocol fee recipient.
+    /// @dev Should be invoked through a wrapped vault.
+    /// @param id Market id.
+    /// @return assetsWithdrawn Amount of assets withdrawn.
+    function withdrawProtocolFee(MarketId id) external payable returns (uint256);
+
+    /// @notice Withdraw `shares` on behalf of a reserve fee recipient
+    /// @param id Market id.
+    /// @param shares Amount of shares to burn.
+    /// @return assetsWithdrawn Amount of assets withdrawn.
+    function withdrawReserveFee(MarketId id, uint256 shares) external payable returns (uint256 assetsWithdrawn);
+
     /// @notice Claim accrued interest for the position.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.

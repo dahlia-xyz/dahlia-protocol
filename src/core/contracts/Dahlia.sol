@@ -188,6 +188,34 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return assets;
     }
 
+    /// @inheritdoc IDahlia
+    function withdrawProtocolFee(MarketId id) external payable returns (uint256) {
+        require(protocolFeeRecipient != address(0), Errors.ZeroAddress());
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => UserPosition) storage positions = marketData.userPositions;
+        _accrueMarketInterest(positions, market);
+        UserPosition storage ownerPosition = positions[protocolFeeRecipient];
+
+        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, ownerPosition.lendShares, protocolFeeRecipient, protocolFeeRecipient);
+        IERC20(market.loanToken).safeTransfer(protocolFeeRecipient, assets);
+        return assets;
+    }
+
+    /// @inheritdoc IDahlia
+    function withdrawReserveFee(MarketId id, uint256 shares) external payable isSenderPermitted(reserveFeeRecipient) returns (uint256) {
+        require(reserveFeeRecipient != address(0), Errors.ZeroAddress());
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        mapping(address => UserPosition) storage positions = marketData.userPositions;
+        _accrueMarketInterest(positions, market);
+        UserPosition storage ownerPosition = positions[reserveFeeRecipient];
+
+        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, shares, reserveFeeRecipient, reserveFeeRecipient);
+        IERC20(market.loanToken).safeTransfer(reserveFeeRecipient, assets);
+        return assets;
+    }
+
     function claimInterest(MarketId id, address receiver, address owner) external payable nonReentrant returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
@@ -419,7 +447,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         UserPosition memory position = marketData.userPositions[userAddress];
         borrowAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
-        uint256 leftToBorrow = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral, market.lltv) - borrowAssets;
+        uint256 positionCapacity = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral, market.lltv);
+        uint256 leftToBorrow = positionCapacity > borrowAssets ? positionCapacity - borrowAssets : 0;
         uint256 availableLendAssets = market.totalLendAssets - market.totalBorrowAssets;
         maxBorrowAssets = availableLendAssets.min(leftToBorrow);
     }
