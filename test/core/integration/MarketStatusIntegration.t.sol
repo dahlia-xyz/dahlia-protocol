@@ -103,6 +103,11 @@ contract MarketStatusIntegrationTest is Test {
         vm.prank($.owner);
         vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
         $.dahlia.unpauseMarket($.marketId);
+
+        // check cannot deprecate twice
+        vm.prank($.owner);
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        $.dahlia.deprecateMarket($.marketId);
     }
 
     function validate_checkIsForbiddenToSupplyLendBorrow(bytes memory revertData) internal {
