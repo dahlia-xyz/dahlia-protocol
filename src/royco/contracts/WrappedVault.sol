@@ -171,8 +171,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         // Check if max rewards offered limit has been reached
         if (rewards.length == MAX_REWARDS) revert MaxRewardsReached();
 
-        if (rewardsToken == address(dahlia)) revert InvalidReward();
-
         if (rewardsToken == address(this)) revert InvalidReward();
 
         // Check if reward has already been added to the incentivized vault
