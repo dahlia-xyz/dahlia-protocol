@@ -11,6 +11,10 @@ interface IDahliaRegistry {
     /// @param irm The IRM added.
     event AllowIrm(IIrm indexed irm);
 
+    /// @notice Emitted when an IRM is removed from the registry.
+    /// @param irm The IRM removed.
+    event DisallowIrm(IIrm indexed irm);
+
     /// @notice Emitted when an address is set for an ID.
     /// @param setter Who set the new address.
     /// @param id The ID linked to the new address.
@@ -52,6 +56,10 @@ interface IDahliaRegistry {
     /// @notice Add an IRM address to the registry.
     /// @param irm The IRM address.
     function allowIrm(IIrm irm) external;
+
+    /// @notice Remove an IRM address from the registry.
+    /// @param irm The IRM address.
+    function disallowIrm(IIrm irm) external;
 
     /// @notice Check if an IRM address is allowed for market deployment.
     /// @param irm The IRM address.

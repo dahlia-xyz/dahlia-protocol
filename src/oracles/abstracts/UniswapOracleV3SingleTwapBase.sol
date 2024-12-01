@@ -21,6 +21,13 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
     /// @dev Emitted when the TWAP duration is updated
     event SetTwapDuration(uint256 oldTwapDuration, uint256 newTwapDuration);
 
+    /// @notice Emitted on deploy contract
+    /// @param uniswapV3PairAddress Address of the Uniswap V3 pair
+    /// @param baseToken Base token address
+    /// @param quoteToken Quote token address
+    /// @param uniswapStaticOracle Address of the static oracle
+    event SetParams(address indexed uniswapV3PairAddress, address indexed baseToken, address indexed quoteToken, address uniswapStaticOracle);
+
     /// @notice Address of the Uniswap V3 pair
     address public immutable UNI_V3_PAIR_ADDRESS;
 
@@ -44,10 +51,11 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
     /// @param _uniswapStaticOracle Address of the static oracle
     constructor(OracleParams memory _params, address _uniswapStaticOracle) {
         UNI_V3_PAIR_ADDRESS = _params.uniswapV3PairAddress;
-        twapDuration = _params.twapDuration;
+        _setTwapDuration(_params.twapDuration);
         UNISWAP_STATIC_ORACLE_ADDRESS = _uniswapStaticOracle;
         UNISWAP_V3_TWAP_BASE_TOKEN = _params.baseToken;
         UNISWAP_V3_TWAP_QUOTE_TOKEN = _params.quoteToken;
+        emit SetParams(UNI_V3_PAIR_ADDRESS, UNISWAP_V3_TWAP_BASE_TOKEN, UNISWAP_V3_TWAP_QUOTE_TOKEN, UNISWAP_STATIC_ORACLE_ADDRESS);
 
         bool pairSupported = IStaticOracle(UNISWAP_STATIC_ORACLE_ADDRESS).isPairSupported(UNISWAP_V3_TWAP_BASE_TOKEN, UNISWAP_V3_TWAP_QUOTE_TOKEN);
 

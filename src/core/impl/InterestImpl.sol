@@ -61,8 +61,8 @@ library InterestImpl {
                 market.totalLendShares += reserveFeeShares;
             }
 
-            emit IDahlia.DahliaAccrueInterest(market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
             market.updatedAt = uint48(block.timestamp);
+            emit IDahlia.DahliaAccrueInterest(market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
         }
     }
 

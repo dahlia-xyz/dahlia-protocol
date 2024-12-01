@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -12,8 +11,6 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
  * @notice Implements market deployment and protocol fee
  */
 library ManageMarketImpl {
-    using FixedPointMathLib for uint256;
-
     function setProtocolFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.protocolFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());

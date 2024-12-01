@@ -62,6 +62,10 @@ interface IDahlia {
         mapping(address => UserPosition) userPositions;
     }
 
+    /// @dev Emitted when the DahliaRegistry set.
+    /// @param dahliaRegistry Address of the new reserve fee recipient.
+    event SetDahliaRegistry(address indexed dahliaRegistry);
+
     /// @dev Emitted when the protocol fee rate is updated.
     /// @param id Market id.
     /// @param newFee The updated fee rate.
