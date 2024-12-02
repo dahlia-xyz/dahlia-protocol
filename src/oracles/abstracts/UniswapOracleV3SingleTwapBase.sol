@@ -21,6 +21,10 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
     /// @dev Emitted when the TWAP duration is updated
     event SetTwapDuration(uint256 oldTwapDuration, uint256 newTwapDuration);
 
+    error TwapDurationIsTooShort();
+
+    uint32 public constant MIN_TWAP_DURATION = 300;
+
     /// @notice Address of the Uniswap V3 pair
     address public immutable UNI_V3_PAIR_ADDRESS;
 
@@ -44,7 +48,7 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
     /// @param _uniswapStaticOracle Address of the static oracle
     constructor(OracleParams memory _params, address _uniswapStaticOracle) {
         UNI_V3_PAIR_ADDRESS = _params.uniswapV3PairAddress;
-        twapDuration = _params.twapDuration;
+        _setTwapDuration(_params.twapDuration);
         UNISWAP_STATIC_ORACLE_ADDRESS = _uniswapStaticOracle;
         UNISWAP_V3_TWAP_BASE_TOKEN = _params.baseToken;
         UNISWAP_V3_TWAP_QUOTE_TOKEN = _params.quoteToken;
@@ -57,6 +61,7 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
     /// @dev Internal function to update the TWAP duration
     /// @param _newTwapDuration The new TWAP duration
     function _setTwapDuration(uint32 _newTwapDuration) internal {
+        require(_newTwapDuration >= MIN_TWAP_DURATION, TwapDurationIsTooShort());
         emit SetTwapDuration({ oldTwapDuration: twapDuration, newTwapDuration: _newTwapDuration });
         twapDuration = _newTwapDuration;
     }
