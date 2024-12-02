@@ -423,7 +423,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @param vault The wrapped vault associated with the market.
     function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
         address sender = _msgSender();
-        require(sender == owner() || sender == vault.vaultOwner(), Errors.NotPermitted(sender));
+        require(sender == owner() || sender == vault.owner(), Errors.NotPermitted(sender));
     }
 
     /// @inheritdoc IDahlia

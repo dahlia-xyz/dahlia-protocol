@@ -348,7 +348,7 @@ contract WrappedVaultTest is Test {
         vm.assume(timeElapsed > 7 days && timeElapsed <= 30 days);
 
         uint256 rewardAmount = 1000 * WAD;
-        uint32 start = uint32(bound(start, 1, block.timestamp));
+        start = uint32(bound(start, 1, block.timestamp));
         uint32 duration = 30 days;
 
         testIncentivizedVault.addRewardsToken(address(rewardToken1));

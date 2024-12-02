@@ -578,33 +578,33 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 expectedShares) {
+    function withdraw(uint256 assets, address receiver, address from) external returns (uint256 expectedShares) {
         expectedShares = previewWithdraw(assets);
-        uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, owner);
+        uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, from);
 
         if (assets != actualAssets) revert InvalidWithdrawal();
 
-        emit Withdraw(msg.sender, receiver, owner, assets, expectedShares);
+        emit Withdraw(msg.sender, receiver, from, assets, expectedShares);
     }
 
     /// @inheritdoc IWrappedVault
-    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 _assets) {
+    function redeem(uint256 shares, address receiver, address from) external returns (uint256 _assets) {
         uint256 assets = previewRedeem(shares);
-        (_assets) = _withdraw(msg.sender, shares, receiver, owner);
+        (_assets) = _withdraw(msg.sender, shares, receiver, from);
 
-        emit Withdraw(msg.sender, receiver, owner, assets, shares);
+        emit Withdraw(msg.sender, receiver, from, assets, shares);
     }
 
-    function _withdraw(address caller, uint256 shares, address receiver, address owner) internal virtual returns (uint256 _assets) {
-        if (caller != owner) {
-            uint256 allowed = allowance[owner][caller]; // Saves gas for limited approvals.
+    function _withdraw(address caller, uint256 shares, address receiver, address from) internal virtual returns (uint256 _assets) {
+        if (caller != from) {
+            uint256 allowed = allowance[from][caller]; // Saves gas for limited approvals.
             if (shares > allowed) revert NotOwnerOfVaultOrApproved();
-            if (allowed != type(uint256).max) allowance[owner][caller] = allowed - shares;
+            if (allowed != type(uint256).max) allowance[from][caller] = allowed - shares;
         }
 
-        _burn(owner, shares);
+        _burn(from, shares);
 
-        (_assets) = dahlia.withdraw(marketId, shares, receiver, owner);
+        (_assets) = dahlia.withdraw(marketId, shares, receiver, from);
     }
 
     /// @inheritdoc IWrappedVault
@@ -662,7 +662,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function vaultOwner() external view returns (address) {
+    function owner() public view virtual override(IWrappedVault, Ownable) returns (address result) {
         return super.owner();
     }
 }
