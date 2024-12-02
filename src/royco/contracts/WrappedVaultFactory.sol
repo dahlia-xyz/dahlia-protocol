@@ -17,7 +17,6 @@ contract WrappedVaultFactory is Owned {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
     constructor(address _protocolFeeRecipient, uint256 _protocolFee, uint256 _minimumFrontendFee, address _owner, address _pointsFactory, address _dahlia)
-        payable
         Owned(_owner)
     {
         if (_protocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
@@ -75,21 +74,21 @@ contract WrappedVaultFactory is Owned {
     //////////////////////////////////////////////////////////////*/
 
     /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
-    function updateProtocolFee(uint256 newProtocolFee) external payable onlyOwner {
+    function updateProtocolFee(uint256 newProtocolFee) external onlyOwner {
         if (newProtocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
         protocolFee = newProtocolFee;
         emit ProtocolFeeUpdated(newProtocolFee);
     }
 
     /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults, must be less than MAX_MIN_REFERRAL_FEE
-    function updateMinimumReferralFee(uint256 newMinimumReferralFee) external payable onlyOwner {
+    function updateMinimumReferralFee(uint256 newMinimumReferralFee) external onlyOwner {
         if (newMinimumReferralFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
         minimumFrontendFee = newMinimumReferralFee;
         emit ReferralFeeUpdated(newMinimumReferralFee);
     }
 
     /// @param newRecipient The new protocol fee recipient to set for all incentivized vaults
-    function updateProtocolFeeRecipient(address newRecipient) external payable onlyOwner {
+    function updateProtocolFeeRecipient(address newRecipient) external onlyOwner {
         protocolFeeRecipient = newRecipient;
         emit ProtocolFeeRecipientUpdated(newRecipient);
     }
@@ -105,7 +104,6 @@ contract WrappedVaultFactory is Owned {
     /// @param initialFrontendFee The initial frontend fee for the wrapped vault ()
     function wrapVault(IDahlia.MarketId id, address loanToken, address owner, string calldata name, uint256 initialFrontendFee)
         external
-        payable
         returns (WrappedVault wrappedVault)
     {
         string memory newSymbol = getNextSymbol();
