@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
+import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import { LibString } from "@solady/utils/LibString.sol";
-import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -12,16 +13,29 @@ import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 /// @title WrappedVaultFactory
 /// @author CopyPaste, Jack Corddry, Shivaansh Kapoor
 /// @dev A factory for deploying wrapped vaults, and managing protocol or other fees
-contract WrappedVaultFactory is Owned {
+contract WrappedVaultFactory is Ownable2Step {
+    using Clones for address;
+
+    // Address of the Wrapped Vault's implementation contract
+    address public wrappedVaultImplementation;
+
     /*//////////////////////////////////////////////////////////////
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
-    constructor(address _protocolFeeRecipient, uint256 _protocolFee, uint256 _minimumFrontendFee, address _owner, address _pointsFactory, address _dahlia)
-        Owned(_owner)
-    {
+    constructor(
+        address _wrappedVaultImplementation,
+        address _protocolFeeRecipient,
+        uint256 _protocolFee,
+        uint256 _minimumFrontendFee,
+        address _owner,
+        address _pointsFactory,
+        address _dahlia
+    ) payable Ownable(_owner) {
+        if (_wrappedVaultImplementation.code.length == 0) revert InvalidWrappedVaultImplementation();
         if (_protocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
         if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
 
+        wrappedVaultImplementation = _wrappedVaultImplementation;
         protocolFeeRecipient = _protocolFeeRecipient;
         protocolFee = _protocolFee;
         minimumFrontendFee = _minimumFrontendFee;
@@ -33,8 +47,8 @@ contract WrappedVaultFactory is Owned {
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    uint256 private constant MAX_PROTOCOL_FEE = 0.3e18;
-    uint256 private constant MAX_MIN_REFERRAL_FEE = 0.3e18;
+    uint256 public constant MAX_PROTOCOL_FEE = 0.3e18;
+    uint256 public constant MAX_MIN_REFERRAL_FEE = 0.3e18;
 
     address public immutable pointsFactory;
 
@@ -53,9 +67,11 @@ contract WrappedVaultFactory is Owned {
     /*//////////////////////////////////////////////////////////////
                                INTERFACE
     //////////////////////////////////////////////////////////////*/
+    error InvalidWrappedVaultImplementation();
     error ProtocolFeeTooHigh();
     error ReferralFeeTooHigh();
 
+    event WrappedVaultImplementationUpdated(address newWrappedVaultImplementation);
     event ProtocolFeeUpdated(uint256 newProtocolFee);
     event ReferralFeeUpdated(uint256 newReferralFee);
     event ProtocolFeeRecipientUpdated(address newRecipient);
@@ -72,6 +88,13 @@ contract WrappedVaultFactory is Owned {
     /*//////////////////////////////////////////////////////////////
                              OWNER CONTROLS
     //////////////////////////////////////////////////////////////*/
+
+    /// @param newWrappedVaultImplementation The new address of the Wrapped Vault implementation.
+    function updateWrappedVaultImplementation(address newWrappedVaultImplementation) external payable onlyOwner {
+        if (newWrappedVaultImplementation.code.length == 0) revert InvalidWrappedVaultImplementation();
+        wrappedVaultImplementation = newWrappedVaultImplementation;
+        emit WrappedVaultImplementationUpdated(newWrappedVaultImplementation);
+    }
 
     /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
     function updateProtocolFee(uint256 newProtocolFee) external onlyOwner {
@@ -108,8 +131,9 @@ contract WrappedVaultFactory is Owned {
     {
         string memory newSymbol = getNextSymbol();
         bytes32 salt = keccak256(abi.encodePacked(id, owner, name, initialFrontendFee));
+        wrappedVault = WrappedVault(wrappedVaultImplementation.cloneDeterministic(salt));
         uint8 decimals = IERC20Metadata(loanToken).decimals() + SharesMathLib.VIRTUAL_SHARES_DECIMALS;
-        wrappedVault = new WrappedVault{ salt: salt }(owner, name, newSymbol, dahlia, decimals, id, loanToken, initialFrontendFee, pointsFactory);
+        wrappedVault.initialize(owner, name, newSymbol, dahlia, decimals, id, loanToken, initialFrontendFee, pointsFactory);
 
         incentivizedVaults.push(address(wrappedVault));
         isVault[address(wrappedVault)] = true;

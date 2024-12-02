@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import { Points } from "@royco/Points.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { SafeCast } from "@royco/libraries/SafeCast.sol";
-
+import { Ownable } from "@solady/auth/Ownable.sol";
 import { FixedPointMathLib as SoladyMath } from "@solady/utils/FixedPointMathLib.sol";
-import { Owned } from "@solmate/auth/Owned.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
 import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
@@ -14,13 +13,14 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
-contract WrappedVault is Owned, ERC20, IWrappedVault {
+contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     using SafeTransferLib for ERC20;
     using SafeCast for uint256;
     using FixedPointMathLib for uint256;
@@ -92,9 +92,9 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     uint256 public constant RPT_PRECISION = 1e27;
 
     /// @dev The underlying asset being deposited into the vault
-    ERC20 private immutable DEPOSIT_ASSET;
+    ERC20 private DEPOSIT_ASSET;
     /// @dev The address of the canonical points program factory
-    PointsFactory public immutable POINTS_FACTORY;
+    PointsFactory public POINTS_FACTORY;
     /// @dev The address of the canonical WrappedVault factory
     WrappedVaultFactory public WRAPPED_VAULT_FACTORY;
 
@@ -114,11 +114,11 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @dev Maps a reward (either token or points) to a claimant, to accrued fees
     mapping(address => mapping(address => uint256)) public rewardToClaimantToFees;
 
-    IDahlia public immutable dahlia;
-    IDahlia.MarketId public immutable marketId; // 4 bytes
+    IDahlia public dahlia;
+    IDahlia.MarketId public marketId; // 4 bytes
 
     /*//////////////////////////////////////////////////////////////
-                              CONSTRUCTOR
+                                INITIALIZER
     //////////////////////////////////////////////////////////////*/
 
     /// @param _owner The owner of the incentivized vault
@@ -129,7 +129,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param _marketId The market id in dahlia
     /// @param initialFrontendFee The initial fee set for the frontend out of WAD
     /// @param pointsFactory The canonical factory responsible for deploying all points programs
-    constructor(
+    function initialize(
         address _owner,
         string memory _name,
         string memory _symbol,
@@ -139,7 +139,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         address _asset,
         uint256 initialFrontendFee,
         address pointsFactory
-    ) Owned(_owner) ERC20(_name, _symbol, _decimals) {
+    ) external initializer {
+        _initializeOwner(_owner);
+        _initializeERC20(_name, _symbol, _decimals);
+
         WRAPPED_VAULT_FACTORY = WrappedVaultFactory(msg.sender);
         if (initialFrontendFee < WRAPPED_VAULT_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
 
@@ -660,6 +663,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function vaultOwner() external view returns (address) {
-        return owner;
+        return super.owner();
     }
 }
