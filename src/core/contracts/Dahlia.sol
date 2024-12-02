@@ -365,7 +365,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         BorrowImpl.internalSupplyCollateral(market, marketData.userPositions[owner], assets, owner);
 
-        if (callbackData.length > 0) {
+        if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
             IDahliaSupplyCollateralCallback(msg.sender).onDahliaSupplyCollateral(assets, callbackData);
         }
 
