@@ -262,7 +262,7 @@ contract ManageMarketIntegrationTest is Test {
         IDahlia.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
         assertEq(IDahlia.MarketId.unwrap(marketId), 2);
         IDahlia.Market memory market = $.dahlia.getMarket(marketId);
-        assertEq(market.vault.vaultOwner(), ownerFuzz);
+        assertEq(market.vault.owner(), ownerFuzz);
     }
 
     function test_int_royco_deployWithNoOwner() public {
@@ -273,7 +273,7 @@ contract ManageMarketIntegrationTest is Test {
         assertEq(IDahlia.MarketId.unwrap(marketId), 2);
         IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);
-        assertEq(market.vault.vaultOwner(), $.marketAdmin);
+        assertEq(market.vault.owner(), $.marketAdmin);
         vm.stopPrank();
     }
 }

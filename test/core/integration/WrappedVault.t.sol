@@ -1,10 +1,12 @@
 // SPDX-Liense-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
+import { Ownable as SoladyOwnable } from "@solady/auth/Ownable.sol";
+import { ERC20 } from "@solmate/tokens/ERC20.sol";
+import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
 import { Test, Vm } from "forge-std/Test.sol";
-import { ERC20 } from "lib/solmate/src/tokens/ERC20.sol";
-import { ERC4626 } from "lib/solmate/src/tokens/ERC4626.sol";
 import { FixedPointMathLib } from "lib/solmate/src/utils/FixedPointMathLib.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
@@ -36,10 +38,6 @@ contract WrappedVaultTest is Test {
 
     uint256 constant WAD = 1e18;
 
-    uint256 private constant MAX_REWARDS = 20; // copied from WrappedVault
-    uint256 private constant MIN_CAMPAIGN_DURATION = 1 weeks; // copied from WrappedVault
-    uint256 private constant MAX_PROTOCOL_FEE = 0.3e18; // copied from WrappedVaultFactory
-    uint256 private constant MAX_MIN_REFERRAL_FEE = 0.3e18; // copied from WrappedVault WrappedVaultFactory
     uint256 constant DEFAULT_REFERRAL_FEE = 0.025e18;
     uint256 constant DEFAULT_FRONTEND_FEE = 0.025e18;
     uint256 constant DEFAULT_PROTOCOL_FEE = 0.05e18;
@@ -79,12 +77,12 @@ contract WrappedVaultTest is Test {
 
     function testFactoryUpdateProtocolFees() public {
         vm.startPrank(address(0x8482));
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(0x8482)));
         testFactory.updateProtocolFee(0.01e18);
         vm.stopPrank();
 
         vm.startPrank(testFactory.owner());
-        uint256 maxProtocolFee = MAX_PROTOCOL_FEE;
+        uint256 maxProtocolFee = testFactory.MAX_PROTOCOL_FEE();
         vm.expectRevert(WrappedVaultFactory.ProtocolFeeTooHigh.selector);
         testFactory.updateProtocolFee(maxProtocolFee + 1);
 
@@ -94,12 +92,12 @@ contract WrappedVaultTest is Test {
 
     function testFactoryUpdateReferralFee() public {
         vm.startPrank(address(0x8482));
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(0x8482)));
         testFactory.updateMinimumReferralFee(0.01e18);
         vm.stopPrank();
 
         vm.startPrank(testFactory.owner());
-        uint256 maxMinFee = MAX_MIN_REFERRAL_FEE;
+        uint256 maxMinFee = testFactory.MAX_MIN_REFERRAL_FEE();
         vm.expectRevert(WrappedVaultFactory.ReferralFeeTooHigh.selector);
         testFactory.updateMinimumReferralFee(maxMinFee + 1);
 
@@ -127,13 +125,13 @@ contract WrappedVaultTest is Test {
 
     function testAddRewardTokenUnauthorized(address unauthorized) public {
         vm.assume(unauthorized != address(this));
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(abi.encodeWithSelector(SoladyOwnable.Unauthorized.selector));
         vm.prank(unauthorized);
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
     }
 
     function testAddRewardTokenMaxReached() public {
-        for (uint256 i = 0; i < MAX_REWARDS; i++) {
+        for (uint256 i = 0; i < testIncentivizedVault.MAX_REWARDS(); i++) {
             testIncentivizedVault.addRewardsToken(address(new MockERC20("", "", 6)));
         }
 
@@ -156,7 +154,7 @@ contract WrappedVaultTest is Test {
 
     function testSetRewardsInterval(uint32 start, uint32 duration, uint256 totalRewards) public {
         vm.assume(start != 0);
-        vm.assume(duration >= MIN_CAMPAIGN_DURATION);
+        vm.assume(duration >= testIncentivizedVault.MIN_CAMPAIGN_DURATION());
         vm.assume(duration <= type(uint32).max - start); //If this is not here, then 'end' variable will overflow
         vm.assume(totalRewards > 0 && totalRewards < type(uint96).max);
         vm.assume(totalRewards / duration > 1e6);
@@ -187,7 +185,7 @@ contract WrappedVaultTest is Test {
         uint256 remainingSpace = type(uint32).max - start;
 
         // Get the minimum campaign duration
-        uint256 minCampaignDuration = MIN_CAMPAIGN_DURATION;
+        uint256 minCampaignDuration = testIncentivizedVault.MIN_CAMPAIGN_DURATION();
 
         // Ensure there is enough remaining space for the initial duration
         if (remainingSpace < minCampaignDuration) {
@@ -306,7 +304,7 @@ contract WrappedVaultTest is Test {
             start = uint32(block.timestamp + 10_000);
         }
 
-        vm.assume(duration >= MIN_CAMPAIGN_DURATION);
+        vm.assume(duration >= testIncentivizedVault.MIN_CAMPAIGN_DURATION());
         vm.assume(duration <= type(uint32).max - start); //If this is not here, then 'end' variable will overflow
         vm.assume(totalRewards > 0 && totalRewards < type(uint96).max);
         vm.assume(totalRewards / duration > 1e6);
@@ -319,7 +317,7 @@ contract WrappedVaultTest is Test {
         testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, end, totalRewards, DEFAULT_FEE_RECIPIENT);
 
         vm.startPrank(REGULAR_USER);
-        vm.expectRevert("UNAUTHORIZED");
+        vm.expectRevert(SoladyOwnable.Unauthorized.selector);
         testIncentivizedVault.refundRewardsInterval(address(rewardToken1));
         vm.stopPrank();
 
@@ -345,12 +343,12 @@ contract WrappedVaultTest is Test {
         assertEq(testIncentivizedVault.totalAssets(), depositAmount - withdrawAmount);
     }
 
-    function testRewardsAccrual(uint256 depositAmount, uint32 timeElapsed) public {
+    function testRewardsAccrual(uint32 start, uint256 depositAmount, uint32 timeElapsed) public {
         vm.assume(depositAmount > 1e6 && depositAmount <= type(uint96).max);
         vm.assume(timeElapsed > 7 days && timeElapsed <= 30 days);
 
         uint256 rewardAmount = 1000 * WAD;
-        uint32 start = uint32(block.timestamp);
+        start = uint32(bound(start, 1, block.timestamp));
         uint32 duration = 30 days;
 
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
@@ -461,13 +459,6 @@ contract WrappedVaultTest is Test {
     }
 
     function testRewardsAfterWithdraw(uint256 depositAmount, uint32 timeElapsed, uint256 withdrawAmount) public {
-        // depositAmount = 4076725132;
-        // timeElapsed = 9305;
-        // withdrawAmount = 1294;
-        depositAmount = 68_770_290_467_632_281_537_321_058;
-        timeElapsed = 1;
-        withdrawAmount = 3;
-
         vm.assume(depositAmount > 1e6 && depositAmount <= type(uint96).max);
         vm.assume(timeElapsed > 0 && timeElapsed < 30 days);
         vm.assume(withdrawAmount > 0 && withdrawAmount < depositAmount);
@@ -483,8 +474,7 @@ contract WrappedVaultTest is Test {
 
         uint256 frontendFee = rewardAmount.mulWadDown(testIncentivizedVault.frontendFee());
         uint256 protocolFee = rewardAmount.mulWadDown(testFactory.protocolFee());
-        uint256 rewardsAfterFee = rewardAmount - frontendFee - protocolFee;
-        // uint256 rate = rewardsAfterFee / (end - start);
+        rewardAmount -= frontendFee + protocolFee;
 
         MockERC20(address(token)).mint(REGULAR_USER, depositAmount);
 
@@ -495,10 +485,10 @@ contract WrappedVaultTest is Test {
 
         uint256 supply = testIncentivizedVault.totalSupply();
 
-        //uint256 wshares = testIncentivizedVault.withdraw(withdrawAmount, REGULAR_USER, REGULAR_USER);
+        testIncentivizedVault.withdraw(withdrawAmount, REGULAR_USER, REGULAR_USER);
         vm.stopPrank();
 
-        uint256 expectedRewards = rewardsAfterFee * timeElapsed / duration * shares / supply;
+        uint256 expectedRewards = rewardAmount * timeElapsed / duration * shares / supply;
         assertApproxEqRel(testIncentivizedVault.currentUserRewards(address(rewardToken1), REGULAR_USER), expectedRewards, 5e15);
     }
 

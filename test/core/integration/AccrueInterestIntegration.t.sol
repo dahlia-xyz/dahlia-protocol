@@ -249,6 +249,8 @@ contract AccrueInterestIntegrationTest is Test {
 
     function printUserPos(string memory suffix, address user) public view {
         IDahlia.UserPosition memory pos = $.dahlia.getPosition($.marketId, user);
+        console.log(suffix, ".WrappedVault.balanceOf", WrappedVault(address($.dahlia.getMarket($.marketId).vault)).balanceOf(user));
+        console.log(suffix, ".WrappedVault.balanceOfDahlia", WrappedVault(address($.dahlia.getMarket($.marketId).vault)).balanceOfDahlia(user));
         console.log(suffix, ".lendAssets", pos.lendAssets);
         console.log(suffix, ".lendShares", pos.lendShares);
         console.log(suffix, ".usdc.balance", $.loanToken.balanceOf(user));

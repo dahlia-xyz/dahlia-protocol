@@ -15,6 +15,7 @@ import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -268,7 +269,9 @@ contract TestContext {
         }
 
         address pointsFactory = address(new PointsFactory(roycoOwner));
-        wrappedVaultFactory = new WrappedVaultFactory(protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia));
+        address wrappedVault = address(new WrappedVault());
+        wrappedVaultFactory =
+            new WrappedVaultFactory(wrappedVault, protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia));
 
         vm.startPrank(dahliaOwner);
         DahliaRegistry(dahliaRegistry).setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, address(wrappedVaultFactory));

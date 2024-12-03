@@ -28,5 +28,5 @@ interface IPermitted {
     /// @dev Fails if the signature is reused or invalid
     /// @param data The permission details
     /// @param signature The EIP-712 signature
-    function updatePermissionWithSig(Data calldata data, bytes memory signature) external;
+    function updatePermissionWithSig(Data memory data, bytes calldata signature) external;
 }

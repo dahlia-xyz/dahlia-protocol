@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import { Points } from "@royco/Points.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { SafeCast } from "@royco/libraries/SafeCast.sol";
-import { Owned } from "@solmate/auth/Owned.sol";
+import { Ownable } from "@solady/auth/Ownable.sol";
+import { FixedPointMathLib as SoladyMath } from "@solady/utils/FixedPointMathLib.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
 import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
@@ -12,13 +13,14 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
-contract WrappedVault is Owned, ERC20, IWrappedVault {
+contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     using SafeTransferLib for ERC20;
     using SafeCast for uint256;
     using FixedPointMathLib for uint256;
@@ -39,7 +41,6 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     error MaxRewardsReached();
     error TooFewShares();
     error VaultNotAuthorizedToRewardPoints();
-    error InvalidInterval();
     error IntervalInProgress();
     error IntervalScheduled();
     error NoIntervalInProgress();
@@ -51,6 +52,10 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     error InvalidWithdrawal();
     error InvalidIntervalDuration();
     error NotOwnerOfVaultOrApproved();
+    error IntervalEndBeforeStart();
+    error IntervalEndInPast();
+    error CannotShortenInterval();
+    error IntervalStartIsZero();
 
     /*//////////////////////////////////////////////////////////////
                                 STORAGE
@@ -80,18 +85,18 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @dev The max amount of reward campaigns a user can be involved in
-    uint256 private constant MAX_REWARDS = 20;
+    uint256 public constant MAX_REWARDS = 20;
     /// @dev The minimum duration a reward campaign must last
-    uint256 private constant MIN_CAMPAIGN_DURATION = 1 weeks;
+    uint256 public constant MIN_CAMPAIGN_DURATION = 1 weeks;
     /// @dev RewardsPerToken.accumulated is scaled up to prevent loss of incentives
-    uint256 private constant RPT_PRECISION = 1e27;
+    uint256 public constant RPT_PRECISION = 1e27;
 
     /// @dev The underlying asset being deposited into the vault
-    ERC20 private immutable DEPOSIT_ASSET;
+    ERC20 private DEPOSIT_ASSET;
     /// @dev The address of the canonical points program factory
-    PointsFactory public immutable POINTS_FACTORY;
+    PointsFactory public POINTS_FACTORY;
     /// @dev The address of the canonical WrappedVault factory
-    WrappedVaultFactory public immutable ERC4626I_FACTORY;
+    WrappedVaultFactory public WRAPPED_VAULT_FACTORY;
 
     /// @dev The fee taken by the referring frontend, out of WAD
     uint256 public frontendFee;
@@ -109,11 +114,11 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @dev Maps a reward (either token or points) to a claimant, to accrued fees
     mapping(address => mapping(address => uint256)) public rewardToClaimantToFees;
 
-    IDahlia public immutable dahlia;
-    IDahlia.MarketId public immutable marketId; // 4 bytes
+    IDahlia public dahlia;
+    IDahlia.MarketId public marketId; // 4 bytes
 
     /*//////////////////////////////////////////////////////////////
-                              CONSTRUCTOR
+                                INITIALIZER
     //////////////////////////////////////////////////////////////*/
 
     /// @param _owner The owner of the incentivized vault
@@ -124,7 +129,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param _marketId The market id in dahlia
     /// @param initialFrontendFee The initial fee set for the frontend out of WAD
     /// @param pointsFactory The canonical factory responsible for deploying all points programs
-    constructor(
+    function initialize(
         address _owner,
         string memory _name,
         string memory _symbol,
@@ -134,9 +139,12 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         address _asset,
         uint256 initialFrontendFee,
         address pointsFactory
-    ) Owned(_owner) ERC20(_name, _symbol, _decimals) {
-        ERC4626I_FACTORY = WrappedVaultFactory(msg.sender);
-        if (initialFrontendFee < ERC4626I_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
+    ) external initializer {
+        _initializeOwner(_owner);
+        _initializeERC20(_name, _symbol, _decimals);
+
+        WRAPPED_VAULT_FACTORY = WrappedVaultFactory(msg.sender);
+        if (initialFrontendFee < WRAPPED_VAULT_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
 
         frontendFee = initialFrontendFee;
         dahlia = IDahlia(_dahlia);
@@ -187,7 +195,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
     /// @param newFrontendFee The new front-end fee out of WAD
     function setFrontendFee(uint256 newFrontendFee) public payable onlyOwner {
-        if (newFrontendFee < ERC4626I_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
+        if (newFrontendFee < WRAPPED_VAULT_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
         frontendFee = newFrontendFee;
         emit FrontendFeeUpdated(newFrontendFee);
     }
@@ -245,17 +253,17 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     function extendRewardsInterval(address reward, uint256 rewardsAdded, uint256 newEnd, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) revert InvalidReward();
         RewardsInterval storage rewardsInterval = _rewardToInterval[reward];
-        if (newEnd <= rewardsInterval.end) revert InvalidInterval();
+        if (newEnd <= rewardsInterval.end) revert CannotShortenInterval();
         if (block.timestamp >= rewardsInterval.end) revert NoIntervalInProgress();
         _updateRewardsPerToken(reward);
 
         // Calculate fees
         uint256 frontendFeeTaken = rewardsAdded.mulWadDown(frontendFee);
-        uint256 protocolFeeTaken = rewardsAdded.mulWadDown(ERC4626I_FACTORY.protocolFee());
+        uint256 protocolFeeTaken = rewardsAdded.mulWadDown(WRAPPED_VAULT_FACTORY.protocolFee());
 
         // Make fees available for claiming
         rewardToClaimantToFees[reward][frontendFeeRecipient] += frontendFeeTaken;
-        rewardToClaimantToFees[reward][ERC4626I_FACTORY.protocolFeeRecipient()] += protocolFeeTaken;
+        rewardToClaimantToFees[reward][WRAPPED_VAULT_FACTORY.protocolFeeRecipient()] += protocolFeeTaken;
 
         // Calculate the new rate
 
@@ -265,7 +273,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         uint256 remainingRewards = rewardsInterval.rate * (rewardsInterval.end - newStart);
         uint256 rate = (rewardsAdded - frontendFeeTaken - protocolFeeTaken + remainingRewards) / (newEnd - newStart);
-        rewardsAdded = (rate - rewardsInterval.rate) * (newEnd - newStart) + frontendFeeTaken + protocolFeeTaken;
+        rewardsAdded = rate * (newEnd - newStart) - remainingRewards + frontendFeeTaken + protocolFeeTaken;
 
         if (rate < rewardsInterval.rate) revert RateCannotDecrease();
 
@@ -287,9 +295,9 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     /// @param frontendFeeRecipient The address to reward the frontendFee
     function setRewardsInterval(address reward, uint256 start, uint256 end, uint256 totalRewards, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) revert InvalidReward();
-        if (start >= end) revert InvalidInterval();
-        if (end <= block.timestamp) revert InvalidInterval();
-        if (start == 0) revert InvalidInterval();
+        if (start >= end) revert IntervalEndBeforeStart();
+        if (end <= block.timestamp) revert IntervalEndBeforeStart();
+        if (start == 0) revert IntervalEndBeforeStart();
         if ((end - start) < MIN_CAMPAIGN_DURATION) revert InvalidIntervalDuration();
 
         RewardsInterval storage rewardsInterval = _rewardToInterval[reward];
@@ -306,11 +314,11 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
 
         // Calculate fees
         uint256 frontendFeeTaken = totalRewards.mulWadDown(frontendFee);
-        uint256 protocolFeeTaken = totalRewards.mulWadDown(ERC4626I_FACTORY.protocolFee());
+        uint256 protocolFeeTaken = totalRewards.mulWadDown(WRAPPED_VAULT_FACTORY.protocolFee());
 
         // Make fees available for claiming
         rewardToClaimantToFees[reward][frontendFeeRecipient] += frontendFeeTaken;
-        rewardToClaimantToFees[reward][ERC4626I_FACTORY.protocolFeeRecipient()] += protocolFeeTaken;
+        rewardToClaimantToFees[reward][WRAPPED_VAULT_FACTORY.protocolFeeRecipient()] += protocolFeeTaken;
 
         // Calculate the rate
         uint256 rate = (totalRewards - frontendFeeTaken - protocolFeeTaken) / (end - start);
@@ -374,7 +382,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
         // The rewards per token are scaled up for precision
         uint256 elapsedScaled = elapsed * RPT_PRECISION;
         // Calculate and update the new value of the accumulator.
-        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (elapsedScaled.mulDivDown(rewardsInterval_.rate, totalSupply)));
+        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (SoladyMath.fullMulDiv(elapsedScaled, rewardsInterval_.rate, totalSupply)));
 
         return rewardsPerTokenOut;
     }
@@ -570,33 +578,33 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 expectedShares) {
+    function withdraw(uint256 assets, address receiver, address from) external returns (uint256 expectedShares) {
         expectedShares = previewWithdraw(assets);
-        uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, owner);
+        uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, from);
 
         if (assets != actualAssets) revert InvalidWithdrawal();
 
-        emit Withdraw(msg.sender, receiver, owner, assets, expectedShares);
+        emit Withdraw(msg.sender, receiver, from, assets, expectedShares);
     }
 
     /// @inheritdoc IWrappedVault
-    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 _assets) {
+    function redeem(uint256 shares, address receiver, address from) external returns (uint256 _assets) {
         uint256 assets = previewRedeem(shares);
-        (_assets) = _withdraw(msg.sender, shares, receiver, owner);
+        (_assets) = _withdraw(msg.sender, shares, receiver, from);
 
-        emit Withdraw(msg.sender, receiver, owner, assets, shares);
+        emit Withdraw(msg.sender, receiver, from, assets, shares);
     }
 
-    function _withdraw(address caller, uint256 shares, address receiver, address owner) internal virtual returns (uint256 _assets) {
-        if (caller != owner) {
-            uint256 allowed = allowance[owner][caller]; // Saves gas for limited approvals.
+    function _withdraw(address caller, uint256 shares, address receiver, address from) internal virtual returns (uint256 _assets) {
+        if (caller != from) {
+            uint256 allowed = allowance[from][caller]; // Saves gas for limited approvals.
             if (shares > allowed) revert NotOwnerOfVaultOrApproved();
-            if (allowed != type(uint256).max) allowance[owner][caller] = allowed - shares;
+            if (allowed != type(uint256).max) allowance[from][caller] = allowed - shares;
         }
 
-        _burn(owner, shares);
+        _burn(from, shares);
 
-        (_assets) = dahlia.withdraw(marketId, shares, receiver, owner);
+        (_assets) = dahlia.withdraw(marketId, shares, receiver, from);
     }
 
     /// @inheritdoc IWrappedVault
@@ -654,7 +662,7 @@ contract WrappedVault is Owned, ERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function vaultOwner() external view returns (address) {
-        return owner;
+    function owner() public view virtual override(IWrappedVault, Ownable) returns (address result) {
+        return super.owner();
     }
 }

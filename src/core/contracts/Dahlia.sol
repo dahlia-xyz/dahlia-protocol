@@ -175,7 +175,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable nonReentrant returns (uint256) {
+    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external nonReentrant returns (uint256) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -201,7 +201,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function withdrawProtocolFee(MarketId id) external payable returns (uint256) {
+    function withdrawProtocolFee(MarketId id) external returns (uint256) {
         require(protocolFeeRecipient != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -215,7 +215,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function withdrawReserveFee(MarketId id, uint256 shares) external payable isSenderPermitted(reserveFeeRecipient) returns (uint256) {
+    function withdrawReserveFee(MarketId id, uint256 shares) external isSenderPermitted(reserveFeeRecipient) returns (uint256) {
         require(reserveFeeRecipient != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -228,7 +228,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return assets;
     }
 
-    function claimInterest(MarketId id, address receiver, address owner) external payable nonReentrant returns (uint256 assets) {
+    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -377,7 +377,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         BorrowImpl.internalSupplyCollateral(market, marketData.userPositions[owner], assets, owner);
 
-        if (callbackData.length > 0) {
+        if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
             IDahliaSupplyCollateralCallback(msg.sender).onDahliaSupplyCollateral(assets, callbackData);
         }
 
@@ -435,7 +435,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @param vault The wrapped vault associated with the market.
     function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
         address sender = _msgSender();
-        require(sender == owner() || sender == vault.vaultOwner(), Errors.NotPermitted(sender));
+        require(sender == owner() || sender == vault.owner(), Errors.NotPermitted(sender));
     }
 
     /// @inheritdoc IDahlia

@@ -175,6 +175,8 @@ contract WrappedVaultTakeRewardsTest is Test {
         console.log("undistributed rewards:", rewardToken1.balanceOf(address(testIncentivizedVault)));
         console.log("user1 rewards:        ", rewardToken1.balanceOf($.alice));
         console.log("user2 rewards:        ", rewardToken1.balanceOf($.bob));
+        console.log("balanceOf(user1)", testIncentivizedVault.balanceOf($.alice));
+        console.log("balanceOfDahlia(user1)", testIncentivizedVault.balanceOfDahlia($.alice));
         vm.stopPrank();
     }
 }
