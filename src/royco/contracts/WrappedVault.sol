@@ -34,7 +34,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     event RewardsPerTokenUpdated(address reward, uint256 accumulated);
     event UserRewardsUpdated(address reward, address user, uint256 accumulated, uint256 checkpoint);
     event Claimed(address reward, address user, address receiver, uint256 claimed);
-    event FeesClaimed(address claimant, address incentiveToken);
+    event FeesClaimed(address claimant, address incentiveToken, uint256 owed);
     event RewardsTokenAdded(address reward);
     event FrontendFeeUpdated(uint256 frontendFee);
 
@@ -216,7 +216,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         uint256 owed = rewardToClaimantToFees[reward][msg.sender];
         delete rewardToClaimantToFees[reward][msg.sender];
         pushReward(reward, to, owed);
-        emit FeesClaimed(msg.sender, reward);
+        emit FeesClaimed(msg.sender, reward, owed);
     }
 
     /// @param reward The reward token / points program

@@ -20,7 +20,7 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
     /// @inheritdoc IDahliaRegistry
     function setAddress(uint256 id, address _addr) external onlyOwner {
         addresses[id] = _addr;
-        emit SetAddress(msg.sender, id, _addr);
+        emit SetAddress(id, _addr);
     }
 
     /// @inheritdoc IDahliaRegistry
@@ -30,7 +30,7 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
 
     function _setValue(uint256 id, uint256 _val) internal {
         values[id] = _val;
-        emit SetValue(msg.sender, id, _val);
+        emit SetValue(id, _val);
     }
 
     /// @inheritdoc IDahliaRegistry

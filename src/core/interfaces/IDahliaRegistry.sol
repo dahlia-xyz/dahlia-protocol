@@ -16,16 +16,14 @@ interface IDahliaRegistry {
     event DisallowIrm(IIrm indexed irm);
 
     /// @notice Emitted when an address is set for an ID.
-    /// @param setter Who set the new address.
     /// @param id The ID linked to the new address.
     /// @param newAddress The new address.
-    event SetAddress(address indexed setter, uint256 indexed id, address newAddress);
+    event SetAddress(uint256 indexed id, address newAddress);
 
     /// @notice Emitted when a value is set for an ID.
-    /// @param setter Who set the new value.
     /// @param id The ID linked to the new value.
     /// @param newValue The new value.
-    event SetValue(address indexed setter, uint256 indexed id, uint256 newValue);
+    event SetValue(uint256 indexed id, uint256 newValue);
 
     /// @notice Get the address linked to an ID.
     /// @param id The ID to check.
