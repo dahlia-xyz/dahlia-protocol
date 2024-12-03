@@ -72,5 +72,22 @@ contract DahliaRegistryTest is Test {
         vm.expectEmit(true, true, true, true, address(registry));
         emit IDahliaRegistry.AllowIrm(irmFuzz);
         registry.allowIrm(irmFuzz);
+
+        assertEq(registry.isIrmAllowed(irmFuzz), true);
+    }
+
+    function test_unit_registry_disallowIrm(IIrm irmFuzz) public {
+        vm.assume(!registry.isIrmAllowed(irmFuzz));
+        vm.prank(owner);
+        registry.allowIrm(irmFuzz);
+
+        assertEq(registry.isIrmAllowed(irmFuzz), true);
+
+        vm.prank(owner);
+        vm.expectEmit(true, true, true, true, address(registry));
+        emit IDahliaRegistry.DisallowIrm(irmFuzz);
+        registry.disallowIrm(irmFuzz);
+
+        assertEq(registry.isIrmAllowed(irmFuzz), false);
     }
 }

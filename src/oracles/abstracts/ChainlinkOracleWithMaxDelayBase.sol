@@ -28,6 +28,10 @@ abstract contract ChainlinkOracleWithMaxDelayBase is IChainlinkOracleWithMaxDela
     /// @param newMaxDelays The new max oracle delay settings
     event SetMaximumOracleDelay(Delays oldMaxDelays, Delays newMaxDelays);
 
+    /// @notice Emitted on deploy contract
+    /// @param params Initial params
+    event SetParams(Params params);
+
     uint256 public immutable ORACLE_PRECISION;
 
     Params public params;
@@ -38,7 +42,8 @@ abstract contract ChainlinkOracleWithMaxDelayBase is IChainlinkOracleWithMaxDela
         require(address(_params.quoteToken) != address(0), Errors.ZeroAddress());
 
         params = _params;
-        _maxDelays = delays;
+        emit SetParams(_params);
+        _setMaximumOracleDelays(delays);
 
         uint256 baseTokenDecimals = IERC20Metadata(params.baseToken).decimals();
         uint256 quoteTokenDecimals = IERC20Metadata(params.quoteToken).decimals();

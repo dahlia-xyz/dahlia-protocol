@@ -48,18 +48,28 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     constructor(address _owner, address addressRegistry) Ownable(_owner) {
         require(addressRegistry != address(0), Errors.ZeroAddress());
         dahliaRegistry = IDahliaRegistry(addressRegistry);
-        protocolFeeRecipient = _owner;
-        lltvRange = RateRange(Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
-        liquidationBonusRateRange = RateRange(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE);
+        emit SetDahliaRegistry(addressRegistry);
+
+        _setProtocolFeeRecipient(_owner);
+        _setLltvRange(RateRange(Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV));
+        _setLiquidationBonusRateRange(RateRange(Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE));
+    }
+
+    function _setLltvRange(RateRange memory range) internal {
+        lltvRange = range;
+        emit SetLLTVRange(range.min, range.max);
     }
 
     /// @inheritdoc IDahlia
     function setLltvRange(RateRange memory range) external onlyOwner {
         // The percentage must always be between 0 and 100%, and min LTV should be <= max LTV.
         require(range.min > 0 && range.max < Constants.LLTV_100_PERCENT && range.min <= range.max, Errors.RangeNotValid(range.min, range.max));
-        lltvRange = range;
+        _setLltvRange(range);
+    }
 
-        emit SetLLTVRange(range.min, range.max);
+    function _setLiquidationBonusRateRange(RateRange memory range) internal {
+        liquidationBonusRateRange = range;
+        emit SetLiquidationBonusRateRange(range.min, range.max);
     }
 
     /// @inheritdoc IDahlia
@@ -68,9 +78,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             range.min >= Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE && range.max <= Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE && range.min <= range.max,
             Errors.RangeNotValid(range.min, range.max)
         );
-        liquidationBonusRateRange = range;
-
-        emit SetLiquidationBonusRateRange(range.min, range.max);
+        _setLiquidationBonusRateRange(range);
     }
 
     /// @inheritdoc IDahlia
@@ -94,12 +102,16 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         ManageMarketImpl.setReserveFeeRate(market, newFeeRate);
     }
 
+    function _setProtocolFeeRecipient(address newProtocolFeeRecipient) internal {
+        protocolFeeRecipient = newProtocolFeeRecipient;
+        emit SetProtocolFeeRecipient(newProtocolFeeRecipient);
+    }
+
     /// @inheritdoc IDahlia
     function setProtocolFeeRecipient(address newProtocolFeeRecipient) external onlyOwner {
         require(newProtocolFeeRecipient != address(0), Errors.ZeroAddress());
         require(newProtocolFeeRecipient != protocolFeeRecipient, Errors.AlreadySet());
-        protocolFeeRecipient = newProtocolFeeRecipient;
-        emit SetProtocolFeeRecipient(newProtocolFeeRecipient);
+        _setProtocolFeeRecipient(newProtocolFeeRecipient);
     }
 
     /// @inheritdoc IDahlia

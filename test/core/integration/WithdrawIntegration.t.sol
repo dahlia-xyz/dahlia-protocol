@@ -131,7 +131,7 @@ contract WithdrawIntegrationTest is Test {
 
         (uint256 borrowedAssets,,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
         vm.dahliaPrepareLoanBalanceFor($.alice, borrowedAssets, $);
-        vm.dahliaRepayBy($.alice, borrowedAssets - 1, $);
+        vm.dahliaRepayBy($.alice, borrowedAssets, $);
 
         IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 protocolFeeShares = $.dahlia.getPosition($.marketId, protocolRecipient).lendShares;
@@ -168,7 +168,7 @@ contract WithdrawIntegrationTest is Test {
 
         (uint256 borrowedAssets,,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
         vm.dahliaPrepareLoanBalanceFor($.alice, borrowedAssets, $);
-        vm.dahliaRepayBy($.alice, borrowedAssets - 1, $);
+        vm.dahliaRepayBy($.alice, borrowedAssets, $);
 
         IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 reserveFeeShares = $.dahlia.getPosition($.marketId, reserveRecipient).lendShares;

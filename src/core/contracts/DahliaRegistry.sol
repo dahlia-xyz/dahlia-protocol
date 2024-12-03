@@ -14,13 +14,13 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
     mapping(IIrm => bool) public isIrmAllowed;
 
     constructor(address _owner) Ownable(_owner) {
-        values[Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE] = 0.02e18;
+        _setValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE, 0.02e18);
     }
 
     /// @inheritdoc IDahliaRegistry
     function setAddress(uint256 id, address _addr) external onlyOwner {
         addresses[id] = _addr;
-        emit SetAddress(msg.sender, id, _addr);
+        emit SetAddress(id, _addr);
     }
 
     /// @inheritdoc IDahliaRegistry
@@ -28,10 +28,14 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
         return addresses[id];
     }
 
+    function _setValue(uint256 id, uint256 _val) internal {
+        values[id] = _val;
+        emit SetValue(id, _val);
+    }
+
     /// @inheritdoc IDahliaRegistry
     function setValue(uint256 id, uint256 _val) external onlyOwner {
-        emit SetValue(msg.sender, id, _val);
-        values[id] = _val;
+        _setValue(id, _val);
     }
 
     /// @inheritdoc IDahliaRegistry
@@ -49,10 +53,15 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
 
     /// @inheritdoc IDahliaRegistry
     function allowIrm(IIrm irm) external onlyOwner {
-        if (isIrmAllowed[irm]) {
-            revert Errors.AlreadySet();
-        }
+        require(!isIrmAllowed[irm], Errors.AlreadySet());
         isIrmAllowed[irm] = true;
-        emit IDahliaRegistry.AllowIrm(irm);
+        emit AllowIrm(irm);
+    }
+
+    /// @inheritdoc IDahliaRegistry
+    function disallowIrm(IIrm irm) external onlyOwner {
+        require(isIrmAllowed[irm], Errors.IrmNotAllowed());
+        delete isIrmAllowed[irm];
+        emit DisallowIrm(irm);
     }
 }
