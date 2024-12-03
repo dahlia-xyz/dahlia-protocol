@@ -588,9 +588,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function redeem(uint256 shares, address receiver, address from) external returns (uint256 _assets) {
-        uint256 assets = previewRedeem(shares);
-        (_assets) = _withdraw(msg.sender, shares, receiver, from);
+    function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets) {
+        (assets) = _withdraw(msg.sender, shares, receiver, from);
 
         emit Withdraw(msg.sender, receiver, from, assets, shares);
     }
