@@ -189,11 +189,14 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         (uint256 assets, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
 
         // user lend assets should be 0 if not shares left (rounding issue)
+        uint256 userLendAssets = ownerPosition.lendPrincipalAssets;
         if (ownerLendShares == 0) {
-            ownerPosition.lendAssets = 0;
+            ownerPosition.lendPrincipalAssets = 0;
+            market.totalLendPrincipalAssets -= userLendAssets;
         } else {
-            uint256 userLendAssets = ownerPosition.lendAssets;
-            ownerPosition.lendAssets = (userLendAssets - FixedPointMathLib.min(assets, userLendAssets)).toUint128();
+            uint256 userLendAssetsDown = FixedPointMathLib.min(assets, userLendAssets);
+            ownerPosition.lendPrincipalAssets = (userLendAssets - userLendAssetsDown).toUint128();
+            market.totalLendPrincipalAssets -= userLendAssetsDown;
         }
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
@@ -228,6 +231,33 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return assets;
     }
 
+    function transferLendShares(MarketId id, address owner, address receiver, uint256 shares) public returns (bool) {
+        require(receiver != address(0), Errors.ZeroAddress());
+        MarketData storage marketData = markets[id];
+        Market storage market = marketData.market;
+        IWrappedVault vault = market.vault;
+        _permittedByWrappedVault(vault);
+        mapping(address => UserPosition) storage positions = marketData.userPositions;
+        UserPosition storage ownerPosition = positions[owner];
+        UserPosition storage receiverPosition = positions[receiver];
+        uint256 assets = shares.toAssetsDown(market.totalLendAssets, market.totalLendShares);
+        uint256 newOwnerLendShares = ownerPosition.lendShares - shares;
+
+        uint256 ownerLendPrincipalAssets = ownerPosition.lendPrincipalAssets;
+        if (newOwnerLendShares == 0) {
+            receiverPosition.lendPrincipalAssets += ownerLendPrincipalAssets.toUint128(); // transfer all if no shares left
+            ownerPosition.lendPrincipalAssets = 0;
+        } else {
+            uint256 ownerLendPrincipalAssetsDown = FixedPointMathLib.min(assets, ownerLendPrincipalAssets);
+            ownerPosition.lendPrincipalAssets = (ownerLendPrincipalAssets - ownerLendPrincipalAssetsDown).toUint128();
+            receiverPosition.lendPrincipalAssets += ownerLendPrincipalAssetsDown.toUint128();
+        }
+        ownerPosition.lendShares = newOwnerLendShares.toUint128();
+        receiverPosition.lendShares += shares.toUint128();
+
+        return true;
+    }
+
     function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
@@ -241,7 +271,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
-        uint256 lendShares = ownerPosition.lendAssets.toSharesDown(totalLendAssets, totalLendShares);
+        uint256 lendShares = ownerPosition.lendPrincipalAssets.toSharesDown(totalLendAssets, totalLendShares);
         uint256 sharesInterest = ownerPosition.lendShares - lendShares;
 
         (assets,) = LendImpl.internalWithdraw(market, ownerPosition, sharesInterest, owner, receiver);
@@ -479,7 +509,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         UserPosition memory position = marketData.userPositions[userAddress];
         Market memory state = InterestImpl.getLastMarketState(marketData.market);
-        uint256 lendShares = position.lendAssets.toSharesDown(state.totalLendAssets, state.totalLendShares);
+        uint256 lendShares = position.lendPrincipalAssets.toSharesDown(state.totalLendAssets, state.totalLendShares);
         shares = position.lendShares - lendShares;
         assets = shares.toAssetsDown(state.totalLendAssets, state.totalLendShares);
     }

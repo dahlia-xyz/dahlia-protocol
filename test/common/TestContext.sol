@@ -44,6 +44,8 @@ contract TestContext {
         address alice;
         address bob;
         address carol;
+        address protocolFeeRecipient;
+        address reserveFeeRecipient;
         address marketAdmin;
         address royco;
         address owner;
@@ -88,6 +90,8 @@ contract TestContext {
         v.owner = createWallet("OWNER");
         v.marketAdmin = createWallet("MARKET_ADMIN");
         v.royco = createWallet("ROYCO");
+        v.protocolFeeRecipient = createWallet("PROTOCOL_FEE_RECIPIENT");
+        v.reserveFeeRecipient = createWallet("RESERVE_FEE_RECIPIENT");
         v.permitted = new address[](2);
         v.permitted[0] = v.owner;
         v.permitted[1] = v.marketAdmin;
