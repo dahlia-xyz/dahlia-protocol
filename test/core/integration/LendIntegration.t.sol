@@ -74,6 +74,8 @@ contract LendIntegrationTest is Test {
         assertEq(userPos.lendShares, expectedLendShares, "supply shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, amount, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedLendShares, "total supply shares");
+        assertEq($.dahlia.getMarket($.marketId).totalLendPrincipalAssets, amount, "total principal assets");
+        assertEq($.dahlia.getPosition($.marketId, $.bob).lendPrincipalAssets, amount, "user principal assets");
         assertEq($.loanToken.balanceOf($.alice), 0, "Alice balance");
         assertEq($.loanToken.balanceOf(address($.dahlia)), amount, "Dahlia balance");
     }

@@ -152,7 +152,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         DEPOSIT_ASSET = ERC20(_asset);
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
-        _mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
+        //_mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
     }
@@ -375,6 +375,11 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         // No changes if no time has passed
         if (elapsed == 0) return rewardsPerTokenOut;
+
+        // No changes if there are no stakers
+        uint256 _totalPrincipal = totalPrincipal();
+        if (_totalPrincipal == 0) return rewardsPerTokenOut;
+
         rewardsPerTokenOut.lastUpdated = updateTime.toUint32();
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
@@ -382,7 +387,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         // The rewards per token are scaled up for precision
         uint256 elapsedScaled = elapsed * RPT_PRECISION;
         // Calculate and update the new value of the accumulator.
-        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (SoladyMath.fullMulDiv(elapsedScaled, rewardsInterval_.rate, totalSupply)));
+        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (SoladyMath.fullMulDiv(elapsedScaled, rewardsInterval_.rate, _totalPrincipal)));
 
         return rewardsPerTokenOut;
     }
@@ -427,7 +432,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         if (userRewards_.checkpoint == rewardsPerToken_.accumulated) return userRewards_;
 
         // Calculate and update the new value user reserves.
-        userRewards_.accumulated += _calculateUserRewards(balanceOf[user], userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
+        userRewards_.accumulated += _calculateUserRewards(principal(user), userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
         userRewards_.checkpoint = rewardsPerToken_.accumulated;
 
         rewardToUserToAR[reward][user] = userRewards_;
@@ -437,16 +442,16 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @dev Mint tokens, after accumulating rewards for an user and update the rewards per token accumulator.
-    function _mint(address to, uint256 amount) internal virtual override {
-        _updateUserRewards(to);
-        super._mint(to, amount);
-    }
+    //    function _mint(address to) internal {
+    //        _updateUserRewards(to);
+    //        super._mint(to, amount);
+    //    }
 
     /// @dev Burn tokens, after accumulating rewards for an user and update the rewards per token accumulator.
-    function _burn(address from, uint256 amount) internal virtual override {
-        _updateUserRewards(from);
-        super._burn(from, amount);
-    }
+    //    function _burn(address from) internal {
+    //        _updateUserRewards(from);
+    //        super._burn(from, amount);
+    //    }
 
     /// @notice Claim rewards for an user
     function _claim(address reward, address from, address to, uint256 amount) internal virtual {
@@ -461,16 +466,40 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @dev Transfer tokens, after updating rewards for source and destination.
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        _updateUserRewards(msg.sender);
-        _updateUserRewards(to);
-        return super.transfer(to, amount);
+        return _transfer(msg.sender, to, amount);
     }
 
     /// @dev Transfer tokens, after updating rewards for source and destination.
     function transferFrom(address from, address to, uint256 amount) public virtual override returns (bool) {
+        _spendAllowance(from, amount);
+        return _transfer(from, to, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal returns (bool) {
         _updateUserRewards(from);
         _updateUserRewards(to);
-        return super.transferFrom(from, to, amount);
+        dahlia.transferLendShares(marketId, from, to, amount);
+        emit Transfer(from, to, amount);
+        return true;
+    }
+
+    /**
+     * @notice copied from OpenZeppelin ERC20.sol
+     * @dev Updates `from` s allowance for `spender` based on spent `value`.
+     *
+     * Does not update the allowance value in case of infinite allowance.
+     * Revert if not enough allowance is available.
+     *
+     * Does not emit an {Approval} event.
+     */
+    function _spendAllowance(address from, uint256 value) internal virtual {
+        uint256 currentAllowance = allowance[from][msg.sender];
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= value, ERC20InsufficientAllowance(msg.sender, currentAllowance, value));
+            unchecked {
+                _approve(from, msg.sender, currentAllowance - value, false);
+            }
+        }
     }
 
     /// @notice Allows the owner to claim the rewards from the burned shares
@@ -506,7 +535,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     function currentUserRewards(address reward, address user) public view returns (uint256) {
         UserRewards memory accumulatedRewards_ = rewardToUserToAR[reward][user];
         RewardsPerToken memory rewardsPerToken_ = _calculateRewardsPerToken(rewardToRPT[reward], _rewardToInterval[reward]);
-        return accumulatedRewards_.accumulated + _calculateUserRewards(balanceOf[user], accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
+        return accumulatedRewards_.accumulated + _calculateUserRewards(principal(user), accumulatedRewards_.checkpoint, rewardsPerToken_.accumulated);
     }
 
     /// @notice Calculates the rate a user would receive in rewards after depositing assets
@@ -514,9 +543,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     function previewRateAfterDeposit(address reward, uint256 assets) public view returns (uint256) {
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
         if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return 0;
-        uint256 shares = previewDeposit(assets);
 
-        uint256 rewardsRate = (uint256(rewardsInterval.rate) * shares / (totalSupply + shares)) * 1e18 / assets;
+        uint256 rewardsRate = (uint256(rewardsInterval.rate) * assets / (totalPrincipal() + assets)) * 1e18 / assets;
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(marketId, assets);
@@ -539,10 +567,23 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         return dahlia.getMarket(marketId).totalLendAssets;
     }
 
-    /**
-     * @dev See {IERC4626-balanceOf}.
-     */
-    function balanceOfDahlia(address account) public view returns (uint256 lendShares) {
+    /// @inheritdoc IWrappedVault
+    function principal(address account) public view returns (uint256) {
+        return dahlia.getPosition(marketId, account).lendPrincipalAssets;
+    }
+
+    /// @inheritdoc IWrappedVault
+    function totalPrincipal() public view returns (uint256) {
+        return dahlia.getMarket(marketId).totalLendPrincipalAssets;
+    }
+
+    /// @dev See {IERC4626-balanceOf}.
+    function totalSupply() public view returns (uint256 result) {
+        return dahlia.getMarket(marketId).totalLendShares;
+    }
+
+    /// @dev See {IERC4626-balanceOf}.
+    function balanceOf(address account) public view returns (uint256 lendShares) {
         return dahlia.getPosition(marketId, account).lendShares;
     }
 
@@ -566,7 +607,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         DEPOSIT_ASSET.safeTransferFrom(msg.sender, address(this), assets);
 
         (shares) = dahlia.lend(marketId, assets, receiver);
-        _mint(receiver, shares);
+        _updateUserRewards(receiver);
 
         emit Deposit(msg.sender, receiver, assets, shares);
     }
@@ -601,7 +642,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
             if (allowed != type(uint256).max) allowance[from][caller] = allowed - shares;
         }
 
-        _burn(from, shares);
+        _updateUserRewards(from);
 
         (_assets) = dahlia.withdraw(marketId, shares, receiver, from);
     }
@@ -640,7 +681,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxWithdraw(address addr) external view returns (uint256 maxAssets) {
-        maxAssets = convertToAssets(balanceOfDahlia(addr));
+        maxAssets = convertToAssets(balanceOf(addr));
     }
 
     /// @inheritdoc IWrappedVault
@@ -651,7 +692,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxRedeem(address addr) external view returns (uint256 maxShares) {
-        maxShares = balanceOfDahlia(addr);
+        maxShares = balanceOf(addr);
     }
 
     /// @inheritdoc IWrappedVault

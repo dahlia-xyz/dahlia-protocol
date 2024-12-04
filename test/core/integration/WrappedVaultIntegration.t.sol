@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { IERC4626 } from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
+import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
@@ -68,7 +69,14 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.bob), shares, "bob balance");
         assertEq(marketProxy.maxWithdraw($.bob), assets, "bob max withdraw");
         assertEq(marketProxy.totalAssets(), assets, "total assets");
-        assertEq(marketProxy.totalSupply(), shares + 10_000e6, "total supply");
+        assertEq(
+            marketProxy.totalSupply(),
+            shares,
+            /**
+             * + 10_000e6*
+             */
+            "total supply"
+        );
     }
 
     function test_int_proxy_depositByShares(uint256 shares) public {
@@ -95,7 +103,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.bob), shares);
         assertEq(marketProxy.maxWithdraw($.bob), assets);
         assertEq(marketProxy.totalAssets(), assets);
-        assertEq(marketProxy.totalSupply(), shares + 10_000e6);
+        assertEq(marketProxy.totalSupply(), shares /*+ 10_000e6*/ );
     }
 
     function test_int_proxy_withdrawByAssets(uint256 assets) public {
@@ -129,7 +137,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
         assertEq(marketProxy.totalAssets(), 0);
-        assertEq(marketProxy.totalSupply(), 10_000e6);
+        assertEq(marketProxy.totalSupply(), 0 /*10_000e6*/ );
     }
 
     function test_int_proxy_withdrawByShares(uint256 shares) public {
@@ -164,7 +172,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
         assertEq(marketProxy.totalAssets(), 0);
-        assertEq(marketProxy.totalSupply(), 10_000e6);
+        assertEq(marketProxy.totalSupply(), 0 /*10_000e6*/ );
     }
 
     function test_int_proxy_revertWithdrawNoApprove(uint256 assets) public {
@@ -288,5 +296,157 @@ contract WrappedVaultIntegration is Test {
         assertEq($.loanToken.balanceOf($.bob), assets);
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
+    }
+
+    function test_int_proxy_transferAndWithdraw(uint256 assets) public {
+        vm.pauseGasMetering();
+        assets = vm.boundAmount(assets);
+
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendShares, 0, "totalLendShares initially 0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendPrincipalAssets, 0, "totalLendPrincipalAssets initially 0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendAssets, 0, "totalLendAssets initially 0");
+
+        $.loanToken.setBalance($.alice, assets);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), assets);
+
+        vm.resumeGasMetering();
+        uint256 shares = marketProxy.deposit(assets, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        assertEq($.dahlia.getPosition($.marketId, $.bob).lendPrincipalAssets, assets, "bob has principal assets");
+        assertEq($.dahlia.getPosition($.marketId, $.bob).lendShares, shares, "bob has principal shares");
+
+        IDahlia.Market memory marketBeforeTransfer = $.dahlia.getActualMarketState($.marketId);
+
+        vm.startPrank($.bob);
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit IWrappedVault.Transfer($.bob, $.carol, shares);
+        vm.resumeGasMetering();
+        marketProxy.transfer($.carol, shares);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        IDahlia.Market memory marketAfterTransfer = $.dahlia.getActualMarketState($.marketId);
+
+        assertEq(marketBeforeTransfer.totalLendShares, marketAfterTransfer.totalLendShares);
+        assertEq(marketBeforeTransfer.totalLendPrincipalAssets, marketAfterTransfer.totalLendPrincipalAssets);
+        assertEq(marketBeforeTransfer.totalLendAssets, marketAfterTransfer.totalLendAssets);
+        assertEq(assets, marketAfterTransfer.totalLendAssets);
+        assertEq(assets, marketAfterTransfer.totalLendPrincipalAssets);
+
+        IDahlia.UserPosition memory carolPos = $.dahlia.getPosition($.marketId, $.carol);
+        assertEq(shares, carolPos.lendShares, "carol lendShares=shares");
+        assertEq(assets, carolPos.lendPrincipalAssets, "carol lendPrincipalAssets=assets");
+        assertEq(shares, marketProxy.balanceOf($.carol));
+        assertEq($.loanToken.balanceOf(address($.dahlia)), assets, "dahlia balance");
+
+        IDahlia.UserPosition memory bobPos = $.dahlia.getPosition($.marketId, $.bob);
+        assertEq(0, bobPos.lendShares, "bob lendShares=0");
+        assertEq(0, bobPos.lendPrincipalAssets, "bob lendPrincipalAssets=0");
+        assertEq(0, marketProxy.balanceOf($.bob));
+
+        // deposit again from alice to bob
+        $.loanToken.setBalance($.alice, assets);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), assets);
+
+        vm.resumeGasMetering();
+        uint256 shares2 = marketProxy.deposit(assets, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        vm.startPrank($.bob);
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit IWrappedVault.Transfer($.bob, $.carol, shares2);
+        vm.resumeGasMetering();
+        marketProxy.transfer($.carol, shares);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        assertEq(shares + shares2, $.dahlia.getPosition($.marketId, $.carol).lendShares, "carol lendShares=shares+shares2");
+        assertEq(assets * 2, $.dahlia.getPosition($.marketId, $.carol).lendPrincipalAssets, "carol lendPrincipalAssets=assets*2");
+        assertEq(shares + shares2, marketProxy.balanceOf($.carol), "marketProxy.balanceOf($.carol) lendShares=shares+shares2");
+        assertEq(assets * 2, $.loanToken.balanceOf(address($.dahlia)), "dahlia balance=assets*2");
+
+        vm.startPrank($.carol);
+        vm.resumeGasMetering();
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Withdraw($.marketId, address(marketProxy), $.alice, $.carol, assets * 2, shares + shares2);
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit IWrappedVault.Withdraw($.carol, $.alice, $.carol, assets * 2, shares + shares2);
+        marketProxy.withdraw(assets * 2, $.alice, $.carol);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        assertEq($.loanToken.balanceOf($.alice), assets * 2, "alice balance=assets*2");
+        assertEq($.loanToken.balanceOf(address($.dahlia)), 0, "dahlia balance=0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendShares, 0, "totalLendShares become 0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendPrincipalAssets, 0, "totalLendPrincipalAssets become 0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendAssets, 0, "totalLendAssets become 0");
+    }
+
+    function test_int_proxy_transferFrom_ERC20InsufficientAllowance(uint256 assets) public {
+        vm.pauseGasMetering();
+        assets = vm.boundAmount(assets);
+
+        $.loanToken.setBalance($.alice, assets);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), assets);
+
+        vm.resumeGasMetering();
+        uint256 shares = marketProxy.deposit(assets, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        vm.startPrank($.carol);
+        vm.resumeGasMetering();
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, $.carol, 0, shares));
+        marketProxy.transferFrom($.bob, $.carol, shares);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+    }
+
+    function test_int_proxy_transferFrom_ERC20InvalidApprover(uint256 assets) public {
+        vm.pauseGasMetering();
+        assets = vm.boundAmount(assets);
+
+        $.loanToken.setBalance($.alice, assets);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), assets);
+
+        vm.resumeGasMetering();
+        uint256 shares = marketProxy.deposit(assets, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        vm.startPrank($.carol);
+        vm.resumeGasMetering();
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, $.carol, 0, shares));
+        marketProxy.transferFrom($.bob, $.carol, shares);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+    }
+
+    function test_int_proxy_approve_ZeroAddress(uint256 assets) public {
+        vm.pauseGasMetering();
+        assets = vm.boundAmount(assets);
+
+        $.loanToken.setBalance($.alice, assets);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), assets);
+
+        vm.resumeGasMetering();
+        uint256 shares = marketProxy.deposit(assets, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        vm.startPrank($.bob);
+        vm.resumeGasMetering();
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSpender.selector, address(0)));
+        marketProxy.approve(address(0), shares);
+        vm.pauseGasMetering();
+        vm.stopPrank();
     }
 }

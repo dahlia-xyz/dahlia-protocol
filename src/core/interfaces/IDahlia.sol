@@ -44,15 +44,16 @@ interface IDahlia {
         // --- 20 bytes
         IWrappedVault vault; // 20 bytes
         // --- having all 256 bytes at the end make deployment size smaller
-        uint256 totalLendAssets; // 32 bytes
+        uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
+        uint256 totalLendPrincipalAssets; // 32 bytes // store user initial lend assets
     }
 
     struct UserPosition {
         uint128 lendShares;
-        uint128 lendAssets; // store user initial lend assets
+        uint128 lendPrincipalAssets; // store user initial lend assets
         uint128 borrowShares;
         uint128 collateral;
     }
@@ -327,6 +328,14 @@ interface IDahlia {
     /// @param owner Owner of the lend position.
     /// @return assetsWithdrawn Amount of assets withdrawn.
     function withdraw(MarketId id, uint256 shares, address receiver, address owner) external returns (uint256 assetsWithdrawn);
+
+    /// @notice Transfer lend shares between two users.
+    /// @dev Should be invoked through a wrapped vault.
+    /// @param id Market id.
+    /// @param owner Address owning the increased borrow position.
+    /// @param receiver Address receiving the assets.
+    /// @param amount Amount of assets to transfer.
+    function transferLendShares(MarketId id, address owner, address receiver, uint256 amount) external returns (bool);
 
     /// @notice Withdraw all `assets` on behalf of a protocol fee recipient.
     /// @dev Should be invoked through a wrapped vault.

@@ -5,6 +5,13 @@ interface IWrappedVault {
     /// @return The address of the vault owner
     function owner() external view returns (address);
 
+    /// @param account The address to get the principal balance of
+    /// @return principal balance of given account
+    function principal(address account) external view returns (uint256);
+
+    /// @return get total principal of all accounts
+    function totalPrincipal() external view returns (uint256);
+
     /// @param to The address to send the rewards to
     /// @param reward The reward token / points program to claim rewards from
     function claim(address to, address reward) external payable;
@@ -86,4 +93,7 @@ interface IWrappedVault {
      * @dev Emitted when a withdrawal is made, either through redeem or withdraw
      */
     event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
+
+    /// @dev Emitted when a transfer is made
+    event Transfer(address indexed from, address indexed to, uint256 amount);
 }

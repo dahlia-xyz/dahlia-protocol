@@ -364,12 +364,14 @@ contract WrappedVaultTest is Test {
 
         vm.startPrank(REGULAR_USER);
         token.approve(address(testIncentivizedVault), depositAmount);
-        uint256 shares = testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        uint256 shares = testIncentivizedVault.principal(REGULAR_USER);
+        assertEq(depositAmount, shares, "principal should belong to user");
         vm.stopPrank();
 
         vm.warp(start + timeElapsed);
 
-        uint256 expectedRewards = (rewardAmount * timeElapsed) * shares / testIncentivizedVault.totalSupply() / duration;
+        uint256 expectedRewards = (rewardAmount * timeElapsed) * shares / testIncentivizedVault.totalPrincipal() / duration;
         uint256 actualRewards = testIncentivizedVault.currentUserRewards(address(rewardToken1), REGULAR_USER);
 
         assertApproxEqRel(actualRewards, expectedRewards, 1e15); // Allow 0.1% deviation
@@ -401,10 +403,11 @@ contract WrappedVaultTest is Test {
 
         vm.startPrank(REGULAR_USER);
         token.approve(address(testIncentivizedVault), depositAmount);
-        uint256 shares = testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        uint256 shares = testIncentivizedVault.principal(REGULAR_USER);
         vm.warp(timeElapsed);
 
-        uint256 expectedRewards = (rewardAmount / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
+        uint256 expectedRewards = (rewardAmount / duration) * shares / testIncentivizedVault.totalPrincipal() * timeElapsed;
         testIncentivizedVault.rewardToInterval(address(rewardToken1));
 
         testIncentivizedVault.claim(REGULAR_USER);
@@ -445,14 +448,15 @@ contract WrappedVaultTest is Test {
 
         vm.startPrank(REGULAR_USER);
         token.approve(address(testIncentivizedVault), depositAmount);
-        uint256 shares = testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        uint256 shares = testIncentivizedVault.principal(REGULAR_USER);
         vm.warp(start + timeElapsed);
 
         testIncentivizedVault.claim(REGULAR_USER);
         vm.stopPrank();
 
-        uint256 expectedRewards1 = (rewardAmount1 / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
-        uint256 expectedRewards2 = (rewardAmount2 / duration) * shares / testIncentivizedVault.totalSupply() * timeElapsed;
+        uint256 expectedRewards1 = (rewardAmount1 / duration) * shares / testIncentivizedVault.totalPrincipal() * timeElapsed;
+        uint256 expectedRewards2 = (rewardAmount2 / duration) * shares / testIncentivizedVault.totalPrincipal() * timeElapsed;
 
         assertApproxEqRel(rewardToken1.balanceOf(REGULAR_USER), expectedRewards1, 1e15);
         assertApproxEqRel(rewardToken2.balanceOf(REGULAR_USER), expectedRewards2, 1e15);
@@ -480,10 +484,11 @@ contract WrappedVaultTest is Test {
 
         vm.startPrank(REGULAR_USER);
         token.approve(address(testIncentivizedVault), depositAmount);
-        uint256 shares = testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        uint256 shares = testIncentivizedVault.principal(REGULAR_USER);
         vm.warp(start + timeElapsed);
 
-        uint256 supply = testIncentivizedVault.totalSupply();
+        uint256 supply = testIncentivizedVault.totalPrincipal();
 
         testIncentivizedVault.withdraw(withdrawAmount, REGULAR_USER, REGULAR_USER);
         vm.stopPrank();
