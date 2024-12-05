@@ -6,7 +6,7 @@ import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 contract IrmFactory {
-    event VariableIrmCreated(address indexed irmAddressm, VariableIrm.Config config);
+    event VariableIrmCreated(address indexed irmAddress, VariableIrm.Config config);
 
     error IncorrectConfig();
 
