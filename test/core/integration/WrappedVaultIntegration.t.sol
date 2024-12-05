@@ -449,4 +449,78 @@ contract WrappedVaultIntegration is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
     }
+
+    function test_int_proxy_maxMint(address user) public {
+        uint256 maxShares = marketProxy.maxMint(user);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+        assertEq(maxShares, type(uint128).max, "maxShares");
+    }
+
+    function test_int_proxy_maxDeposit(address user) public {
+        uint256 maxAssets = marketProxy.maxDeposit(user);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+        assertEq(maxAssets, SharesMathLib.toAssetsDown(type(uint128).max, 0, 0), "maxAssets");
+
+        $.loanToken.setBalance($.alice, maxAssets);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), maxAssets);
+
+        vm.resumeGasMetering();
+        marketProxy.deposit(maxAssets, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        vm.resumeGasMetering();
+        uint256 maxAssets2 = marketProxy.maxDeposit(user);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+        assertEq(maxAssets2, SharesMathLib.toAssetsDown(type(uint128).max, 0, 0), "maxAssets2");
+    }
+
+    function test_int_proxy_maxWithdraw_AND_maxRedeem(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
+
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        $.oracle.setPrice(pos.price);
+
+        $.loanToken.setBalance($.alice, pos.lent);
+        vm.startPrank($.alice);
+        $.loanToken.approve(address(marketProxy), pos.lent);
+
+        vm.resumeGasMetering();
+        uint256 shares = marketProxy.deposit(pos.lent, $.alice);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        vm.resumeGasMetering();
+        vm.pauseGasMetering();
+        assertEq(marketProxy.maxWithdraw($.alice), pos.lent, "alice can withdraw all lent assets");
+        assertEq(marketProxy.maxRedeem($.alice), shares, "alice can withdraw all lent shares");
+
+        vm.dahliaSupplyCollateralBy($.bob, pos.collateral, $);
+        (uint256 borrowAssets1, uint256 maxBorrowAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.bob);
+        assertEq(borrowAssets1, 0, "no borrowed assets yet");
+        assertGt(maxBorrowAssets1, 0, "user can borrow");
+
+        vm.startPrank($.bob);
+        vm.resumeGasMetering();
+        uint256 borrowedShares = $.dahlia.borrow($.marketId, pos.borrowed, $.bob, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        assertGt(borrowedShares, 0, "user borrow some assets");
+
+        vm.resumeGasMetering();
+        vm.pauseGasMetering();
+
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        uint256 maxAvailableAssets = market.totalLendAssets - market.totalBorrowAssets;
+        uint256 maxAvailableShares = marketProxy.convertToShares(maxAvailableAssets);
+        uint256 expectedMaxAssets = FixedPointMathLib.min(maxAvailableAssets, marketProxy.convertToAssets(shares));
+        uint256 expectedMaxShares = FixedPointMathLib.min(maxAvailableShares, marketProxy.convertToShares(pos.lent));
+        assertEq(marketProxy.maxWithdraw($.alice), expectedMaxAssets, "alice can withdraw some lent assets");
+        assertEq(marketProxy.maxRedeem($.alice), expectedMaxShares, "alice can withdraw some lent shares");
+    }
 }

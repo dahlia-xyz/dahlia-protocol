@@ -659,7 +659,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxDeposit(address) external pure returns (uint256 maxAssets) {
-        maxAssets = type(uint128).max;
+        uint256 maxShares = _maxMint();
+        maxAssets = SharesMathLib.toAssetsDown(maxShares, 0, 0);
     }
 
     /// @inheritdoc IWrappedVault
@@ -670,6 +671,10 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxMint(address) external pure returns (uint256 maxShares) {
+        maxShares = _maxMint();
+    }
+
+    function _maxMint() internal pure returns (uint256 maxShares) {
         maxShares = type(uint128).max;
     }
 
@@ -681,7 +686,9 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxWithdraw(address addr) external view returns (uint256 maxAssets) {
-        maxAssets = convertToAssets(balanceOf(addr));
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
+        uint256 maxAvailable = market.totalLendAssets - market.totalBorrowAssets;
+        maxAssets = SoladyMath.min(maxAvailable, convertToAssets(balanceOf(addr)));
     }
 
     /// @inheritdoc IWrappedVault
@@ -692,7 +699,10 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function maxRedeem(address addr) external view returns (uint256 maxShares) {
-        maxShares = balanceOf(addr);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
+        uint256 maxAvailableAssets = market.totalLendAssets - market.totalBorrowAssets;
+        uint256 maxAvailableShares = SharesMathLib.toSharesDown(maxAvailableAssets, market.totalLendAssets, market.totalLendShares);
+        maxShares = SoladyMath.min(maxAvailableShares, balanceOf(addr));
     }
 
     /// @inheritdoc IWrappedVault
