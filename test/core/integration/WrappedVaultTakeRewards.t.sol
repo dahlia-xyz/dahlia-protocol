@@ -17,11 +17,12 @@ import { ERC20Mock as MockERC20 } from "test/common/mocks/ERC20Mock.sol";
 library TestLib {
     uint8 public constant vaultERC20decimals = uint8(18);
     uint8 public constant vaultVirtualOffset = uint8(6);
-    uint8 public constant rewardERC20decimals = uint8(6);
+    uint8 public constant rewardERC20decimals1 = uint8(6);
+    uint8 public constant rewardERC20decimals2 = uint8(18);
 }
 
 contract RewardMockERC20 is ERC20 {
-    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol, TestLib.rewardERC20decimals) { }
+    constructor(string memory _name, string memory _symbol, uint8 _decimal) ERC20(_name, _symbol, _decimal) { }
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
@@ -92,6 +93,7 @@ contract WrappedVaultTakeRewardsTest is Test {
     address public constant REFERRAL_USER = address(0x33f123);
 
     RewardMockERC20 rewardToken1;
+    RewardMockERC20 rewardToken2;
 
     function setUp() public {
         ctx = new TestContext(vm);
@@ -109,7 +111,8 @@ contract WrappedVaultTakeRewardsTest is Test {
         token = $.loanToken;
 
         testIncentivizedVault = WrappedVault(address(dahlia.getMarket($.marketId).vault));
-        rewardToken1 = new RewardMockERC20("Reward Token 1", "RWD1");
+        rewardToken1 = new RewardMockERC20("Reward Token 1", "RWD1", TestLib.rewardERC20decimals1);
+        rewardToken2 = new RewardMockERC20("Reward Token 2", "RWD1", TestLib.rewardERC20decimals2);
 
         vm.label(address(testIncentivizedVault), "IncentivizedVault");
         vm.label(address(rewardToken1), "RewardToken1");
@@ -117,7 +120,8 @@ contract WrappedVaultTakeRewardsTest is Test {
 
     function testTakeRewards() public {
         // !!!!!! change this params for checking rewards
-        uint256 rewardAmount = 100_000 * 10 ** TestLib.rewardERC20decimals; // 1000 USDC rewards
+        uint256 rewardAmount1 = 100_000 * 10 ** TestLib.rewardERC20decimals1; // 1000 rewards1
+        uint256 rewardAmount2 = 100_000 * 10 ** TestLib.rewardERC20decimals2; // 1000 rewards2
         uint256 depositAmount = 500 * 10 ** TestLib.vaultERC20decimals; // 500 ETH
 
         uint32 start = uint32(block.timestamp);
@@ -125,9 +129,15 @@ contract WrappedVaultTakeRewardsTest is Test {
         console.log("duration (seconds):", duration);
 
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
-        rewardToken1.mint(address(this), rewardAmount);
-        rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
+        testIncentivizedVault.addRewardsToken(address(rewardToken2));
+
+        rewardToken1.mint(address(this), rewardAmount1);
+        rewardToken1.approve(address(testIncentivizedVault), rewardAmount1);
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount1, DEFAULT_FEE_RECIPIENT);
+
+        rewardToken2.mint(address(this), rewardAmount2);
+        rewardToken2.approve(address(testIncentivizedVault), rewardAmount2);
+        testIncentivizedVault.setRewardsInterval(address(rewardToken2), start, start + duration, rewardAmount2, DEFAULT_FEE_RECIPIENT);
         //assertEq(rewardToken1.balanceOf(address(testIncentivizedVault)), rewardAmount, "reward token on vault");
 
         RewardMockERC20(address(token)).mint($.alice, depositAmount);
@@ -142,7 +152,18 @@ contract WrappedVaultTakeRewardsTest is Test {
         token.approve(address(testIncentivizedVault), depositAmount);
         uint256 d2 = testIncentivizedVault.deposit(depositAmount, $.bob);
         vm.stopPrank();
-
+        {
+            (,, uint96 rate) = testIncentivizedVault.rewardToInterval(address(rewardToken1));
+            console.log("reward1 rewardToInterval.rate:        ", rate);
+            assertGt(rate, 0, "reward1 rewardToInterval.rate > 0");
+        }
+        {
+            (,, uint96 rate) = testIncentivizedVault.rewardToInterval(address(rewardToken2));
+            console.log("reward2 rewardToInterval.rate:        ", rate);
+            assertGt(rate, 0, "reward2 rewardToInterval.rate > 0");
+        }
+        console.log("reward1 rate:        ", testIncentivizedVault.previewRateAfterDeposit(address(rewardToken1), 1));
+        console.log("reward2 rate:        ", testIncentivizedVault.previewRateAfterDeposit(address(rewardToken2), 1));
         console.log("user1 deposit:        ", d1);
         console.log("user2 deposit:        ", d2);
         console.log("undistributed rewards:", rewardToken1.balanceOf(address(testIncentivizedVault)));

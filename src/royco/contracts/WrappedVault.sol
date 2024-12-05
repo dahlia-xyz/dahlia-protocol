@@ -544,7 +544,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
         if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return 0;
 
-        uint256 rewardsRate = (uint256(rewardsInterval.rate) * assets / (totalPrincipal() + assets)) * 1e18 / assets;
+        uint256 rewardsRate = (uint256(rewardsInterval.rate) * assets * 1e18 / (totalPrincipal() + assets)) / assets;
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(marketId, assets);
