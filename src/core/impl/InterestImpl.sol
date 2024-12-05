@@ -72,7 +72,8 @@ library InterestImpl {
         pure
         returns (uint256 feeShares)
     {
-        feeShares = (interestEarnedAssets * feeRate * totalLendShares) / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets));
+        feeShares = (interestEarnedAssets * feeRate * totalLendShares)
+            / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets - (interestEarnedAssets * feeRate / Constants.FEE_PRECISION)));
     }
 
     /// @notice Gets the expected market balances after interest accrual.

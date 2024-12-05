@@ -385,4 +385,29 @@ contract AccrueInterestIntegrationTest is Test {
         assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
         assertEq(vault.balanceOf($.reserveFeeRecipient), 0, "reserveFeeRecipient balance");
     }
+
+    function test_int_accrueInterest_feeSharesBugfix() public pure {
+        uint256 totalLendAssets = 200e18;
+        uint256 totalLendShares = 200e24;
+        uint256 interestEarnedAssets = 10 ether;
+        uint256 feeRate = 0.1e5; //10%
+
+        uint256 feeSharesUsingExpected = (interestEarnedAssets * feeRate * totalLendShares)
+            / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets - (interestEarnedAssets * feeRate / Constants.FEE_PRECISION)));
+
+        uint256 feeSharesUsingReturned = InterestImpl.calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, feeRate);
+
+        uint256 feeAssetUsingReturned =
+            SharesMathLib.toAssetsDown(feeSharesUsingReturned, totalLendAssets + interestEarnedAssets, totalLendShares + feeSharesUsingReturned);
+        uint256 feeAssetUsingExpected =
+            SharesMathLib.toAssetsDown(feeSharesUsingExpected, totalLendAssets + interestEarnedAssets, totalLendShares + feeSharesUsingExpected);
+
+        // We know from the above details that at a 10% fee rate, whatever feeShares we get, we should be able to convert it back to 1 ether of assets.
+        // As shown below, the fixed calculation is much closer to 1 ether, which we know is the correct answer. It's not exactly 1 ether because of precision
+        // loss, and virtual shares are
+        // not being accounted for.
+
+        assertApproxEqAbs(feeAssetUsingReturned, 1e18, 1e4, "fee asset returned");
+        assertApproxEqAbs(feeAssetUsingExpected, 1e18, 1e4, "fee asset expected");
+    }
 }
