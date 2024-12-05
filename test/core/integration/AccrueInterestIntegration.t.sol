@@ -370,8 +370,19 @@ contract AccrueInterestIntegrationTest is Test {
         // if not position claim will fail with NotPermitted
         // vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, address(market.vault)));
         market.vault.claim($.carol, address($.loanToken));
+        assertEq(vault.balanceOf($.reserveFeeRecipient), 249_998, "reserveFeeRecipient balance");
+        assertEq(vault.balanceOf($.protocolFeeRecipient), 249_998, "protocolFeeRecipient balance");
         uint256 protocolFees = $.dahlia.withdrawProtocolFee($.marketId);
         assertEq(protocolFees, 0, "protocol fees");
-        printMarketState("8", "after protocolFee fees");
+        printMarketState("9", "after withdrawProtocolFee");
+        assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
+        assertEq(vault.balanceOf($.reserveFeeRecipient), 249_998, "reserveFeeRecipient balance");
+        vm.stopPrank();
+        vm.startPrank($.reserveFeeRecipient);
+        uint256 reserveFees = $.dahlia.withdrawReserveFee($.marketId, vault.balanceOf($.reserveFeeRecipient));
+        assertEq(reserveFees, 0, "reserve fees");
+        printMarketState("10", "after withdrawReserveFee");
+        assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
+        assertEq(vault.balanceOf($.reserveFeeRecipient), 0, "reserveFeeRecipient balance");
     }
 }
