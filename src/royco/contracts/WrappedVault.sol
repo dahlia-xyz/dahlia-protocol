@@ -70,8 +70,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         uint96 rate;
     }
 
-    /// @custom:field accumulated The accumulated rewards per token for the intervaled, scaled up by WAD
-    /// @custom:field lastUpdated THe last time rewards per token (accumulated) was updated
+    /// @custom:field accumulated The accumulated rewards per token for the interval, scaled up by WAD
+    /// @custom:field lastUpdated The last time rewards per token (accumulated) was updated
     struct RewardsPerToken {
         uint256 accumulated;
         uint32 lastUpdated;
@@ -167,9 +167,9 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         end = _rewardToInterval[reward].end;
         rate = _rewardToInterval[reward].rate;
         if (reward == address(DEPOSIT_ASSET)) {
-            uint256 minDuration = block.timestamp + MIN_CAMPAIGN_DURATION;
-            if (end < minDuration && dahlia.getMarket(marketId).totalBorrowAssets > 0) {
-                end = uint32(minDuration);
+            uint256 minEnd = block.timestamp + MIN_CAMPAIGN_DURATION;
+            if (end < minEnd && dahlia.getMarket(marketId).totalBorrowAssets > 0) {
+                end = uint32(minEnd);
             }
         }
     }
@@ -215,14 +215,14 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         uint256 owed = rewardToClaimantToFees[reward][msg.sender];
         delete rewardToClaimantToFees[reward][msg.sender];
-        pushReward(reward, to, owed);
+        _pushReward(reward, to, owed);
         emit FeesClaimed(msg.sender, reward, owed);
     }
 
     /// @param reward The reward token / points program
     /// @param from The address to pull rewards from
     /// @param amount The amount of rewards to deduct from the user
-    function pullReward(address reward, address from, uint256 amount) internal {
+    function _pullReward(address reward, address from, uint256 amount) internal {
         if (POINTS_FACTORY.isPointsProgram(reward)) {
             if (!Points(reward).isAllowedVault(address(this))) revert VaultNotAuthorizedToRewardPoints();
         } else {
@@ -233,7 +233,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     /// @param reward The reward token / points program
     /// @param to The address to send rewards to
     /// @param amount The amount of rewards to deduct from the user
-    function pushReward(address reward, address to, uint256 amount) internal {
+    function _pushReward(address reward, address to, uint256 amount) internal {
         // If owed is 0, there is nothing to claim. Check allows any loop calling pushReward to continue without reversion.
         if (amount == 0) {
             return;
@@ -283,7 +283,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         emit RewardsSet(reward, newStart, newEnd.toUint32(), rate, (rate * (newEnd - newStart)), protocolFeeTaken, frontendFeeTaken);
 
-        pullReward(reward, msg.sender, rewardsAdded);
+        _pullReward(reward, msg.sender, rewardsAdded);
     }
 
     /// @dev Set a rewards schedule
@@ -338,7 +338,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         emit RewardsSet(reward, rewardsInterval.start, rewardsInterval.end, rate, (rate * (end - start)), protocolFeeTaken, frontendFeeTaken);
 
-        pullReward(reward, msg.sender, totalRewards);
+        _pullReward(reward, msg.sender, totalRewards);
     }
 
     /// @param reward The address of the reward for which campaign should be refunded
@@ -460,7 +460,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         if (reward == address(DEPOSIT_ASSET)) {
             dahlia.claimInterest(marketId, to, from);
         }
-        pushReward(reward, to, amount);
+        _pushReward(reward, to, amount);
         emit Claimed(reward, from, to, amount);
     }
 

@@ -36,11 +36,11 @@ interface IDahlia {
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
         IDahliaOracle oracle; // 20 bytes
-        uint64 fullUtilizationRate; // 3 bytes
-        uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 23 bytes
-        IIrm irm; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
+        uint64 fullUtilizationRate; // 8 bytes
+        // --- 28 bytes
+        IIrm irm; // 20 bytes
+        uint64 ratePerSec; // 8 bytes // store refreshed rate per second
         // --- 20 bytes
         IWrappedVault vault; // 20 bytes
         // --- having all 256 bytes at the end make deployment size smaller
@@ -192,11 +192,11 @@ interface IDahlia {
 
     /// @dev Emitted when interest is accrued.
     /// @param id Market id.
-    /// @param prevBorrowRate Previous borrow rate.
+    /// @param newRatePerSec New rate per second.
     /// @param interest Amount of interest accrued.
     /// @param protocolFeeShares Shares minted as protocol fee.
     /// @param reserveFeeShares Shares minted as reserve fee.
-    event DahliaAccrueInterest(IDahlia.MarketId indexed id, uint256 prevBorrowRate, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares);
+    event DahliaAccrueInterest(IDahlia.MarketId indexed id, uint256 newRatePerSec, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares);
 
     /// @dev Emitted when a flash loan is executed.
     /// @param caller Address of the caller.

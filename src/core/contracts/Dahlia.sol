@@ -125,7 +125,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @inheritdoc IDahlia
     function setFlashLoanFeeRate(uint24 newFlashLoanFeeRate) external onlyOwner {
         require(newFlashLoanFeeRate <= Constants.MAX_FLASH_LOAN_FEE_RATE, Errors.MaxFeeExceeded());
-        flashLoanFeeRate = uint24(newFlashLoanFeeRate);
+        flashLoanFeeRate = newFlashLoanFeeRate;
         emit SetFlashLoanFeeRate(newFlashLoanFeeRate);
     }
 

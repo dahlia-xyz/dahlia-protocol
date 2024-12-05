@@ -81,7 +81,7 @@ contract VariableIrm is IIrm {
     /// @param utilization Utilization % with 5 decimals precision
     /// @param fullUtilizationRate Interest at 100% utilization, 18 decimals
     /// @return newFullUtilizationRate New max interest rate
-    function getFullUtilizationInterest(uint256 deltaTime, uint256 utilization, uint256 fullUtilizationRate)
+    function _getFullUtilizationInterest(uint256 deltaTime, uint256 utilization, uint256 fullUtilizationRate)
         internal
         view
         returns (uint256 newFullUtilizationRate)
@@ -129,7 +129,7 @@ contract VariableIrm is IIrm {
         uint256 _zeroUtilizationRate = zeroUtilizationRate;
         uint256 _targetUtilization = targetUtilization;
 
-        newFullUtilizationRate = getFullUtilizationInterest(deltaTime, utilization, oldFullUtilizationRate);
+        newFullUtilizationRate = _getFullUtilizationInterest(deltaTime, utilization, oldFullUtilizationRate);
 
         // Calculate target rate as a percentage of the delta between min and max interest
         uint256 _targetRate = _zeroUtilizationRate + FixedPointMathLib.mulWad(newFullUtilizationRate - _zeroUtilizationRate, targetRatePercent);
