@@ -1,4 +1,4 @@
-// SPDX-Liense-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
 import { Test, Vm, console } from "@forge-std/Test.sol";
@@ -16,12 +16,13 @@ import { ERC20Mock as MockERC20 } from "test/common/mocks/ERC20Mock.sol";
 
 library TestLib {
     uint8 public constant vaultERC20decimals = uint8(18);
-    uint8 public constant vaultVirtualOffset = uint8(6);
-    uint8 public constant rewardERC20decimals = uint8(6);
+    uint8 public constant vaultVirtualOffset = uint8(0);
+    uint8 public constant rewardERC20decimals1 = uint8(6);
+    uint8 public constant rewardERC20decimals2 = uint8(18);
 }
 
 contract RewardMockERC20 is ERC20 {
-    constructor(string memory _name, string memory _symbol) ERC20(_name, _symbol, TestLib.rewardERC20decimals) { }
+    constructor(string memory _name, string memory _symbol, uint8 _decimal) ERC20(_name, _symbol, _decimal) { }
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
@@ -89,9 +90,11 @@ contract WrappedVaultTakeRewardsTest is Test {
     address private constant DEFAULT_FEE_RECIPIENT = address(0x33f120);
 
     address public constant POINTS_FACTORY_OWNER = address(0x1);
+    address public constant REGULAR_USER = address(0x33f121);
     address public constant REFERRAL_USER = address(0x33f123);
 
     RewardMockERC20 rewardToken1;
+    RewardMockERC20 rewardToken2;
 
     function setUp() public {
         ctx = new TestContext(vm);
@@ -108,75 +111,78 @@ contract WrappedVaultTakeRewardsTest is Test {
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv(), address(this));
         token = $.loanToken;
 
+        testFactory = new WrappedVaultFactory(address(new WrappedVault()), DEFAULT_FEE_RECIPIENT, 0, 0, address(this), address(pointsFactory), address(dahlia));
         testIncentivizedVault = WrappedVault(address(dahlia.getMarket($.marketId).vault));
-        rewardToken1 = new RewardMockERC20("Reward Token 1", "RWD1");
+        rewardToken1 = new RewardMockERC20("Reward Token USDC", "USDC", TestLib.rewardERC20decimals1);
+        rewardToken2 = new RewardMockERC20("Reward Token GHO", "GHO", TestLib.rewardERC20decimals2);
 
         vm.label(address(testIncentivizedVault), "IncentivizedVault");
-        vm.label(address(rewardToken1), "RewardToken1");
+        vm.label(address(rewardToken1), "Reward Token USDC");
+        vm.label(address(rewardToken2), "Reward Token GHO");
+        vm.label(REGULAR_USER, "RegularUser");
+        vm.label(REFERRAL_USER, "ReferralUser");
     }
 
     function testTakeRewards() public {
         // !!!!!! change this params for checking rewards
-        uint256 rewardAmount = 100_000 * 10 ** TestLib.rewardERC20decimals; // 1000 USDC rewards
-        uint256 depositAmount = 500 * 10 ** TestLib.vaultERC20decimals; // 500 ETH
+        uint256 rewardAmount1 = 10_000 * 10 ** TestLib.rewardERC20decimals1; // 10_000 USDC
+        uint256 rewardAmount2 = 10_000 * 10 ** TestLib.rewardERC20decimals2; // 10_000 GHO
+        uint256 depositAmount = 50 * 10 ** TestLib.vaultERC20decimals; // 50 WETH
 
         uint32 start = uint32(block.timestamp);
         uint32 duration = 30 days;
-        console.log("duration (seconds):", duration);
+        console.log("Campaign Duration: 30 days");
+        console.log("USDC Rewards: ", rewardAmount1 / 10 ** TestLib.rewardERC20decimals1);
+        console.log("GHO Rewards: ", rewardAmount2 / 10 ** TestLib.rewardERC20decimals2);
+        console.log("User Initial Deposit (WETH): ", depositAmount / 10 ** TestLib.vaultERC20decimals);
+        console.log("");
 
         testIncentivizedVault.addRewardsToken(address(rewardToken1));
-        rewardToken1.mint(address(this), rewardAmount);
-        rewardToken1.approve(address(testIncentivizedVault), rewardAmount);
-        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
-        //assertEq(rewardToken1.balanceOf(address(testIncentivizedVault)), rewardAmount, "reward token on vault");
+        testIncentivizedVault.addRewardsToken(address(rewardToken2));
 
-        RewardMockERC20(address(token)).mint($.alice, depositAmount);
-        RewardMockERC20(address(token)).mint($.bob, depositAmount);
+        // Set reward interval for USDC for 30 days
+        rewardToken1.mint(address(this), rewardAmount1);
+        rewardToken1.approve(address(testIncentivizedVault), rewardAmount1);
+        testIncentivizedVault.setRewardsInterval(address(rewardToken1), start, start + duration, rewardAmount1, DEFAULT_FEE_RECIPIENT);
 
-        vm.startPrank($.alice);
+        // Set reward interval for GHO for 30 days
+        rewardToken2.mint(address(this), rewardAmount2);
+        rewardToken2.approve(address(testIncentivizedVault), rewardAmount2);
+        testIncentivizedVault.setRewardsInterval(address(rewardToken2), start, start + duration, rewardAmount2, DEFAULT_FEE_RECIPIENT);
+
+        // Issue #1: Reward rates should be equal for the same amounts of rewards. In this case USDC is `77` and GHO `77160493827160` because of decimals
+        // Preview rewards rate for `depositAmount`
+        uint256 r1before = testIncentivizedVault.previewRateAfterDeposit(address(rewardToken1), depositAmount);
+        uint256 r2before = testIncentivizedVault.previewRateAfterDeposit(address(rewardToken2), depositAmount);
+        console.log("USDC reward rate before deposit:", r1before, "decimals", TestLib.rewardERC20decimals1);
+        console.log("GHO reward rate before deposit:", r2before, "decimals", TestLib.rewardERC20decimals2);
+        console.log("");
+
+        // Deposit `depositAmount` into the vault
+        RewardMockERC20(address(token)).mint(REGULAR_USER, depositAmount);
+        vm.startPrank(REGULAR_USER);
         token.approve(address(testIncentivizedVault), depositAmount);
-        uint256 d1 = testIncentivizedVault.deposit(depositAmount, $.alice);
+        testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
         vm.stopPrank();
 
-        vm.startPrank($.bob);
-        token.approve(address(testIncentivizedVault), depositAmount);
-        uint256 d2 = testIncentivizedVault.deposit(depositAmount, $.bob);
-        vm.stopPrank();
+        // Issue #2: previewing rate with a small deposit amount returns 0
+        // Preview rewards rate for depositing 0.01 more WETH (we expect it to be > 0)
+        uint256 r1after = testIncentivizedVault.previewRateAfterDeposit(address(rewardToken1), 1e16); // 0.01 WTBC ~$1000
+        uint256 r2after = testIncentivizedVault.previewRateAfterDeposit(address(rewardToken2), 1e16); // 0.01 WBTC ~$1000
+        console.log("USDC reward rate after deposit: ", r1after);
+        console.log("GHO reward rate after deposit: ", r2after);
+        //        assertGt(r1after,0, "USDC reward rate after deposit > 0");
+        //        assertGt(r2after,0, "GHO reward rate after deposit > 0");
 
-        console.log("user1 deposit:        ", d1);
-        console.log("user2 deposit:        ", d2);
-        console.log("undistributed rewards:", rewardToken1.balanceOf(address(testIncentivizedVault)));
-        console.log("user1 rewards:        ", rewardToken1.balanceOf($.alice));
-        console.log("user2 rewards:        ", rewardToken1.balanceOf($.bob));
-
-        // 1000 USDC deposited by single user.
-        vm.warp(start + duration / 2);
-        vm.startPrank($.alice);
-        testIncentivizedVault.claim($.alice);
-        vm.stopPrank();
-        vm.startPrank($.bob);
-        testIncentivizedVault.claim($.bob);
-        vm.stopPrank();
-        vm.startPrank($.alice);
-        testIncentivizedVault.withdraw(depositAmount, $.alice, $.alice);
-        testIncentivizedVault.claim($.alice);
-        vm.stopPrank();
-
-        console.log("undistributed rewards:", rewardToken1.balanceOf(address(testIncentivizedVault)));
-        console.log("user1 rewards:        ", rewardToken1.balanceOf($.alice));
-        console.log("user2 rewards:        ", rewardToken1.balanceOf($.bob));
-
-        vm.warp(start + duration + 1);
-        vm.startPrank($.bob);
-        testIncentivizedVault.claim($.bob);
-        vm.stopPrank();
-        console.log("\n #### End of rewards period. Expecting DEFAULT_FRONTEND_FEE and DEFAULT_PROTOCOL_FEE stay");
-        console.log("User1: should take 1/4 and user2: should take 3/4");
-        console.log("undistributed rewards:", rewardToken1.balanceOf(address(testIncentivizedVault)));
-        console.log("user1 rewards:        ", rewardToken1.balanceOf($.alice));
-        console.log("user2 rewards:        ", rewardToken1.balanceOf($.bob));
-        console.log("principal(user1)", testIncentivizedVault.principal($.alice));
-        console.log("balanceOf(user1)", testIncentivizedVault.balanceOf($.alice));
-        vm.stopPrank();
+        {
+            (,, uint96 rate) = testIncentivizedVault.rewardToInterval(address(rewardToken1));
+            console.log("USDC rewardToInterval.rate: ", rate);
+            assertGt(rate, 0, "reward1 rewardToInterval.rate > 0");
+        }
+        {
+            (,, uint96 rate) = testIncentivizedVault.rewardToInterval(address(rewardToken2));
+            console.log("GHO rewardToInterval.rate:        ", rate);
+            assertGt(rate, 0, "reward2 rewardToInterval.rate > 0");
+        }
     }
 }
