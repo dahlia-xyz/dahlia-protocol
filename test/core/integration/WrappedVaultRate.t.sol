@@ -70,7 +70,7 @@ contract WrappedVaultRateTest is Test {
     function printReward(TestContext.MarketContext memory mCtx, string memory message) public {
         ERC20Mock rewardToken = mCtx.loanToken;
         (,, uint256 rate) = mCtx.vault.rewardToInterval(address(rewardToken));
-        uint256 ratePerSec = mCtx.vault.previewRateAfterDeposit(address(rewardToken), 1);
+        uint256 ratePerSec = mCtx.vault.previewRateAfterDeposit(address(rewardToken), 0);
         uint256 decimals = rewardToken.decimals();
         string memory log = string(
             abi.encodePacked(
@@ -92,9 +92,9 @@ contract WrappedVaultRateTest is Test {
 
         console.log("Dahlia fullUtilizationRate", mCtx.dahlia.getMarket(mCtx.marketId).fullUtilizationRate);
         console.log("Dahlia borrow APR", toPercentString(ir * 365 days, 18));
-        uint256 pr = mCtx.dahlia.previewLendRateAfterDeposit(mCtx.marketId, 1);
+        uint256 pr = mCtx.dahlia.previewLendRateAfterDeposit(mCtx.marketId, 0);
         console.log("Dahlia lend previewLendRateAfterDeposit:", pr);
-        console.log("lend lend APR:", toPercentString(pr * 365 days, 18));
+        console.log("Dahlia lend APR:", toPercentString(pr * 365 days, 18));
     }
 
     function prepareRate(TestContext.MarketContext memory mCtx) public {
