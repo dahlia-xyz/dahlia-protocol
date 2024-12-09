@@ -54,6 +54,7 @@ contract TestContext {
         VariableIrm irm;
         ERC20Mock loanToken;
         ERC20Mock collateralToken;
+        WrappedVault vault;
     }
 
     Vm public vm;
@@ -64,6 +65,7 @@ contract TestContext {
 
     constructor(Vm vm_) {
         defaultTokenDecimals["USDC"] = 6;
+        defaultTokenDecimals["USDE"] = 18;
         defaultTokenDecimals["WETH"] = 18;
         defaultTokenDecimals["WBTC"] = 8;
         vm = vm_;
@@ -107,6 +109,7 @@ contract TestContext {
 
         v.marketConfig = marketConfig;
         v.marketId = deployDahliaMarket(v.marketConfig);
+        v.vault = WrappedVault(address(v.dahlia.getMarket(v.marketId).vault));
         v.oracle = OracleMock(address(marketConfig.oracle));
         v.loanToken = ERC20Mock(marketConfig.loanToken);
         v.collateralToken = ERC20Mock(marketConfig.collateralToken);
