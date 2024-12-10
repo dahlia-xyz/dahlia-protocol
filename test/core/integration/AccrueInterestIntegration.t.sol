@@ -10,8 +10,10 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
+import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestConstants, TestContext } from "test/common/TestContext.sol";
@@ -179,6 +181,12 @@ contract AccrueInterestIntegrationTest is Test {
 
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
+            vm.expectEmit(true, true, true, true, address($.vault));
+            emit InitializableERC20.Transfer(address(0), address($.protocolFeeRecipient), protocolFeeShares);
+
+            vm.expectEmit(true, true, true, true, address($.vault));
+            emit InitializableERC20.Transfer(address(0), address($.reserveFeeRecipient), reserveFeeShares);
+
             vm.expectEmit(true, true, true, true, address($.dahlia));
             emit IDahlia.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
         }
@@ -372,16 +380,17 @@ contract AccrueInterestIntegrationTest is Test {
         market.vault.claim($.carol, address($.loanToken));
         assertEq(vault.balanceOf($.reserveFeeRecipient), 26_249_996, "reserveFeeRecipient balance");
         assertEq(vault.balanceOf($.protocolFeeRecipient), 26_249_996, "protocolFeeRecipient balance");
-        uint256 protocolFees = $.dahlia.withdrawProtocolFee($.marketId);
+        vm.startPrank($.protocolFeeRecipient);
+        uint256 protocolFees = $.vault.redeem(vault.balanceOf($.protocolFeeRecipient), $.protocolFeeRecipient, $.protocolFeeRecipient);
         assertEq(protocolFees, 26, "protocol fees");
         printMarketState("9", "after withdrawProtocolFee");
         assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
         assertEq(vault.balanceOf($.reserveFeeRecipient), 26_249_996, "reserveFeeRecipient balance");
         vm.stopPrank();
         vm.startPrank($.reserveFeeRecipient);
-        uint256 reserveFees = $.dahlia.withdrawReserveFee($.marketId, vault.balanceOf($.reserveFeeRecipient));
+        uint256 reserveFees = $.vault.redeem(vault.balanceOf($.reserveFeeRecipient), $.reserveFeeRecipient, $.reserveFeeRecipient);
         assertEq(reserveFees, 26, "reserve fees");
-        printMarketState("10", "after withdrawReserveFee");
+        printMarketState("10", "after withdraw reserve fee");
         assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
         assertEq(vault.balanceOf($.reserveFeeRecipient), 0, "reserveFeeRecipient balance");
     }

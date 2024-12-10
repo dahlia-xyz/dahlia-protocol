@@ -203,34 +203,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return assets;
     }
 
-    /// @inheritdoc IDahlia
-    function withdrawProtocolFee(MarketId id) external returns (uint256) {
-        require(protocolFeeRecipient != address(0), Errors.ZeroAddress());
-        MarketData storage marketData = markets[id];
-        Market storage market = marketData.market;
-        mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
-        UserPosition storage ownerPosition = positions[protocolFeeRecipient];
-
-        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, ownerPosition.lendShares, protocolFeeRecipient, protocolFeeRecipient);
-        IERC20(market.loanToken).safeTransfer(protocolFeeRecipient, assets);
-        return assets;
-    }
-
-    /// @inheritdoc IDahlia
-    function withdrawReserveFee(MarketId id, uint256 shares) external isSenderPermitted(reserveFeeRecipient) returns (uint256) {
-        require(reserveFeeRecipient != address(0), Errors.ZeroAddress());
-        MarketData storage marketData = markets[id];
-        Market storage market = marketData.market;
-        mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
-        UserPosition storage ownerPosition = positions[reserveFeeRecipient];
-
-        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, shares, reserveFeeRecipient, reserveFeeRecipient);
-        IERC20(market.loanToken).safeTransfer(reserveFeeRecipient, assets);
-        return assets;
-    }
-
     function transferLendShares(MarketId id, address owner, address receiver, uint256 shares) public returns (bool) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
@@ -258,7 +230,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return true;
     }
 
-    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets) {
+    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets, uint256 sharesInterest) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -272,7 +244,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
         uint256 lendShares = ownerPosition.lendPrincipalAssets.toSharesDown(totalLendAssets, totalLendShares);
-        uint256 sharesInterest = ownerPosition.lendShares - lendShares;
+        sharesInterest = ownerPosition.lendShares - lendShares;
 
         (assets,) = LendImpl.internalWithdraw(market, ownerPosition, sharesInterest, owner, receiver);
 
@@ -458,7 +430,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     function _accrueMarketInterest(mapping(address => UserPosition) storage positions, Market storage market) internal {
-        InterestImpl.executeMarketAccrueInterest(market, positions[protocolFeeRecipient], positions[reserveFeeRecipient]);
+        InterestImpl.executeMarketAccrueInterest(market, positions, protocolFeeRecipient, reserveFeeRecipient);
     }
 
     /// @notice Checks if the sender is the market or the wrapped vault owner.

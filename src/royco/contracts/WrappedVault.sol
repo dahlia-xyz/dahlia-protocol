@@ -52,6 +52,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     error InvalidWithdrawal();
     error InvalidIntervalDuration();
     error NotOwnerOfVaultOrApproved();
+    error NotDahlia();
     error IntervalEndBeforeStart();
     error IntervalEndInPast();
     error CannotShortenInterval();
@@ -442,23 +443,24 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @dev Mint tokens, after accumulating rewards for an user and update the rewards per token accumulator.
-    //    function _mint(address to) internal {
-    //        _updateUserRewards(to);
-    //        super._mint(to, amount);
-    //    }
+    function _mint(address to, uint256 amount) internal virtual override {
+        _updateUserRewards(to);
+        super._mint(to, amount);
+    }
 
     /// @dev Burn tokens, after accumulating rewards for an user and update the rewards per token accumulator.
-    //    function _burn(address from) internal {
-    //        _updateUserRewards(from);
-    //        super._burn(from, amount);
-    //    }
+    function _burn(address from, uint256 amount) internal virtual override {
+        _updateUserRewards(from);
+        super._burn(from, amount);
+    }
 
     /// @notice Claim rewards for an user
     function _claim(address reward, address from, address to, uint256 amount) internal virtual {
         _updateUserRewards(reward, from);
         rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
         if (reward == address(DEPOSIT_ASSET)) {
-            dahlia.claimInterest(marketId, to, from);
+            (, uint256 shares) = dahlia.claimInterest(marketId, to, from);
+            super._burn(from, shares);
         }
         _pushReward(reward, to, amount);
         emit Claimed(reward, from, to, amount);
@@ -610,7 +612,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         DEPOSIT_ASSET.safeTransferFrom(msg.sender, address(this), assets);
 
         (shares) = dahlia.lend(marketId, assets, receiver);
-        _updateUserRewards(receiver);
+        _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);
     }
@@ -619,6 +621,11 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     function mint(uint256 shares, address receiver) public returns (uint256 assets) {
         assets = previewMint(shares);
         _deposit(receiver, assets);
+    }
+
+    function mintFees(uint256 shares, address receiver) external {
+        require(msg.sender == address(dahlia), NotDahlia());
+        super._mint(receiver, shares);
     }
 
     /// @inheritdoc IWrappedVault
@@ -645,7 +652,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
             if (allowed != type(uint256).max) allowance[from][caller] = allowed - shares;
         }
 
-        _updateUserRewards(from);
+        _burn(from, shares);
 
         (_assets) = dahlia.withdraw(marketId, shares, receiver, from);
     }

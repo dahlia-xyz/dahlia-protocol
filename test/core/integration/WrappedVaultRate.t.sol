@@ -67,7 +67,7 @@ contract WrappedVaultRateTest is Test {
         return fractionalPart == 0 ? integerString : string(abi.encodePacked(integerString, ".", fractionalPart.toString()));
     }
 
-    function printReward(TestContext.MarketContext memory mCtx, string memory message) public {
+    function printReward(TestContext.MarketContext memory mCtx, string memory message) public view {
         ERC20Mock rewardToken = mCtx.loanToken;
         (,, uint256 rate) = mCtx.vault.rewardToInterval(address(rewardToken));
         uint256 ratePerSec = mCtx.vault.previewRateAfterDeposit(address(rewardToken), 0);

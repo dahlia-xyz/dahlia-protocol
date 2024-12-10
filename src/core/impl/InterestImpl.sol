@@ -20,8 +20,9 @@ library InterestImpl {
     /// @dev Accrues interest for the specified market.
     function executeMarketAccrueInterest(
         IDahlia.Market storage market,
-        IDahlia.UserPosition storage protocolFeeRecipientPosition,
-        IDahlia.UserPosition storage reserveFeeRecipientPosition
+        mapping(address => IDahlia.UserPosition) storage positions,
+        address protocolFeeRecipient,
+        address reserveFeeRecipient
     ) internal {
         if (address(market.irm) == address(0)) {
             return;
@@ -48,7 +49,8 @@ library InterestImpl {
             uint256 protocolFeeRate = market.protocolFeeRate;
             if (protocolFeeRate > 0) {
                 protocolFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, protocolFeeRate);
-                protocolFeeRecipientPosition.lendShares += protocolFeeShares.toUint128();
+                market.vault.mintFees(protocolFeeShares, protocolFeeRecipient);
+                positions[protocolFeeRecipient].lendShares += protocolFeeShares.toUint128();
                 market.totalLendShares += protocolFeeShares;
             }
 
@@ -57,7 +59,8 @@ library InterestImpl {
             uint256 reserveFeeRate = market.reserveFeeRate;
             if (reserveFeeRate > 0) {
                 reserveFeeShares = calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, reserveFeeRate);
-                reserveFeeRecipientPosition.lendShares += reserveFeeShares.toUint128();
+                market.vault.mintFees(reserveFeeShares, reserveFeeRecipient);
+                positions[reserveFeeRecipient].lendShares += reserveFeeShares.toUint128();
                 market.totalLendShares += reserveFeeShares;
             }
 
