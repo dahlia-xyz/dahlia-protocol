@@ -8,10 +8,8 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
-/**
- * @title InterestImpl library
- * @notice Implements protocol interest and fee accrual
- */
+/// @title InterestImpl library
+/// @notice Implements protocol interest and fee accrual
 library InterestImpl {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;

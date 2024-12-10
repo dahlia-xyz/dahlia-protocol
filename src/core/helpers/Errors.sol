@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-/**
- * @title Errors library
- * @notice Contains error messages for the protocol.
- */
+/// @title Errors library
+/// @notice Contains error messages for the protocol.
 library Errors {
-    /// @notice Not enough liquidity for borrowing, collateral withdrawal, or loan withdrawal.
+    /// @notice Insufficient liquidity for borrowing, collateral withdrawal, or loan withdrawal.
     error InsufficientLiquidity(uint256 totalBorrowAssets, uint256 totalLendAssets);
 
-    /// @notice Not enough collateral to borrow.
+    /// @notice Insufficient collateral to borrow.
     error InsufficientCollateral(uint256 borrowedAssets, uint256 maxBorrowAssets);
 
-    /// @notice Can't liquidate a healthy position.
+    /// @notice Cannot liquidate a healthy position.
     error HealthyPositionLiquidation(uint256 ltv, uint256 lltv);
 
     /// @notice Address not permitted to call function on behalf of another.
@@ -24,13 +22,13 @@ library Errors {
     /// @notice Input address is zero.
     error ZeroAddress();
 
-    /// @notice Market hasn't been deployed.
+    /// @notice Market has not been deployed.
     error MarketNotDeployed();
 
     /// @notice Market is currently paused.
     error MarketPaused();
 
-    /// @notice Can't change the market status.
+    /// @notice Cannot change the market status.
     error CannotChangeMarketStatus();
 
     /// @notice Market is deprecated.
@@ -48,22 +46,22 @@ library Errors {
     /// @notice Value has already been set.
     error AlreadySet();
 
-    /// @notice Range provided is not valid.
+    /// @notice Provided range is not valid.
     error RangeNotValid(uint256, uint256);
 
     /// @notice Maximum fee has been exceeded.
     error MaxFeeExceeded();
 
-    /// @notice Interest Rate Model isn't allowed in the registry.
+    /// @notice Interest Rate Model is not allowed in the registry.
     error IrmNotAllowed();
 
     /// @notice Liquidation LTV is not within the allowed range.
     error LltvNotAllowed();
 
-    /// @notice Liquidation bonus rate isn't allowed.
+    /// @notice Liquidation bonus rate is not allowed.
     error LiquidationBonusRateNotAllowed();
 
-    /// @notice Oracle price data is bad.
+    /// @notice Oracle price data is stalled.
     error OraclePriceBadData();
 
     /// @notice Signature has expired.

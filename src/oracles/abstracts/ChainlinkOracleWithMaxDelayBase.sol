@@ -28,8 +28,8 @@ abstract contract ChainlinkOracleWithMaxDelayBase is IChainlinkOracleWithMaxDela
     /// @param newMaxDelays The new max oracle delay settings
     event SetMaximumOracleDelay(Delays oldMaxDelays, Delays newMaxDelays);
 
-    /// @notice Emitted on deploy contract
-    /// @param params Initial params
+    /// @notice Emitted when the contract is deployed
+    /// @param params Initial parameters
     event SetParams(Params params);
 
     uint256 public immutable ORACLE_PRECISION;
