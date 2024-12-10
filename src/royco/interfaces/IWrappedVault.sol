@@ -12,6 +12,10 @@ interface IWrappedVault {
     /// @return get total principal of all accounts
     function totalPrincipal() external view returns (uint256);
 
+    /// @param shares The amount of shares to mint
+    /// @dev can be called by Dahlia contract only
+    function mintFees(uint256 shares, address receiver) external;
+
     /// @param to The address to send the rewards to
     /// @param reward The reward token / points program to claim rewards from
     function claim(address to, address reward) external payable;
@@ -93,7 +97,4 @@ interface IWrappedVault {
      * @dev Emitted when a withdrawal is made, either through redeem or withdraw
      */
     event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
-
-    /// @dev Emitted when a transfer is made
-    event Transfer(address indexed from, address indexed to, uint256 amount);
 }

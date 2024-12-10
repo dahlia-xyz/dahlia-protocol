@@ -337,24 +337,14 @@ interface IDahlia {
     /// @param amount Amount of assets to transfer.
     function transferLendShares(MarketId id, address owner, address receiver, uint256 amount) external returns (bool);
 
-    /// @notice Withdraw all `assets` on behalf of a protocol fee recipient.
-    /// @dev Should be invoked through a wrapped vault.
-    /// @param id Market id.
-    /// @return assetsWithdrawn Amount of assets withdrawn.
-    function withdrawProtocolFee(MarketId id) external returns (uint256);
-
-    /// @notice Withdraw `shares` on behalf of a reserve fee recipient
-    /// @param id Market id.
-    /// @param shares Amount of shares to burn.
-    /// @return assetsWithdrawn Amount of assets withdrawn.
-    function withdrawReserveFee(MarketId id, uint256 shares) external returns (uint256 assetsWithdrawn);
-
     /// @notice Claim accrued interest for the position.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
     /// @param receiver Address receiving the assets.
     /// @param owner Owner of the lend position.
-    function claimInterest(MarketId id, address receiver, address owner) external returns (uint256 assets);
+    /// @return assets Amount of interest in assets withdrawn.
+    /// @return shares Amount of interest in shares should be burned.
+    function claimInterest(MarketId id, address receiver, address owner) external returns (uint256 assets, uint256 shares);
 
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.

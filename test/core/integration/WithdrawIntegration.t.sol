@@ -139,8 +139,10 @@ contract WithdrawIntegrationTest is Test {
 
         // anyone can call function withdrawProtocolFee
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.Withdraw($.marketId, address(this), protocolRecipient, protocolRecipient, expectedAssets, protocolFeeShares);
-        uint256 assetsWithdrawn = $.dahlia.withdrawProtocolFee($.marketId);
+        emit IDahlia.Withdraw($.marketId, address($.vault), protocolRecipient, protocolRecipient, expectedAssets, protocolFeeShares);
+
+        vm.prank(protocolRecipient);
+        uint256 assetsWithdrawn = $.vault.redeem(protocolFeeShares, protocolRecipient, protocolRecipient);
 
         IDahlia.UserPosition memory protocolRecipientPos = $.dahlia.getPosition($.marketId, protocolRecipient);
         assertEq(assetsWithdrawn, expectedAssets, "assetsWithdrawn check");
@@ -174,14 +176,10 @@ contract WithdrawIntegrationTest is Test {
         uint256 reserveFeeShares = $.dahlia.getPosition($.marketId, reserveRecipient).lendShares;
         uint256 expectedAssets = reserveFeeShares.toAssetsDown(state.totalLendAssets, state.totalLendShares);
 
-        // revert not permitted
-        vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, address(this)));
-        $.dahlia.withdrawReserveFee($.marketId, reserveFeeShares);
-
         vm.prank(reserveRecipient);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.Withdraw($.marketId, reserveRecipient, reserveRecipient, reserveRecipient, expectedAssets, reserveFeeShares);
-        uint256 assetsWithdrawn = $.dahlia.withdrawReserveFee($.marketId, reserveFeeShares);
+        emit IDahlia.Withdraw($.marketId, address($.vault), reserveRecipient, reserveRecipient, expectedAssets, reserveFeeShares);
+        uint256 assetsWithdrawn = $.vault.redeem(reserveFeeShares, reserveRecipient, reserveRecipient);
 
         IDahlia.UserPosition memory reserveRecipientPos = $.dahlia.getPosition($.marketId, reserveRecipient);
         assertEq(assetsWithdrawn, expectedAssets, "assetsWithdrawn check");
