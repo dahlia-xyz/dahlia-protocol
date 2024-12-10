@@ -588,7 +588,9 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.maxRedeem($.alice), expectedMaxShares, "alice can withdraw some lent shares");
     }
 
-    function test_mintFees_NotDahlia() public {
+    function test_mintFees_NotDahlia(address user) public {
+        vm.assume(user != address($.dahlia));
+        vm.startPrank(user);
         vm.expectRevert(WrappedVault.NotDahlia.selector);
         $.vault.mintFees(100, $.protocolFeeRecipient);
     }
