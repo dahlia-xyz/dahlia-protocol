@@ -8,9 +8,7 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { InterestImpl } from "src/core/impl/InterestImpl.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
@@ -176,22 +174,30 @@ contract AccrueInterestIntegrationTest is Test {
         (uint256 interestEarnedAssets, uint256 newRatePerSec,) =
             $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
 
-        uint256 protocolFeeShares = InterestImpl.calcFeeSharesFromInterest(state.totalLendAssets, state.totalLendShares, interestEarnedAssets, protocolFee);
-        uint256 reserveFeeShares = InterestImpl.calcFeeSharesFromInterest(state.totalLendAssets, state.totalLendShares, interestEarnedAssets, reserveFee);
+        uint256 protocolFeeAssets = interestEarnedAssets * protocolFee / Constants.FEE_PRECISION;
+        uint256 reserveFeeAssets = interestEarnedAssets * reserveFee / Constants.FEE_PRECISION;
+        uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
+        uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(state.totalLendAssets + interestEarnedAssets - sumOfFeeAssets, state.totalLendShares);
+
+        uint256 protocolFeeShares = protocolFeeAssets.toSharesDown(state.totalLendAssets + interestEarnedAssets, state.totalLendShares + sumOfFeeShares);
+        uint256 reserveFeeShares = sumOfFeeShares - protocolFeeShares;
 
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
-            vm.expectEmit(true, true, true, true, address($.vault));
-            emit InitializableERC20.Transfer(address(0), address($.protocolFeeRecipient), protocolFeeShares);
-
-            vm.expectEmit(true, true, true, true, address($.vault));
-            emit InitializableERC20.Transfer(address(0), address($.reserveFeeRecipient), reserveFeeShares);
-
+            if (protocolFeeShares > 0) {
+                vm.expectEmit(true, true, true, true, address($.vault));
+                emit InitializableERC20.Transfer(address(0), address($.protocolFeeRecipient), protocolFeeShares);
+            }
+            if (reserveFeeShares > 0) {
+                vm.expectEmit(true, true, true, true, address($.vault));
+                emit InitializableERC20.Transfer(address(0), address($.reserveFeeRecipient), reserveFeeShares);
+            }
             vm.expectEmit(true, true, true, true, address($.dahlia));
             emit IDahlia.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
         }
-
+        vm.resumeGasMetering();
         $.dahlia.accrueMarketInterest($.marketId);
+        vm.pauseGasMetering();
 
         IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued + interestEarnedAssets, "total supply");
@@ -230,7 +236,12 @@ contract AccrueInterestIntegrationTest is Test {
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
         (uint256 interestEarnedAssets,,) =
             $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
-        uint256 protocolFeeShares = InterestImpl.calcFeeSharesFromInterest(state.totalLendAssets, state.totalLendShares, interestEarnedAssets, fee);
+        uint256 protocolFeeAssets = interestEarnedAssets * state.protocolFeeRate / Constants.FEE_PRECISION;
+        uint256 sumOfFeeAssets = protocolFeeAssets;
+        uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(state.totalLendAssets + interestEarnedAssets - sumOfFeeAssets, state.totalLendShares);
+
+        uint256 protocolFeeShares = protocolFeeAssets.toSharesDown(state.totalLendAssets + interestEarnedAssets, state.totalLendShares + sumOfFeeShares);
+
         vm.forward(blocks);
         vm.resumeGasMetering();
         IDahlia.Market memory m = $.dahlia.getMarket($.marketId);
@@ -330,11 +341,11 @@ contract AccrueInterestIntegrationTest is Test {
 
         uint256 blocks = 10_000;
         vm.forward(blocks - 1);
-        validateUserPos("1 ", 857_499_927, 857_499_927, 857, 857);
-        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_145, "lend rate after 100 blocks");
+        validateUserPos("1 ", 857_999_927, 857_999_927, 858, 858);
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_145, "lend rate after 10000 blocks");
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 5_647_219, "lend rate if deposit more assets");
         vm.dahliaClaimInterestBy($.carol, $);
-        validateUserPos("1 claim by carol", 857_749_928, 250_001, 857, 0);
+        validateUserPos("1 claim by carol", 857_999_927, 0, 858, 0);
         assertEq($.dahlia.getMarket($.marketId).ratePerSec, 175_002_615);
         assertLt($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), $.dahlia.getMarket($.marketId).ratePerSec);
         printMarketState("1", "interest claimed by carol after 100 blocks");
@@ -342,32 +353,32 @@ contract AccrueInterestIntegrationTest is Test {
         printMarketState("1.1", "interest again claimed by carol after 100 blocks");
 
         vm.forward(blocks / 2); // 50 block pass
-        validateUserPos("1.2", 1_286_624_855, 428_874_927, 1286, 428);
+        validateUserPos("1.2", 1_287_499_853, 429_499_926, 1287, 429);
         vm.dahliaClaimInterestBy($.carol, $);
         printMarketState("1.2", "interest claimed by carol");
-        validateUserPos("1.2 claim by carol", 1_287_062_346, 437_491, 1287, 0);
+        validateUserPos("1.2 claim by carol", 1_287_749_844, 249_991, 1287, 0);
         vm.dahliaClaimInterestBy($.bob, $);
-        validateUserPos("1.3 claim by bob and carol", 31_256, 468_747, 0, 0);
+        validateUserPos("1.3 claim by bob and carol", 375_005, 624_996, 0, 0);
         printMarketState("1.3", "interest claimed by bob");
         printMarketState("2", "accrual of interest and lending again by carol");
         vm.dahliaLendBy($.carol, pos.lent, $);
-        validateUserPos("3 lending by carol", 31_256, 468_746, 0, 0);
+        validateUserPos("3 lending by carol", 375_005, 624_995, 0, 0);
         printMarketState("3", "carol lending again");
         //        vm.dahliaLendBy($.bob, pos.lent, $);
         //        printMarketState("4.1", "bob lending again");
         uint256 assets = vm.dahliaWithdrawBy($.bob, $.dahlia.getPosition($.marketId, $.bob).lendShares, $);
-        validateUserPos("4 after bob withdraw all shares", 0, 500_002, 0, 0);
+        validateUserPos("4 after bob withdraw all shares", 0, 1_000_000, 0, 1);
         printMarketState("4", "after bob withdraw all shares");
         console.log("4 bob assets withdrawn: ", assets);
         vm.dahliaWithdrawBy($.carol, $.dahlia.getPosition($.marketId, $.carol).lendShares / 2, $);
-        validateUserPos("5 carol withdraw 1/2 of shares", 0, 500_002, 0, 0);
+        validateUserPos("5 carol withdraw 1/2 of shares", 0, 1_000_000, 0, 1);
         printMarketState("5", "carol withdraw 1/2 of shares");
         vm.dahliaClaimInterestBy($.carol, $);
-        validateUserPos("5 carol claim interest", 0, 500_002, 0, 0);
+        validateUserPos("5 carol claim interest", 0, 0, 0, 0);
         printMarketState("5.1", "interest claimed by carol and 1/2 of shares withdrawn");
         IDahlia.UserPosition memory alicePos = $.dahlia.getPosition($.marketId, $.alice);
         vm.dahliaRepayByShares($.alice, alicePos.borrowShares, $.dahlia.getMarket($.marketId).totalBorrowAssets, $);
-        validateUserPos("6 repay by alice", 0, 500_002, 0, 0);
+        validateUserPos("6 repay by alice", 0, 0, 0, 0);
         printMarketState("6", "repay by alice");
         vm.forward(blocks);
         uint256 assets2 = vm.dahliaWithdrawBy($.carol, $.dahlia.getPosition($.marketId, $.carol).lendShares, $);
@@ -378,45 +389,20 @@ contract AccrueInterestIntegrationTest is Test {
         // if not position claim will fail with NotPermitted
         // vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, address(market.vault)));
         market.vault.claim($.carol, address($.loanToken));
-        assertEq(vault.balanceOf($.reserveFeeRecipient), 26_249_996, "reserveFeeRecipient balance");
-        assertEq(vault.balanceOf($.protocolFeeRecipient), 26_249_996, "protocolFeeRecipient balance");
+        assertEq(vault.balanceOf($.reserveFeeRecipient), 24_999_998, "reserveFeeRecipient balance");
+        assertEq(vault.balanceOf($.protocolFeeRecipient), 24_999_996, "protocolFeeRecipient balance");
         vm.startPrank($.protocolFeeRecipient);
         uint256 protocolFees = $.vault.redeem(vault.balanceOf($.protocolFeeRecipient), $.protocolFeeRecipient, $.protocolFeeRecipient);
-        assertEq(protocolFees, 26, "protocol fees");
+        assertEq(protocolFees, 25, "protocol fees");
         printMarketState("9", "after withdrawProtocolFee");
         assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
-        assertEq(vault.balanceOf($.reserveFeeRecipient), 26_249_996, "reserveFeeRecipient balance");
+        assertEq(vault.balanceOf($.reserveFeeRecipient), 24_999_998, "reserveFeeRecipient balance");
         vm.stopPrank();
         vm.startPrank($.reserveFeeRecipient);
         uint256 reserveFees = $.vault.redeem(vault.balanceOf($.reserveFeeRecipient), $.reserveFeeRecipient, $.reserveFeeRecipient);
-        assertEq(reserveFees, 26, "reserve fees");
-        printMarketState("10", "after withdraw reserve fee");
+        assertEq(reserveFees, 25, "reserve fees");
+        printMarketState("10", "after withdrawReserveFee");
         assertEq(vault.balanceOf($.protocolFeeRecipient), 0, "protocolFeeRecipient balance is 0");
         assertEq(vault.balanceOf($.reserveFeeRecipient), 0, "reserveFeeRecipient balance");
-    }
-
-    function test_int_accrueInterest_feeSharesBugfix() public pure {
-        uint256 totalLendAssets = 200e18;
-        uint256 totalLendShares = 200e24;
-        uint256 interestEarnedAssets = 10 ether;
-        uint256 feeRate = 0.1e5; //10%
-
-        uint256 feeSharesUsingExpected = (interestEarnedAssets * feeRate * totalLendShares)
-            / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets - (interestEarnedAssets * feeRate / Constants.FEE_PRECISION)));
-
-        uint256 feeSharesUsingReturned = InterestImpl.calcFeeSharesFromInterest(totalLendAssets, totalLendShares, interestEarnedAssets, feeRate);
-
-        uint256 feeAssetUsingReturned =
-            SharesMathLib.toAssetsDown(feeSharesUsingReturned, totalLendAssets + interestEarnedAssets, totalLendShares + feeSharesUsingReturned);
-        uint256 feeAssetUsingExpected =
-            SharesMathLib.toAssetsDown(feeSharesUsingExpected, totalLendAssets + interestEarnedAssets, totalLendShares + feeSharesUsingExpected);
-
-        // We know from the above details that at a 10% fee rate, whatever feeShares we get, we should be able to convert it back to 1 ether of assets.
-        // As shown below, the fixed calculation is much closer to 1 ether, which we know is the correct answer. It's not exactly 1 ether because of precision
-        // loss, and virtual shares are
-        // not being accounted for.
-
-        assertApproxEqAbs(feeAssetUsingReturned, 1e18, 1e4, "fee asset returned");
-        assertApproxEqAbs(feeAssetUsingExpected, 1e18, 1e4, "fee asset expected");
     }
 }
