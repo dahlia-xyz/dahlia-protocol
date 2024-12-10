@@ -77,25 +77,20 @@ library InterestImpl {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 deltaTime = block.timestamp - market.updatedAt;
         if (deltaTime != 0 && totalBorrowAssets != 0 && address(market.irm) != address(0)) {
-            uint256 totalLendAssets = market.totalLendAssets;
-            uint256 totalLendShares = market.totalLendShares;
             uint256 fullUtilizationRate = market.fullUtilizationRate;
             (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
-                IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, fullUtilizationRate);
+                IIrm(market.irm).calculateInterest(deltaTime, market.totalLendAssets, totalBorrowAssets, fullUtilizationRate);
 
             market.fullUtilizationRate = uint64(newFullUtilizationRate);
             market.ratePerSec = uint64(newRatePerSec);
             if (interestEarnedAssets != 0) {
-                totalLendAssets += interestEarnedAssets;
+                market.totalLendAssets += interestEarnedAssets;
                 uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
                 uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
                 uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
-                uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(totalLendAssets - sumOfFeeAssets, totalLendShares);
+                uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(market.totalLendAssets - sumOfFeeAssets, market.totalLendShares);
 
-                totalLendShares += sumOfFeeShares;
-
-                market.totalLendShares = totalLendShares;
-                market.totalLendAssets = totalLendAssets;
+                market.totalLendShares += sumOfFeeShares;
                 market.totalBorrowAssets += interestEarnedAssets;
                 market.updatedAt = uint48(block.timestamp);
             }
