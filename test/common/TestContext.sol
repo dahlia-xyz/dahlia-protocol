@@ -110,6 +110,7 @@ contract TestContext {
         v.marketConfig = marketConfig;
         v.marketId = deployDahliaMarket(v.marketConfig);
         v.vault = WrappedVault(address(v.dahlia.getMarket(v.marketId).vault));
+        vm.label(address(v.vault), "[  VAULT  ]");
         v.oracle = OracleMock(address(marketConfig.oracle));
         v.loanToken = ERC20Mock(marketConfig.loanToken);
         v.collateralToken = ERC20Mock(marketConfig.collateralToken);

@@ -13,6 +13,8 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors {
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
@@ -151,5 +153,17 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors {
                 address(this)
             )
         );
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        INTERNAL MINT/BURN LOGIC
+    //////////////////////////////////////////////////////////////*/
+
+    function _mint(address to, uint256 amount) internal virtual {
+        emit Transfer(address(0), to, amount);
+    }
+
+    function _burn(address from, uint256 amount) internal virtual {
+        emit Transfer(from, address(0), amount);
     }
 }

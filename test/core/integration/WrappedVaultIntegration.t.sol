@@ -11,6 +11,7 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestConstants, TestContext } from "test/common/TestContext.sol";
@@ -57,6 +58,23 @@ contract WrappedVaultIntegration is Test {
         vm.startPrank($.alice);
         $.loanToken.approve(address(marketProxy), assets);
         vm.resumeGasMetering();
+        uint256 expectedShares = marketProxy.previewDeposit(assets);
+
+        vm.expectEmit(true, true, true, true, address($.loanToken));
+        emit InitializableERC20.Transfer($.alice, address(marketProxy), assets);
+
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Lend($.marketId, address(marketProxy), $.bob, assets, expectedShares);
+
+        vm.expectEmit(true, true, true, true, address($.loanToken));
+        emit InitializableERC20.Transfer(address(marketProxy), address($.dahlia), assets);
+
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit InitializableERC20.Transfer(address(0), $.bob, expectedShares);
+
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit IWrappedVault.Deposit($.alice, $.bob, assets, expectedShares);
+
         uint256 shares = marketProxy.deposit(assets, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
@@ -91,6 +109,22 @@ contract WrappedVaultIntegration is Test {
         vm.startPrank($.alice);
         $.loanToken.approve(address(marketProxy), assets);
         vm.resumeGasMetering();
+
+        vm.expectEmit(true, true, true, true, address($.loanToken));
+        emit InitializableERC20.Transfer($.alice, address(marketProxy), assets);
+
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Lend($.marketId, address(marketProxy), $.bob, assets, shares);
+
+        vm.expectEmit(true, true, true, true, address($.loanToken));
+        emit InitializableERC20.Transfer(address(marketProxy), address($.dahlia), assets);
+
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit InitializableERC20.Transfer(address(0), $.bob, shares);
+
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit IWrappedVault.Deposit($.alice, $.bob, assets, shares);
+
         uint256 resAssets = marketProxy.mint(shares, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
@@ -121,8 +155,26 @@ contract WrappedVaultIntegration is Test {
         vm.stopPrank();
 
         vm.startPrank($.bob);
+
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit InitializableERC20.Transfer($.bob, address(0), shares);
+
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Withdraw($.marketId, address($.vault), $.alice, $.bob, assets, shares);
+
+        vm.expectEmit(true, true, true, true, address($.loanToken));
+        emit InitializableERC20.Transfer(address($.dahlia), address($.alice), assets);
+
         vm.expectEmit(true, true, true, true, address(marketProxy));
         emit IWrappedVault.Withdraw($.bob, $.alice, $.bob, assets, shares);
+
+        //
+        //        vm.expectEmit(true, true, true, true, address($.dahlia));
+        //        emit IDahlia.Lend($.marketId, address(marketProxy), $.bob, assets, shares);
+        //
+        //        vm.expectEmit(true, true, true, true, address($.loanToken));
+        //        emit InitializableERC20.Transfer(address(marketProxy), address($.dahlia), assets);
+
         vm.resumeGasMetering();
         uint256 sharesWithdrawn = marketProxy.withdraw(assets, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -157,9 +209,21 @@ contract WrappedVaultIntegration is Test {
         vm.stopPrank();
 
         vm.startPrank($.bob);
+
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit InitializableERC20.Transfer($.bob, address(0), shares);
+
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Withdraw($.marketId, address($.vault), $.alice, $.bob, assets, shares);
+
+        vm.expectEmit(true, true, true, true, address($.loanToken));
+        emit InitializableERC20.Transfer(address($.dahlia), address($.alice), assets);
+
         vm.expectEmit(true, true, true, true, address(marketProxy));
         emit IWrappedVault.Withdraw($.bob, $.alice, $.bob, assets, shares);
+
         vm.resumeGasMetering();
+
         uint256 assetsRedeemed = marketProxy.redeem(shares, $.alice, $.bob);
         vm.pauseGasMetering();
         vm.stopPrank();
@@ -322,7 +386,7 @@ contract WrappedVaultIntegration is Test {
 
         vm.startPrank($.bob);
         vm.expectEmit(true, true, true, true, address(marketProxy));
-        emit IWrappedVault.Transfer($.bob, $.carol, shares);
+        emit InitializableERC20.Transfer($.bob, $.carol, shares);
         vm.resumeGasMetering();
         marketProxy.transfer($.carol, shares);
         vm.pauseGasMetering();
@@ -359,7 +423,7 @@ contract WrappedVaultIntegration is Test {
 
         vm.startPrank($.bob);
         vm.expectEmit(true, true, true, true, address(marketProxy));
-        emit IWrappedVault.Transfer($.bob, $.carol, shares2);
+        emit InitializableERC20.Transfer($.bob, $.carol, shares2);
         vm.resumeGasMetering();
         marketProxy.transfer($.carol, shares);
         vm.pauseGasMetering();
@@ -522,5 +586,10 @@ contract WrappedVaultIntegration is Test {
         uint256 expectedMaxShares = FixedPointMathLib.min(maxAvailableShares, marketProxy.convertToShares(pos.lent));
         assertEq(marketProxy.maxWithdraw($.alice), expectedMaxAssets, "alice can withdraw some lent assets");
         assertEq(marketProxy.maxRedeem($.alice), expectedMaxShares, "alice can withdraw some lent shares");
+    }
+
+    function test_mintFees_NotDahlia() public {
+        vm.expectRevert(WrappedVault.NotDahlia.selector);
+        $.vault.mintFees(100, $.protocolFeeRecipient);
     }
 }
