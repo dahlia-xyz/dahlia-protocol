@@ -188,7 +188,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         (uint256 assets, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
 
-        // user lend assets should be 0 if not shares left (rounding issue)
+        // User lend assets should be 0 if no shares are left (rounding issue)
         uint256 userLendAssets = ownerPosition.lendPrincipalAssets;
         if (ownerLendShares == 0) {
             ownerPosition.lendPrincipalAssets = 0;
@@ -217,7 +217,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         uint256 ownerLendPrincipalAssets = ownerPosition.lendPrincipalAssets;
         if (newOwnerLendShares == 0) {
-            receiverPosition.lendPrincipalAssets += ownerLendPrincipalAssets.toUint128(); // transfer all if no shares left
+            receiverPosition.lendPrincipalAssets += ownerLendPrincipalAssets.toUint128(); // Transfer all if no shares left
             ownerPosition.lendPrincipalAssets = 0;
         } else {
             uint256 ownerLendPrincipalAssetsDown = FixedPointMathLib.min(assets, ownerLendPrincipalAssets);
@@ -230,7 +230,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return true;
     }
 
-    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets, uint256 sharesInterest) {
+    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets, uint256 interestShares) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -244,9 +244,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
         uint256 lendShares = ownerPosition.lendPrincipalAssets.toSharesDown(totalLendAssets, totalLendShares);
-        sharesInterest = ownerPosition.lendShares - lendShares;
+        interestShares = ownerPosition.lendShares - lendShares;
 
-        (assets,) = LendImpl.internalWithdraw(market, ownerPosition, sharesInterest, owner, receiver);
+        (assets,) = LendImpl.internalWithdraw(market, ownerPosition, interestShares, owner, receiver);
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
@@ -265,7 +265,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function borrow(MarketId id, uint256 assets, address owner, address receiver) external isSenderPermitted(owner) returns (uint256 sharesBorrowed) {
+    function borrow(MarketId id, uint256 assets, address owner, address receiver) external isSenderPermitted(owner) returns (uint256 borrowShares) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -274,7 +274,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
-        sharesBorrowed = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
+        borrowShares = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }
@@ -533,7 +533,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(status != MarketStatus.None, Errors.MarketNotDeployed());
     }
 
-    /// @notice Validates the current market status is paused or deprecated.
+    /// @notice Validates the current market status is active.
     /// @param status The current market status.
     function _validateMarketActive(MarketStatus status) internal pure {
         if (status == MarketStatus.Deprecated) {
@@ -543,14 +543,14 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         }
     }
 
-    /// @notice Validates the current market status and market is paused or deprecated.
+    /// @notice Validates the current market status is deployed and active.
     /// @param status The current market status.
     function _validateMarketDeployedAndActive(MarketStatus status) internal pure {
         _validateMarketDeployed(status);
         _validateMarketActive(status);
     }
 
-    /// @notice Validates if current sender is WrappedVault contract.
+    /// @notice Validates if the current sender is the WrappedVault contract.
     /// @param vault WrappedVault contract address
     function _permittedByWrappedVault(IWrappedVault vault) internal view {
         require(msg.sender == address(vault), Errors.NotPermitted(msg.sender));

@@ -39,7 +39,7 @@ library Constants {
     /// @notice Address ID for the `DahliaProvider` contract in the registry.
     uint256 internal constant ADDRESS_ID_DAHLIA_PROVIDER = 2;
 
-    /// @notice Address ID for the `DahliaOracleFactory.sol` contract in the registry.
+    /// @notice Address ID for the `DahliaOracleFactory` contract in the registry.
     uint256 internal constant ADDRESS_ID_ORACLE_FACTORY = 4;
 
     /// @notice Address ID for the `IRMFactory` contract in the registry.

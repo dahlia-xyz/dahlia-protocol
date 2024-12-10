@@ -10,10 +10,8 @@ import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
-/**
- * @title BorrowImpl library
- * @notice Implements borrowing protocol functions
- */
+/// @title BorrowImpl library
+/// @notice Implements borrowing protocol functions
 library BorrowImpl {
     using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
@@ -28,7 +26,7 @@ library BorrowImpl {
         emit IDahlia.SupplyCollateral(market.id, msg.sender, owner, assets);
     }
 
-    // Withdraw collateral from borrower's position
+    // Withdraw collateral from a borrower's position
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
@@ -38,7 +36,7 @@ library BorrowImpl {
     ) internal {
         ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
 
-        // Check if there's enough collateral for withdrawal
+        // Ensure sufficient collateral for withdrawal
         if (ownerPosition.borrowShares > 0) {
             uint256 borrowedAssets = SharesMathLib.toAssetsUp(ownerPosition.borrowShares, market.totalBorrowAssets, market.totalBorrowShares);
             uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
@@ -62,13 +60,13 @@ library BorrowImpl {
         uint256 shares = assets.toSharesUp(totalBorrowAssets, totalBorrowShares);
         totalBorrowAssets += assets;
 
-        // Check for sufficient liquidity
+        // Ensure sufficient liquidity
         require(totalBorrowAssets <= totalLendAssets, Errors.InsufficientLiquidity(totalBorrowAssets, totalLendAssets));
 
         totalBorrowShares += shares;
         uint256 ownerBorrowShares = ownerPosition.borrowShares + shares;
 
-        // Check if user has enough collateral
+        // Ensure user has enough collateral
         uint256 borrowedAssets = SharesMathLib.toAssetsUp(ownerBorrowShares, totalBorrowAssets, totalBorrowShares);
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
 
@@ -92,7 +90,7 @@ library BorrowImpl {
         // Calculate assets or shares
         if (assets > 0) {
             shares = assets.toSharesDown(market.totalBorrowAssets, market.totalBorrowShares);
-            // to avoid arithmetic overflow when we have shares tail
+            // Avoid arithmetic overflow when we have shares tail
             uint256 owned = ownerPosition.borrowShares;
             if (shares > owned && (shares - owned) < SharesMathLib.SHARES_OFFSET) {
                 shares = owned;
