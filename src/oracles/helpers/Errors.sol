@@ -6,7 +6,7 @@ library Errors {
     /// @notice Thrown when a negative value is encountered.
     error NegativeAnswer(int256 value);
 
-    /// @notice Uniswap pair is not supported.
+    /// @notice Thrown when a Uniswap pair is not supported.
     error PairNotSupported(address baseToken, address quoteToken);
 
     /// @notice Thrown when a zero address is provided.

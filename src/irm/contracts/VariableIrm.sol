@@ -39,7 +39,7 @@ contract VariableIrm is IIrm {
         /// @notice Interest rate at 0% utilization
         /// e.g., 158247046 (~0.5% yearly), 18 decimals
         uint256 zeroUtilizationRate;
-        /// @notice Percent of delta between full and zero utilization rates
+        /// @notice Percentage of delta between full and zero utilization rates
         /// e.g., 0.2e18, 18 decimals
         uint256 targetRatePercent;
     }

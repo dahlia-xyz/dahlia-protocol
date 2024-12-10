@@ -8,10 +8,8 @@ import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
-/**
- * @title InterestImpl library
- * @notice Implements protocol interest and fee accrual
- */
+/// @title InterestImpl library
+/// @notice Implements protocol interest and fee accrual
 library InterestImpl {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
@@ -69,7 +67,6 @@ library InterestImpl {
         }
     }
 
-    /// @dev Calculates fee shares from earned interest.
     function calcFeeSharesFromInterest(uint256 totalLendAssets, uint256 totalLendShares, uint256 interestEarnedAssets, uint256 feeRate)
         internal
         pure
@@ -79,8 +76,6 @@ library InterestImpl {
             / (Constants.FEE_PRECISION * (totalLendAssets + interestEarnedAssets - (interestEarnedAssets * feeRate / Constants.FEE_PRECISION)));
     }
 
-    /// @notice Gets the expected market balances after interest accrual.
-    /// @return Updated market balances
     function getLastMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 deltaTime = block.timestamp - market.updatedAt;

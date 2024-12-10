@@ -6,10 +6,8 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 
-/**
- * @title ManageMarketImpl library
- * @notice Implements market deployment and protocol fee
- */
+/// @title ManageMarketImpl library
+/// @notice Implements market deployment and protocol fee
 library ManageMarketImpl {
     function setProtocolFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.protocolFeeRate, Errors.AlreadySet());

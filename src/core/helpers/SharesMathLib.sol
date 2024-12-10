@@ -5,8 +5,8 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 
 /// @title SharesMathLib
 /// @dev Math utilities for converting between assets and shares, inspired by Solady and Uniswap.
-/// lib/solady/src/tokens/ERC4626.sol
-/// https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/FullMath.sol
+/// See lib/solady/src/tokens/ERC4626.sol and
+/// https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/FullMath.sol for reference.
 library SharesMathLib {
     using FixedPointMathLib for uint256;
 

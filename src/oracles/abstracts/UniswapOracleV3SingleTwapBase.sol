@@ -21,12 +21,11 @@ abstract contract UniswapOracleV3SingleTwapBase is ERC165, IUniswapV3SingleTwapO
     /// @dev Emitted when the TWAP duration is updated
     event SetTwapDuration(uint256 oldTwapDuration, uint256 newTwapDuration);
 
-    /// @notice Emitted on deploy contract
+    /// @notice Emitted when the contract is deployed
     /// @param uniswapV3PairAddress Address of the Uniswap V3 pair
     /// @param baseToken Base token address
     /// @param quoteToken Quote token address
     /// @param uniswapStaticOracle Address of the static oracle
-
     event SetParams(address indexed uniswapV3PairAddress, address indexed baseToken, address indexed quoteToken, address uniswapStaticOracle);
 
     error TwapDurationIsTooShort();
