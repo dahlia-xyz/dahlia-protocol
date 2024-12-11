@@ -35,9 +35,10 @@ contract DualOracleChainlinkUniV3 is ChainlinkOracleWithMaxDelayBase, UniswapOra
 
     /// @inheritdoc IDahliaOracle
     function getPrice() external view returns (uint256, bool) {
-        (uint256 _chainlinkPrice, bool _chainlinkIsBadPrice) = _getChainlinkPrice();
-        uint256 _uniswapPrice = _getUniswapV3Twap();
-        uint256 _minPrice = (!_chainlinkIsBadPrice && _chainlinkPrice < _uniswapPrice) ? _chainlinkPrice : _uniswapPrice;
-        return (_minPrice, false);
+        (uint256 _price, bool _chainlinkIsBadPrice) = _getChainlinkPrice();
+        if (_chainlinkIsBadPrice) {
+            _price = _getUniswapV3Twap();
+        }
+        return (_price, false);
     }
 }
