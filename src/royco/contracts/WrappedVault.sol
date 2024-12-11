@@ -155,7 +155,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         //_mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
-        DEPOSIT_ASSET.approve(_dahlia, type(uint256).max);
+        DEPOSIT_ASSET.safeApprove(_dahlia, type(uint256).max);
     }
 
     /// @notice Returns parameters of reward internal
