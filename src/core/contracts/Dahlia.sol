@@ -230,7 +230,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return true;
     }
 
-    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 assets, uint256 interestShares) {
+    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 interestShares) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -246,7 +246,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         uint256 lendShares = ownerPosition.lendPrincipalAssets.toSharesDown(totalLendAssets, totalLendShares);
         interestShares = ownerPosition.lendShares - lendShares;
 
-        (assets,) = LendImpl.internalWithdraw(market, ownerPosition, interestShares, owner, receiver);
+        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, interestShares, owner, receiver);
 
         IERC20(market.loanToken).safeTransfer(receiver, assets);
     }

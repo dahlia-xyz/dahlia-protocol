@@ -458,7 +458,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         _updateUserRewards(reward, from);
         rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
         if (reward == address(DEPOSIT_ASSET)) {
-            (, uint256 shares) = dahlia.claimInterest(marketId, to, from);
+            uint256 shares = dahlia.claimInterest(marketId, to, from);
             super._burn(from, shares);
         }
         _pushReward(reward, to, amount);

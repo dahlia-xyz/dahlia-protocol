@@ -342,9 +342,8 @@ interface IDahlia {
     /// @param id Market id.
     /// @param receiver Address receiving the assets.
     /// @param owner Owner of the lend position.
-    /// @return assets Amount of interest in assets withdrawn.
     /// @return shares Amount of interest in shares should be burned.
-    function claimInterest(MarketId id, address receiver, address owner) external returns (uint256 assets, uint256 shares);
+    function claimInterest(MarketId id, address receiver, address owner) external returns (uint256 shares);
 
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.
