@@ -221,13 +221,12 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @param reward The reward token / points program
-    /// @param from The address to pull rewards from
     /// @param amount The amount of rewards to deduct from the user
-    function _pullReward(address reward, address from, uint256 amount) internal {
+    function _pullReward(address reward, uint256 amount) internal {
         if (POINTS_FACTORY.isPointsProgram(reward)) {
             if (!Points(reward).isAllowedVault(address(this))) revert VaultNotAuthorizedToRewardPoints();
         } else {
-            ERC20(reward).safeTransferFrom(from, address(this), amount);
+            ERC20(reward).safeTransferFrom(msg.sender, address(this), amount);
         }
     }
 
@@ -284,7 +283,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         emit RewardsSet(reward, newStart, newEnd.toUint32(), rate, (rate * (newEnd - newStart)), protocolFeeTaken, frontendFeeTaken);
 
-        _pullReward(reward, msg.sender, rewardsAdded);
+        _pullReward(reward, rewardsAdded);
     }
 
     /// @dev Set a rewards schedule
@@ -339,7 +338,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         emit RewardsSet(reward, rewardsInterval.start, rewardsInterval.end, rate, (rate * (end - start)), protocolFeeTaken, frontendFeeTaken);
 
-        _pullReward(reward, msg.sender, totalRewards);
+        _pullReward(reward, totalRewards);
     }
 
     /// @param reward The address of the reward for which campaign should be refunded
