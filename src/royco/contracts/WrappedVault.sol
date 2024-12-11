@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import { Points } from "@royco/Points.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
-import { SafeCast } from "@royco/libraries/SafeCast.sol";
 import { Ownable } from "@solady/auth/Ownable.sol";
 import { FixedPointMathLib as SoladyMath } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
 import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
@@ -22,7 +22,7 @@ import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 /// by the size of their holdings.
 contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     using SafeTransferLib for ERC20;
-    using SafeCast for uint256;
+    using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
 

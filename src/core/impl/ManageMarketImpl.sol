@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -9,6 +10,8 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 /// @title ManageMarketImpl library
 /// @notice Implements market deployment and protocol fee
 library ManageMarketImpl {
+    using SafeCastLib for uint256;
+
     function setProtocolFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.protocolFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
@@ -21,7 +24,7 @@ library ManageMarketImpl {
         require(newFee != market.reserveFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
 
-        market.reserveFeeRate = uint24(newFee);
+        market.reserveFeeRate = newFee.toUint24();
         emit IDahlia.SetReserveFeeRate(market.id, newFee);
     }
 
@@ -39,12 +42,12 @@ library ManageMarketImpl {
         market.collateralToken = marketConfig.collateralToken;
         market.oracle = marketConfig.oracle;
         market.irm = marketConfig.irm;
-        market.fullUtilizationRate = uint64(marketConfig.irm.minFullUtilizationRate());
-        market.ratePerSec = uint64(marketConfig.irm.zeroUtilizationRate());
-        market.lltv = uint24(marketConfig.lltv);
+        market.fullUtilizationRate = marketConfig.irm.minFullUtilizationRate().toUint64();
+        market.ratePerSec = marketConfig.irm.zeroUtilizationRate().toUint64();
+        market.lltv = marketConfig.lltv.toUint24();
         market.updatedAt = uint48(block.timestamp);
         market.status = IDahlia.MarketStatus.Active;
-        market.liquidationBonusRate = uint24(marketConfig.liquidationBonusRate);
+        market.liquidationBonusRate = marketConfig.liquidationBonusRate.toUint24();
         market.vault = vault;
         emit IDahlia.DeployMarket(id, vault, marketConfig);
     }

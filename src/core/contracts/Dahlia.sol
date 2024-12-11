@@ -524,7 +524,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
         emit LiquidationBonusRateChanged(liquidationBonusRate);
-        market.liquidationBonusRate = uint24(liquidationBonusRate);
+        market.liquidationBonusRate = liquidationBonusRate.toUint24();
     }
 
     /// @notice Validates the current market status is not None.
