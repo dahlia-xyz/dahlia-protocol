@@ -6,9 +6,8 @@ import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Ownable } from "@solady/auth/Ownable.sol";
 import { FixedPointMathLib as SoladyMath } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { ERC20 } from "@solmate/tokens/ERC20.sol";
+import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "@solmate/utils/SafeTransferLib.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
@@ -21,7 +20,7 @@ import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
 contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
-    using SafeTransferLib for ERC20;
+    using SafeTransferLib for address;
     using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
@@ -93,7 +92,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     uint256 public constant RPT_PRECISION = 1e27;
 
     /// @dev The underlying asset being deposited into the vault
-    ERC20 private DEPOSIT_ASSET;
+    address private DEPOSIT_ASSET;
     /// @dev The address of the canonical points program factory
     PointsFactory public POINTS_FACTORY;
     /// @dev The address of the canonical WrappedVault factory
@@ -150,7 +149,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         frontendFee = initialFrontendFee;
         dahlia = IDahlia(_dahlia);
         marketId = _marketId;
-        DEPOSIT_ASSET = ERC20(_asset);
+        DEPOSIT_ASSET = _asset;
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
         //_mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
@@ -226,7 +225,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         if (POINTS_FACTORY.isPointsProgram(reward)) {
             if (!Points(reward).isAllowedVault(address(this))) revert VaultNotAuthorizedToRewardPoints();
         } else {
-            ERC20(reward).safeTransferFrom(msg.sender, address(this), amount);
+            reward.safeTransferFrom(msg.sender, address(this), amount);
         }
     }
 
@@ -241,7 +240,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         if (POINTS_FACTORY.isPointsProgram(reward)) {
             Points(reward).award(to, amount);
         } else {
-            ERC20(reward).safeTransfer(to, amount);
+            reward.safeTransfer(to, amount);
         }
     }
 
@@ -350,7 +349,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         uint256 rewardsOwed = (rewardsInterval.rate * (rewardsInterval.end - rewardsInterval.start)) - 1; // Round down
         if (!POINTS_FACTORY.isPointsProgram(reward)) {
-            ERC20(reward).safeTransfer(msg.sender, rewardsOwed);
+            reward.safeTransfer(msg.sender, rewardsOwed);
         }
         emit RewardsSet(reward, 0, 0, 0, 0, 0, 0);
     }
