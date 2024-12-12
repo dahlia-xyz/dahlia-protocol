@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
@@ -74,7 +75,7 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
         $.loanToken.approve(address($.dahlia), 0);
 
         vm.resumeGasMetering();
-        vm.expectRevert("ERC20: subtraction underflow");
+        vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
         $.dahlia.flashLoan(address($.loanToken), amount, abi.encode(this.test_int_flashLoan_shouldRevertIfNotReimbursed.selector, TestConstants.EMPTY_CALLBACK));
     }
 

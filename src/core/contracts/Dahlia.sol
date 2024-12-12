@@ -2,11 +2,10 @@
 pragma solidity ^0.8.27;
 
 import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
+import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
 import { Permitted } from "src/core/abstracts/Permitted.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
@@ -29,7 +28,7 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 /// @title Dahlia
 /// @notice The Dahlia contract.
 contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
-    using SafeERC20 for IERC20;
+    using SafeTransferLib for address;
     using SharesMathLib for *;
     using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
@@ -171,7 +170,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         shares = LendImpl.internalLend(market, positions[owner], assets, owner);
 
-        IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), assets);
+        market.loanToken.safeTransferFrom(msg.sender, address(this), assets);
     }
 
     /// @inheritdoc IDahlia
@@ -199,7 +198,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             market.totalLendPrincipalAssets -= userLendAssetsDown;
         }
 
-        IERC20(market.loanToken).safeTransfer(receiver, assets);
+        market.loanToken.safeTransfer(receiver, assets);
         return assets;
     }
 
@@ -248,7 +247,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, interestShares, owner, receiver);
 
-        IERC20(market.loanToken).safeTransfer(receiver, assets);
+        market.loanToken.safeTransfer(receiver, assets);
     }
 
     /// @param id The market id.
@@ -276,7 +275,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         borrowShares = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
 
-        IERC20(market.loanToken).safeTransfer(receiver, assets);
+        market.loanToken.safeTransfer(receiver, assets);
     }
 
     // @inheritdoc IDahlia
@@ -297,8 +296,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         borrowedShares = BorrowImpl.internalBorrow(market, ownerPosition, borrowAssets, owner, receiver);
 
-        IERC20(market.collateralToken).safeTransferFrom(owner, address(this), collateralAssets);
-        IERC20(market.loanToken).safeTransfer(receiver, borrowAssets);
+        market.collateralToken.safeTransferFrom(owner, address(this), collateralAssets);
+        market.loanToken.safeTransfer(receiver, borrowAssets);
     }
 
     // @inheritdoc IDahlia
@@ -317,10 +316,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
         (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, ownerPosition, repayAssets, repayShares, owner);
-        IERC20(market.loanToken).safeTransferFrom(owner, address(this), repaidAssets);
+        market.loanToken.safeTransferFrom(owner, address(this), repaidAssets);
 
         BorrowImpl.internalWithdrawCollateral(market, ownerPosition, collateralAssets, owner, receiver);
-        IERC20(market.collateralToken).safeTransfer(receiver, collateralAssets);
+        market.collateralToken.safeTransfer(receiver, collateralAssets);
     }
 
     /// @inheritdoc IDahlia
@@ -337,7 +336,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             IDahliaRepayCallback(msg.sender).onDahliaRepay(assets, callbackData);
         }
 
-        IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), assets);
+        market.loanToken.safeTransferFrom(msg.sender, address(this), assets);
         return (assets, shares);
     }
 
@@ -357,7 +356,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             LiquidationImpl.internalLiquidate(market, positions[borrower], positions[reserveFeeRecipient], borrower);
 
         // Transfer seized collateral from Dahlia to the liquidator's wallet.
-        IERC20(market.collateralToken).safeTransfer(msg.sender, seizedCollateral);
+        market.collateralToken.safeTransfer(msg.sender, seizedCollateral);
 
         // This callback allows a smart contract to receive the repaid amount before approving in collateral token.
         if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
@@ -365,7 +364,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         }
 
         // Transfer repaid assets from the liquidator's wallet to Dahlia.
-        IERC20(market.loanToken).safeTransferFrom(msg.sender, address(this), repaidAssets);
+        market.loanToken.safeTransferFrom(msg.sender, address(this), repaidAssets);
     }
 
     /// @inheritdoc IDahlia
@@ -383,7 +382,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             IDahliaSupplyCollateralCallback(msg.sender).onDahliaSupplyCollateral(assets, callbackData);
         }
 
-        IERC20(market.collateralToken).safeTransferFrom(msg.sender, address(this), assets);
+        market.collateralToken.safeTransferFrom(msg.sender, address(this), assets);
     }
 
     /// @inheritdoc IDahlia
@@ -399,7 +398,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         BorrowImpl.internalWithdrawCollateral(market, positions[owner], assets, owner, receiver);
 
-        IERC20(market.collateralToken).safeTransfer(receiver, assets);
+        market.collateralToken.safeTransfer(receiver, assets);
     }
 
     /// @inheritdoc IDahlia
@@ -408,13 +407,13 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         uint256 fee = MarketMath.mulPercentUp(assets, flashLoanFeeRate);
 
-        IERC20(token).safeTransfer(msg.sender, assets);
+        token.safeTransfer(msg.sender, assets);
 
         IDahliaFlashLoanCallback(msg.sender).onDahliaFlashLoan(assets, fee, callbackData);
 
-        IERC20(token).safeTransferFrom(msg.sender, address(this), assets);
+        token.safeTransferFrom(msg.sender, address(this), assets);
         if (fee > 0) {
-            IERC20(token).safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
+            token.safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
         }
 
         emit DahliaFlashLoan(msg.sender, token, assets, fee);
