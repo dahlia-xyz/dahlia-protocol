@@ -31,6 +31,7 @@ library Errors {
     /// @notice Market is stalled and winding down.
     error MarketStalled();
 
+    /// @notice Market is not stalled.
     error MarketNotStalled();
 
     /// @notice Cannot change the market status.

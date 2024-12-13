@@ -8,10 +8,8 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
-/**
- * @title LendImpl library
- * @notice Implements protocol lending functions
- */
+/// @title LendImpl library
+/// @notice Implements protocol lending functions
 library LendImpl {
     using SafeERC20 for IERC20;
     using SharesMathLib for uint256;
