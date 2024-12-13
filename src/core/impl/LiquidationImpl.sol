@@ -22,6 +22,8 @@ library LiquidationImpl {
         IDahlia.UserPosition storage reservePosition,
         address borrower
     ) internal returns (uint256, uint256, uint256) {
+        require(market.staleTimestamp == 0, Errors.MarketStalled());
+
         uint256 rescueAssets = 0;
         uint256 rescueShares = 0;
         uint256 totalBorrowAssets = market.totalBorrowAssets;

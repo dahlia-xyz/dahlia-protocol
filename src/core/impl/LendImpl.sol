@@ -21,6 +21,8 @@ library LendImpl {
         internal
         returns (uint256 shares)
     {
+        require(market.staleTimestamp == 0, Errors.MarketStalled());
+
         shares = assets.toSharesDown(market.totalLendAssets, market.totalLendShares);
 
         ownerPosition.lendShares += shares.toUint128();
@@ -36,6 +38,8 @@ library LendImpl {
         internal
         returns (uint256 assets, uint256 ownerLendShares)
     {
+        require(market.staleTimestamp == 0, Errors.MarketStalled());
+
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
         assets = shares.toAssetsDown(totalLendAssets, totalLendShares);
@@ -49,5 +53,34 @@ library LendImpl {
         market.totalLendAssets = totalLendAssets;
 
         emit IDahlia.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
+    }
+
+    function internalWithdrawDepositAndClaimCollateral(
+        IDahlia.Market storage market,
+        IDahlia.UserPosition storage ownerPosition,
+        address owner,
+        address receiver
+    ) internal returns (uint256 lendAssets, uint256 collateralAssets) {
+        uint256 totalCollateralAssets = market.totalCollateralAssets;
+        uint256 totalLendAssets = market.totalLendAssets; // 10,000
+        uint256 totalBorrowAssets = market.totalLendAssets; // 8,000
+        uint256 totalLendShares = market.totalLendShares;
+        uint256 shares = uint256(ownerPosition.lendShares);
+        require(shares > 0, Errors.ZeroAssets());
+
+        // calculate owner assets based on liquidity in the market
+        lendAssets = shares.toAssetsDown(totalLendAssets - totalBorrowAssets, totalLendShares); // 2000 * shares (10%)
+        totalLendAssets -= lendAssets;
+        // calculate owed collateral based on lend shares
+        collateralAssets = shares.toAssetsDown(totalCollateralAssets, totalLendShares);
+        totalCollateralAssets -= collateralAssets;
+
+        uint256 ownerLendShares = 0;
+        ownerPosition.lendShares = ownerLendShares.toUint128();
+        market.totalLendShares = totalLendShares - shares;
+        market.totalLendAssets = totalLendAssets;
+        market.totalCollateralAssets = totalCollateralAssets;
+
+        emit IDahlia.WithdrawDepositAndClaimCollateral(market.id, msg.sender, receiver, owner, lendAssets, collateralAssets, shares);
     }
 }

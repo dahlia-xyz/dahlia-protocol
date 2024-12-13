@@ -13,8 +13,9 @@ interface IDahlia {
     enum MarketStatus {
         None,
         Active,
-        Paused,
-        Deprecated
+        Pause,
+        Stale,
+        Deprecate
     }
 
     struct RateRange {
@@ -41,14 +42,16 @@ interface IDahlia {
         // --- 28 bytes
         IIrm irm; // 20 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 20 bytes
+        // --- 26 bytes
         IWrappedVault vault; // 20 bytes
+        uint48 staleTimestamp; // 6 bytes
         // --- having all 256 bytes at the end makes deployment size smaller
         uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
         uint256 totalLendPrincipalAssets; // 32 bytes // store user total initial lend assets
+        uint256 totalCollateralAssets; // 32 bytes
     }
 
     struct UserPosition {
@@ -147,6 +150,10 @@ interface IDahlia {
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
 
+    event WithdrawDepositAndClaimCollateral(
+        IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 collateralAssets, uint256 shares
+    );
+
     /// @dev Emitted when assets are borrowed.
     /// @param id Market id.
     /// @param caller Address of the caller.
@@ -204,6 +211,8 @@ interface IDahlia {
     /// @param assets Amount of assets flash loaned.
     /// @param fee Fee amount for the flash loan.
     event DahliaFlashLoan(address indexed caller, address indexed token, uint256 assets, uint256 fee);
+
+    event OracleStaleDetected(IDahlia.MarketId indexed marketId, uint256 lastUpdatedAt);
 
     /// @notice Get user position for a market id and address with accrued interest.
     /// @param id Market id.

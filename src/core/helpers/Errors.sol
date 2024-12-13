@@ -28,6 +28,11 @@ library Errors {
     /// @notice Market is currently paused.
     error MarketPaused();
 
+    /// @notice Market is stalled and winding down.
+    error MarketStalled();
+
+    error MarketNotStalled();
+
     /// @notice Cannot change the market status.
     error CannotChangeMarketStatus();
 
@@ -63,6 +68,12 @@ library Errors {
 
     /// @notice Oracle price data is stalled.
     error OraclePriceBadData();
+
+    /// @notice Oracle price is not stalled.
+    error OraclePriceNotStalled();
+
+    /// @notice Repay period ended.
+    error RepayPeriodEnded();
 
     /// @notice Signature has expired.
     error SignatureExpired();

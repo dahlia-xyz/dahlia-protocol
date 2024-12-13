@@ -15,6 +15,7 @@ contract DahliaRegistry is IDahliaRegistry, Ownable {
 
     constructor(address _owner) Ownable(_owner) {
         _setValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE, 0.02e18);
+        _setValue(Constants.VALUE_ID_REPAY_PERIOD, 7 days);
     }
 
     /// @inheritdoc IDahliaRegistry
