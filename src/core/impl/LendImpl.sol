@@ -59,25 +59,22 @@ library LendImpl {
         address owner,
         address receiver
     ) internal returns (uint256 lendAssets, uint256 collateralAssets) {
+        uint256 shares = ownerPosition.lendShares;
+        require(shares > 0, Errors.ZeroAssets());
         uint256 totalCollateralAssets = market.totalCollateralAssets;
         uint256 totalLendAssets = market.totalLendAssets;
-        uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 totalLendShares = market.totalLendShares;
-        uint256 shares = uint256(ownerPosition.lendShares);
-        require(shares > 0, Errors.ZeroAssets());
 
         // calculate owner assets based on liquidity in the market
-        lendAssets = shares.toAssetsDown(totalLendAssets - totalBorrowAssets, totalLendShares);
-        totalLendAssets -= lendAssets;
+        lendAssets = shares.toAssetsDown(totalLendAssets - market.totalBorrowAssets, totalLendShares);
         // calculate owed collateral based on lend shares
         collateralAssets = shares.toAssetsDown(totalCollateralAssets, totalLendShares);
-        totalCollateralAssets -= collateralAssets;
 
         market.vault.burnShares(owner, shares);
         ownerPosition.lendShares = 0;
         market.totalLendShares = totalLendShares - shares;
-        market.totalLendAssets = totalLendAssets;
-        market.totalCollateralAssets = totalCollateralAssets;
+        market.totalLendAssets = totalLendAssets - lendAssets;
+        market.totalCollateralAssets -= collateralAssets;
 
         emit IDahlia.WithdrawDepositAndClaimCollateral(market.id, msg.sender, receiver, owner, lendAssets, collateralAssets, shares);
     }
