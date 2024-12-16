@@ -229,27 +229,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return true;
     }
 
-    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 interestShares) {
-        require(receiver != address(0), Errors.ZeroAddress());
-        MarketData storage marketData = markets[id];
-        Market storage market = marketData.market;
-        IWrappedVault vault = market.vault;
-        _permittedByWrappedVault(vault);
-        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
-        mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
-        UserPosition storage ownerPosition = positions[owner];
-
-        uint256 totalLendAssets = market.totalLendAssets;
-        uint256 totalLendShares = market.totalLendShares;
-        uint256 lendShares = ownerPosition.lendPrincipalAssets.toSharesDown(totalLendAssets, totalLendShares);
-        interestShares = ownerPosition.lendShares - lendShares;
-
-        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, interestShares, owner, receiver);
-
-        market.loanToken.safeTransfer(receiver, assets);
-    }
-
     /// @param id The market id.
     /// @param lendAssets The amount of assets to deposit into the market.
     /// @return rate The expected rate after depositing `lendAssets` into the market.
