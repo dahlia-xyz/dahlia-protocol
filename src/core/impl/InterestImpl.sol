@@ -53,11 +53,11 @@ library InterestImpl {
 
             if (protocolFeeShares > 0) {
                 positions[protocolFeeRecipient].lendShares += protocolFeeShares.toUint128();
-                market.vault.mintShares(protocolFeeShares, protocolFeeRecipient);
+                market.vault.mintFees(protocolFeeShares, protocolFeeRecipient);
             }
             if (reserveFeeShares > 0) {
                 positions[reserveFeeRecipient].lendShares += reserveFeeShares.toUint128();
-                market.vault.mintShares(reserveFeeShares, reserveFeeRecipient);
+                market.vault.mintFees(reserveFeeShares, reserveFeeRecipient);
             }
 
             market.totalLendShares = totalLendShares;

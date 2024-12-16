@@ -592,6 +592,6 @@ contract WrappedVaultIntegration is Test {
         vm.assume(user != address($.dahlia));
         vm.startPrank(user);
         vm.expectRevert(WrappedVault.NotDahlia.selector);
-        $.vault.mintShares(100, $.protocolFeeRecipient);
+        $.vault.mintFees(100, $.protocolFeeRecipient);
     }
 }

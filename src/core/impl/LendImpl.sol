@@ -70,7 +70,7 @@ library LendImpl {
         // calculate owed collateral based on lend shares
         collateralAssets = shares.toAssetsDown(totalCollateralAssets, totalLendShares);
 
-        market.vault.burnShares(owner, shares);
+        market.vault.burnShares(owner, ownerPosition.lendPrincipalAssets);
         ownerPosition.lendShares = 0;
         ownerPosition.lendPrincipalAssets = 0;
         market.totalLendShares = totalLendShares - shares;

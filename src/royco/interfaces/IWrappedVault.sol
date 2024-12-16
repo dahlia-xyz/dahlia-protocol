@@ -15,7 +15,7 @@ interface IWrappedVault {
     /// @param shares The amount of shares to mint
     /// @param receiver The address to mint the fees for
     /// @dev can be called only by Dahlia contract
-    function mintShares(uint256 shares, address receiver) external;
+    function mintFees(uint256 shares, address receiver) external;
 
     /// @param from The address to burn the shares for
     /// @param shares The amount of shares to burn
