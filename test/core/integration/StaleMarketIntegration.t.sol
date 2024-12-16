@@ -203,6 +203,7 @@ contract StaleMarketIntegrationTest is Test {
 
         IDahlia.UserPosition memory carolPosition = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(carolPosition.lendShares, 0, "position lend shares balance");
+        assertEq(carolPosition.lendPrincipalAssets, 0, "position lend assets balance");
         assertEq($.collateralToken.balanceOf($.carol), collateralAssets, "carol collateral token balance");
         assertEq($.loanToken.balanceOf($.carol), lendAssets, "carol loan token balance");
     }
@@ -228,6 +229,7 @@ contract StaleMarketIntegrationTest is Test {
 
         IDahlia.UserPosition memory carolPosition = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(carolPosition.lendShares, 0, "carol position lend shares balance");
+        assertEq(carolPosition.lendPrincipalAssets, 0, "carol position lend principal balance");
         assertEq($.collateralToken.balanceOf($.carol), collateralAssets, "carol collateral token balance");
         assertEq($.loanToken.balanceOf($.carol), lendAssets, "carol loan token balance");
 
