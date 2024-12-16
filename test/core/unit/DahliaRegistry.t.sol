@@ -39,7 +39,8 @@ contract DahliaRegistryTest is Test {
     function test_unit_registry_value(uint256 key, uint256 value) public {
         vm.assume(key > 1);
         vm.assume(value != 0);
-        vm.assume(key != Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE); // this is special key added in constructor
+        // this is special key added in constructor
+        vm.assume(key != Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE && key != Constants.VALUE_ID_REPAY_PERIOD);
         assertEq(registry.getValue(key), 0);
 
         vm.prank(owner);
