@@ -622,7 +622,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function mintFees(uint256 shares, address receiver) external {
+    function mintShares(uint256 shares, address receiver) external {
         require(msg.sender == address(dahlia), NotDahlia());
         super._mint(receiver, shares);
     }

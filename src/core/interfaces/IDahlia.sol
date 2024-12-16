@@ -44,7 +44,7 @@ interface IDahlia {
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
         // --- 26 bytes
         IWrappedVault vault; // 20 bytes
-        uint48 staleTimestamp; // 6 bytes
+        uint48 repayPeriodEndTimestamp; // 6 bytes
         // --- having all 256 bytes at the end makes deployment size smaller
         uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
         uint256 totalLendShares; // 32 bytes

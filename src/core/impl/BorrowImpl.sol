@@ -5,12 +5,10 @@ import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-import { IDahliaRegistry } from "src/core/interfaces/IDahliaRegistry.sol";
 
 /// @title BorrowImpl library
 /// @notice Implements borrowing protocol functions
@@ -35,13 +33,12 @@ library BorrowImpl {
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
-        IDahliaRegistry dahliaRegistry,
         uint256 assets,
         address owner,
         address receiver
     ) internal {
-        if (market.staleTimestamp > 0) {
-            require(block.timestamp < (market.staleTimestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)), Errors.RepayPeriodEnded());
+        if (market.repayPeriodEndTimestamp > 0) {
+            require(block.timestamp < market.repayPeriodEndTimestamp, Errors.RepayPeriodEnded());
         }
         ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
         market.totalCollateralAssets -= assets;
@@ -94,16 +91,13 @@ library BorrowImpl {
     }
 
     // Repay borrowed assets
-    function internalRepay(
-        IDahlia.Market storage market,
-        IDahlia.UserPosition storage ownerPosition,
-        IDahliaRegistry dahliaRegistry,
-        uint256 assets,
-        uint256 shares,
-        address owner
-    ) internal returns (uint256, uint256) {
-        if (market.staleTimestamp > 0) {
-            require(block.timestamp < (market.staleTimestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)), Errors.RepayPeriodEnded());
+    function internalRepay(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
+        internal
+        returns (uint256, uint256)
+    {
+        uint256 repayPeriodEndTimestamp = market.repayPeriodEndTimestamp;
+        if (repayPeriodEndTimestamp > 0) {
+            require(block.timestamp < repayPeriodEndTimestamp, Errors.RepayPeriodEnded());
         }
         MarketMath.validateExactlyOneZero(assets, shares);
         // Calculate assets or shares

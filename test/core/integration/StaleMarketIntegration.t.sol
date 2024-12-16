@@ -66,7 +66,7 @@ contract StaleMarketIntegrationTest is Test {
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         assertEq(uint256(market.status), uint256(IDahlia.MarketStatus.Stale));
-        assertEq(market.staleTimestamp, uint48(block.timestamp));
+        assertEq(market.repayPeriodEndTimestamp, uint48(block.timestamp + $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)));
     }
 
     function staleMarket(IDahlia.MarketId id) internal {
