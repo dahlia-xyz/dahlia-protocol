@@ -235,6 +235,17 @@ contract StaleMarketIntegrationTest is DahliaTest {
         assertEq($.collateralToken.balanceOf(address($.dahlia)), 0, "Dahlia collateral token balance");
     }
 
+    function test_int_staleMarket_disallowWithdrawNotStaled(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
+
+        vm.startPrank($.alice);
+        vm.expectRevert(Errors.MarketNotStalled.selector);
+        vm.resumeGasMetering();
+        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.alice);
+    }
+
     function test_int_staleMarket_disallowWithdrawRepayPeriodNotEnded(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);

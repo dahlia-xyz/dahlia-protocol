@@ -328,7 +328,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketDeployed(market.status);
-
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
