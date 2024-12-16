@@ -74,7 +74,7 @@ library LendImpl {
         ownerPosition.lendShares = 0;
         market.totalLendShares = totalLendShares - shares;
         market.totalLendAssets = totalLendAssets - lendAssets;
-        market.totalCollateralAssets -= collateralAssets;
+        market.totalCollateralAssets = totalCollateralAssets - collateralAssets;
 
         emit IDahlia.WithdrawDepositAndClaimCollateral(market.id, msg.sender, receiver, owner, lendAssets, collateralAssets, shares);
     }
