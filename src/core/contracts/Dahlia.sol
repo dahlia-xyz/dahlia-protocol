@@ -411,7 +411,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = markets[id].market;
         require(market.status == MarketStatus.Stale, Errors.MarketNotStalled());
-        require(block.timestamp >= (market.staleTimestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)), "error");
+        require(block.timestamp >= (market.staleTimestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)), Errors.RepayPeriodNotEnded());
 
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         UserPosition storage ownerPosition = positions[owner];

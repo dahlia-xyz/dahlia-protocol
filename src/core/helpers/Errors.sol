@@ -76,6 +76,9 @@ library Errors {
     /// @notice Repay period ended.
     error RepayPeriodEnded();
 
+    /// @notice Repay period not ended.
+    error RepayPeriodNotEnded();
+
     /// @notice Signature has expired.
     error SignatureExpired();
 
