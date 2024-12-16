@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { Test, Vm } from "forge-std/Test.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Vm } from "forge-std/Test.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
-
 import { Constants, TestConstants, TestContext } from "test/common/TestContext.sol";
+import { TestTypes } from "test/common/TestTypes.sol";
+import { DahliaTest } from "test/common/abstracts/DahliaTest.sol";
+import { ERC20Mock, IERC20 } from "test/common/mocks/ERC20Mock.sol";
 import { OracleMock } from "test/common/mocks/OracleMock.sol";
 
-import { TestTypes } from "test/common/TestTypes.sol";
-import { ERC20Mock, IERC20 } from "test/common/mocks/ERC20Mock.sol";
-
-contract StaleMarketIntegrationTest is Test {
+contract StaleMarketIntegrationTest is DahliaTest {
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
@@ -56,21 +54,46 @@ contract StaleMarketIntegrationTest is Test {
         $.dahlia.staleMarket($.marketId);
     }
 
-    function test_int_staleMarket_success() public {
+    function test_int_staleMarket_ActiveMarket_success() public {
         OracleMock($.oracle).setIsOracleBadData(true);
 
+        assertEq(IDahlia.MarketStatus.Active, $.dahlia.getMarket($.marketId).status, "market is active");
         vm.startPrank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Stale);
         $.dahlia.staleMarket($.marketId);
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
-        assertEq(uint256(market.status), uint256(IDahlia.MarketStatus.Stale));
+        assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
         assertEq(market.repayPeriodEndTimestamp, uint48(block.timestamp + $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)));
 
         // disallow deprecate stalled market
         vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
         $.dahlia.deprecateMarket($.marketId);
+
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        $.dahlia.pauseMarket($.marketId);
+
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        $.dahlia.unpauseMarket($.marketId);
+    }
+
+    function test_int_staleMarket_pauseMarket_success() public {
+        OracleMock($.oracle).setIsOracleBadData(true);
+
+        vm.startPrank($.owner);
+
+        $.dahlia.pauseMarket($.marketId);
+
+        assertEq(IDahlia.MarketStatus.Pause, $.dahlia.getMarket($.marketId).status, "market is paused");
+
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Pause, IDahlia.MarketStatus.Stale);
+        $.dahlia.staleMarket($.marketId);
+
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
+        assertEq(market.repayPeriodEndTimestamp, uint48(block.timestamp + $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)));
     }
 
     function staleMarket(IDahlia.MarketId id) internal {
@@ -179,7 +202,7 @@ contract StaleMarketIntegrationTest is Test {
         $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.alice);
     }
 
-    function calcMarketClaims(IDahlia.MarketId id, address user) internal returns (uint256 lendAssets, uint256 collateralAssets, uint256 shares) {
+    function calcMarketClaims(IDahlia.MarketId id, address user) internal view returns (uint256 lendAssets, uint256 collateralAssets, uint256 shares) {
         IDahlia.Market memory market = $.dahlia.getMarket(id);
         IDahlia.UserPosition memory lenderPosition = $.dahlia.getPosition(id, user);
         shares = uint256(lenderPosition.lendShares);
