@@ -547,7 +547,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function deprecateMarket(MarketId id) external onlyOwner {
         Market storage market = markets[id].market;
         _validateMarketDeployed(market.status);
-        require(market.status != MarketStatus.Deprecate, Errors.CannotChangeMarketStatus());
+        require(market.status != MarketStatus.Deprecate && market.status != MarketStatus.Stale, Errors.CannotChangeMarketStatus());
         emit MarketStatusChanged(id, market.status, MarketStatus.Deprecate);
         market.status = MarketStatus.Deprecate;
     }

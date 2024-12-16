@@ -67,6 +67,10 @@ contract StaleMarketIntegrationTest is Test {
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         assertEq(uint256(market.status), uint256(IDahlia.MarketStatus.Stale));
         assertEq(market.repayPeriodEndTimestamp, uint48(block.timestamp + $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)));
+
+        // disallow deprecate stalled market
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        $.dahlia.deprecateMarket($.marketId);
     }
 
     function staleMarket(IDahlia.MarketId id) internal {
