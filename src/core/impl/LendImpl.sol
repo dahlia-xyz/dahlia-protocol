@@ -67,15 +67,15 @@ library LendImpl {
 
         // calculate owner assets based on liquidity in the market
         lendAssets = shares.toAssetsDown(totalLendAssets - market.totalBorrowAssets, totalLendShares);
-        // calculate owed collateral based on lend shares
-        collateralAssets = shares.toAssetsDown(totalCollateralAssets, totalLendShares);
+        // Calculate owed collateral based on lendPrincipalAssets
+        collateralAssets = (ownerPosition.lendPrincipalAssets * totalCollateralAssets) / market.totalLendPrincipalAssets;
 
         market.vault.burnShares(owner, ownerPosition.lendPrincipalAssets);
         ownerPosition.lendShares = 0;
         ownerPosition.lendPrincipalAssets = 0;
         market.totalLendShares = totalLendShares - shares;
         market.totalLendAssets = totalLendAssets - lendAssets;
-        market.totalCollateralAssets = totalCollateralAssets - collateralAssets;
+        //market.totalCollateralAssets = totalCollateralAssets - collateralAssets;
 
         emit IDahlia.WithdrawDepositAndClaimCollateral(market.id, msg.sender, receiver, owner, lendAssets, collateralAssets, shares);
     }

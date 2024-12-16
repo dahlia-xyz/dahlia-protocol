@@ -380,7 +380,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         market.collateralToken.safeTransfer(receiver, assets);
     }
 
-    function withdrawDepositAndClaimCollateral(MarketId id, address receiver, address owner)
+    function withdrawDepositAndClaimCollateral(MarketId id, address owner, address receiver)
         external
         nonReentrant
         returns (uint256 lendAssets, uint256 collateralAssets)

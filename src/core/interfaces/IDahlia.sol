@@ -150,6 +150,14 @@ interface IDahlia {
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
 
+    /// @dev Emitted when user call final withdrawal on Staled market
+    /// @param id Market id.
+    /// @param caller Address of the caller.
+    /// @param receiver Address receiving the withdrawn assets.
+    /// @param owner Address of the position owner.
+    /// @param assets Amount of assets withdrawn.
+    /// @param collateralAssets Amount of collateral assets withdrawn.
+    /// @param shares Amount of shares burned.
     event WithdrawDepositAndClaimCollateral(
         IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 collateralAssets, uint256 shares
     );
@@ -211,8 +219,6 @@ interface IDahlia {
     /// @param assets Amount of assets flash loaned.
     /// @param fee Fee amount for the flash loan.
     event DahliaFlashLoan(address indexed caller, address indexed token, uint256 assets, uint256 fee);
-
-    event OracleStaleDetected(IDahlia.MarketId indexed marketId, uint256 lastUpdatedAt);
 
     /// @notice Get user position for a market id and address with accrued interest.
     /// @param id Market id.

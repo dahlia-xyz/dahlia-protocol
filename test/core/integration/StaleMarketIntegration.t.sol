@@ -243,7 +243,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.startPrank($.alice);
         vm.expectRevert(Errors.MarketNotStalled.selector);
         vm.resumeGasMetering();
-        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.alice);
+        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.bob);
     }
 
     function test_int_staleMarket_disallowWithdrawRepayPeriodNotEnded(TestTypes.MarketPosition memory pos) public {
@@ -258,7 +258,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.startPrank($.alice);
         vm.expectRevert(Errors.RepayPeriodNotEnded.selector);
         vm.resumeGasMetering();
-        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.alice);
+        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.bob);
     }
 
     function calcMarketClaims(IDahlia.MarketId id, address user) internal view returns (uint256 lendAssets, uint256 collateralAssets, uint256 shares) {
@@ -269,7 +269,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         // calculate owner assets based on liquidity in the market
         lendAssets = shares.toAssetsDown(market.totalLendAssets - market.totalBorrowAssets, market.totalLendShares);
         // calculate owed collateral based on lend shares
-        collateralAssets = shares.toAssetsDown(market.totalCollateralAssets, market.totalLendShares);
+        collateralAssets = (lenderPosition.lendPrincipalAssets * market.totalCollateralAssets) / market.totalLendPrincipalAssets;
     }
 
     function test_int_staleMarket_withdrawRepayPeriodEnded(TestTypes.MarketPosition memory pos) public {
@@ -287,16 +287,16 @@ contract StaleMarketIntegrationTest is DahliaTest {
         (uint256 lendAssets, uint256 collateralAssets, uint256 shares) = calcMarketClaims($.marketId, $.carol);
 
         vm.startPrank($.carol);
-        emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol, $.carol, lendAssets, collateralAssets, shares);
+        emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.bob, $.carol, lendAssets, collateralAssets, shares);
         vm.resumeGasMetering();
-        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol);
+        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.carol, $.bob);
         vm.pauseGasMetering();
 
         IDahlia.UserPosition memory carolPosition = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(carolPosition.lendShares, 0, "position lend shares balance");
         assertEq(carolPosition.lendPrincipalAssets, 0, "position lend assets balance");
-        assertEq($.collateralToken.balanceOf($.carol), collateralAssets, "carol collateral token balance");
-        assertEq($.loanToken.balanceOf($.carol), lendAssets, "carol loan token balance");
+        assertEq($.collateralToken.balanceOf($.bob), collateralAssets, "carol collateral token balance");
+        assertEq($.loanToken.balanceOf($.bob), lendAssets, "carol loan token balance");
     }
 
     function test_int_staleMarket_withdrawMultiRepayPeriodEnded(TestTypes.MarketPosition memory pos) public {
@@ -304,8 +304,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
-        address maria = address(0x1);
-        vm.dahliaLendBy(maria, pos.lent, $);
+        vm.dahliaLendBy($.maria, pos.lent, $);
 
         vm.resumeGasMetering();
         staleMarket($.marketId);
@@ -318,30 +317,40 @@ contract StaleMarketIntegrationTest is DahliaTest {
         (uint256 lendAssets, uint256 collateralAssets, uint256 shares) = calcMarketClaims($.marketId, $.carol);
 
         vm.startPrank($.carol);
-        emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol, $.carol, lendAssets, collateralAssets, shares);
+        emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.bob, $.carol, lendAssets, collateralAssets, shares);
         vm.resumeGasMetering();
-        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol);
+        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.carol, $.bob);
         vm.pauseGasMetering();
 
         IDahlia.UserPosition memory carolPosition = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(carolPosition.lendShares, 0, "carol position lend shares balance");
         assertEq(carolPosition.lendPrincipalAssets, 0, "carol position lend principal balance");
-        assertEq($.collateralToken.balanceOf($.carol), collateralAssets, "carol collateral token balance");
-        assertEq($.loanToken.balanceOf($.carol), lendAssets, "carol loan token balance");
+        assertEq($.collateralToken.balanceOf($.bob), collateralAssets, "carol collateral token balance");
+        assertEq($.loanToken.balanceOf($.bob), lendAssets, "carol loan token balance");
 
         // withdraw by maria
         vm.startPrank($.carol);
 
-        (uint256 lendAssetsMaria, uint256 collateralAssetsMaria, uint256 sharesMaria) = calcMarketClaims($.marketId, maria);
+        (uint256 lendAssetsMaria, uint256 collateralAssetsMaria, uint256 sharesMaria) = calcMarketClaims($.marketId, $.maria);
 
-        emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, maria, maria, maria, lendAssetsMaria, collateralAssetsMaria, sharesMaria);
+        emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.maria, $.maria, $.maria, lendAssetsMaria, collateralAssetsMaria, sharesMaria);
         vm.resumeGasMetering();
-        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, maria, maria);
+        $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.maria, $.maria);
         vm.pauseGasMetering();
 
-        IDahlia.UserPosition memory mariaPosition = $.dahlia.getPosition($.marketId, maria);
+        IDahlia.UserPosition memory mariaPosition = $.dahlia.getPosition($.marketId, $.maria);
         assertEq(mariaPosition.lendShares, 0, "maria position lend shares balance");
-        assertEq($.collateralToken.balanceOf(maria), collateralAssetsMaria, "maria collateral token balance");
-        assertEq($.loanToken.balanceOf(maria), lendAssetsMaria, "maria loan token balance");
+        assertEq($.collateralToken.balanceOf($.maria), collateralAssetsMaria, "maria collateral token balance");
+        assertEq($.loanToken.balanceOf($.maria), lendAssetsMaria, "maria loan token balance");
+
+        IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
+        assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
+        assertEq(market.totalLendShares, 0, "market total lend shares");
+        assertEq($.loanToken.balanceOf(address($.dahlia)), 0, "Dahlia lend token balance");
+        assertLe($.collateralToken.balanceOf(address($.dahlia)), 1, "Dahlia collateral token balance should not be bigger than 1");
+        assertGt(market.totalCollateralAssets, 0, "market collateral assets stays the same");
+        assertEq(market.totalLendAssets - market.totalBorrowAssets, 0, "market available assets");
+        assertGt(market.totalLendAssets, 0, "market left over lend assets covered after all withdrawals");
+        assertGt(market.totalBorrowAssets, 0, "market left over borrow assets covered by collateral");
     }
 }
