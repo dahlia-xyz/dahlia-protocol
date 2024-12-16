@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import { Vm } from "@forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { Vm } from "forge-std/Test.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -29,17 +29,21 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function test_int_staleMarket_marketNotDeployed(IDahlia.MarketId marketIdFuzz) public {
+        vm.pauseGasMetering();
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.startPrank($.owner);
         vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.resumeGasMetering();
         $.dahlia.staleMarket(marketIdFuzz);
     }
 
     function test_int_staleMarket_marketDeprecated() public {
+        vm.pauseGasMetering();
         vm.startPrank($.owner);
         $.dahlia.deprecateMarket($.marketId);
 
         vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        vm.resumeGasMetering();
         $.dahlia.staleMarket($.marketId);
     }
 
@@ -49,19 +53,24 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function test_int_staleMarket_marketNoBadOracle() public {
+        vm.pauseGasMetering();
         vm.startPrank($.owner);
         vm.expectRevert(Errors.OraclePriceNotStalled.selector);
+        vm.resumeGasMetering();
         $.dahlia.staleMarket($.marketId);
     }
 
     function test_int_staleMarket_ActiveMarket_success() public {
+        vm.pauseGasMetering();
         OracleMock($.oracle).setIsOracleBadData(true);
 
         assertEq(IDahlia.MarketStatus.Active, $.dahlia.getMarket($.marketId).status, "market is active");
         vm.startPrank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Stale);
+        vm.resumeGasMetering();
         $.dahlia.staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
@@ -79,6 +88,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function test_int_staleMarket_pauseMarket_success() public {
+        vm.pauseGasMetering();
         OracleMock($.oracle).setIsOracleBadData(true);
 
         vm.startPrank($.owner);
@@ -89,7 +99,9 @@ contract StaleMarketIntegrationTest is DahliaTest {
 
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Pause, IDahlia.MarketStatus.Stale);
+        vm.resumeGasMetering();
         $.dahlia.staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
@@ -97,36 +109,50 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function staleMarket(IDahlia.MarketId id) internal {
+        vm.pauseGasMetering();
         OracleMock($.oracle).setIsOracleBadData(true);
         vm.prank($.owner);
+        vm.resumeGasMetering();
         $.dahlia.staleMarket(id);
     }
 
     function test_int_staleMarket_disallowBorrow(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
 
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         vm.prank($.alice);
         vm.expectRevert(Errors.MarketStalled.selector);
+        vm.resumeGasMetering();
         $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
     }
 
     function test_int_staleMarket_disallowSupplyCollateral(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         vm.prank($.alice);
         vm.expectRevert(Errors.MarketStalled.selector);
+        vm.resumeGasMetering();
         $.dahlia.supplyCollateral($.marketId, pos.collateral, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 
     function test_int_staleMarket_disallowLend(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         ERC20Mock($.marketConfig.loanToken).setBalance($.alice, pos.lent);
@@ -134,54 +160,72 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.startPrank($.alice);
         IERC20($.marketConfig.loanToken).approve(address(market.vault), pos.lent);
         vm.expectRevert(Errors.MarketStalled.selector);
+        vm.resumeGasMetering();
         market.vault.deposit(pos.lent, $.alice);
     }
 
     function test_int_staleMarket_disallowWithdrawLent(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         uint256 lendShares = $.dahlia.getPosition($.marketId, $.carol).lendShares;
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
 
         vm.startPrank($.carol);
         vm.expectRevert(Errors.MarketStalled.selector);
+        vm.resumeGasMetering();
         market.vault.redeem(lendShares, $.carol, $.carol);
     }
 
     function test_int_staleMarket_disallowWithdrawCollateralWithoutRepay(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         vm.prank($.alice);
         vm.expectRevert(Errors.OraclePriceBadData.selector);
+        vm.resumeGasMetering();
         $.dahlia.withdrawCollateral($.marketId, pos.collateral, $.alice, $.alice);
     }
 
     function test_int_staleMarket_disallowLiquidate(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, TestConstants.MAX_TEST_LLTV);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         vm.expectRevert(Errors.MarketStalled.selector);
+        vm.resumeGasMetering();
         $.dahlia.liquidate($.marketId, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 
     function test_int_staleMarket_repayAndWithdraw(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         vm.startPrank($.alice);
         $.loanToken.approve(address($.dahlia), pos.borrowed);
+        vm.resumeGasMetering();
         $.dahlia.repay($.marketId, pos.borrowed, 0, $.alice, TestConstants.EMPTY_CALLBACK);
         $.dahlia.withdrawCollateral($.marketId, pos.collateral, $.alice, $.alice);
+        vm.pauseGasMetering();
         vm.stopPrank();
 
         IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
@@ -192,13 +236,17 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function test_int_staleMarket_disallowWithdrawRepayPeriodNotEnded(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         vm.startPrank($.alice);
         vm.expectRevert(Errors.RepayPeriodNotEnded.selector);
+        vm.resumeGasMetering();
         $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.alice, $.alice);
     }
 
@@ -214,10 +262,13 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function test_int_staleMarket_withdrawRepayPeriodEnded(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         uint256 repayPeriod = $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD);
         vm.warp(block.timestamp + repayPeriod);
@@ -226,7 +277,9 @@ contract StaleMarketIntegrationTest is DahliaTest {
 
         vm.startPrank($.carol);
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol, $.carol, lendAssets, collateralAssets, shares);
+        vm.resumeGasMetering();
         $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol);
+        vm.pauseGasMetering();
 
         IDahlia.UserPosition memory carolPosition = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(carolPosition.lendShares, 0, "position lend shares balance");
@@ -236,13 +289,16 @@ contract StaleMarketIntegrationTest is DahliaTest {
     }
 
     function test_int_staleMarket_withdrawMultiRepayPeriodEnded(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
         address maria = address(0x1);
         vm.dahliaLendBy(maria, pos.lent, $);
 
+        vm.resumeGasMetering();
         staleMarket($.marketId);
+        vm.pauseGasMetering();
 
         uint256 repayPeriod = $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD);
         vm.warp(block.timestamp + repayPeriod);
@@ -252,7 +308,9 @@ contract StaleMarketIntegrationTest is DahliaTest {
 
         vm.startPrank($.carol);
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol, $.carol, lendAssets, collateralAssets, shares);
+        vm.resumeGasMetering();
         $.dahlia.withdrawDepositAndClaimCollateral($.marketId, $.carol, $.carol);
+        vm.pauseGasMetering();
 
         IDahlia.UserPosition memory carolPosition = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(carolPosition.lendShares, 0, "carol position lend shares balance");
@@ -266,7 +324,9 @@ contract StaleMarketIntegrationTest is DahliaTest {
         (uint256 lendAssetsMaria, uint256 collateralAssetsMaria, uint256 sharesMaria) = calcMarketClaims($.marketId, maria);
 
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, maria, maria, maria, lendAssetsMaria, collateralAssetsMaria, sharesMaria);
+        vm.resumeGasMetering();
         $.dahlia.withdrawDepositAndClaimCollateral($.marketId, maria, maria);
+        vm.pauseGasMetering();
 
         IDahlia.UserPosition memory mariaPosition = $.dahlia.getPosition($.marketId, maria);
         assertEq(mariaPosition.lendShares, 0, "maria position lend shares balance");
