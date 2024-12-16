@@ -73,6 +73,7 @@ library LendImpl {
         collateralAssets = shares.toAssetsDown(totalCollateralAssets, totalLendShares);
         totalCollateralAssets -= collateralAssets;
 
+        market.vault.burnShares(owner, shares);
         ownerPosition.lendShares = 0;
         market.totalLendShares = totalLendShares - shares;
         market.totalLendAssets = totalLendAssets;
