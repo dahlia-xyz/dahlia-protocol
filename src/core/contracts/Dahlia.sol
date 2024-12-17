@@ -519,8 +519,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _validateMarketDeployed(status);
         require(status != MarketStatus.Deprecated && status != MarketStatus.Staled, Errors.CannotChangeMarketStatus());
         // Check if the price is stalled
-        (, bool isBadData) = market.oracle.getPrice();
-        require(isBadData, Errors.OraclePriceNotStalled());
+        //        (, bool isBadData) = market.oracle.getPrice();
+        //        require(isBadData, Errors.OraclePriceNotStalled());
         market.repayPeriodEndTimestamp = uint48(block.timestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD));
         _setStatus(market, status, MarketStatus.Staled);
     }

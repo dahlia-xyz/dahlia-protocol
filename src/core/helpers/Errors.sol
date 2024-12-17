@@ -71,7 +71,7 @@ library Errors {
     error OraclePriceBadData();
 
     /// @notice Oracle price is not stalled.
-    error OraclePriceNotStalled();
+    //error OraclePriceNotStalled();
 
     /// @notice Repay period ended.
     error RepayPeriodEnded();
