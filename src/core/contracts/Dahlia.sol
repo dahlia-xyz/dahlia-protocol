@@ -520,7 +520,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _validateMarketIsActiveOrPaused(status);
         // Check if the price is stalled
         try market.oracle.getPrice() returns (uint256 price, bool isBadData) {
-            require(isBadData, Errors.OraclePriceNotStalled());
+            require(isBadData || price == 0, Errors.OraclePriceNotStalled());
         } catch {
             // Do nothing if the price is not available to allow stale the market
         }
