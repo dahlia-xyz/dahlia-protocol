@@ -105,8 +105,10 @@ library BorrowImpl {
             shares = assets.toSharesDown(market.totalBorrowAssets, market.totalBorrowShares);
             // Avoid arithmetic overflow when we have shares tail
             uint256 owned = ownerPosition.borrowShares;
-            if (shares > owned && (shares - owned) < SharesMathLib.SHARES_OFFSET) {
-                shares = owned;
+            if (shares > owned) {
+                if ((shares - owned) < SharesMathLib.SHARES_OFFSET) {
+                    shares = owned;
+                }
             }
         } else {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);

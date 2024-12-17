@@ -290,7 +290,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployedAndActive(market.status);
+        _validateMarketDeployed(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
@@ -382,6 +382,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     function withdrawDepositAndClaimCollateral(MarketId id, address owner, address receiver)
         external
+        isSenderPermitted(owner)
         nonReentrant
         returns (uint256 lendAssets, uint256 collateralAssets)
     {
