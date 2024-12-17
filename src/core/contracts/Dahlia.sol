@@ -554,6 +554,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function _validateMarketActive(MarketStatus status) internal pure {
         if (status == MarketStatus.Deprecated) {
             revert Errors.MarketDeprecated();
+        } else if (status == MarketStatus.Staled) {
+            revert Errors.MarketStalled();
         } else if (status == MarketStatus.Paused) {
             revert Errors.MarketPaused();
         }

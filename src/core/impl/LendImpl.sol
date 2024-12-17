@@ -19,8 +19,6 @@ library LendImpl {
         internal
         returns (uint256 shares)
     {
-        require(market.status != IDahlia.MarketStatus.Staled, Errors.MarketStalled());
-
         shares = assets.toSharesDown(market.totalLendAssets, market.totalLendShares);
 
         ownerPosition.lendShares += shares.toUint128();

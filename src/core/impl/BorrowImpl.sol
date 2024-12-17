@@ -21,8 +21,6 @@ library BorrowImpl {
 
     // Add collateral to a borrower's position
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
-        require(market.status != IDahlia.MarketStatus.Staled, Errors.MarketStalled());
-
         ownerPosition.collateral += assets.toUint128();
         market.totalCollateralAssets += assets;
 
@@ -61,8 +59,6 @@ library BorrowImpl {
         internal
         returns (uint256)
     {
-        require(market.status != IDahlia.MarketStatus.Staled, Errors.MarketStalled());
-
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalBorrowShares = market.totalBorrowShares;
