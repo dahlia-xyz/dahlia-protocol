@@ -35,7 +35,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.assume(assets > 0);
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.supplyAndBorrow(marketIdFuzz, assets, assets, $.alice, $.alice);
     }
 

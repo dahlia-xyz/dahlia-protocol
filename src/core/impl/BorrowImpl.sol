@@ -35,9 +35,6 @@ library BorrowImpl {
         address owner,
         address receiver
     ) internal {
-        if (market.repayPeriodEndTimestamp > 0) {
-            require(block.timestamp < market.repayPeriodEndTimestamp, Errors.RepayPeriodEnded());
-        }
         ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
         market.totalCollateralAssets -= assets;
 
@@ -91,10 +88,6 @@ library BorrowImpl {
         internal
         returns (uint256, uint256)
     {
-        uint256 repayPeriodEndTimestamp = market.repayPeriodEndTimestamp;
-        if (repayPeriodEndTimestamp > 0) {
-            require(block.timestamp < repayPeriodEndTimestamp, Errors.RepayPeriodEnded());
-        }
         MarketMath.validateExactlyOneZero(assets, shares);
         // Calculate assets or shares
         if (assets > 0) {

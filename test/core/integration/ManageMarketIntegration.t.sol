@@ -98,7 +98,7 @@ contract ManageMarketIntegrationTest is Test {
     function test_int_manage_setProtocolFeeRateWhenMarketNotDeployed(IDahlia.MarketId marketIdFuzz, uint32 feeFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.owner);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.setProtocolFeeRate(marketIdFuzz, feeFuzz);
     }
 
@@ -132,7 +132,7 @@ contract ManageMarketIntegrationTest is Test {
 
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.owner);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.setReserveFeeRate(marketIdFuzz, feeFuzz);
     }
 

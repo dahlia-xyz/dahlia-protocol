@@ -54,7 +54,7 @@ contract AccrueInterestIntegrationTest is Test {
     function test_int_accrueInterest_marketNotDeployed(IDahlia.MarketId marketIdFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.resumeGasMetering();
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.accrueMarketInterest(marketIdFuzz);
     }
 
