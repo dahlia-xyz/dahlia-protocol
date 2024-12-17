@@ -180,7 +180,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         IWrappedVault vault = market.vault;
         _permittedByWrappedVault(vault);
-        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
+        _validateMarketNotStaled(market.status); // no need to check active because it's protected by _permittedByWrappedVault
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
@@ -327,7 +327,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(borrower != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployed(market.status);
+        IDahlia.MarketStatus status = market.status;
+        _validateMarketDeployed(status);
+        _validateMarketNotStaled(status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
@@ -543,10 +545,18 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         market.liquidationBonusRate = liquidationBonusRate.toUint24();
     }
 
-    /// @notice Validates the current market status is not None.
+    /// @notice Validates the current market status is not Uninitialized.
     /// @param status The current market status.
     function _validateMarketDeployed(MarketStatus status) internal pure {
         require(status != MarketStatus.Uninitialized, Errors.MarketNotDeployed());
+    }
+
+    /// @notice Validates the current market status is not Staled.
+    /// @param status The current market status.
+    function _validateMarketNotStaled(MarketStatus status) internal pure {
+        if (status == MarketStatus.Staled) {
+            revert Errors.MarketStalled();
+        }
     }
 
     /// @notice Validates the current market status is active.
@@ -554,11 +564,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function _validateMarketActive(MarketStatus status) internal pure {
         if (status == MarketStatus.Deprecated) {
             revert Errors.MarketDeprecated();
-        } else if (status == MarketStatus.Staled) {
-            revert Errors.MarketStalled();
         } else if (status == MarketStatus.Paused) {
             revert Errors.MarketPaused();
         }
+        _validateMarketNotStaled(status);
     }
 
     /// @notice Validates the current market status is deployed and active.
