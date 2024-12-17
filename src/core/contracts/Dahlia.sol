@@ -487,7 +487,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function isMarketDeployed(MarketId id) external view virtual returns (bool) {
+    function isMarketDeployed(MarketId id) external view returns (bool) {
         return markets[id].market.status != MarketStatus.Uninitialized;
     }
 
@@ -519,8 +519,11 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketStatus status = market.status;
         _validateMarketIsActiveOrPaused(status);
         // Check if the price is stalled
-        //        (, bool isBadData) = market.oracle.getPrice();
-        //        require(isBadData, Errors.OraclePriceNotStalled());
+        try market.oracle.getPrice() returns (uint256 price, bool isBadData) {
+            require(isBadData, Errors.OraclePriceNotStalled());
+        } catch {
+            // Do nothing if the price is not available to allow stale the market
+        }
         market.repayPeriodEndTimestamp = uint48(block.timestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD));
         _setStatus(market, status, MarketStatus.Staled);
     }

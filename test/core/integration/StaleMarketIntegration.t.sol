@@ -63,13 +63,13 @@ contract StaleMarketIntegrationTest is DahliaTest {
         $.dahlia.staleMarket($.marketId);
     }
 
-    //    function test_int_staleMarket_marketNoBadOracle() public {
-    //        vm.pauseGasMetering();
-    //        vm.startPrank($.owner);
-    //        vm.expectRevert(Errors.OraclePriceNotStalled.selector);
-    //        vm.resumeGasMetering();
-    //        $.dahlia.staleMarket($.marketId);
-    //    }
+    function test_int_staleMarket_marketNoBadOracle() public {
+        vm.pauseGasMetering();
+        vm.startPrank($.owner);
+        vm.expectRevert(Errors.OraclePriceNotStalled.selector);
+        vm.resumeGasMetering();
+        $.dahlia.staleMarket($.marketId);
+    }
 
     function test_int_staleMarket_ActiveMarket_success() public {
         vm.pauseGasMetering();

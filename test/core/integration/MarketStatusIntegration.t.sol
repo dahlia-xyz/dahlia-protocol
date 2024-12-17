@@ -111,32 +111,6 @@ contract MarketStatusIntegrationTest is DahliaTest {
         $.dahlia.deprecateMarket($.marketId);
     }
 
-    function test_int_marketStatus_staled() public {
-        // revert when not owner
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        $.dahlia.staleMarket($.marketId);
-
-        // deprecate
-        vm.startPrank($.owner);
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Staled);
-        $.dahlia.staleMarket($.marketId);
-        assertEq($.dahlia.getMarket($.marketId).status, IDahlia.MarketStatus.Staled, "market stalled");
-        vm.stopPrank();
-
-        validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Staled));
-
-        // check unpause reversion
-        vm.prank($.owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Staled));
-        $.dahlia.unpauseMarket($.marketId);
-
-        // check cannot deprecate twice
-        vm.prank($.owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Staled));
-        $.dahlia.deprecateMarket($.marketId);
-    }
-
     function validate_checkIsForbiddenToSupplyLendBorrow(bytes memory revertData) internal {
         vm.pauseGasMetering();
         // check supply
