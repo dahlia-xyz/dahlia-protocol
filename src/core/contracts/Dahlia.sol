@@ -554,19 +554,14 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @notice Validates the current market status is not Staled.
     /// @param status The current market status.
     function _validateMarketNotStaled(MarketStatus status) internal pure {
-        if (status == MarketStatus.Staled) {
-            revert Errors.MarketStalled();
-        }
+        require(status != MarketStatus.Staled, Errors.MarketStalled());
     }
 
     /// @notice Validates the current market status is active.
     /// @param status The current market status.
     function _validateMarketActive(MarketStatus status) internal pure {
-        if (status == MarketStatus.Deprecated) {
-            revert Errors.MarketDeprecated();
-        } else if (status == MarketStatus.Paused) {
-            revert Errors.MarketPaused();
-        }
+        require(status != MarketStatus.Deprecated, Errors.MarketDeprecated());
+        require(status != MarketStatus.Paused, Errors.MarketPaused());
         _validateMarketNotStaled(status);
     }
 
