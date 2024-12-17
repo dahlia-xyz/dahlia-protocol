@@ -389,7 +389,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = markets[id].market;
-        require(market.status == MarketStatus.Stale, Errors.MarketNotStalled());
+        require(market.status == MarketStatus.Staled, Errors.MarketNotStalled());
         require(block.timestamp >= market.repayPeriodEndTimestamp, Errors.RepayPeriodNotEnded());
 
         mapping(address => UserPosition) storage positions = marketData.userPositions;
@@ -487,7 +487,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     /// @inheritdoc IDahlia
     function isMarketDeployed(MarketId id) external view virtual returns (bool) {
-        return markets[id].market.status != MarketStatus.None;
+        return markets[id].market.status != MarketStatus.Uninitialized;
     }
 
     function _setStatus(Market storage market, MarketStatus oldStatus, MarketStatus newStatus) internal {
@@ -501,7 +501,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _checkDahliaOwnerOrVaultOwner(market.vault);
         MarketStatus status = market.status;
         require(status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
-        _setStatus(market, status, MarketStatus.Pause);
+        _setStatus(market, status, MarketStatus.Paused);
     }
 
     /// @inheritdoc IDahlia
@@ -509,7 +509,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         MarketStatus status = market.status;
-        require(status == MarketStatus.Pause, Errors.CannotChangeMarketStatus());
+        require(status == MarketStatus.Paused, Errors.CannotChangeMarketStatus());
         _setStatus(market, status, MarketStatus.Active);
     }
 
@@ -517,12 +517,12 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         MarketStatus status = market.status;
         _validateMarketDeployed(status);
-        require(status != MarketStatus.Deprecate, Errors.CannotChangeMarketStatus());
+        require(status != MarketStatus.Deprecated, Errors.CannotChangeMarketStatus());
         // Check if the price is stalled
         (, bool isBadData) = market.oracle.getPrice();
         require(isBadData, Errors.OraclePriceNotStalled());
         market.repayPeriodEndTimestamp = uint48(block.timestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD));
-        _setStatus(market, status, MarketStatus.Stale);
+        _setStatus(market, status, MarketStatus.Staled);
     }
 
     /// @inheritdoc IDahlia
@@ -530,8 +530,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         MarketStatus status = market.status;
         _validateMarketDeployed(status);
-        require(status != MarketStatus.Deprecate && status != MarketStatus.Stale, Errors.CannotChangeMarketStatus());
-        _setStatus(market, status, MarketStatus.Deprecate);
+        require(status != MarketStatus.Deprecated && status != MarketStatus.Staled, Errors.CannotChangeMarketStatus());
+        _setStatus(market, status, MarketStatus.Deprecated);
     }
 
     /// @inheritdoc IDahlia
@@ -546,15 +546,15 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @notice Validates the current market status is not None.
     /// @param status The current market status.
     function _validateMarketDeployed(MarketStatus status) internal pure {
-        require(status != MarketStatus.None, Errors.MarketNotDeployed());
+        require(status != MarketStatus.Uninitialized, Errors.MarketNotDeployed());
     }
 
     /// @notice Validates the current market status is active.
     /// @param status The current market status.
     function _validateMarketActive(MarketStatus status) internal pure {
-        if (status == MarketStatus.Deprecate) {
+        if (status == MarketStatus.Deprecated) {
             revert Errors.MarketDeprecated();
-        } else if (status == MarketStatus.Pause) {
+        } else if (status == MarketStatus.Paused) {
             revert Errors.MarketPaused();
         }
     }

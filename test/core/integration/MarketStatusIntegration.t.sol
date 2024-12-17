@@ -42,9 +42,9 @@ contract MarketStatusIntegrationTest is Test {
         // pause
         vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Pause);
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Paused);
         $.dahlia.pauseMarket($.marketId);
-        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Pause));
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Paused));
 
         // check is forbidden to lend, borrow, supply
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketPaused.selector));
@@ -56,7 +56,7 @@ contract MarketStatusIntegrationTest is Test {
         // unpause
         vm.prank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Pause, IDahlia.MarketStatus.Active);
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Active));
     }
@@ -78,7 +78,7 @@ contract MarketStatusIntegrationTest is Test {
         // unpause
         vm.startPrank(permitted);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Pause, IDahlia.MarketStatus.Active);
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Active);
         $.dahlia.unpauseMarket($.marketId);
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Active));
         vm.stopPrank();
@@ -92,9 +92,9 @@ contract MarketStatusIntegrationTest is Test {
         // deprecate
         vm.startPrank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Deprecate);
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Deprecated);
         $.dahlia.deprecateMarket($.marketId);
-        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Deprecate));
+        assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Deprecated));
         vm.stopPrank();
 
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketDeprecated.selector));

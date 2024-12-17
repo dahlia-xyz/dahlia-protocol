@@ -11,11 +11,11 @@ interface IDahlia {
     type MarketId is uint32;
 
     enum MarketStatus {
-        None,
+        Uninitialized,
         Active,
-        Pause,
-        Stale,
-        Deprecate
+        Paused,
+        Staled,
+        Deprecated
     }
 
     struct RateRange {

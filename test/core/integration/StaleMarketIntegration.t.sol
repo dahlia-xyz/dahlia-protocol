@@ -68,13 +68,13 @@ contract StaleMarketIntegrationTest is DahliaTest {
         assertEq(IDahlia.MarketStatus.Active, $.dahlia.getMarket($.marketId).status, "market is active");
         vm.startPrank($.owner);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Stale);
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Staled);
         vm.resumeGasMetering();
         $.dahlia.staleMarket($.marketId);
         vm.pauseGasMetering();
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
-        assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
+        assertEq(market.status, IDahlia.MarketStatus.Staled, "market is staled");
         assertEq(market.repayPeriodEndTimestamp, uint48(block.timestamp + $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)));
 
         // disallow deprecate stalled market
@@ -96,16 +96,16 @@ contract StaleMarketIntegrationTest is DahliaTest {
 
         $.dahlia.pauseMarket($.marketId);
 
-        assertEq(IDahlia.MarketStatus.Pause, $.dahlia.getMarket($.marketId).status, "market is paused");
+        assertEq(IDahlia.MarketStatus.Paused, $.dahlia.getMarket($.marketId).status, "market is paused");
 
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Pause, IDahlia.MarketStatus.Stale);
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Paused, IDahlia.MarketStatus.Staled);
         vm.resumeGasMetering();
         $.dahlia.staleMarket($.marketId);
         vm.pauseGasMetering();
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
-        assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
+        assertEq(market.status, IDahlia.MarketStatus.Staled, "market is staled");
         assertEq(market.repayPeriodEndTimestamp, uint48(block.timestamp + $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD)));
     }
 
@@ -421,7 +421,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         assertEq($.loanToken.balanceOf($.maria), lendAssetsMaria, "maria loan token balance");
 
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
-        assertEq(market.status, IDahlia.MarketStatus.Stale, "market is staled");
+        assertEq(market.status, IDahlia.MarketStatus.Staled, "market is staled");
         assertEq(market.totalLendShares, 0, "market total lend shares");
         assertEq($.loanToken.balanceOf(address($.dahlia)), 0, "Dahlia lend token balance");
         assertLe($.collateralToken.balanceOf(address($.dahlia)), 1, "Dahlia collateral token balance should not be bigger than 1");
