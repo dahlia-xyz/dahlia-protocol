@@ -343,7 +343,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.pauseGasMetering();
 
         uint256 repayPeriod = $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD);
-        vm.warp(block.timestamp + repayPeriod);
+        skip(repayPeriod);
 
         (uint256 lendAssets, uint256 collateralAssets, uint256 shares) = calcMarketClaims($.marketId, $.carol);
 
@@ -373,7 +373,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.pauseGasMetering();
 
         uint256 repayPeriod = $.dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD);
-        vm.warp(block.timestamp + repayPeriod);
+        skip(repayPeriod);
 
         // withdraw by carol
         (uint256 lendAssetsCarol, uint256 collateralAssetsCarol, uint256 sharesCarol) = calcMarketClaims($.marketId, $.carol);
