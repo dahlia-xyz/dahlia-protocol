@@ -490,14 +490,18 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return markets[id].market.status != MarketStatus.None;
     }
 
+    function _setStatus(Market storage market, MarketStatus oldStatus, MarketStatus newStatus) internal {
+        market.status = newStatus;
+        emit MarketStatusChanged(market.id, oldStatus, newStatus);
+    }
+
     /// @inheritdoc IDahlia
     function pauseMarket(MarketId id) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         MarketStatus status = market.status;
         require(status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, status, MarketStatus.Pause);
-        market.status = MarketStatus.Pause;
+        _setStatus(market, status, MarketStatus.Pause);
     }
 
     /// @inheritdoc IDahlia
@@ -506,22 +510,19 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _checkDahliaOwnerOrVaultOwner(market.vault);
         MarketStatus status = market.status;
         require(status == MarketStatus.Pause, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, status, MarketStatus.Active);
-        market.status = MarketStatus.Active;
+        _setStatus(market, status, MarketStatus.Active);
     }
 
     function staleMarket(MarketId id) external onlyOwner {
         Market storage market = markets[id].market;
-        MarketStatus marketStatus = market.status;
-        _validateMarketDeployed(marketStatus);
-        require(marketStatus != MarketStatus.Deprecate, Errors.CannotChangeMarketStatus());
+        MarketStatus status = market.status;
+        _validateMarketDeployed(status);
+        require(status != MarketStatus.Deprecate, Errors.CannotChangeMarketStatus());
         // Check if the price is stalled
         (, bool isBadData) = market.oracle.getPrice();
         require(isBadData, Errors.OraclePriceNotStalled());
-
-        emit MarketStatusChanged(id, marketStatus, MarketStatus.Stale);
-        market.status = MarketStatus.Stale;
         market.repayPeriodEndTimestamp = uint48(block.timestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD));
+        _setStatus(market, status, MarketStatus.Stale);
     }
 
     /// @inheritdoc IDahlia
@@ -530,8 +531,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketStatus status = market.status;
         _validateMarketDeployed(status);
         require(status != MarketStatus.Deprecate && status != MarketStatus.Stale, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, status, MarketStatus.Deprecate);
-        market.status = MarketStatus.Deprecate;
+        _setStatus(market, status, MarketStatus.Deprecate);
     }
 
     /// @inheritdoc IDahlia
