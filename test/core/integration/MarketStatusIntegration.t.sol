@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { Test, Vm } from "@forge-std/Test.sol";
+import { Vm } from "@forge-std/Test.sol";
 import { IERC20 } from "@forge-std/interfaces/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
@@ -10,9 +10,10 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { DahliaTest } from "test/common/abstracts/DahliaTest.sol";
 import { ERC20Mock } from "test/common/mocks/ERC20Mock.sol";
 
-contract MarketStatusIntegrationTest is Test {
+contract MarketStatusIntegrationTest is DahliaTest {
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
@@ -98,6 +99,32 @@ contract MarketStatusIntegrationTest is Test {
         vm.stopPrank();
 
         validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketDeprecated.selector));
+
+        // check unpause reversion
+        vm.prank($.owner);
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        $.dahlia.unpauseMarket($.marketId);
+
+        // check cannot deprecate twice
+        vm.prank($.owner);
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        $.dahlia.deprecateMarket($.marketId);
+    }
+
+    function test_int_marketStatus_staled() public {
+        // revert when not owner
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
+        $.dahlia.staleMarket($.marketId);
+
+        // deprecate
+        vm.startPrank($.owner);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.MarketStatusChanged($.marketId, IDahlia.MarketStatus.Active, IDahlia.MarketStatus.Staled);
+        $.dahlia.staleMarket($.marketId);
+        assertEq($.dahlia.getMarket($.marketId).status, IDahlia.MarketStatus.Staled, "market stalled");
+        vm.stopPrank();
+
+        validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketStalled.selector));
 
         // check unpause reversion
         vm.prank($.owner);
