@@ -494,8 +494,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function pauseMarket(MarketId id) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
-        require(market.status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, market.status, MarketStatus.Pause);
+        MarketStatus status = market.status;
+        require(status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
+        emit MarketStatusChanged(id, status, MarketStatus.Pause);
         market.status = MarketStatus.Pause;
     }
 
@@ -503,8 +504,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function unpauseMarket(MarketId id) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
-        require(market.status == MarketStatus.Pause, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, market.status, MarketStatus.Active);
+        MarketStatus status = market.status;
+        require(status == MarketStatus.Pause, Errors.CannotChangeMarketStatus());
+        emit MarketStatusChanged(id, status, MarketStatus.Active);
         market.status = MarketStatus.Active;
     }
 
@@ -525,9 +527,10 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @inheritdoc IDahlia
     function deprecateMarket(MarketId id) external onlyOwner {
         Market storage market = markets[id].market;
-        _validateMarketDeployed(market.status);
-        require(market.status != MarketStatus.Deprecate && market.status != MarketStatus.Stale, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, market.status, MarketStatus.Deprecate);
+        MarketStatus status = market.status;
+        _validateMarketDeployed(status);
+        require(status != MarketStatus.Deprecate && status != MarketStatus.Stale, Errors.CannotChangeMarketStatus());
+        emit MarketStatusChanged(id, status, MarketStatus.Deprecate);
         market.status = MarketStatus.Deprecate;
     }
 
