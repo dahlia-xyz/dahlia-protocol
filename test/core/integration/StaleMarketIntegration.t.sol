@@ -48,6 +48,16 @@ contract StaleMarketIntegrationTest is DahliaTest {
         $.dahlia.staleMarket($.marketId);
     }
 
+    function test_int_staleMarket_doubleStale() public {
+        staleMarket($.marketId);
+        vm.pauseGasMetering();
+
+        vm.startPrank($.owner);
+        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        vm.resumeGasMetering();
+        $.dahlia.staleMarket($.marketId);
+    }
+
     function test_int_staleMarket_unauthorized() public {
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
         $.dahlia.staleMarket($.marketId);

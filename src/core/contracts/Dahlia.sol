@@ -517,7 +517,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         MarketStatus status = market.status;
         _validateMarketDeployed(status);
-        require(status != MarketStatus.Deprecated, Errors.CannotChangeMarketStatus());
+        require(status != MarketStatus.Deprecated && status != MarketStatus.Staled, Errors.CannotChangeMarketStatus());
         // Check if the price is stalled
         (, bool isBadData) = market.oracle.getPrice();
         require(isBadData, Errors.OraclePriceNotStalled());
