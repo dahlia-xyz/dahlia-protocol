@@ -246,8 +246,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        MarketStatus status = market.status;
-        _validateMarketIsActive(status);
+        _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
@@ -326,8 +325,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(borrower != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        IDahlia.MarketStatus status = market.status;
-        _validateMarketIsActiveOrPausedOrDeprecated(status);
+        _validateMarketIsActiveOrPausedOrDeprecated(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
