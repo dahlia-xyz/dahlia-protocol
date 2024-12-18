@@ -31,7 +31,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.assume(assets > 0);
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.repayAndWithdraw(marketIdFuzz, assets, 0, assets, $.alice, $.alice);
     }
 

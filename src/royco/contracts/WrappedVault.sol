@@ -540,13 +540,17 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
         if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return 0;
 
+        // Check if Dahlia market deposits are enabled
+        IDahlia.MarketId id = marketId;
+        if (dahlia.getMarket(id).status != IDahlia.MarketStatus.Active) return 0;
+
         // 18 decimals if reward token = lend token
         uint256 rewardsRate = SoladyMath.divWad(rewardsInterval.rate, totalPrincipal() + assets);
 
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             // 18 decimals
-            uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(marketId, assets);
+            uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(id, assets);
             rewardsRate += dahliaRate;
         }
         return rewardsRate;
@@ -617,9 +621,16 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         _deposit(receiver, assets);
     }
 
+    /// @inheritdoc IWrappedVault
     function mintFees(uint256 shares, address receiver) external {
         require(msg.sender == address(dahlia), NotDahlia());
         super._mint(receiver, shares);
+    }
+
+    /// @inheritdoc IWrappedVault
+    function burnShares(address from, uint256 shares) external {
+        require(msg.sender == address(dahlia), NotDahlia());
+        _burn(from, shares);
     }
 
     /// @inheritdoc IWrappedVault

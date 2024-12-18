@@ -11,9 +11,10 @@ interface IDahlia {
     type MarketId is uint32;
 
     enum MarketStatus {
-        None,
+        Uninitialized,
         Active,
         Paused,
+        Staled,
         Deprecated
     }
 
@@ -41,14 +42,16 @@ interface IDahlia {
         // --- 28 bytes
         IIrm irm; // 20 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 20 bytes
+        // --- 26 bytes
         IWrappedVault vault; // 20 bytes
+        uint48 repayPeriodEndTimestamp; // 6 bytes
         // --- having all 256 bytes at the end makes deployment size smaller
         uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
         uint256 totalLendPrincipalAssets; // 32 bytes // store user total initial lend assets
+        uint256 totalCollateralAssets; // 32 bytes
     }
 
     struct UserPosition {
@@ -146,6 +149,18 @@ interface IDahlia {
     /// @param assets Amount of assets withdrawn.
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
+
+    /// @dev Emitted when user call final withdrawal on Staled market
+    /// @param id Market id.
+    /// @param caller Address of the caller.
+    /// @param receiver Address receiving the withdrawn assets.
+    /// @param owner Address of the position owner.
+    /// @param assets Amount of assets withdrawn.
+    /// @param collateralAssets Amount of collateral assets withdrawn.
+    /// @param shares Amount of shares burned.
+    event WithdrawDepositAndClaimCollateral(
+        IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 collateralAssets, uint256 shares
+    );
 
     /// @dev Emitted when assets are borrowed.
     /// @param id Market id.

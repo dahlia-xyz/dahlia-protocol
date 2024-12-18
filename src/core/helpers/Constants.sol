@@ -51,4 +51,7 @@ library Constants {
     // Value IDs in DahliaRegistry
     /// @notice Initial frontend fee value for Royco's wrapped vaults.
     uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE = 10;
+
+    /// @notice Repay period duration.
+    uint256 internal constant VALUE_ID_REPAY_PERIOD = 11;
 }
