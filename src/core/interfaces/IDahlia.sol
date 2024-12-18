@@ -14,7 +14,7 @@ interface IDahlia {
         Uninitialized,
         Active,
         Paused,
-        Staled,
+        Stalled,
         Deprecated
     }
 
@@ -150,7 +150,7 @@ interface IDahlia {
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
 
-    /// @dev Emitted when user call final withdrawal on Staled market
+    /// @dev Emitted when user calls final withdrawal on Stalled market
     /// @param id Market id.
     /// @param caller Address of the caller.
     /// @param receiver Address receiving the withdrawn assets.
