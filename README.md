@@ -24,6 +24,7 @@
 
 To set up the development environment, follow these steps:
 
+1. Install [foundry](https://book.getfoundry.sh/getting-started/installation#using-foundryup)
 1. Ensure you have [pnpm](https://pnpm.io/) installed.
 1. Run the setup command to prepare the environment:
 
