@@ -21,8 +21,6 @@ const waitForRpc = async (): Promise<GetBlockNumberReturnType> => {
   }
 };
 
-const HTTP_URL = "http://localhost:80";
-
 await $({ env })`pnpm nx run dahlia:otterscan`;
 
 console.log("Deploying contracts...");
