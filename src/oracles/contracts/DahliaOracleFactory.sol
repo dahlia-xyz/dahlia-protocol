@@ -6,6 +6,8 @@ import { DualOracleChainlinkUniV3 } from "./DualOracleChainlinkUniV3.sol";
 import { UniswapOracleV3SingleTwap } from "./UniswapOracleV3SingleTwap.sol";
 
 contract DahliaOracleFactory {
+    event SetTimelockAddress(address indexed timelockAddress);
+    event SetUniswapStaticOracleAddres(address indexed uniswapStaticOracleAddres);
     event ChainlinkOracleCreated(address indexed oracleAddress, ChainlinkOracleWithMaxDelay.Params params, ChainlinkOracleWithMaxDelay.Delays maxDelays);
     event UniswapOracleCreated(address indexed oracleAddress, UniswapOracleV3SingleTwap.OracleParams params);
     event DualOracleChainlinkUniV3Created(
@@ -20,7 +22,9 @@ contract DahliaOracleFactory {
 
     constructor(address timelockAddress_, address uniswapStaticOracleAddress_) {
         timelockAddress = timelockAddress_;
+        emit SetTimelockAddress(timelockAddress_);
         uniswapStaticOracleAddress = uniswapStaticOracleAddress_;
+        emit SetUniswapStaticOracleAddres(uniswapStaticOracleAddress_);
     }
 
     function createChainlinkOracle(ChainlinkOracleWithMaxDelay.Params memory params, ChainlinkOracleWithMaxDelay.Delays memory maxDelays)

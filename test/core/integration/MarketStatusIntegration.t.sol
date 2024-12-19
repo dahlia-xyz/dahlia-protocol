@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { Test, Vm } from "@forge-std/Test.sol";
+import { Vm } from "@forge-std/Test.sol";
 import { IERC20 } from "@forge-std/interfaces/IERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
@@ -10,9 +10,10 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestConstants, TestContext } from "test/common/TestContext.sol";
+import { DahliaTest } from "test/common/abstracts/DahliaTest.sol";
 import { ERC20Mock } from "test/common/mocks/ERC20Mock.sol";
 
-contract MarketStatusIntegrationTest is Test {
+contract MarketStatusIntegrationTest is DahliaTest {
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
     using DahliaTransUtils for Vm;
@@ -47,11 +48,11 @@ contract MarketStatusIntegrationTest is Test {
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Paused));
 
         // check is forbidden to lend, borrow, supply
-        validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketPaused.selector));
+        validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Paused));
 
         // revert when pause not active market
         vm.prank(permitted);
-        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Paused));
         $.dahlia.pauseMarket($.marketId);
         // unpause
         vm.prank(permitted);
@@ -68,7 +69,7 @@ contract MarketStatusIntegrationTest is Test {
 
         // revert when unpause active market
         vm.prank(permitted);
-        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Active));
         $.dahlia.unpauseMarket($.marketId);
 
         // pause
@@ -97,12 +98,17 @@ contract MarketStatusIntegrationTest is Test {
         assertEq(uint256($.dahlia.getMarket($.marketId).status), uint256(IDahlia.MarketStatus.Deprecated));
         vm.stopPrank();
 
-        validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.MarketDeprecated.selector));
+        validate_checkIsForbiddenToSupplyLendBorrow(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Deprecated));
 
         // check unpause reversion
         vm.prank($.owner);
-        vm.expectRevert(Errors.CannotChangeMarketStatus.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Deprecated));
         $.dahlia.unpauseMarket($.marketId);
+
+        // check cannot deprecate twice
+        vm.prank($.owner);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Deprecated));
+        $.dahlia.deprecateMarket($.marketId);
     }
 
     function validate_checkIsForbiddenToSupplyLendBorrow(bytes memory revertData) internal {

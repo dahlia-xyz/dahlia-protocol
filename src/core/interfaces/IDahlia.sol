@@ -11,9 +11,10 @@ interface IDahlia {
     type MarketId is uint32;
 
     enum MarketStatus {
-        None,
+        Uninitialized,
         Active,
         Paused,
+        Stalled,
         Deprecated
     }
 
@@ -36,23 +37,26 @@ interface IDahlia {
         uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
         IDahliaOracle oracle; // 20 bytes
-        uint64 fullUtilizationRate; // 3 bytes
-        uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 23 bytes
-        IIrm irm; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
-        // --- 20 bytes
+        uint64 fullUtilizationRate; // 8 bytes
+        // --- 28 bytes
+        IIrm irm; // 20 bytes
+        uint64 ratePerSec; // 8 bytes // store refreshed rate per second
+        // --- 26 bytes
         IWrappedVault vault; // 20 bytes
-        // --- having all 256 bytes at the end make deployment size smaller
-        uint256 totalLendAssets; // 32 bytes
+        uint48 repayPeriodEndTimestamp; // 6 bytes
+        // --- having all 256 bytes at the end makes deployment size smaller
+        uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
+        uint256 totalLendPrincipalAssets; // 32 bytes // store user total initial lend assets
+        uint256 totalCollateralAssets; // 32 bytes
     }
 
     struct UserPosition {
         uint128 lendShares;
-        uint128 lendAssets; // store user initial lend assets
+        uint128 lendPrincipalAssets; // store user initial lend assets
         uint128 borrowShares;
         uint128 collateral;
     }
@@ -61,6 +65,10 @@ interface IDahlia {
         Market market;
         mapping(address => UserPosition) userPositions;
     }
+
+    /// @dev Emitted when the DahliaRegistry is set.
+    /// @param dahliaRegistry Address of the new reserve fee recipient.
+    event SetDahliaRegistry(address indexed dahliaRegistry);
 
     /// @dev Emitted when the protocol fee rate is updated.
     /// @param id Market id.
@@ -142,6 +150,18 @@ interface IDahlia {
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
 
+    /// @dev Emitted when user calls final withdrawal on Stalled market
+    /// @param id Market id.
+    /// @param caller Address of the caller.
+    /// @param receiver Address receiving the withdrawn assets.
+    /// @param owner Address of the position owner.
+    /// @param assets Amount of assets withdrawn.
+    /// @param collateralAssets Amount of collateral assets withdrawn.
+    /// @param shares Amount of shares burned.
+    event WithdrawDepositAndClaimCollateral(
+        IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 collateralAssets, uint256 shares
+    );
+
     /// @dev Emitted when assets are borrowed.
     /// @param id Market id.
     /// @param caller Address of the caller.
@@ -187,11 +207,11 @@ interface IDahlia {
 
     /// @dev Emitted when interest is accrued.
     /// @param id Market id.
-    /// @param prevBorrowRate Previous borrow rate.
+    /// @param newRatePerSec New rate per second.
     /// @param interest Amount of interest accrued.
     /// @param protocolFeeShares Shares minted as protocol fee.
     /// @param reserveFeeShares Shares minted as reserve fee.
-    event DahliaAccrueInterest(IDahlia.MarketId indexed id, uint256 prevBorrowRate, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares);
+    event DahliaAccrueInterest(IDahlia.MarketId indexed id, uint256 newRatePerSec, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares);
 
     /// @dev Emitted when a flash loan is executed.
     /// @param caller Address of the caller.
@@ -221,8 +241,8 @@ interface IDahlia {
     /// @notice Get user's earned interest for a market.
     /// @param id Market id.
     /// @param userAddress User address.
-    /// @return assets number of assets earned as interest
-    /// @return shares number of shares earned as interest
+    /// @return assets Number of assets earned as interest.
+    /// @return shares Number of shares earned as interest.
     function getPositionInterest(MarketId id, address userAddress) external view returns (uint256 assets, uint256 shares);
 
     /// @notice Get market parameters.
@@ -322,14 +342,15 @@ interface IDahlia {
     /// @param receiver Address receiving the assets.
     /// @param owner Owner of the lend position.
     /// @return assetsWithdrawn Amount of assets withdrawn.
-    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external payable returns (uint256 assetsWithdrawn);
+    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external returns (uint256 assetsWithdrawn);
 
-    /// @notice Claim accrued interest for the position.
+    /// @notice Transfer lend shares between two users.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
+    /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the assets.
-    /// @param owner Owner of the lend position.
-    function claimInterest(MarketId id, address receiver, address owner) external payable returns (uint256 assets);
+    /// @param amount Amount of assets to transfer.
+    function transferLendShares(MarketId id, address owner, address receiver, uint256 amount) external returns (bool);
 
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.
@@ -344,8 +365,8 @@ interface IDahlia {
     /// @param assets Amount of assets to borrow.
     /// @param owner Address owning the increased borrow position.
     /// @param receiver Address receiving the borrowed assets.
-    /// @return sharesBorrowed Amount of shares minted.
-    function borrow(MarketId id, uint256 assets, address owner, address receiver) external returns (uint256 sharesBorrowed);
+    /// @return borrowShares Amount of shares minted.
+    function borrow(MarketId id, uint256 assets, address owner, address receiver) external returns (uint256 borrowShares);
 
     /// @notice Supply `collateralAssets` and borrow `borrowAssets` on behalf of a user, sending borrowed assets to a receiver.
     /// @dev Both `collateralAssets` and `borrowAssets` must not be zero.
@@ -398,7 +419,7 @@ interface IDahlia {
         returns (uint256 collateralSeized, uint256 assetsRepaid, uint256 sharesRepaid);
 
     /// @notice Supplies collateral on behalf of a user, with an optional callback.
-    /// @param id of the market.
+    /// @param id Market id.
     /// @param assets The amount of collateral to supply.
     /// @param owner The address that will own the increased collateral position.
     /// @param callbackData Arbitrary data to pass to the `onDahliaSupplyCollateral` callback.

@@ -21,6 +21,8 @@ contract ManageMarketImplUnitTest is Test {
     function test_unit_manage_deployMarket_success(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
+        marketParamsFuzz.liquidationBonusRate =
+            bound(marketParamsFuzz.liquidationBonusRate, Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE);
 
         IDahlia.MarketId marketParamsFuzzId = IDahlia.MarketId.wrap(1);
         vm.expectEmit(true, true, true, true, address(this));
@@ -46,6 +48,8 @@ contract ManageMarketImplUnitTest is Test {
     function test_unit_manage_deployMarket_alreadyDeployed(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
+        marketParamsFuzz.liquidationBonusRate =
+            bound(marketParamsFuzz.liquidationBonusRate, Constants.DEFAULT_MIN_LIQUIDATION_BONUS_RATE, Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE);
         IDahlia.MarketId marketParamsFuzzId = IDahlia.MarketId.wrap(1);
 
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault);

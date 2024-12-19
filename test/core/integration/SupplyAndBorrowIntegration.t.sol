@@ -35,7 +35,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.assume(assets > 0);
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.supplyAndBorrow(marketIdFuzz, assets, assets, $.alice, $.alice);
     }
 
@@ -113,6 +113,33 @@ contract SupplyAndBorrowIntegrationTest is Test {
         emit IDahlia.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        vm.resumeGasMetering();
+        uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        _checkMarketBorrowValid(_shares, pos.lent, pos.borrowed, expectedBorrowShares);
+    }
+
+    function test_int_supplyAndBorrow_onBehalfOfOwner(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
+
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        $.oracle.setPrice(pos.price);
+        vm.dahliaLendBy($.carol, pos.lent, $);
+        vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);
+        uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
+
+        address caller = ctx.createWallet("CALLER");
+        vm.prank($.alice);
+        $.dahlia.updatePermission(caller, true);
+
+        // caller must have possibility to supplyAndBorrow on behalf of alice
+        vm.startPrank(caller);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.SupplyCollateral($.marketId, caller, $.alice, pos.collateral);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaBorrow($.marketId, caller, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();

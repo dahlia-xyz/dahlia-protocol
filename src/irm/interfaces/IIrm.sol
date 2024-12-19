@@ -21,7 +21,7 @@ interface IIrm {
 
     /// @notice Calculate new interest rates based on utilization.
     /// @param deltaTime Time since the last update in seconds.
-    /// @param utilization Utilization percentage with 5 decimals precision.
+    /// @param utilization Utilization percentage with 5 decimal precision.
     /// @param oldFullUtilizationRate Interest rate at 100% utilization, 18 decimals.
     /// @return newRatePerSec New interest rate per second, 18 decimals.
     /// @return newFullUtilizationRate New max interest rate, 18 decimals.

@@ -15,6 +15,7 @@ import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -43,6 +44,9 @@ contract TestContext {
         address alice;
         address bob;
         address carol;
+        address maria;
+        address protocolFeeRecipient;
+        address reserveFeeRecipient;
         address marketAdmin;
         address royco;
         address owner;
@@ -51,6 +55,7 @@ contract TestContext {
         VariableIrm irm;
         ERC20Mock loanToken;
         ERC20Mock collateralToken;
+        WrappedVault vault;
     }
 
     Vm public vm;
@@ -61,6 +66,7 @@ contract TestContext {
 
     constructor(Vm vm_) {
         defaultTokenDecimals["USDC"] = 6;
+        defaultTokenDecimals["USDE"] = 18;
         defaultTokenDecimals["WETH"] = 18;
         defaultTokenDecimals["WBTC"] = 8;
         vm = vm_;
@@ -84,9 +90,12 @@ contract TestContext {
         v.alice = createWallet("ALICE");
         v.bob = createWallet("BOB");
         v.carol = createWallet("CAROL");
+        v.maria = createWallet("MARIA");
         v.owner = createWallet("OWNER");
         v.marketAdmin = createWallet("MARKET_ADMIN");
         v.royco = createWallet("ROYCO");
+        v.protocolFeeRecipient = createWallet("PROTOCOL_FEE_RECIPIENT");
+        v.reserveFeeRecipient = createWallet("RESERVE_FEE_RECIPIENT");
         v.permitted = new address[](2);
         v.permitted[0] = v.owner;
         v.permitted[1] = v.marketAdmin;
@@ -102,6 +111,8 @@ contract TestContext {
 
         v.marketConfig = marketConfig;
         v.marketId = deployDahliaMarket(v.marketConfig);
+        v.vault = WrappedVault(address(v.dahlia.getMarket(v.marketId).vault));
+        vm.label(address(v.vault), "[  VAULT  ]");
         v.oracle = OracleMock(address(marketConfig.oracle));
         v.loanToken = ERC20Mock(marketConfig.loanToken);
         v.collateralToken = ERC20Mock(marketConfig.collateralToken);
@@ -204,7 +215,6 @@ contract TestContext {
         dahlia = new DahliaExt(owner, dahliaRegistry);
         vm.label(address(dahlia), "[ DAHLIA ]");
         dahlia.setProtocolFeeRecipient(createWallet("PROTOCOL_FEE_RECIPIENT"));
-        dahlia.setReserveFeeRecipient(createWallet("RESERVE_FEE_RECIPIENT"));
 
         vm.stopPrank();
         contracts["dahlia"] = address(dahlia);
@@ -269,7 +279,9 @@ contract TestContext {
         }
 
         address pointsFactory = address(new PointsFactory(roycoOwner));
-        wrappedVaultFactory = new WrappedVaultFactory(protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia));
+        address wrappedVault = address(new WrappedVault());
+        wrappedVaultFactory =
+            new WrappedVaultFactory(wrappedVault, protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia));
 
         vm.startPrank(dahliaOwner);
         DahliaRegistry(dahliaRegistry).setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, address(wrappedVaultFactory));

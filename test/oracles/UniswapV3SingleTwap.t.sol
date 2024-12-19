@@ -57,4 +57,25 @@ contract UniswapOracleV3SingleTwapTest is Test {
 
         assertEq(oracle.twapDuration(), 500);
     }
+
+    function test_oracle_uniswap_setTwapDurationTooShort() public {
+        address owner = ctx.createWallet("OWNER");
+        vm.prank(owner);
+        vm.expectRevert(UniswapOracleV3SingleTwapBase.TwapDurationIsTooShort.selector);
+        oracle.setTwapDuration(299);
+    }
+
+    function test_oracle_createWithShortTwapDuration() public {
+        vm.expectRevert(UniswapOracleV3SingleTwapBase.TwapDurationIsTooShort.selector);
+        new UniswapOracleV3SingleTwap(
+            address(0x1),
+            UniswapOracleV3SingleTwapBase.OracleParams({
+                baseToken: Mainnet.WETH_ERC20,
+                quoteToken: Mainnet.UNI_ERC20,
+                uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,
+                twapDuration: 200
+            }),
+            Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS
+        );
+    }
 }

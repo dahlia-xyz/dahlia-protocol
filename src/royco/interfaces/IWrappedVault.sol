@@ -3,7 +3,24 @@ pragma solidity ^0.8.27;
 
 interface IWrappedVault {
     /// @return The address of the vault owner
-    function vaultOwner() external view returns (address);
+    function owner() external view returns (address);
+
+    /// @param account The address to get the principal balance of
+    /// @return principal balance of given account
+    function principal(address account) external view returns (uint256);
+
+    /// @return get total principal of all accounts
+    function totalPrincipal() external view returns (uint256);
+
+    /// @param shares The amount of shares to mint
+    /// @param receiver The address to mint the fees for
+    /// @dev can be called only by Dahlia contract
+    function mintFees(uint256 shares, address receiver) external;
+
+    /// @param from The address to burn the shares for
+    /// @param shares The amount of shares to burn
+    /// @dev can be called only by Dahlia contract
+    function burnShares(address from, uint256 shares) external;
 
     /// @param to The address to send the rewards to
     /// @param reward The reward token / points program to claim rewards from
@@ -59,9 +76,9 @@ interface IWrappedVault {
 
     /// @param assets The amount of assets that should be withdrawn
     /// @param receiver The address user whom should receive the mevEth out
-    /// @param owner The address of the owner of the mevEth
+    /// @param from The address of the owner of the mevEth
     /// @return shares The amount of shares burned
-    function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares);
+    function withdraw(uint256 assets, address receiver, address from) external returns (uint256 shares);
 
     /// @param owner The address in question of who would be redeeming their shares
     /// @return maxShares The maximum amount of shares they could redeem
@@ -73,9 +90,9 @@ interface IWrappedVault {
 
     /// @param shares The amount of shares that should be burned
     /// @param receiver The address user whom should receive the wETH out
-    /// @param owner The address of the owner of the mevEth
+    /// @param from The address of the owner of the lend assets
     /// @return assets The amount of assets withdrawn
-    function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
+    function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets);
 
     /**
      * @dev Emitted when a deposit is made, either through mint or deposit

@@ -65,7 +65,7 @@ contract Timelock is Ownable2Step {
 
     /// @notice Queues a transaction to be executed after the delay.
     function queueTransaction(address target, uint256 value, string memory signature, bytes memory data, uint256 eta) public onlyOwner returns (bytes32) {
-        require(getBlockTimestamp() + delay < eta, EstimatedExecutionBlockMustSatisfyDelay());
+        require(_getBlockTimestamp() + delay < eta, EstimatedExecutionBlockMustSatisfyDelay());
 
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         queuedTransactions[txHash] = true;
@@ -91,8 +91,8 @@ contract Timelock is Ownable2Step {
     {
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         require(queuedTransactions[txHash], TransactionHasNotBeenQueued());
-        require(getBlockTimestamp() >= eta, TransactionHasNotSurpassedTimeLock());
-        require(getBlockTimestamp() <= eta + GRACE_PERIOD, TransactionIsStale());
+        require(_getBlockTimestamp() >= eta, TransactionHasNotSurpassedTimeLock());
+        require(_getBlockTimestamp() <= eta + GRACE_PERIOD, TransactionIsStale());
 
         queuedTransactions[txHash] = false;
 
@@ -114,7 +114,7 @@ contract Timelock is Ownable2Step {
     }
 
     /// @notice Returns the current block timestamp.
-    function getBlockTimestamp() internal view returns (uint256) {
+    function _getBlockTimestamp() internal view returns (uint256) {
         return block.timestamp;
     }
 }

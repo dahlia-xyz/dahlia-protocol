@@ -29,7 +29,7 @@ contract LiquidateIntegrationTest is Test {
 
     function test_int_liquidate_marketNotDeployed(IDahlia.MarketId marketIdFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.liquidate(marketIdFuzz, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 
@@ -184,7 +184,11 @@ contract LiquidateIntegrationTest is Test {
 
     function test_int_liquidate_withReserveShares(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
+
         address reserveAddress = ctx.createWallet("RESERVE_FEE_RECIPIENT");
+        vm.prank($.owner);
+        $.dahlia.setReserveFeeRecipient(reserveAddress);
+
         pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, TestConstants.MAX_TEST_LLTV);
 
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);

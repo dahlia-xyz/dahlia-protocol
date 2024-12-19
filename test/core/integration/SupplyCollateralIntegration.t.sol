@@ -24,7 +24,7 @@ contract SupplyCollateralIntegrationTest is Test {
     function test_int_supplyCollateral_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.assume(assets > 0);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.supplyCollateral(marketIdFuzz, assets, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 

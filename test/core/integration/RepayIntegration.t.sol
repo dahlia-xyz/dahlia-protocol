@@ -28,7 +28,7 @@ contract RepayIntegrationTest is Test {
     function test_int_repay_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.repay(marketIdFuzz, assets, 0, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 

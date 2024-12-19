@@ -1,4 +1,4 @@
-FROM ghcr.io/foundry-rs/foundry
+FROM ghcr.io/foundry-rs/foundry:v0.2.0
 
 WORKDIR /app
 

@@ -110,6 +110,83 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - amountWithdrawn, "Dahlia balance");
     }
 
+    function test_int_withdraw_protocolFee(TestTypes.MarketPosition memory pos, uint256 blocks, uint32 fee) public {
+        vm.pauseGasMetering();
+        address protocolRecipient = ctx.wallets("PROTOCOL_FEE_RECIPIENT");
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
+
+        uint32 protocolFee = uint32(bound(uint256(fee), BoundUtils.toPercent(2), BoundUtils.toPercent(5)));
+
+        vm.startPrank($.owner);
+        if (protocolFee != $.dahlia.getMarket($.marketId).protocolFeeRate) {
+            $.dahlia.setProtocolFeeRate($.marketId, protocolFee);
+        }
+        vm.stopPrank();
+
+        blocks = vm.boundBlocks(blocks);
+
+        vm.forward(blocks);
+        $.dahlia.accrueMarketInterest($.marketId);
+
+        (uint256 borrowedAssets,,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        vm.dahliaPrepareLoanBalanceFor($.alice, borrowedAssets, $);
+        vm.dahliaRepayBy($.alice, borrowedAssets, $);
+
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
+        uint256 protocolFeeShares = $.dahlia.getPosition($.marketId, protocolRecipient).lendShares;
+        uint256 expectedAssets = protocolFeeShares.toAssetsDown(state.totalLendAssets, state.totalLendShares);
+
+        // anyone can call function withdrawProtocolFee
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Withdraw($.marketId, address($.vault), protocolRecipient, protocolRecipient, expectedAssets, protocolFeeShares);
+
+        vm.prank(protocolRecipient);
+        uint256 assetsWithdrawn = $.vault.redeem(protocolFeeShares, protocolRecipient, protocolRecipient);
+
+        IDahlia.UserPosition memory protocolRecipientPos = $.dahlia.getPosition($.marketId, protocolRecipient);
+        assertEq(assetsWithdrawn, expectedAssets, "assetsWithdrawn check");
+        assertEq(protocolRecipientPos.lendShares, 0, "protocolRecipient lend shares");
+        assertEq($.loanToken.balanceOf(protocolRecipient), expectedAssets, "reserveRecipient balance");
+    }
+
+    function test_int_withdraw_reserveFee(TestTypes.MarketPosition memory pos, uint256 blocks, uint32 fee) public {
+        vm.pauseGasMetering();
+        address reserveRecipient = ctx.createWallet("RESERVE_FEE_RECIPIENT");
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
+
+        uint32 reserveFee = uint32(bound(uint256(fee), BoundUtils.toPercent(2), BoundUtils.toPercent(5)));
+
+        vm.startPrank($.owner);
+        $.dahlia.setReserveFeeRecipient(reserveRecipient);
+        $.dahlia.setReserveFeeRate($.marketId, reserveFee);
+        vm.stopPrank();
+
+        blocks = vm.boundBlocks(blocks);
+
+        vm.forward(blocks);
+        $.dahlia.accrueMarketInterest($.marketId);
+
+        (uint256 borrowedAssets,,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        vm.dahliaPrepareLoanBalanceFor($.alice, borrowedAssets, $);
+        vm.dahliaRepayBy($.alice, borrowedAssets, $);
+
+        IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
+        uint256 reserveFeeShares = $.dahlia.getPosition($.marketId, reserveRecipient).lendShares;
+        uint256 expectedAssets = reserveFeeShares.toAssetsDown(state.totalLendAssets, state.totalLendShares);
+
+        vm.prank(reserveRecipient);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.Withdraw($.marketId, address($.vault), reserveRecipient, reserveRecipient, expectedAssets, reserveFeeShares);
+        uint256 assetsWithdrawn = $.vault.redeem(reserveFeeShares, reserveRecipient, reserveRecipient);
+
+        IDahlia.UserPosition memory reserveRecipientPos = $.dahlia.getPosition($.marketId, reserveRecipient);
+        assertEq(assetsWithdrawn, expectedAssets, "assetsWithdrawn check");
+        assertEq(reserveRecipientPos.lendShares, 0, "reserveRecipient lend shares");
+        assertEq($.loanToken.balanceOf(reserveRecipient), expectedAssets, "reserveRecipient balance");
+    }
+
     function test_int_withdraw_byShares(TestTypes.MarketPosition memory pos, uint256 sharesWithdrawn) public {
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);

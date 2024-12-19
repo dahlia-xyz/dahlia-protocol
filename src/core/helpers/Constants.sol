@@ -36,10 +36,7 @@ library Constants {
     /// @notice Address ID for the `Dahlia` contract in the registry.
     uint256 internal constant ADDRESS_ID_DAHLIA = 1;
 
-    /// @notice Address ID for the `DahliaProvider` contract in the registry.
-    uint256 internal constant ADDRESS_ID_DAHLIA_PROVIDER = 2;
-
-    /// @notice Address ID for the `DahliaOracleFactory.sol` contract in the registry.
+    /// @notice Address ID for the `DahliaOracleFactory` contract in the registry.
     uint256 internal constant ADDRESS_ID_ORACLE_FACTORY = 4;
 
     /// @notice Address ID for the `IRMFactory` contract in the registry.
@@ -51,4 +48,7 @@ library Constants {
     // Value IDs in DahliaRegistry
     /// @notice Initial frontend fee value for Royco's wrapped vaults.
     uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE = 10;
+
+    /// @notice Repay period duration.
+    uint256 internal constant VALUE_ID_REPAY_PERIOD = 11;
 }

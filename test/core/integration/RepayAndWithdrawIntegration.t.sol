@@ -31,7 +31,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.assume(assets > 0);
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.repayAndWithdraw(marketIdFuzz, assets, 0, assets, $.alice, $.alice);
     }
 
@@ -86,6 +86,51 @@ contract RepayAndWithdrawIntegrationTest is Test {
 
         IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
         IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
+        assertEq(returnAssets, amountRepaid, "returned asset amount");
+        assertEq(returnShares, expectedRepaidShares, "returned shares amount");
+        assertEq(userPos.borrowShares, expectedBorrowShares, "borrow shares");
+        assertEq(stateAfter.totalBorrowAssets, pos.borrowed - amountRepaid, "total borrow");
+        assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
+        assertEq($.loanToken.balanceOf($.alice), pos.borrowed - amountRepaid, "RECEIVER balance");
+        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance");
+        assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
+        assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateral, "Dahlia collateral balance");
+    }
+
+    function test_int_repayAndWithdraw_onBehalfOfOwner(TestTypes.MarketPosition memory pos, uint256 amountRepaid) public {
+        vm.pauseGasMetering();
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
+
+        amountRepaid = bound(amountRepaid, 1, pos.borrowed);
+        uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
+        uint256 expectedRepaidShares = amountRepaid.toSharesDown(pos.borrowed, expectedBorrowShares);
+        uint256 amountCollateral = amountRepaid.lendToCollateralUp(pos.price).mulPercentUp($.marketConfig.lltv);
+
+        address caller = ctx.createWallet("CALLER");
+        vm.startPrank($.alice);
+        $.dahlia.updatePermission(caller, true);
+        $.loanToken.approve(address($.dahlia), amountRepaid);
+        vm.stopPrank();
+
+        vm.startPrank(caller);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaRepay($.marketId, caller, $.alice, amountRepaid, expectedRepaidShares);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.WithdrawCollateral($.marketId, caller, $.alice, $.alice, amountCollateral);
+
+        vm.resumeGasMetering();
+        (uint256 returnAssets, uint256 returnShares) = $.dahlia.repayAndWithdraw($.marketId, amountCollateral, amountRepaid, 0, $.alice, $.alice);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        expectedBorrowShares -= expectedRepaidShares;
+
+        IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
+        IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.alice);
+        assertEq($.loanToken.balanceOf(caller), 0, "caller balance");
+        assertEq($.collateralToken.balanceOf(caller), 0, "caller balance");
+
         assertEq(returnAssets, amountRepaid, "returned asset amount");
         assertEq(returnShares, expectedRepaidShares, "returned shares amount");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow shares");

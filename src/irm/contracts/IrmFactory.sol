@@ -6,7 +6,7 @@ import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 contract IrmFactory {
-    event VariableIrmCreated(address indexed irmAddressm, VariableIrm.Config config);
+    event VariableIrmCreated(address indexed irmAddress, VariableIrm.Config config);
 
     error IncorrectConfig();
 
@@ -19,6 +19,7 @@ contract IrmFactory {
         }
         require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, IncorrectConfig());
         require(config.minTargetUtilization < config.maxTargetUtilization, IncorrectConfig());
+        require(config.minFullUtilizationRate <= config.maxFullUtilizationRate, IncorrectConfig());
         VariableIrm irm = new VariableIrm{ salt: salt }(config);
         emit VariableIrmCreated(address(irm), config);
         return irm;

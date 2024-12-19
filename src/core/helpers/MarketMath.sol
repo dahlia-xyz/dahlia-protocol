@@ -86,7 +86,8 @@ library MarketMath {
     }
 
     /// @dev Checks if exactly one of two values is zero, used for validation purposes
-    function validateExactlyOneZero(uint256 x, uint256 y) internal pure returns (bool z) {
+    function validateExactlyOneZero(uint256 x, uint256 y) internal pure {
+        bool z;
         assembly {
             z := xor(iszero(x), iszero(y))
         }

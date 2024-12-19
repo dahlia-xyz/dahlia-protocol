@@ -1,34 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 
-/**
- * @title BorrowImpl library
- * @notice Implements borrowing protocol functions
- */
+/// @title BorrowImpl library
+/// @notice Implements borrowing protocol functions
 library BorrowImpl {
-    using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
-    using SafeCastLib for uint256;
-    using MarketMath for uint256;
 
     // Add collateral to a borrower's position
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
-        ownerPosition.collateral += assets.toUint128();
+        ownerPosition.collateral += uint128(assets);
+        market.totalCollateralAssets += assets;
 
         emit IDahlia.SupplyCollateral(market.id, msg.sender, owner, assets);
     }
 
-    // Withdraw collateral from borrower's position
+    // Withdraw collateral from a borrower's position
     function internalWithdrawCollateral(
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
@@ -36,9 +29,10 @@ library BorrowImpl {
         address owner,
         address receiver
     ) internal {
-        ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
+        ownerPosition.collateral -= uint128(assets); // Decrease collateral
+        market.totalCollateralAssets -= assets;
 
-        // Check if there's enough collateral for withdrawal
+        // Ensure sufficient collateral for withdrawal
         if (ownerPosition.borrowShares > 0) {
             uint256 borrowedAssets = SharesMathLib.toAssetsUp(ownerPosition.borrowShares, market.totalBorrowAssets, market.totalBorrowShares);
             uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
@@ -62,13 +56,13 @@ library BorrowImpl {
         uint256 shares = assets.toSharesUp(totalBorrowAssets, totalBorrowShares);
         totalBorrowAssets += assets;
 
-        // Check for sufficient liquidity
+        // Ensure sufficient liquidity
         require(totalBorrowAssets <= totalLendAssets, Errors.InsufficientLiquidity(totalBorrowAssets, totalLendAssets));
 
         totalBorrowShares += shares;
         uint256 ownerBorrowShares = ownerPosition.borrowShares + shares;
 
-        // Check if user has enough collateral
+        // Ensure user has enough collateral
         uint256 borrowedAssets = SharesMathLib.toAssetsUp(ownerBorrowShares, totalBorrowAssets, totalBorrowShares);
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
 
@@ -76,7 +70,7 @@ library BorrowImpl {
         require(borrowedAssets <= maxBorrowAssets, Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets));
 
         // Update borrow values in totals and position
-        ownerPosition.borrowShares = ownerBorrowShares.toUint128();
+        ownerPosition.borrowShares = uint128(ownerBorrowShares);
         market.totalBorrowAssets = totalBorrowAssets;
         market.totalBorrowShares = totalBorrowShares;
         emit IDahlia.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
@@ -92,11 +86,18 @@ library BorrowImpl {
         // Calculate assets or shares
         if (assets > 0) {
             shares = assets.toSharesDown(market.totalBorrowAssets, market.totalBorrowShares);
+            // Avoid arithmetic overflow when we have shares tail
+            uint256 owned = ownerPosition.borrowShares;
+            if (shares > owned) {
+                if ((shares - owned) < SharesMathLib.SHARES_OFFSET) {
+                    shares = owned;
+                }
+            }
         } else {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
         }
         // Update borrow values in totals and position
-        ownerPosition.borrowShares -= shares.toUint128();
+        ownerPosition.borrowShares -= uint128(shares);
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 

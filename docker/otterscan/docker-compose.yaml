@@ -10,13 +10,13 @@ services:
     command: >
       --host 0.0.0.0
       --fork-url https://eth-rpc.dahliadev.xyz
-      --fork-block-number 20720117
+      --fork-block-number 21429439
       --chain-id 1
     ports:
       - "8546:8545"
 
   otterscan:
-    image: otterscan/otterscan:v2.6.0
+    image: otterscan/otterscan:v2.6.1
     environment:
       #      - DISABLE_CONFIG_OVERWRITE=1
       - ERIGON_URL=http://localhost:8546

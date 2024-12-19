@@ -21,8 +21,6 @@ const waitForRpc = async (): Promise<GetBlockNumberReturnType> => {
   }
 };
 
-const HTTP_URL = "http://localhost:80";
-
 await $({ env })`pnpm nx run dahlia:otterscan`;
 
 console.log("Deploying contracts...");
@@ -51,9 +49,7 @@ await $$({
   env: {
     PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     DAHLIA_OWNER: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    DAHLIA_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+    FEES_RECIPIENT: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
   },
 })`forge script script/Dahlia.s.sol --rpc-url http://localhost:8546 --broadcast`;
-
-console.log(`Visit ${HTTP_URL}/block/${blockNumber + 1n} to see block info`);
-const HASH = "0xb33be9d86dd8e6fdfddbd257b08b59a65b5cf47a1de1fb12634d92bb2add2e28";
-console.log(`Visit ${HTTP_URL}/tx/${HASH}/logs to see logs of transaction`);
