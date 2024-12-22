@@ -109,8 +109,9 @@ interface IDahlia {
     event MarketStatusChanged(IDahlia.MarketId indexed id, IDahlia.MarketStatus from, IDahlia.MarketStatus to);
 
     /// @dev Emitted when the liquidation bonus rate changes.
+    /// @param id Market id.
     /// @param liquidationBonusRate The updated liquidation bonus rate.
-    event LiquidationBonusRateChanged(uint256 liquidationBonusRate);
+    event LiquidationBonusRateChanged(IDahlia.MarketId indexed id, uint256 liquidationBonusRate);
 
     /// @dev Emitted when a new market is deployed.
     /// @param id Market id.

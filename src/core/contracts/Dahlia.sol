@@ -539,7 +539,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
-        emit LiquidationBonusRateChanged(liquidationBonusRate);
+        emit LiquidationBonusRateChanged(id, liquidationBonusRate);
         market.liquidationBonusRate = liquidationBonusRate.toUint24();
     }
 
