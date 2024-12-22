@@ -98,9 +98,9 @@ interface IDahlia {
     event SetLLTVRange(uint256 minLltv, uint256 maxLltv);
 
     /// @dev Emitted when a new liquidation bonus rate range is set.
-    /// @param minLltv Minimum liquidation bonus rate.
-    /// @param maxLltv Maximum liquidation bonus rate.
-    event SetLiquidationBonusRateRange(uint256 minLltv, uint256 maxLltv);
+    /// @param minLiquidationBonusRate Minimum liquidation bonus rate.
+    /// @param maxLiquidationBonusRate Maximum liquidation bonus rate.
+    event SetLiquidationBonusRateRange(uint256 minLiquidationBonusRate, uint256 maxLiquidationBonusRate);
 
     /// @dev Emitted when the market status changes.
     /// @param id Market id.
