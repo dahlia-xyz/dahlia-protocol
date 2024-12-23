@@ -16,9 +16,10 @@ contract DeployDahlia is Script {
     using LibString for *;
 
     uint256 blockNumber;
+    string otterscanPort;
 
     function _printContract(string memory prefix, address addr) internal {
-        string memory host = "http://localhost/";
+        string memory host = string(abi.encodePacked("http://localhost:", otterscanPort, "/"));
         blockNumber++;
         string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
@@ -27,6 +28,7 @@ contract DeployDahlia is Script {
 
     function run() public {
         blockNumber = vm.getBlockNumber();
+        otterscanPort = vm.envOr("OTTERSCAN_PORT", string("80"));
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY"); // Use environment variable for security
         vm.startBroadcast(deployerPrivateKey);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
