@@ -33,7 +33,8 @@ contract DeployDahlia is Script {
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
         address deployerAddress = vm.addr(deployerPrivateKey);
         console.log("Deployer address:", deployerAddress);
-        address pointsFactory = address(new PointsFactory(dahliaOwner));
+        address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
+        address pointsFactory = pointsFactoryFromEnv == address(0) ? address(new PointsFactory(dahliaOwner)) : pointsFactoryFromEnv;
         _printContract("PointsFactory:              ", pointsFactory);
         address wrappedVault = address(new WrappedVault());
         _printContract("WrappedVault Implementation:", wrappedVault);
