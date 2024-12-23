@@ -238,7 +238,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             (, uint256 newRatePerSec,) = IIrm(market.irm).calculateInterest(0, market.totalLendAssets, market.totalBorrowAssets, market.fullUtilizationRate);
             market.ratePerSec = newRatePerSec.toUint64();
         }
-        if (market.totalLendAssets != 0) return market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets);
+        return (market.totalLendAssets != 0) ? market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets) : 0;
     }
 
     /// @inheritdoc IDahlia
