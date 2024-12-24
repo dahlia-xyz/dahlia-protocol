@@ -10,10 +10,22 @@ abstract contract BaseScript is Script {
 
     address internal deployer;
     uint256 internal privateKey;
+    uint256 internal blockNumber;
+    string internal otterscanPort;
 
     function setUp() public virtual {
         privateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.rememberKey(privateKey);
+        blockNumber = vm.getBlockNumber();
+        otterscanPort = vm.envOr("OTTERSCAN_PORT", string("80"));
+    }
+
+    function _printContract(string memory prefix, address addr) internal {
+        string memory host = string(abi.encodePacked("http://localhost:", otterscanPort, "/"));
+        blockNumber++;
+        string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
+        string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
+        console.log(prefix, addressUrl, blockUrl);
     }
 
     modifier broadcaster() {

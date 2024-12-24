@@ -4,31 +4,19 @@ pragma solidity ^0.8.27;
 import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
-import { LibString } from "@solady/utils/LibString.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
+import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
+import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
+import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
+import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 
 contract DeployDahlia is BaseScript {
-    using LibString for *;
-
-    uint256 blockNumber;
-    string otterscanPort;
-
-    function _printContract(string memory prefix, address addr) internal {
-        string memory host = string(abi.encodePacked("http://localhost:", otterscanPort, "/"));
-        blockNumber++;
-        string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
-        string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
-        console.log(prefix, addressUrl, blockUrl);
-    }
-
     function run() public {
-        blockNumber = vm.getBlockNumber();
-        otterscanPort = vm.envOr("OTTERSCAN_PORT", string("80"));
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
@@ -55,6 +43,29 @@ contract DeployDahlia is BaseScript {
             )
         );
         _printContract("WrappedVaultFactory:        ", wrappedVaultFactory);
+        IrmFactory irmFactory = new IrmFactory();
+        _printContract("IrmFactory:                ", address(irmFactory));
+
+        uint64 ZERO_UTIL_RATE = 158_247_046;
+        uint64 MIN_FULL_UTIL_RATE = 1_582_470_460;
+        uint64 MAX_FULL_UTIL_RATE = 3_164_940_920_000;
+
+        IIrm irm = irmFactory.createVariableIrm(
+            VariableIrm.Config({
+                minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                targetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                minFullUtilizationRate: MIN_FULL_UTIL_RATE,
+                maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
+                zeroUtilizationRate: ZERO_UTIL_RATE,
+                rateHalfLife: 172_800,
+                targetRatePercent: 0.2e18
+            })
+        );
+        _printContract("Irm:                        ", address(irm));
+
+        // Oracle
+
         uint256 contractSize = dahlia.code.length;
         console.log("Dahlia contract size:", contractSize);
         vm.stopBroadcast();
