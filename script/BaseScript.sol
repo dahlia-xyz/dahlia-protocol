@@ -12,7 +12,7 @@ abstract contract BaseScript is Script {
     uint256 internal privateKey;
 
     function setUp() public virtual {
-        privateKey = vm.envUint("PK");
+        privateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.rememberKey(privateKey);
     }
 

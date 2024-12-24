@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Script } from "@forge-std/Script.sol";
+import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { LibString } from "@solady/utils/LibString.sol";
@@ -12,7 +12,7 @@ import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 
-contract DeployDahlia is Script {
+contract DeployDahlia is BaseScript {
     using LibString for *;
 
     uint256 blockNumber;
@@ -29,12 +29,10 @@ contract DeployDahlia is Script {
     function run() public {
         blockNumber = vm.getBlockNumber();
         otterscanPort = vm.envOr("OTTERSCAN_PORT", string("80"));
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY"); // Use environment variable for security
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
-        address deployerAddress = vm.addr(deployerPrivateKey);
-        console.log("Deployer address:", deployerAddress);
+        console.log("Deployer address:", deployer);
         address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
         address pointsFactory = pointsFactoryFromEnv == address(0) ? address(new PointsFactory(dahliaOwner)) : pointsFactoryFromEnv;
         _printContract("PointsFactory:              ", pointsFactory);
