@@ -68,6 +68,7 @@ const deployContracts = async (rpcPort: string, otterscanPort: string): Promise<
    * (8) 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
    * (9) 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
    */
+  let private_key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   await $$({
     cwd: "..",
     env: {
@@ -78,7 +79,7 @@ const deployContracts = async (rpcPort: string, otterscanPort: string): Promise<
       POINTS_FACTORY: "0x19112AdBDAfB465ddF0b57eCC07E68110Ad09c50",
       OTTERSCAN_PORT: otterscanPort,
     },
-  })`forge script script/Dahlia.s.sol --rpc-url ${rpcUrl} --broadcast`;
+  })`forge script script/Dahlia.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${private_key}`;
 };
 
 await deployContracts(process.env.MAINNET_RPC_PORT || "8546", process.env.MAINNET_OTT_PORT || "28546");
