@@ -319,8 +319,6 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.balanceOf($.bob), 0);
     }
 
-    bytes32 constant PERMIT_TYPEHASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-
     function test_int_proxy_withdrawWithPermit(uint256 assets) public {
         vm.pauseGasMetering();
         assets = vm.boundAmount(assets);
@@ -332,16 +330,7 @@ contract WrappedVaultIntegration is Test {
 
         uint256 alicePrivateKey = uint256(bytes32(bytes("ALICE"))); // Logic from TestContext
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            alicePrivateKey,
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    WrappedVault(address(marketProxy)).DOMAIN_SEPARATOR(),
-                    keccak256(abi.encode(PERMIT_TYPEHASH, $.alice, $.bob, shares, 0, block.timestamp))
-                )
-            )
-        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, $.vault.hashTypedData($.alice, $.bob, shares, $.vault.nonces($.alice), block.timestamp));
         WrappedVault(address(marketProxy)).permit($.alice, $.bob, shares, block.timestamp, v, r, s);
         vm.stopPrank();
 
@@ -354,6 +343,12 @@ contract WrappedVaultIntegration is Test {
         assertEq($.loanToken.balanceOf($.bob), assets);
         assertEq(marketProxy.balanceOf($.alice), 0);
         assertEq(marketProxy.balanceOf($.bob), 0);
+
+        vm.expectRevert(abi.encodeWithSelector(InitializableERC20.InvalidPermit.selector));
+        WrappedVault(address(marketProxy)).permit($.alice, $.bob, shares, block.timestamp, v, r, s);
+
+        vm.expectRevert(abi.encodeWithSelector(InitializableERC20.PermitExpired.selector));
+        WrappedVault(address(marketProxy)).permit($.alice, $.bob, shares, block.timestamp - 1, v, r, s);
     }
 
     function test_int_proxy_transferAndWithdraw(uint256 assets) public {
