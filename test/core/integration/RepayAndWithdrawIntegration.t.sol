@@ -92,7 +92,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowAssets, pos.borrowed - amountRepaid, "total borrow");
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed - amountRepaid, "RECEIVER balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance");
         assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateral, "Dahlia collateral balance");
     }
@@ -137,7 +137,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowAssets, pos.borrowed - amountRepaid, "total borrow");
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed - amountRepaid, "RECEIVER balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed + amountRepaid, "Dahlia loan balance");
         assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateral, "Dahlia collateral balance");
     }
@@ -174,7 +174,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
 
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed - expectedAmountRepaid, "RECEIVER balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance");
 
         assertEq($.collateralToken.balanceOf($.alice), amountCollateral, "borrower collateral");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), pos.collateral - amountCollateral, "Dahlia collateral balance");

@@ -31,7 +31,7 @@ contract WrappedVaultIntegration is Test {
     function setUp() public {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
-        marketProxy = IERC4626(address($.dahlia.getMarket($.marketId).vault));
+        marketProxy = IERC4626(address($.vault));
     }
 
     function test_int_proxy_checks() public view {
@@ -56,23 +56,20 @@ contract WrappedVaultIntegration is Test {
         $.loanToken.setBalance($.alice, assets);
 
         vm.startPrank($.alice);
-        $.loanToken.approve(address(marketProxy), assets);
+        $.loanToken.approve(address($.vault), assets);
         vm.resumeGasMetering();
         uint256 expectedShares = marketProxy.previewDeposit(assets);
 
-        vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer($.alice, address(marketProxy), assets);
-
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.Lend($.marketId, address(marketProxy), $.bob, assets, expectedShares);
+        emit IDahlia.Lend($.marketId, address($.vault), $.bob, assets, expectedShares);
 
         vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer(address(marketProxy), address($.dahlia), assets);
+        emit InitializableERC20.Transfer($.alice, address($.vault), assets);
 
-        vm.expectEmit(true, true, true, true, address(marketProxy));
+        vm.expectEmit(true, true, true, true, address($.vault));
         emit InitializableERC20.Transfer(address(0), $.bob, expectedShares);
 
-        vm.expectEmit(true, true, true, true, address(marketProxy));
+        vm.expectEmit(true, true, true, true, address($.vault));
         emit IWrappedVault.Deposit($.alice, $.bob, assets, expectedShares);
 
         uint256 shares = marketProxy.deposit(assets, $.bob);
@@ -110,19 +107,16 @@ contract WrappedVaultIntegration is Test {
         $.loanToken.approve(address(marketProxy), assets);
         vm.resumeGasMetering();
 
-        vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer($.alice, address(marketProxy), assets);
-
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.Lend($.marketId, address(marketProxy), $.bob, assets, shares);
+        emit IDahlia.Lend($.marketId, address($.vault), $.bob, assets, shares);
 
         vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer(address(marketProxy), address($.dahlia), assets);
+        emit InitializableERC20.Transfer($.alice, address($.vault), assets);
 
-        vm.expectEmit(true, true, true, true, address(marketProxy));
+        vm.expectEmit(true, true, true, true, address($.vault));
         emit InitializableERC20.Transfer(address(0), $.bob, shares);
 
-        vm.expectEmit(true, true, true, true, address(marketProxy));
+        vm.expectEmit(true, true, true, true, address($.vault));
         emit IWrappedVault.Deposit($.alice, $.bob, assets, shares);
 
         uint256 resAssets = marketProxy.mint(shares, $.bob);
@@ -156,14 +150,14 @@ contract WrappedVaultIntegration is Test {
 
         vm.startPrank($.bob);
 
-        vm.expectEmit(true, true, true, true, address(marketProxy));
-        emit InitializableERC20.Transfer($.bob, address(0), shares);
-
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.Withdraw($.marketId, address($.vault), $.alice, $.bob, assets, shares);
 
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit InitializableERC20.Transfer($.bob, address(0), shares);
+
         vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer(address($.dahlia), address($.alice), assets);
+        emit InitializableERC20.Transfer(address($.vault), address($.alice), assets);
 
         vm.expectEmit(true, true, true, true, address(marketProxy));
         emit IWrappedVault.Withdraw($.bob, $.alice, $.bob, assets, shares);
@@ -210,14 +204,14 @@ contract WrappedVaultIntegration is Test {
 
         vm.startPrank($.bob);
 
-        vm.expectEmit(true, true, true, true, address(marketProxy));
-        emit InitializableERC20.Transfer($.bob, address(0), shares);
-
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.Withdraw($.marketId, address($.vault), $.alice, $.bob, assets, shares);
 
+        vm.expectEmit(true, true, true, true, address(marketProxy));
+        emit InitializableERC20.Transfer($.bob, address(0), shares);
+
         vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer(address($.dahlia), address($.alice), assets);
+        emit InitializableERC20.Transfer(address($.vault), address($.alice), assets);
 
         vm.expectEmit(true, true, true, true, address(marketProxy));
         emit IWrappedVault.Withdraw($.bob, $.alice, $.bob, assets, shares);
@@ -404,7 +398,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(shares, carolPos.lendShares, "carol lendShares=shares");
         assertEq(assets, carolPos.lendPrincipalAssets, "carol lendPrincipalAssets=assets");
         assertEq(shares, marketProxy.balanceOf($.carol));
-        assertEq($.loanToken.balanceOf(address($.dahlia)), assets, "dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), assets, "dahlia balance");
 
         IDahlia.UserPosition memory bobPos = $.dahlia.getPosition($.marketId, $.bob);
         assertEq(0, bobPos.lendShares, "bob lendShares=0");
@@ -432,7 +426,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(shares + shares2, $.dahlia.getPosition($.marketId, $.carol).lendShares, "carol lendShares=shares+shares2");
         assertEq(assets * 2, $.dahlia.getPosition($.marketId, $.carol).lendPrincipalAssets, "carol lendPrincipalAssets=assets*2");
         assertEq(shares + shares2, marketProxy.balanceOf($.carol), "marketProxy.balanceOf($.carol) lendShares=shares+shares2");
-        assertEq(assets * 2, $.loanToken.balanceOf(address($.dahlia)), "dahlia balance=assets*2");
+        assertEq(assets * 2, $.loanToken.balanceOf(address($.vault)), "dahlia balance=assets*2");
 
         vm.startPrank($.carol);
         vm.resumeGasMetering();

@@ -157,7 +157,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function lend(MarketId id, uint256 assets, address owner) external returns (uint256 shares) {
+    function lend(MarketId id, uint256 assets, uint256 shares, address owner) external returns (uint256, uint256) {
         require(owner != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -167,13 +167,11 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
-        shares = LendImpl.internalLend(market, positions[owner], assets, owner);
-
-        market.loanToken.safeTransferFrom(msg.sender, address(this), assets);
+        return LendImpl.internalLend(market, positions[owner], assets, shares, owner);
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external nonReentrant returns (uint256) {
+    function withdraw(MarketId id, uint256 assets, uint256 shares, address receiver, address owner) external nonReentrant returns (uint256, uint256) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
@@ -184,7 +182,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
 
-        (uint256 assets, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
+        (uint256 _assets, uint256 _shares, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, assets, shares, owner, receiver);
 
         // User lend assets should be 0 if no shares are left (rounding issue)
         uint256 userLendAssets = ownerPosition.lendPrincipalAssets;
@@ -192,13 +190,12 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             ownerPosition.lendPrincipalAssets = 0;
             market.totalLendPrincipalAssets -= userLendAssets;
         } else {
-            uint256 userLendAssetsDown = FixedPointMathLib.min(assets, userLendAssets);
+            uint256 userLendAssetsDown = FixedPointMathLib.min(_assets, userLendAssets);
             ownerPosition.lendPrincipalAssets = (userLendAssets - userLendAssetsDown).toUint128();
             market.totalLendPrincipalAssets -= userLendAssetsDown;
         }
 
-        market.loanToken.safeTransfer(receiver, assets);
-        return assets;
+        return (_assets, _shares);
     }
 
     function transferLendShares(MarketId id, address owner, address receiver, uint256 shares) public returns (bool) {
@@ -252,7 +249,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         borrowShares = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
 
-        market.loanToken.safeTransfer(receiver, assets);
+        market.loanToken.safeTransferFrom(address(market.vault), receiver, assets);
     }
 
     // @inheritdoc IDahlia
@@ -274,7 +271,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         borrowedShares = BorrowImpl.internalBorrow(market, ownerPosition, borrowAssets, owner, receiver);
 
         market.collateralToken.safeTransferFrom(owner, address(this), collateralAssets);
-        market.loanToken.safeTransfer(receiver, borrowAssets);
+        market.loanToken.safeTransferFrom(address(market.vault), receiver, borrowAssets);
     }
 
     // @inheritdoc IDahlia
@@ -293,7 +290,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
         (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, ownerPosition, repayAssets, repayShares, owner);
-        market.loanToken.safeTransferFrom(owner, address(this), repaidAssets);
+        market.loanToken.safeTransferFrom(owner, address(market.vault), repaidAssets);
 
         BorrowImpl.internalWithdrawCollateral(market, ownerPosition, collateralAssets, owner, receiver);
         market.collateralToken.safeTransfer(receiver, collateralAssets);
@@ -313,7 +310,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             IDahliaRepayCallback(msg.sender).onDahliaRepay(assets, callbackData);
         }
 
-        market.loanToken.safeTransferFrom(msg.sender, address(this), assets);
+        market.loanToken.safeTransferFrom(msg.sender, address(market.vault), assets);
         return (assets, shares);
     }
 
@@ -341,7 +338,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         }
 
         // Transfer repaid assets from the liquidator's wallet to Dahlia.
-        market.loanToken.safeTransferFrom(msg.sender, address(this), repaidAssets);
+        market.loanToken.safeTransferFrom(msg.sender, address(market.vault), repaidAssets);
     }
 
     /// @inheritdoc IDahlia
@@ -396,26 +393,39 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         (lendAssets, collateralAssets) = LendImpl.internalWithdrawDepositAndClaimCollateral(market, ownerPosition, owner, receiver);
 
-        market.loanToken.safeTransfer(receiver, lendAssets);
+        market.loanToken.safeTransferFrom(address(market.vault), receiver, lendAssets);
         market.collateralToken.safeTransfer(receiver, collateralAssets);
     }
 
-    /// @inheritdoc IDahlia
-    function flashLoan(address token, uint256 assets, bytes calldata callbackData) external {
-        require(assets != 0, Errors.ZeroAssets());
-
+    function _flashLoan(address location, address token, uint256 assets, bytes calldata callbackData) internal {
         uint256 fee = MarketMath.mulPercentUp(assets, flashLoanFeeRate);
-
-        token.safeTransfer(msg.sender, assets);
 
         IDahliaFlashLoanCallback(msg.sender).onDahliaFlashLoan(assets, fee, callbackData);
 
-        token.safeTransferFrom(msg.sender, address(this), assets);
+        token.safeTransferFrom(msg.sender, location, assets);
         if (fee > 0) {
             token.safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
         }
 
         emit DahliaFlashLoan(msg.sender, token, assets, fee);
+    }
+
+    /// @inheritdoc IDahlia
+    function flashLoan(MarketId id, uint256 assets, bytes calldata callbackData) external {
+        require(assets != 0, Errors.ZeroAssets());
+        Market storage market = markets[id].market;
+        _validateMarketIsActive(market.status);
+        address token = market.loanToken;
+        address vault = address(market.vault);
+        token.safeTransferFrom(vault, msg.sender, assets);
+        _flashLoan(vault, token, assets, callbackData);
+    }
+
+    /// @inheritdoc IDahlia
+    function flashLoan(address token, uint256 assets, bytes calldata callbackData) external {
+        require(assets != 0, Errors.ZeroAssets());
+        token.safeTransfer(msg.sender, assets);
+        _flashLoan(address(this), token, assets, callbackData);
     }
 
     /// @inheritdoc IDahlia

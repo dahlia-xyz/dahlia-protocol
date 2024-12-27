@@ -152,6 +152,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         DEPOSIT_ASSET = _asset;
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
+        // there is impossible to get less assets as we do toAssetsUp(shares) and because of virtual shares we always get not 0 shares
         //_mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.safeApprove(_dahlia, type(uint256).max);
@@ -596,20 +597,21 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     /// @param receiver The address to mint the shares to
     /// @param minShares The minimum amount of shares to mint
     function safeDeposit(uint256 assets, address receiver, uint256 minShares) public returns (uint256 shares) {
-        shares = _deposit(receiver, assets);
+        (, shares) = dahlia.lend(marketId, assets, 0, receiver);
         if (shares < minShares) revert TooFewShares();
+        _deposit(receiver, assets, shares);
     }
 
     /// @inheritdoc IWrappedVault
     function deposit(uint256 assets, address receiver) public returns (uint256 shares) {
-        shares = _deposit(receiver, assets);
+        (, shares) = dahlia.lend(marketId, assets, 0, receiver);
+        _deposit(receiver, assets, shares);
     }
 
     /// @dev Deposit/mint common workflow.
-    function _deposit(address receiver, uint256 assets) internal returns (uint256 shares) {
+    function _deposit(address receiver, uint256 assets, uint256 shares) internal {
         DEPOSIT_ASSET.safeTransferFrom(msg.sender, address(this), assets);
 
-        (shares) = dahlia.lend(marketId, assets, receiver);
         _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);
@@ -617,8 +619,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function mint(uint256 shares, address receiver) public returns (uint256 assets) {
-        assets = previewMint(shares);
-        _deposit(receiver, assets);
+        (assets,) = dahlia.lend(marketId, 0, shares, receiver);
+        _deposit(receiver, assets, shares);
     }
 
     /// @inheritdoc IWrappedVault
@@ -634,23 +636,20 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function withdraw(uint256 assets, address receiver, address from) external returns (uint256 expectedShares) {
-        expectedShares = previewWithdraw(assets);
-        uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, from);
-
+    function withdraw(uint256 assets, address receiver, address from) external returns (uint256) {
+        (uint256 actualAssets, uint256 shares) = dahlia.withdraw(marketId, assets, 0, receiver, from);
         if (assets != actualAssets) revert InvalidWithdrawal();
-
-        emit Withdraw(msg.sender, receiver, from, assets, expectedShares);
+        _withdraw(msg.sender, assets, shares, receiver, from);
+        return shares;
     }
 
     /// @inheritdoc IWrappedVault
     function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets) {
-        (assets) = _withdraw(msg.sender, shares, receiver, from);
-
-        emit Withdraw(msg.sender, receiver, from, assets, shares);
+        (assets,) = dahlia.withdraw(marketId, 0, shares, receiver, from);
+        _withdraw(msg.sender, assets, shares, receiver, from);
     }
 
-    function _withdraw(address caller, uint256 shares, address receiver, address from) internal virtual returns (uint256 _assets) {
+    function _withdraw(address caller, uint256 assets, uint256 shares, address receiver, address from) internal virtual {
         if (caller != from) {
             uint256 allowed = allowance[from][caller]; // Saves gas for limited approvals.
             if (shares > allowed) revert NotOwnerOfVaultOrApproved();
@@ -659,7 +658,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         _burn(from, shares);
 
-        (_assets) = dahlia.withdraw(marketId, shares, receiver, from);
+        DEPOSIT_ASSET.safeTransfer(receiver, assets);
+        emit Withdraw(msg.sender, receiver, from, assets, shares);
     }
 
     /// @inheritdoc IWrappedVault
