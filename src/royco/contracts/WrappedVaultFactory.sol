@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
+import { LibClone } from "@solady/utils/LibClone.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 import { ERC4626 } from "@solmate/tokens/ERC4626.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
@@ -14,7 +14,7 @@ import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 /// @author CopyPaste, Jack Corddry, Shivaansh Kapoor
 /// @dev A factory for deploying wrapped vaults, and managing protocol or other fees
 contract WrappedVaultFactory is Ownable2Step {
-    using Clones for address;
+    using LibClone for address;
 
     // Address of the Wrapped Vault's implementation contract
     address public wrappedVaultImplementation;
