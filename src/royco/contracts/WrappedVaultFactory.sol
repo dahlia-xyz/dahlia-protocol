@@ -31,11 +31,10 @@ contract WrappedVaultFactory is Ownable2Step {
         address _pointsFactory,
         address _dahlia
     ) payable Ownable(_owner) {
-        if (_wrappedVaultImplementation.code.length == 0) revert InvalidWrappedVaultImplementation();
         if (_protocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
         if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
 
-        wrappedVaultImplementation = _wrappedVaultImplementation;
+        _setWrappedVaultImplementation(_wrappedVaultImplementation);
         protocolFeeRecipient = _protocolFeeRecipient;
         protocolFee = _protocolFee;
         minimumFrontendFee = _minimumFrontendFee;
@@ -89,11 +88,15 @@ contract WrappedVaultFactory is Ownable2Step {
                              OWNER CONTROLS
     //////////////////////////////////////////////////////////////*/
 
-    /// @param newWrappedVaultImplementation The new address of the Wrapped Vault implementation.
-    function updateWrappedVaultImplementation(address newWrappedVaultImplementation) external payable onlyOwner {
+    function _setWrappedVaultImplementation(address newWrappedVaultImplementation) internal {
         if (newWrappedVaultImplementation.code.length == 0) revert InvalidWrappedVaultImplementation();
         wrappedVaultImplementation = newWrappedVaultImplementation;
         emit WrappedVaultImplementationUpdated(newWrappedVaultImplementation);
+    }
+    /// @param newWrappedVaultImplementation The new address of the Wrapped Vault implementation.
+
+    function updateWrappedVaultImplementation(address newWrappedVaultImplementation) external payable onlyOwner {
+        _setWrappedVaultImplementation(newWrappedVaultImplementation);
     }
 
     /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
