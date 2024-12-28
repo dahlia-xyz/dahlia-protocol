@@ -395,7 +395,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.bob, $.carol, lendAssetsCarol, collateralAssetsCarol, sharesCarol);
         vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer(address($.dahlia), $.bob, lendAssetsCarol);
+        emit InitializableERC20.Transfer(address($.vault), $.bob, lendAssetsCarol);
         vm.expectEmit(true, true, true, true, address($.collateralToken));
         emit InitializableERC20.Transfer(address($.dahlia), $.bob, collateralAssetsCarol);
         vm.resumeGasMetering();
@@ -418,7 +418,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.maria, $.maria, $.maria, lendAssetsMaria, collateralAssetsMaria, sharesMaria);
         vm.expectEmit(true, true, true, true, address($.loanToken));
-        emit InitializableERC20.Transfer(address($.dahlia), $.maria, lendAssetsMaria);
+        emit InitializableERC20.Transfer(address($.vault), $.maria, lendAssetsMaria);
         vm.expectEmit(true, true, true, true, address($.collateralToken));
         emit InitializableERC20.Transfer(address($.dahlia), $.maria, collateralAssetsMaria);
         vm.resumeGasMetering();
@@ -433,7 +433,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         assertEq(market.status, IDahlia.MarketStatus.Stalled, "market is staled");
         assertEq(market.totalLendShares, 0, "market total lend shares");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), 0, "Dahlia lend token balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), 0, "Dahlia lend token balance");
         assertLe($.collateralToken.balanceOf(address($.dahlia)), 1, "Dahlia collateral token balance should not be bigger than 1");
         assertEq(market.totalLendAssets - market.totalBorrowAssets, 0, "market available assets");
         assertGt(market.totalCollateralAssets, 0, "market collateral assets stays the same");

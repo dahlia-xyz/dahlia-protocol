@@ -136,5 +136,11 @@ contract MarketStatusIntegrationTest is DahliaTest {
         vm.expectRevert(revertData);
         $.dahlia.borrow($.marketId, assets, $.alice, $.alice);
         vm.resumeGasMetering();
+
+        // check flash loan
+        vm.prank($.alice);
+        vm.expectRevert(revertData);
+        $.dahlia.flashLoan($.marketId, assets, TestConstants.EMPTY_CALLBACK);
+        vm.resumeGasMetering();
     }
 }

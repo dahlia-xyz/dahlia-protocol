@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
@@ -10,12 +11,13 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 /// @title BorrowImpl library
 /// @notice Implements borrowing protocol functions
 library BorrowImpl {
+    using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
 
     // Add collateral to a borrower's position
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
-        ownerPosition.collateral += uint128(assets);
+        ownerPosition.collateral += assets.toUint128();
         market.totalCollateralAssets += assets;
 
         emit IDahlia.SupplyCollateral(market.id, msg.sender, owner, assets);
@@ -29,7 +31,7 @@ library BorrowImpl {
         address owner,
         address receiver
     ) internal {
-        ownerPosition.collateral -= uint128(assets); // Decrease collateral
+        ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
         market.totalCollateralAssets -= assets;
 
         // Ensure sufficient collateral for withdrawal
@@ -70,7 +72,7 @@ library BorrowImpl {
         require(borrowedAssets <= maxBorrowAssets, Errors.InsufficientCollateral(borrowedAssets, maxBorrowAssets));
 
         // Update borrow values in totals and position
-        ownerPosition.borrowShares = uint128(ownerBorrowShares);
+        ownerPosition.borrowShares = ownerBorrowShares.toUint128();
         market.totalBorrowAssets = totalBorrowAssets;
         market.totalBorrowShares = totalBorrowShares;
         emit IDahlia.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
@@ -97,7 +99,7 @@ library BorrowImpl {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
         }
         // Update borrow values in totals and position
-        ownerPosition.borrowShares -= uint128(shares);
+        ownerPosition.borrowShares -= shares.toUint128();
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 

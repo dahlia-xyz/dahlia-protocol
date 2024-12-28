@@ -154,7 +154,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow share");
         assertEq($.loanToken.balanceOf($.bob), amountBorrowed, "receiver balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), amountLent - amountBorrowed, "dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), amountLent - amountBorrowed, "dahlia balance");
     }
 
     function test_int_supplyAndBorrow_WithInterest() public {

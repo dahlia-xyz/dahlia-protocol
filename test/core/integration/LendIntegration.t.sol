@@ -28,7 +28,7 @@ contract LendIntegrationTest is Test {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.startPrank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
-        $.dahlia.lend(marketIdFuzz, assets, $.alice);
+        $.dahlia.lend(marketIdFuzz, assets, 0, $.alice);
     }
 
     function test_int_lend_zeroAmount() public {
@@ -40,14 +40,14 @@ contract LendIntegrationTest is Test {
         IERC20($.marketConfig.loanToken).approve(address($.dahlia), assets);
         vm.startPrank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
-        $.dahlia.lend($.marketId, assets, $.alice);
+        $.dahlia.lend($.marketId, assets, 0, $.alice);
     }
 
     function test_int_lend_zeroAddress(uint256 assets) public {
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         vm.startPrank(address(market.vault));
         vm.expectRevert(Errors.ZeroAddress.selector);
-        $.dahlia.lend($.marketId, assets, address(0));
+        $.dahlia.lend($.marketId, assets, 0, address(0));
     }
 
     function test_int_lend_byAssets(uint256 amount) public {
@@ -77,6 +77,6 @@ contract LendIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendPrincipalAssets, amount, "total principal assets");
         assertEq($.dahlia.getPosition($.marketId, $.bob).lendPrincipalAssets, amount, "user principal assets");
         assertEq($.loanToken.balanceOf($.alice), 0, "Alice balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), amount, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), amount, "Dahlia balance");
     }
 }

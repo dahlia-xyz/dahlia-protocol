@@ -1,14 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
+import { IERC20Permit, IERC2612 } from "@openzeppelin/contracts/interfaces/IERC2612.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
+import { EIP712 } from "@solady/utils/EIP712.sol";
 
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
 /// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol), Shivaansh Kapoor, Jack Corddry
 /// @author Modified from Uniswap (https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2ERC20.sol)
 /// @dev Do not manually set balances without updating totalSupply, as the sum of all user balances must not exceed it.
-abstract contract InitializableERC20 is Initializable, IERC20Errors {
+abstract contract InitializableERC20 is Initializable, IERC20Errors, IERC2612, EIP712, Nonces {
+    bytes32 private constant HASH = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+
+    /// @dev The permit is invalid.
+    error InvalidPermit();
+
+    /// @dev The permit has expired.
+    error PermitExpired();
+
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -34,16 +45,6 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors {
     mapping(address => mapping(address => uint256)) public allowance;
 
     /*//////////////////////////////////////////////////////////////
-                            EIP-2612 STORAGE
-    //////////////////////////////////////////////////////////////*/
-
-    uint256 internal INITIAL_CHAIN_ID;
-
-    bytes32 internal INITIAL_DOMAIN_SEPARATOR;
-
-    mapping(address => uint256) public nonces;
-
-    /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
@@ -53,9 +54,6 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
-
-        INITIAL_CHAIN_ID = block.chainid;
-        INITIAL_DOMAIN_SEPARATOR = computeDomainSeparator();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -103,35 +101,21 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors {
                              EIP-2612 LOGIC
     //////////////////////////////////////////////////////////////*/
 
+    /// Helper function to be used to sign a permit
+    function hashTypedData(address owner, address spender, uint256 value, uint256 nonce, uint256 deadline) public view returns (bytes32) {
+        return _hashTypedData(keccak256(abi.encode(HASH, owner, spender, value, nonce, deadline)));
+    }
+
     function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual {
-        require(deadline >= block.timestamp, "PERMIT_DEADLINE_EXPIRED");
+        require(deadline >= block.timestamp, PermitExpired());
 
         // Unchecked because the only math done is incrementing
         // the owner's nonce which cannot realistically overflow.
         unchecked {
-            address recoveredAddress = ecrecover(
-                keccak256(
-                    abi.encodePacked(
-                        "\x19\x01",
-                        DOMAIN_SEPARATOR(),
-                        keccak256(
-                            abi.encode(
-                                keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"),
-                                owner,
-                                spender,
-                                value,
-                                nonces[owner]++,
-                                deadline
-                            )
-                        )
-                    )
-                ),
-                v,
-                r,
-                s
-            );
+            bytes32 digest = hashTypedData(owner, spender, value, _useNonce(owner), deadline);
+            address recoveredAddress = ecrecover(digest, v, r, s);
 
-            require(recoveredAddress != address(0) && recoveredAddress == owner, "INVALID_SIGNER");
+            require(recoveredAddress != address(0) && recoveredAddress == owner, InvalidPermit());
 
             allowance[recoveredAddress][spender] = value;
         }
@@ -139,20 +123,23 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors {
         emit Approval(owner, spender, value);
     }
 
-    function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
-        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : computeDomainSeparator();
+    /*//////////////////////////////////////////////////////////////
+                             EIP-712 LOGIC
+    //////////////////////////////////////////////////////////////*/
+    function _domainNameAndVersion() internal view override returns (string memory, string memory) {
+        return (name, "1");
     }
 
-    function computeDomainSeparator() internal view virtual returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes(name)),
-                keccak256("1"),
-                block.chainid,
-                address(this)
-            )
-        );
+    function _domainNameAndVersionMayChange() internal pure override returns (bool result) {
+        return true;
+    }
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
+    }
+
+    function nonces(address owner) public view override(IERC20Permit, Nonces) returns (uint256) {
+        return Nonces.nonces(owner);
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -14,8 +14,9 @@ import { BoundUtils } from "test/common/BoundUtils.sol";
 import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestConstants, TestContext } from "test/common/TestContext.sol";
 import { TestTypes } from "test/common/TestTypes.sol";
+import { ERC20Mock } from "test/common/mocks/ERC20Mock.sol";
 
-contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
+contract FlashLoanIntegrationLendingCollateralTest is Test, IDahliaFlashLoanCallback {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
     using BoundUtils for Vm;
@@ -23,10 +24,20 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
 
     TestContext.MarketContext $;
     TestContext ctx;
+    ERC20Mock token;
+    address param;
+    address internal location;
+
+    function supplyOrLend(uint256 amount) internal {
+        vm.dahliaSupplyCollateralBy($.carol, amount, $);
+    }
 
     function setUp() public {
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
+        token = $.collateralToken;
+        param = address(token);
+        location = address($.dahlia);
     }
 
     function onDahliaSupplyCollateral(uint256 amount, bytes memory data) external {
@@ -57,39 +68,39 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
         assertEq(msg.sender, address($.dahlia));
         bytes4 selector = abi.decode(data, (bytes4));
         if (selector == this.test_int_flashLoan_success.selector) {
-            assertEq($.loanToken.balanceOf(address(this)), amount + fee);
-            $.loanToken.approve(address($.dahlia), amount + fee);
+            assertEq(token.balanceOf(address(this)), amount + fee, "balance mismatch");
+            token.approve(address($.dahlia), amount + fee);
         }
     }
 
     function test_int_flashLoan_ZeroAssets() public {
         vm.expectRevert(Errors.ZeroAssets.selector);
-        $.dahlia.flashLoan(address($.loanToken), 0, abi.encode(this.test_int_flashLoan_ZeroAssets.selector));
+        $.dahlia.flashLoan(param, 0, abi.encode(this.test_int_flashLoan_ZeroAssets.selector));
     }
 
     function test_int_flashLoan_shouldRevertIfNotReimbursed(uint256 amount) public {
         vm.pauseGasMetering();
         amount = vm.boundAmount(amount);
-        vm.dahliaLendBy($.carol, amount, $);
+        supplyOrLend(amount);
 
-        $.loanToken.approve(address($.dahlia), 0);
+        token.approve(location, 0);
 
         vm.resumeGasMetering();
         vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
-        $.dahlia.flashLoan(address($.loanToken), amount, abi.encode(this.test_int_flashLoan_shouldRevertIfNotReimbursed.selector, TestConstants.EMPTY_CALLBACK));
+        $.dahlia.flashLoan(param, amount, abi.encode(this.test_int_flashLoan_shouldRevertIfNotReimbursed.selector, TestConstants.EMPTY_CALLBACK));
     }
 
     function test_int_flashLoan_success(uint256 amount) public {
         vm.pauseGasMetering();
         amount = vm.boundAmount(amount);
 
-        vm.dahliaLendBy($.carol, amount, $);
+        supplyOrLend(amount);
         vm.resumeGasMetering();
-        $.dahlia.flashLoan(address($.loanToken), amount, abi.encode(this.test_int_flashLoan_success.selector));
+        $.dahlia.flashLoan(param, amount, abi.encode(this.test_int_flashLoan_success.selector));
         vm.pauseGasMetering();
 
-        assertEq($.loanToken.balanceOf(address($.carol)), 0, "Balance of Carol should stay 0");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), amount, "Balance of Dahlia the same after");
+        assertEq(token.balanceOf($.carol), 0, "Balance of Carol should stay 0");
+        assertEq(token.balanceOf(location), amount, "Balance of Dahlia the same after");
     }
 
     function test_int_flashLoan_withFee(uint256 amount, uint24 flashLoanFeeRate) public {
@@ -101,16 +112,16 @@ contract FlashLoanIntegrationTest is Test, IDahliaFlashLoanCallback {
         $.dahlia.setFlashLoanFeeRate(flashLoanFeeRate);
 
         uint256 expectedFee = MarketMath.mulPercentUp(amount, flashLoanFeeRate);
-        $.loanToken.setBalance(address(this), expectedFee);
+        token.setBalance(address(this), expectedFee);
 
-        vm.dahliaLendBy($.carol, amount, $);
+        supplyOrLend(amount);
         vm.resumeGasMetering();
-        $.dahlia.flashLoan(address($.loanToken), amount, abi.encode(this.test_int_flashLoan_success.selector));
+        $.dahlia.flashLoan(param, amount, abi.encode(this.test_int_flashLoan_success.selector));
         vm.pauseGasMetering();
 
-        assertEq($.loanToken.balanceOf(ctx.wallets("PROTOCOL_FEE_RECIPIENT")), expectedFee, "Balance of owner should increase with fee");
-        assertEq($.loanToken.balanceOf(address($.carol)), 0, "Balance of Carol should stay 0");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), amount, "Balance of Dahlia the same after");
+        assertEq(token.balanceOf(ctx.wallets("PROTOCOL_FEE_RECIPIENT")), expectedFee, "Balance of owner should increase with fee");
+        assertEq(token.balanceOf($.carol), 0, "Balance of Carol should stay 0");
+        assertEq(token.balanceOf(location), amount, "Balance of Dahlia the same after");
     }
 
     function test_int_flashActions(TestTypes.MarketPosition memory pos) public {
