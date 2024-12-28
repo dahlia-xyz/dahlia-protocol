@@ -673,9 +673,10 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function maxDeposit(address) external pure returns (uint256 maxAssets) {
+    function maxDeposit(address) external view returns (uint256 maxAssets) {
         uint256 maxShares = _maxMint();
-        maxAssets = SharesMathLib.toAssetsDown(maxShares, 0, 0);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
+        maxAssets = SharesMathLib.toAssetsDown(maxShares, market.totalLendAssets, market.totalLendShares);
     }
 
     /// @inheritdoc IWrappedVault
