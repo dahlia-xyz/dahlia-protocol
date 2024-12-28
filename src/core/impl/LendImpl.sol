@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -8,6 +9,7 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 /// @title LendImpl library
 /// @notice Implements protocol lending functions
 library LendImpl {
+    using SafeCastLib for uint256;
     using SharesMathLib for uint256;
 
     function internalLend(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
@@ -19,8 +21,8 @@ library LendImpl {
         } else {
             shares = assets.toSharesDown(market.totalLendAssets, market.totalLendShares);
         }
-        ownerPosition.lendShares += uint128(shares);
-        ownerPosition.lendPrincipalAssets += uint128(assets);
+        ownerPosition.lendShares += shares.toUint128();
+        ownerPosition.lendPrincipalAssets += assets.toUint128();
         market.totalLendPrincipalAssets += assets;
         market.totalLendShares += shares;
         market.totalLendAssets += assets;
@@ -49,7 +51,7 @@ library LendImpl {
             revert Errors.InsufficientLiquidity(market.totalBorrowAssets, totalLendAssets);
         }
         uint256 ownerLendShares = ownerPosition.lendShares - shares;
-        ownerPosition.lendShares = uint128(ownerLendShares);
+        ownerPosition.lendShares = ownerLendShares.toUint128();
         market.totalLendShares = totalLendShares - shares;
         market.totalLendAssets = totalLendAssets;
 
