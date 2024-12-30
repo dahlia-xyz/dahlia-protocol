@@ -17,7 +17,7 @@ contract DahliaOracleFactory {
         ChainlinkOracleWithMaxDelay.Delays chainlinkMaxDelays,
         UniswapOracleV3SingleTwap.OracleParams uniswapParams
     );
-    event PythOracleCreated(address indexed oracleAddress, PythOracle.Params chainlinkParams, PythOracle.Delays chainlinkMaxDelays);
+    event PythOracleCreated(address indexed oracleAddress, PythOracle.Params params, PythOracle.Delays delays);
 
     address public immutable timelockAddress;
     address public immutable uniswapStaticOracleAddress;
