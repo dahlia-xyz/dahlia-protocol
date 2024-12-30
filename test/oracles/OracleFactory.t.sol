@@ -188,7 +188,7 @@ contract OracleFactoryTest is Test {
         assertEq(isBadData, false);
     }
 
-    function test_oracleFactory_pyth_wethUniWithBadDataFromUni() public {
+    function test_oracleFactory_pyth_wethUniWithBadDataFromPyth() public {
         PythOracle oracle = oracleFactory.createPythOracle(
             PythOracle.Params({
                 baseToken: Mainnet.WETH_ERC20,
@@ -200,6 +200,14 @@ contract OracleFactoryTest is Test {
             })
         );
         (uint256 price, bool isBadData) = oracle.getPrice();
+        assertEq(oracle.ORACLE_PRECISION(), 10 ** 36);
+        assertEq(oracle.baseToken(), Mainnet.WETH_ERC20);
+        assertEq(oracle.baseFeed(), 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace);
+        assertEq(oracle.baseMaxDelay(), 86_400);
+        assertEq(oracle.quoteToken(), Mainnet.UNI_ERC20);
+        assertEq(oracle.quoteFeed(), 0x78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501);
+        assertEq(oracle.quoteMaxDelay(), 86_400);
+        assertEq(oracle.pythStaticOracle(), oracleFactory.pythStaticOracleAddress());
         assertEq(price, 349_637_857_989_881_860_139_699_580_376_458_729_677);
         assertEq(((price * 1e18) / 1e18) / 1e36, 349); // 349 UNI per 1 WETH
         assertEq(isBadData, false);

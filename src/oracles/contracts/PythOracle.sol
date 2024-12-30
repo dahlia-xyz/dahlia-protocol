@@ -7,15 +7,23 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-
-import { console } from "forge-std/Test.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 
 /// @title PythOracle
 /// @notice A contract for fetching price from PythOracle
 contract PythOracle is Ownable2Step, IDahliaOracle {
-    using SafeCastLib for int64;
+    using SafeCastLib for *;
     using FixedPointMathLib for uint256;
+
+    address public immutable pythStaticOracle; // 20 bytes
+    uint256 public immutable ORACLE_PRECISION;
+
+    address public immutable baseToken; // 20 bytes
+    address public immutable quoteToken; // 20 bytes
+    bytes32 public immutable baseFeed; // 32 bytes
+    bytes32 public immutable quoteFeed; // 32 bytes
+    uint256 public immutable baseMaxDelay; // 32 bytes
+    uint256 public immutable quoteMaxDelay; // 32 bytes
 
     struct Params {
         address baseToken;
@@ -26,39 +34,40 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
         uint256 quoteMaxDelay;
     }
 
-    Params public params;
-
-    address public pythStaticOracle;
-
-    uint256 public immutable ORACLE_PRECISION;
-
     /// @notice Initializes the contract with owner, oracle parameters, and Pyth static oracle address
-    /// @param owner_ The address of the contract owner
-    /// @param params_ The pyth oracle parameters
-    /// @param pythStaticOracle_ The address of the Pyth static oracle
-    constructor(address owner_, Params memory params_, address pythStaticOracle_) Ownable(owner_) {
-        pythStaticOracle = pythStaticOracle_;
-        params = params_;
+    /// @param owner The address of the contract owner
+    /// @param params The pyth oracle parameters
+    /// @param oracle The address of the Pyth static oracle
+    constructor(address owner, Params memory params, address oracle) Ownable(owner) {
+        pythStaticOracle = oracle;
+        baseToken = params.baseToken;
+        baseFeed = params.baseFeed;
+        baseMaxDelay = params.baseMaxDelay;
+        quoteToken = params.quoteToken;
+        quoteFeed = params.quoteFeed;
+        quoteMaxDelay = params.quoteMaxDelay;
 
-        int64 baseTokenDecimals = SafeCastLib.toInt64(IERC20Metadata(params.baseToken).decimals());
-        int64 quoteTokenDecimals = SafeCastLib.toInt64(IERC20Metadata(params.quoteToken).decimals());
+        int32 baseTokenDecimals = getDecimals(params.baseToken);
+        int32 quoteTokenDecimals = getDecimals(params.quoteToken);
+        uint256 precision = (quoteTokenDecimals + getFeedDecimals(params.baseFeed) - getFeedDecimals(params.quoteFeed) - baseTokenDecimals).toUint256();
 
-        ORACLE_PRECISION =
-            10 ** (36 + quoteTokenDecimals + getFeedDecimals(params.quoteFeed) - baseTokenDecimals - getFeedDecimals(params.baseFeed)).toUint256();
-        console.log("ORACLE_PRECISION", ORACLE_PRECISION);
+        ORACLE_PRECISION = 10 ** (36 + precision);
     }
 
-    function getFeedDecimals(bytes32 feedId) internal returns (int64) {
-        PythStructs.Price memory priceResult = IPyth(pythStaticOracle).getPriceUnsafe(feedId);
-        return -priceResult.expo;
+    function getDecimals(address token) internal returns (int32) {
+        return (IERC20Metadata(token).decimals()).toInt32();
+    }
+
+    function getFeedDecimals(bytes32 feedId) internal returns (int32) {
+        return IPyth(pythStaticOracle).getPriceUnsafe(feedId).expo;
     }
 
     /// @inheritdoc IDahliaOracle
     function getPrice() external view returns (uint256 price, bool isBadData) {
-        PythStructs.Price memory basePrice = IPyth(pythStaticOracle).getPriceNoOlderThan(params.baseFeed, params.baseMaxDelay);
-        PythStructs.Price memory quotePrice = IPyth(pythStaticOracle).getPriceNoOlderThan(params.quoteFeed, params.quoteMaxDelay);
+        PythStructs.Price memory basePrice = IPyth(pythStaticOracle).getPriceNoOlderThan(baseFeed, baseMaxDelay);
+        PythStructs.Price memory quotePrice = IPyth(pythStaticOracle).getPriceNoOlderThan(quoteFeed, quoteMaxDelay);
 
-        isBadData = false;
         price = ORACLE_PRECISION.mulDiv(basePrice.price.toUint256(), quotePrice.price.toUint256());
+        isBadData = price == 0;
     }
 }
