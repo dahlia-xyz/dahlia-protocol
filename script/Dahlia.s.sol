@@ -15,35 +15,163 @@ import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 
+// Deploy contracts using CREATE2 contract (EVM Standard) for deterministic addresses
+// Solidity CREATE2 implementation
+// https://docs.soliditylang.org/en/latest/control-structures.html#salted-contract-creations-create2
+// Foundry tutorial for self CREATE2
+// https://book.getfoundry.sh/tutorials/create2-tutorial
+// Foundry std function for computing CREATE2 address
+// https://github.com/foundry-rs/forge-std/blob/f73c73d2018eb6a111f35e4dae7b4f27401e9421/src/StdUtils.sol#L122-L134
+// Solana independent implementation
+// https://github.com/Genesis3800/CREATE2Factory/blob/main/src/Create2.sol
+
+string constant POINTS_FACTORY_SALT = "POINTS_FACTORY_V0.0.1";
+string constant WRAPPED_VAULT_SALT = "WRAPPED_VAULT_V0.0.1";
+string constant DAHLIA_REGISTRY_SALT = "DAHLIA_REGISTRY_V0.0.1";
+string constant DAHLIA_SALT = "DAHLIA_V0.0.1";
+string constant WRAPPED_VAULT_FACTORY_SALT = "WRAPPED_VAULT_FACTORY_V0.0.1";
+string constant IRM_FACTORY_SALT = "IRM_FACTORY_V0.0.1";
+
+// Kindof example https://github.com/0xsend/sendapp/blob/5fbf335a481d101d0ffd6649c2cfdc0bc1c20e16/packages/contracts/script/DeploySendAccountFactory.s.sol#L19
+
 contract DeployDahlia is BaseScript {
+    function _deployPointsFactory(address pointsFactoryEnvAddress, address daliaOwner) internal returns (address) {
+        if (pointsFactoryEnvAddress != address(0)) {
+            return pointsFactoryEnvAddress;
+        } else {
+            bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
+            bytes memory encodedArgs = abi.encode(daliaOwner);
+            bytes32 initCodeHash = hashInitCode(type(PointsFactory).creationCode, encodedArgs);
+            address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+            if (expectedAddress.code.length > 0) {
+                console.log("PointsFactory already deployed");
+                return expectedAddress;
+            } else {
+                address pointsFactory = address(new PointsFactory{ salt: salt }(daliaOwner));
+                require(expectedAddress == pointsFactory);
+                return pointsFactory;
+            }
+        }
+    }
+
+    function _deployWrappedVault() internal returns (address) {
+        bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_SALT));
+        bytes32 initCodeHash = hashInitCode(type(WrappedVault).creationCode);
+        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+        if (expectedAddress.code.length > 0) {
+            console.log("WrappedVault already deployed");
+            return expectedAddress;
+        } else {
+            address wrappedVault = address(new WrappedVault{ salt: salt }());
+            require(expectedAddress == wrappedVault);
+            return wrappedVault;
+        }
+    }
+
+    function _deployDahliaRegistry(address dahliaOwner) internal returns (address) {
+        bytes32 salt = keccak256(abi.encode(DAHLIA_REGISTRY_SALT));
+        bytes memory encodedArgs = abi.encode(dahliaOwner);
+        bytes32 initCodeHash = hashInitCode(type(DahliaRegistry).creationCode, encodedArgs);
+        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+        if (expectedAddress.code.length > 0) {
+            console.log("DahliaRegistry already deployed");
+            return expectedAddress;
+        } else {
+            address registry = address(new DahliaRegistry{ salt: salt }(dahliaOwner));
+            require(expectedAddress == registry);
+            return registry;
+        }
+    }
+
+    function _deployDahlia(address dahliaOwner, address registry) internal returns (address) {
+        bytes32 salt = keccak256(abi.encode(DAHLIA_SALT));
+        bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
+        bytes32 initCodeHash = hashInitCode(type(Dahlia).creationCode, encodedArgs);
+        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+        if (expectedAddress.code.length > 0) {
+            console.log("Dahlia already deployed");
+            return expectedAddress;
+        } else {
+            address dahlia = address(new Dahlia{ salt: salt }(dahliaOwner, registry));
+            require(expectedAddress == dahlia);
+            return dahlia;
+        }
+    }
+
+    function _deployWrappedVaultFactory(
+        address wrappedVault,
+        address feesRecipient,
+        uint256 protocolFee,
+        uint256 minimumFrontendFee,
+        address dahliaOwner,
+        address pointsFactory,
+        address dahlia
+    ) internal returns (address) {
+        bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_FACTORY_SALT));
+        bytes memory encodedArgs = abi.encode(wrappedVault, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);
+        bytes32 initCodeHash = hashInitCode(type(WrappedVaultFactory).creationCode, encodedArgs);
+        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+        if (expectedAddress.code.length > 0) {
+            console.log("WrappedVaultFactory already deployed");
+            return expectedAddress;
+        } else {
+            address wrappedVaultFactory = address(
+                new WrappedVaultFactory{ salt: salt }(
+                    wrappedVault,
+                    feesRecipient,
+                    TestConstants.ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE,
+                    TestConstants.ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE,
+                    dahliaOwner,
+                    pointsFactory,
+                    dahlia
+                )
+            );
+            require(expectedAddress == wrappedVaultFactory);
+            return wrappedVaultFactory;
+        }
+    }
+
+    function _deployIrmFactory() internal returns (IrmFactory) {
+        bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
+        bytes32 initCodeHash = hashInitCode(type(IrmFactory).creationCode);
+        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+        if (expectedAddress.code.length > 0) {
+            console.log("IrmFactory already deployed");
+            return IrmFactory(expectedAddress);
+        } else {
+            IrmFactory irmFactory = new IrmFactory{ salt: salt }();
+            address irmFactoryAddress = address(irmFactory);
+            require(expectedAddress == irmFactoryAddress);
+            return irmFactory;
+        }
+    }
+
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
         console.log("Deployer address:", deployer);
         address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
-        address pointsFactory = pointsFactoryFromEnv == address(0) ? address(new PointsFactory(dahliaOwner)) : pointsFactoryFromEnv;
+        address pointsFactory = _deployPointsFactory(pointsFactoryFromEnv, dahliaOwner);
         _printContract("PointsFactory:              ", pointsFactory);
-        address wrappedVault = address(new WrappedVault());
+        address wrappedVault = _deployWrappedVault();
         _printContract("WrappedVault Implementation:", wrappedVault);
-        address registry = address(new DahliaRegistry(dahliaOwner));
+        address registry = _deployDahliaRegistry(dahliaOwner);
         _printContract("Registry:                   ", registry);
         // Deploy the contract
-        address dahlia = address(new Dahlia(dahliaOwner, registry));
+        address dahlia = _deployDahlia(dahliaOwner, registry);
         _printContract("Dahlia:                     ", dahlia);
-        address wrappedVaultFactory = address(
-            new WrappedVaultFactory(
-                wrappedVault,
-                feesRecipient,
-                TestConstants.ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE,
-                TestConstants.ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE,
-                dahliaOwner,
-                pointsFactory,
-                dahlia
-            )
+        address wrappedVaultFactory = _deployWrappedVaultFactory(
+            wrappedVault,
+            feesRecipient,
+            TestConstants.ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE,
+            TestConstants.ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE,
+            dahliaOwner,
+            pointsFactory,
+            dahlia
         );
         _printContract("WrappedVaultFactory:        ", wrappedVaultFactory);
-        IrmFactory irmFactory = new IrmFactory();
+        IrmFactory irmFactory = _deployIrmFactory();
         _printContract("IrmFactory:                ", address(irmFactory));
 
         uint64 ZERO_UTIL_RATE = 158_247_046;
