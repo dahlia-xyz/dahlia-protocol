@@ -293,7 +293,7 @@ contract TestContext {
             return contracts["oracleFactory"];
         }
         address owner = createWallet("OWNER");
-        DahliaOracleFactory factory = new DahliaOracleFactory(owner, Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS);
+        DahliaOracleFactory factory = new DahliaOracleFactory(owner, Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS, Mainnet.PYTH_BERACHAIN_ADDRESS);
         contracts["oracleFactory"] = address(factory);
         return address(factory);
     }

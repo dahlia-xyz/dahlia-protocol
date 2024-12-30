@@ -22,3 +22,6 @@
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/vectorized/solady
+[submodule "lib/pyth-crosschain"]
+	path = lib/pyth-crosschain
+	url = https://github.com/pyth-network/pyth-crosschain

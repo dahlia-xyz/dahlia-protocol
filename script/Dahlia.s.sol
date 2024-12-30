@@ -43,9 +43,14 @@ contract DeployDahlia is BaseScript {
             bytes memory encodedArgs = abi.encode(daliaOwner);
             bytes32 initCodeHash = hashInitCode(type(PointsFactory).creationCode, encodedArgs);
             address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-            address pointsFactory = address(new PointsFactory{ salt: salt }(daliaOwner));
-            require(expectedAddress == pointsFactory);
-            return pointsFactory;
+            if (expectedAddress.code.length > 0) {
+                console.log("PointsFactory already deployed");
+                return expectedAddress;
+            } else {
+                address pointsFactory = address(new PointsFactory{ salt: salt }(daliaOwner));
+                require(expectedAddress == pointsFactory);
+                return pointsFactory;
+            }
         }
     }
 
@@ -53,9 +58,14 @@ contract DeployDahlia is BaseScript {
         bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_SALT));
         bytes32 initCodeHash = hashInitCode(type(WrappedVault).creationCode);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        address wrappedVault = address(new WrappedVault{ salt: salt }());
-        require(expectedAddress == wrappedVault);
-        return wrappedVault;
+        if (expectedAddress.code.length > 0) {
+            console.log("WrappedVault already deployed");
+            return expectedAddress;
+        } else {
+            address wrappedVault = address(new WrappedVault{ salt: salt }());
+            require(expectedAddress == wrappedVault);
+            return wrappedVault;
+        }
     }
 
     function _deployDahliaRegistry(address dahliaOwner) internal returns (address) {
@@ -63,9 +73,14 @@ contract DeployDahlia is BaseScript {
         bytes memory encodedArgs = abi.encode(dahliaOwner);
         bytes32 initCodeHash = hashInitCode(type(DahliaRegistry).creationCode, encodedArgs);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        address registry = address(new DahliaRegistry{ salt: salt }(dahliaOwner));
-        require(expectedAddress == registry);
-        return registry;
+        if (expectedAddress.code.length > 0) {
+            console.log("DahliaRegistry already deployed");
+            return expectedAddress;
+        } else {
+            address registry = address(new DahliaRegistry{ salt: salt }(dahliaOwner));
+            require(expectedAddress == registry);
+            return registry;
+        }
     }
 
     function _deployDahlia(address dahliaOwner, address registry) internal returns (address) {
@@ -73,9 +88,14 @@ contract DeployDahlia is BaseScript {
         bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
         bytes32 initCodeHash = hashInitCode(type(Dahlia).creationCode, encodedArgs);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        address dahlia = address(new Dahlia{ salt: salt }(dahliaOwner, registry));
-        require(expectedAddress == dahlia);
-        return dahlia;
+        if (expectedAddress.code.length > 0) {
+            console.log("Dahlia already deployed");
+            return expectedAddress;
+        } else {
+            address dahlia = address(new Dahlia{ salt: salt }(dahliaOwner, registry));
+            require(expectedAddress == dahlia);
+            return dahlia;
+        }
     }
 
     function _deployWrappedVaultFactory(
@@ -91,29 +111,39 @@ contract DeployDahlia is BaseScript {
         bytes memory encodedArgs = abi.encode(wrappedVault, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);
         bytes32 initCodeHash = hashInitCode(type(WrappedVaultFactory).creationCode, encodedArgs);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        address wrappedVaultFactory = address(
-            new WrappedVaultFactory{ salt: salt }(
-                wrappedVault,
-                feesRecipient,
-                TestConstants.ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE,
-                TestConstants.ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE,
-                dahliaOwner,
-                pointsFactory,
-                dahlia
-            )
-        );
-        require(expectedAddress == wrappedVaultFactory);
-        return wrappedVaultFactory;
+        if (expectedAddress.code.length > 0) {
+            console.log("WrappedVaultFactory already deployed");
+            return expectedAddress;
+        } else {
+            address wrappedVaultFactory = address(
+                new WrappedVaultFactory{ salt: salt }(
+                    wrappedVault,
+                    feesRecipient,
+                    TestConstants.ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE,
+                    TestConstants.ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE,
+                    dahliaOwner,
+                    pointsFactory,
+                    dahlia
+                )
+            );
+            require(expectedAddress == wrappedVaultFactory);
+            return wrappedVaultFactory;
+        }
     }
 
     function _deployIrmFactory() internal returns (IrmFactory) {
         bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
         bytes32 initCodeHash = hashInitCode(type(IrmFactory).creationCode);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        IrmFactory irmFactory = new IrmFactory{ salt: salt }();
-        address irmFactoryAddress = address(irmFactory);
-        require(expectedAddress == irmFactoryAddress);
-        return irmFactory;
+        if (expectedAddress.code.length > 0) {
+            console.log("IrmFactory already deployed");
+            return IrmFactory(expectedAddress);
+        } else {
+            IrmFactory irmFactory = new IrmFactory{ salt: salt }();
+            address irmFactoryAddress = address(irmFactory);
+            require(expectedAddress == irmFactoryAddress);
+            return irmFactory;
+        }
     }
 
     function run() public {
