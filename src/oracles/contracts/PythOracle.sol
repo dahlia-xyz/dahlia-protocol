@@ -54,11 +54,11 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
         ORACLE_PRECISION = 10 ** (36 + precision);
     }
 
-    function getDecimals(address token) internal returns (int32) {
+    function getDecimals(address token) internal view returns (int32) {
         return (IERC20Metadata(token).decimals()).toInt32();
     }
 
-    function getFeedDecimals(bytes32 feedId) internal returns (int32) {
+    function getFeedDecimals(bytes32 feedId) internal view returns (int32) {
         return IPyth(pythStaticOracle).getPriceUnsafe(feedId).expo;
     }
 
