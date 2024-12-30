@@ -17,6 +17,7 @@ contract DahliaOracleFactory {
         ChainlinkOracleWithMaxDelay.Delays chainlinkMaxDelays,
         UniswapOracleV3SingleTwap.OracleParams uniswapParams
     );
+    event PythOracleCreated(address indexed oracleAddress, PythOracle.Params chainlinkParams, PythOracle.Delays chainlinkMaxDelays);
 
     address public immutable timelockAddress;
     address public immutable uniswapStaticOracleAddress;
@@ -56,9 +57,8 @@ contract DahliaOracleFactory {
         return oracle;
     }
 
-    function createPythOracle(PythOracle.Params memory params) external returns (PythOracle) {
-        PythOracle oracle = new PythOracle(timelockAddress, params, pythStaticOracleAddress);
-        // emit DualOracleChainlinkUniV3Created(address(oracle), chainlinkParams, chainlinkMaxDelays, uniswapParams);
-        return oracle;
+    function createPythOracle(PythOracle.Params memory params, PythOracle.Delays memory delays) external returns (PythOracle oracle) {
+        oracle = new PythOracle(timelockAddress, params, delays, pythStaticOracleAddress);
+        emit PythOracleCreated(address(oracle), params, delays);
     }
 }

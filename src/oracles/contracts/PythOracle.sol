@@ -15,6 +15,11 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
     using SafeCastLib for *;
     using FixedPointMathLib for uint256;
 
+    /// @notice Emitted when the max oracle delay is updated
+    /// @param oldMaxDelays The previous max oracle delay settings
+    /// @param newMaxDelays The new max oracle delay settings
+    event SetMaximumOracleDelay(Delays oldMaxDelays, Delays newMaxDelays);
+
     address public immutable pythStaticOracle; // 20 bytes
     uint256 public immutable ORACLE_PRECISION;
 
@@ -22,15 +27,19 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
     address public immutable quoteToken; // 20 bytes
     bytes32 public immutable baseFeed; // 32 bytes
     bytes32 public immutable quoteFeed; // 32 bytes
-    uint256 public immutable baseMaxDelay; // 32 bytes
-    uint256 public immutable quoteMaxDelay; // 32 bytes
+    uint256 public baseMaxDelay; // 32 bytes
+    uint256 public quoteMaxDelay; // 32 bytes
 
     struct Params {
         address baseToken;
         bytes32 baseFeed;
-        uint256 baseMaxDelay;
         address quoteToken;
         bytes32 quoteFeed;
+    }
+
+    /// @notice Struct to hold max delay settings
+    struct Delays {
+        uint256 baseMaxDelay;
         uint256 quoteMaxDelay;
     }
 
@@ -38,14 +47,13 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
     /// @param owner The address of the contract owner
     /// @param params The pyth oracle parameters
     /// @param oracle The address of the Pyth static oracle
-    constructor(address owner, Params memory params, address oracle) Ownable(owner) {
+    constructor(address owner, Params memory params, Delays memory delays, address oracle) Ownable(owner) {
         pythStaticOracle = oracle;
         baseToken = params.baseToken;
         baseFeed = params.baseFeed;
-        baseMaxDelay = params.baseMaxDelay;
         quoteToken = params.quoteToken;
         quoteFeed = params.quoteFeed;
-        quoteMaxDelay = params.quoteMaxDelay;
+        _setMaximumOracleDelays(delays);
 
         int32 baseTokenDecimals = getDecimals(params.baseToken);
         int32 quoteTokenDecimals = getDecimals(params.quoteToken);
@@ -69,5 +77,18 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
 
         price = ORACLE_PRECISION.mulDiv(basePrice.price.toUint256(), quotePrice.price.toUint256());
         isBadData = price == 0;
+    }
+
+    /// @dev Internal function to update max oracle delays
+    function _setMaximumOracleDelays(Delays memory delays) internal {
+        emit SetMaximumOracleDelay({ oldMaxDelays: Delays({ baseMaxDelay: baseMaxDelay, quoteMaxDelay: quoteMaxDelay }), newMaxDelays: delays });
+        baseMaxDelay = delays.baseMaxDelay;
+        quoteMaxDelay = delays.quoteMaxDelay;
+    }
+
+    /// @notice Set new max oracle delays
+    /// @param delays The new max delay settings
+    function setMaximumOracleDelays(Delays memory delays) external onlyOwner {
+        _setMaximumOracleDelays(delays);
     }
 }

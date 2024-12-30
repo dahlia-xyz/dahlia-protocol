@@ -189,16 +189,18 @@ contract OracleFactoryTest is Test {
     }
 
     function test_oracleFactory_pyth_wethUniWithBadDataFromPyth() public {
-        PythOracle oracle = oracleFactory.createPythOracle(
-            PythOracle.Params({
-                baseToken: Mainnet.WETH_ERC20,
-                baseFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace,
-                baseMaxDelay: 86_400,
-                quoteToken: Mainnet.UNI_ERC20,
-                quoteFeed: 0x78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501,
-                quoteMaxDelay: 86_400
-            })
-        );
+        PythOracle.Params memory params = PythOracle.Params({
+            baseToken: Mainnet.WETH_ERC20,
+            baseFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace,
+            quoteToken: Mainnet.UNI_ERC20,
+            quoteFeed: 0x78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501
+        });
+        PythOracle.Delays memory delays = PythOracle.Delays({ baseMaxDelay: 86_400, quoteMaxDelay: 86_400 });
+        vm.expectEmit(true, true, true, true);
+        emit PythOracle.SetMaximumOracleDelay(PythOracle.Delays({ baseMaxDelay: 0, quoteMaxDelay: 0 }), delays);
+        vm.expectEmit(false, true, true, true, address(oracleFactory));
+        emit DahliaOracleFactory.PythOracleCreated(address(0), params, delays);
+        PythOracle oracle = oracleFactory.createPythOracle(params, delays);
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(oracle.ORACLE_PRECISION(), 10 ** 36);
         assertEq(oracle.baseToken(), Mainnet.WETH_ERC20);
