@@ -13,8 +13,14 @@ interface IWrappedVault {
     function totalPrincipal() external view returns (uint256);
 
     /// @param shares The amount of shares to mint
-    /// @dev can be called by Dahlia contract only
+    /// @param receiver The address to mint the fees for
+    /// @dev can be called only by Dahlia contract
     function mintFees(uint256 shares, address receiver) external;
+
+    /// @param from The address to burn the shares for
+    /// @param shares The amount of shares to burn
+    /// @dev can be called only by Dahlia contract
+    function burnShares(address from, uint256 shares) external;
 
     /// @param to The address to send the rewards to
     /// @param reward The reward token / points program to claim rewards from

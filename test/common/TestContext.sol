@@ -44,6 +44,7 @@ contract TestContext {
         address alice;
         address bob;
         address carol;
+        address maria;
         address protocolFeeRecipient;
         address reserveFeeRecipient;
         address marketAdmin;
@@ -89,6 +90,7 @@ contract TestContext {
         v.alice = createWallet("ALICE");
         v.bob = createWallet("BOB");
         v.carol = createWallet("CAROL");
+        v.maria = createWallet("MARIA");
         v.owner = createWallet("OWNER");
         v.marketAdmin = createWallet("MARKET_ADMIN");
         v.royco = createWallet("ROYCO");

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+
 /// @title Errors library
 /// @notice Contains error messages for the protocol.
 library Errors {
@@ -23,25 +25,13 @@ library Errors {
     error ZeroAddress();
 
     /// @notice Market has not been deployed.
-    error MarketNotDeployed();
-
-    /// @notice Market is currently paused.
-    error MarketPaused();
-
-    /// @notice Cannot change the market status.
-    error CannotChangeMarketStatus();
-
-    /// @notice Market is deprecated.
-    error MarketDeprecated();
+    error WrongStatus(IDahlia.MarketStatus status);
 
     /// @notice Attempting to deploy a market that already exists.
     error MarketAlreadyDeployed();
 
     /// @notice Assets or shares input is inconsistent.
     error InconsistentAssetsOrSharesInput();
-
-    /// @notice Markets are inconsistent.
-    error MarketsDiffer();
 
     /// @notice Value has already been set.
     error AlreadySet();
@@ -63,6 +53,15 @@ library Errors {
 
     /// @notice Oracle price data is stalled.
     error OraclePriceBadData();
+
+    /// @notice Oracle price is not stalled.
+    error OraclePriceNotStalled();
+
+    /// @notice Repay period ended.
+    error RepayPeriodEnded();
+
+    /// @notice Repay period not ended.
+    error RepayPeriodNotEnded();
 
     /// @notice Signature has expired.
     error SignatureExpired();

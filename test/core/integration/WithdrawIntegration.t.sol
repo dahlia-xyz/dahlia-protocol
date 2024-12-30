@@ -29,7 +29,7 @@ contract WithdrawIntegrationTest is Test {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
-        $.dahlia.withdraw(marketIdFuzz, assets, $.alice, $.alice);
+        $.dahlia.withdraw(marketIdFuzz, assets, 0, $.alice, $.alice);
     }
 
     function test_int_withdraw_zeroAmount() public {
@@ -46,7 +46,7 @@ contract WithdrawIntegrationTest is Test {
     function test_int_lend_directCallNotPermitted(uint256 shares) public {
         vm.startPrank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
-        $.dahlia.withdraw($.marketId, shares, $.alice, $.alice);
+        $.dahlia.withdraw($.marketId, 0, shares, $.alice, $.alice);
     }
 
     function test_int_withdraw_zeroAddress(uint256 lent) public {
@@ -57,10 +57,10 @@ contract WithdrawIntegrationTest is Test {
         vm.resumeGasMetering();
         vm.startPrank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.NotPermitted.selector, $.alice));
-        $.dahlia.withdraw($.marketId, lent, $.alice, address(0));
+        $.dahlia.withdraw($.marketId, lent, 0, $.alice, address(0));
 
         vm.expectRevert(Errors.ZeroAddress.selector);
-        $.dahlia.withdraw($.marketId, lent, address(0), $.alice);
+        $.dahlia.withdraw($.marketId, lent, 0, address(0), $.alice);
         vm.stopPrank();
     }
 
@@ -107,7 +107,7 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - amountWithdrawn, "total supply");
         assertEq($.loanToken.balanceOf($.bob), amountWithdrawn, "receiver balance");
         assertEq($.loanToken.balanceOf($.carol), pos.borrowed, "borrower balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - amountWithdrawn, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed - amountWithdrawn, "Dahlia balance");
     }
 
     function test_int_withdraw_protocolFee(TestTypes.MarketPosition memory pos, uint256 blocks, uint32 fee) public {
@@ -216,7 +216,7 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - expectedAmountWithdrawn, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.loanToken.balanceOf($.bob), expectedAmountWithdrawn, "receiver balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - expectedAmountWithdrawn, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed - expectedAmountWithdrawn, "Dahlia balance");
     }
 
     function test_int_withdraw_onBehalfOfByAssets(TestTypes.MarketPosition memory pos, uint256 amountWithdrawn) public {
@@ -253,7 +253,7 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - amountWithdrawn, "total supply");
         assertEq($.loanToken.balanceOf($.bob), amountWithdrawn, "receiver balance");
         assertEq($.loanToken.balanceOf($.carol), pos.borrowed, "borrower balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - amountWithdrawn, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed - amountWithdrawn, "Dahlia balance");
     }
 
     function test_int_withdraw_onBehalfOfByShares(TestTypes.MarketPosition memory pos, uint256 sharesWithdrawn) public {
@@ -291,6 +291,6 @@ contract WithdrawIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, pos.lent - expectedAmountWithdrawn, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedSupplyShares, "total lend shares");
         assertEq($.loanToken.balanceOf($.bob), expectedAmountWithdrawn, "receiver balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed - expectedAmountWithdrawn, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed - expectedAmountWithdrawn, "Dahlia balance");
     }
 }

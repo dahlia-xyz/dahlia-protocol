@@ -152,6 +152,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         DEPOSIT_ASSET = _asset;
         POINTS_FACTORY = PointsFactory(pointsFactory);
 
+        // there is impossible to get less assets as we do toAssetsUp(shares) and because of virtual shares we always get not 0 shares
         //_mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET); // Burn 10,000 wei to stop 'first share' front running attacks on depositors
 
         DEPOSIT_ASSET.safeApprove(_dahlia, type(uint256).max);
@@ -295,8 +296,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     function setRewardsInterval(address reward, uint256 start, uint256 end, uint256 totalRewards, address frontendFeeRecipient) external payable onlyOwner {
         if (!isReward[reward]) revert InvalidReward();
         if (start >= end) revert IntervalEndBeforeStart();
-        if (end <= block.timestamp) revert IntervalEndBeforeStart();
-        if (start == 0) revert IntervalEndBeforeStart();
+        if (end <= block.timestamp) revert IntervalEndInPast();
+        if (start == 0) revert IntervalStartIsZero();
         if ((end - start) < MIN_CAMPAIGN_DURATION) revert InvalidIntervalDuration();
 
         RewardsInterval storage rewardsInterval = _rewardToInterval[reward];
@@ -456,10 +457,6 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     function _claim(address reward, address from, address to, uint256 amount) internal virtual {
         _updateUserRewards(reward, from);
         rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
-        if (reward == address(DEPOSIT_ASSET)) {
-            uint256 shares = dahlia.claimInterest(marketId, to, from);
-            super._burn(from, shares);
-        }
         _pushReward(reward, to, amount);
         emit Claimed(reward, from, to, amount);
     }
@@ -544,13 +541,17 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
         if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return 0;
 
+        // Check if Dahlia market deposits are enabled
+        IDahlia.MarketId id = marketId;
+        if (dahlia.getMarket(id).status != IDahlia.MarketStatus.Active) return 0;
+
         // 18 decimals if reward token = lend token
         uint256 rewardsRate = SoladyMath.divWad(rewardsInterval.rate, totalPrincipal() + assets);
 
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             // 18 decimals
-            uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(marketId, assets);
+            uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(id, assets);
             rewardsRate += dahliaRate;
         }
         return rewardsRate;
@@ -596,20 +597,21 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     /// @param receiver The address to mint the shares to
     /// @param minShares The minimum amount of shares to mint
     function safeDeposit(uint256 assets, address receiver, uint256 minShares) public returns (uint256 shares) {
-        shares = _deposit(receiver, assets);
+        (, shares) = dahlia.lend(marketId, assets, 0, receiver);
         if (shares < minShares) revert TooFewShares();
+        _deposit(receiver, assets, shares);
     }
 
     /// @inheritdoc IWrappedVault
     function deposit(uint256 assets, address receiver) public returns (uint256 shares) {
-        shares = _deposit(receiver, assets);
+        (, shares) = dahlia.lend(marketId, assets, 0, receiver);
+        _deposit(receiver, assets, shares);
     }
 
     /// @dev Deposit/mint common workflow.
-    function _deposit(address receiver, uint256 assets) internal returns (uint256 shares) {
+    function _deposit(address receiver, uint256 assets, uint256 shares) internal {
         DEPOSIT_ASSET.safeTransferFrom(msg.sender, address(this), assets);
 
-        (shares) = dahlia.lend(marketId, assets, receiver);
         _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);
@@ -617,33 +619,37 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function mint(uint256 shares, address receiver) public returns (uint256 assets) {
-        assets = previewMint(shares);
-        _deposit(receiver, assets);
+        (assets,) = dahlia.lend(marketId, 0, shares, receiver);
+        _deposit(receiver, assets, shares);
     }
 
+    /// @inheritdoc IWrappedVault
     function mintFees(uint256 shares, address receiver) external {
         require(msg.sender == address(dahlia), NotDahlia());
         super._mint(receiver, shares);
     }
 
     /// @inheritdoc IWrappedVault
-    function withdraw(uint256 assets, address receiver, address from) external returns (uint256 expectedShares) {
-        expectedShares = previewWithdraw(assets);
-        uint256 actualAssets = _withdraw(msg.sender, expectedShares, receiver, from);
+    function burnShares(address from, uint256 shares) external {
+        require(msg.sender == address(dahlia), NotDahlia());
+        _burn(from, shares);
+    }
 
+    /// @inheritdoc IWrappedVault
+    function withdraw(uint256 assets, address receiver, address from) external returns (uint256) {
+        (uint256 actualAssets, uint256 shares) = dahlia.withdraw(marketId, assets, 0, receiver, from);
         if (assets != actualAssets) revert InvalidWithdrawal();
-
-        emit Withdraw(msg.sender, receiver, from, assets, expectedShares);
+        _withdraw(msg.sender, assets, shares, receiver, from);
+        return shares;
     }
 
     /// @inheritdoc IWrappedVault
     function redeem(uint256 shares, address receiver, address from) external returns (uint256 assets) {
-        (assets) = _withdraw(msg.sender, shares, receiver, from);
-
-        emit Withdraw(msg.sender, receiver, from, assets, shares);
+        (assets,) = dahlia.withdraw(marketId, 0, shares, receiver, from);
+        _withdraw(msg.sender, assets, shares, receiver, from);
     }
 
-    function _withdraw(address caller, uint256 shares, address receiver, address from) internal virtual returns (uint256 _assets) {
+    function _withdraw(address caller, uint256 assets, uint256 shares, address receiver, address from) internal virtual {
         if (caller != from) {
             uint256 allowed = allowance[from][caller]; // Saves gas for limited approvals.
             if (shares > allowed) revert NotOwnerOfVaultOrApproved();
@@ -652,7 +658,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
         _burn(from, shares);
 
-        (_assets) = dahlia.withdraw(marketId, shares, receiver, from);
+        DEPOSIT_ASSET.safeTransfer(receiver, assets);
+        emit Withdraw(msg.sender, receiver, from, assets, shares);
     }
 
     /// @inheritdoc IWrappedVault
@@ -666,9 +673,10 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     }
 
     /// @inheritdoc IWrappedVault
-    function maxDeposit(address) external pure returns (uint256 maxAssets) {
+    function maxDeposit(address) external view returns (uint256 maxAssets) {
         uint256 maxShares = _maxMint();
-        maxAssets = SharesMathLib.toAssetsDown(maxShares, 0, 0);
+        IDahlia.Market memory market = dahlia.getMarket(marketId);
+        maxAssets = SharesMathLib.toAssetsDown(maxShares, market.totalLendAssets, market.totalLendShares);
     }
 
     /// @inheritdoc IWrappedVault

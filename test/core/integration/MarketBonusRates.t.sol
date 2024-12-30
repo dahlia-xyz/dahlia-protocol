@@ -42,7 +42,7 @@ contract MarketStatusIntegrationTest is Test {
             address permitted = $.permitted[i];
             vm.prank(permitted);
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit IDahlia.LiquidationBonusRateChanged(liquidationBonusRate);
+            emit IDahlia.LiquidationBonusRateChanged($.marketId, liquidationBonusRate);
             vm.resumeGasMetering();
             $.dahlia.updateLiquidationBonusRate($.marketId, liquidationBonusRate);
             vm.pauseGasMetering();

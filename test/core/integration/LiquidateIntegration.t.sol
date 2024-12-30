@@ -29,7 +29,7 @@ contract LiquidateIntegrationTest is Test {
 
     function test_int_liquidate_marketNotDeployed(IDahlia.MarketId marketIdFuzz) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.liquidate(marketIdFuzz, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 
@@ -177,7 +177,7 @@ contract LiquidateIntegrationTest is Test {
         assertEq(m.totalBorrowShares, 0, "total borrow shares");
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "borrower balance");
         assertEq($.loanToken.balanceOf($.bob), 0, "liquidator balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - _badDebtAssets, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - _badDebtAssets, "Dahlia balance");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), expectedLeftCollateral, "Dahlia collateral balance");
         assertEq($.collateralToken.balanceOf($.bob), returnSeizedCollateral, "liquidator collateral balance");
     }
@@ -250,7 +250,7 @@ contract LiquidateIntegrationTest is Test {
         assertEq(m.totalBorrowShares, 0, "total borrow shares");
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "borrower balance");
         assertEq($.loanToken.balanceOf($.bob), 0, "liquidator balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), dahliaLoanTokenBalance, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), dahliaLoanTokenBalance, "Dahlia balance");
         assertEq($.collateralToken.balanceOf(address($.dahlia)), expectedLeftCollateral, "Dahlia collateral balance");
         assertEq($.collateralToken.balanceOf($.bob), returnSeizedCollateral, "liquidator collateral balance");
     }

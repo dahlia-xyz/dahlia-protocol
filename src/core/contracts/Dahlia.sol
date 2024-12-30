@@ -84,7 +84,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function setProtocolFeeRate(MarketId id, uint32 newFeeRate) external onlyOwner {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployed(market.status);
+        _validateMarketIsActive(market.status);
         _accrueMarketInterest(marketData.userPositions, market);
 
         ManageMarketImpl.setProtocolFeeRate(market, newFeeRate);
@@ -95,7 +95,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(reserveFeeRecipient != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployed(market.status);
+        _validateMarketIsActive(market.status);
         _accrueMarketInterest(marketData.userPositions, market);
 
         ManageMarketImpl.setReserveFeeRate(market, newFeeRate);
@@ -157,35 +157,32 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function lend(MarketId id, uint256 assets, address owner) external returns (uint256 shares) {
+    function lend(MarketId id, uint256 assets, uint256 shares, address owner) external returns (uint256, uint256) {
         require(owner != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         IWrappedVault vault = market.vault;
         _permittedByWrappedVault(vault);
-        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
-        _validateMarketActive(market.status);
+        _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
-        shares = LendImpl.internalLend(market, positions[owner], assets, owner);
-
-        market.loanToken.safeTransferFrom(msg.sender, address(this), assets);
+        return LendImpl.internalLend(market, positions[owner], assets, shares, owner);
     }
 
     /// @inheritdoc IDahlia
-    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external nonReentrant returns (uint256) {
+    function withdraw(MarketId id, uint256 assets, uint256 shares, address receiver, address owner) external nonReentrant returns (uint256, uint256) {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         IWrappedVault vault = market.vault;
         _permittedByWrappedVault(vault);
-        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
+        _validateMarketIsActiveOrPausedOrDeprecated(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
 
-        (uint256 assets, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, shares, owner, receiver);
+        (uint256 _assets, uint256 _shares, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, assets, shares, owner, receiver);
 
         // User lend assets should be 0 if no shares are left (rounding issue)
         uint256 userLendAssets = ownerPosition.lendPrincipalAssets;
@@ -193,13 +190,12 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             ownerPosition.lendPrincipalAssets = 0;
             market.totalLendPrincipalAssets -= userLendAssets;
         } else {
-            uint256 userLendAssetsDown = FixedPointMathLib.min(assets, userLendAssets);
+            uint256 userLendAssetsDown = FixedPointMathLib.min(_assets, userLendAssets);
             ownerPosition.lendPrincipalAssets = (userLendAssets - userLendAssetsDown).toUint128();
             market.totalLendPrincipalAssets -= userLendAssetsDown;
         }
 
-        market.loanToken.safeTransfer(receiver, assets);
-        return assets;
+        return (_assets, _shares);
     }
 
     function transferLendShares(MarketId id, address owner, address receiver, uint256 shares) public returns (bool) {
@@ -229,27 +225,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         return true;
     }
 
-    function claimInterest(MarketId id, address receiver, address owner) external nonReentrant returns (uint256 interestShares) {
-        require(receiver != address(0), Errors.ZeroAddress());
-        MarketData storage marketData = markets[id];
-        Market storage market = marketData.market;
-        IWrappedVault vault = market.vault;
-        _permittedByWrappedVault(vault);
-        // _validateMarketDeployed(market.status); no need to call because it's protected by _permittedByWrappedVault
-        mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
-        UserPosition storage ownerPosition = positions[owner];
-
-        uint256 totalLendAssets = market.totalLendAssets;
-        uint256 totalLendShares = market.totalLendShares;
-        uint256 lendShares = ownerPosition.lendPrincipalAssets.toSharesDown(totalLendAssets, totalLendShares);
-        interestShares = ownerPosition.lendShares - lendShares;
-
-        (uint256 assets,) = LendImpl.internalWithdraw(market, ownerPosition, interestShares, owner, receiver);
-
-        market.loanToken.safeTransfer(receiver, assets);
-    }
-
     /// @param id The market id.
     /// @param lendAssets The amount of assets to deposit into the market.
     /// @return rate The expected rate after depositing `lendAssets` into the market.
@@ -260,7 +235,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             (, uint256 newRatePerSec,) = IIrm(market.irm).calculateInterest(0, market.totalLendAssets, market.totalBorrowAssets, market.fullUtilizationRate);
             market.ratePerSec = newRatePerSec.toUint64();
         }
-        if (market.totalLendAssets != 0) return market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets);
+        return (market.totalLendAssets != 0) ? market.totalBorrowAssets.mulDiv(market.ratePerSec, market.totalLendAssets) : 0;
     }
 
     /// @inheritdoc IDahlia
@@ -268,14 +243,13 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        MarketStatus status = market.status;
-        _validateMarketDeployedAndActive(status);
+        _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
         borrowShares = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
 
-        market.loanToken.safeTransfer(receiver, assets);
+        market.loanToken.safeTransferFrom(address(market.vault), receiver, assets);
     }
 
     // @inheritdoc IDahlia
@@ -288,7 +262,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployedAndActive(market.status);
+        _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
@@ -297,7 +271,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         borrowedShares = BorrowImpl.internalBorrow(market, ownerPosition, borrowAssets, owner, receiver);
 
         market.collateralToken.safeTransferFrom(owner, address(this), collateralAssets);
-        market.loanToken.safeTransfer(receiver, borrowAssets);
+        market.loanToken.safeTransferFrom(address(market.vault), receiver, borrowAssets);
     }
 
     // @inheritdoc IDahlia
@@ -311,12 +285,12 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployedAndActive(market.status);
+        _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(market);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
         UserPosition storage ownerPosition = positions[owner];
         (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, ownerPosition, repayAssets, repayShares, owner);
-        market.loanToken.safeTransferFrom(owner, address(this), repaidAssets);
+        market.loanToken.safeTransferFrom(owner, address(market.vault), repaidAssets);
 
         BorrowImpl.internalWithdrawCollateral(market, ownerPosition, collateralAssets, owner, receiver);
         market.collateralToken.safeTransfer(receiver, collateralAssets);
@@ -327,8 +301,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(owner != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
+        _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(market);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _validateMarketDeployed(market.status);
         _accrueMarketInterest(positions, market);
 
         (assets, shares) = BorrowImpl.internalRepay(market, positions[owner], assets, shares, owner);
@@ -336,7 +310,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             IDahliaRepayCallback(msg.sender).onDahliaRepay(assets, callbackData);
         }
 
-        market.loanToken.safeTransferFrom(msg.sender, address(this), assets);
+        market.loanToken.safeTransferFrom(msg.sender, address(market.vault), assets);
         return (assets, shares);
     }
 
@@ -348,7 +322,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(borrower != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployed(market.status);
+        _validateMarketIsActiveOrPausedOrDeprecated(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
@@ -364,7 +338,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         }
 
         // Transfer repaid assets from the liquidator's wallet to Dahlia.
-        market.loanToken.safeTransferFrom(msg.sender, address(this), repaidAssets);
+        market.loanToken.safeTransferFrom(msg.sender, address(market.vault), repaidAssets);
     }
 
     /// @inheritdoc IDahlia
@@ -373,7 +347,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(owner != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployedAndActive(market.status);
+        _validateMarketIsActive(market.status);
         /// @dev accrueInterest is not needed here.
 
         BorrowImpl.internalSupplyCollateral(market, marketData.userPositions[owner], assets, owner);
@@ -392,7 +366,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployed(market.status);
+        _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(market);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
 
@@ -401,17 +375,34 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         market.collateralToken.safeTransfer(receiver, assets);
     }
 
-    /// @inheritdoc IDahlia
-    function flashLoan(address token, uint256 assets, bytes calldata callbackData) external {
-        require(assets != 0, Errors.ZeroAssets());
+    function withdrawDepositAndClaimCollateral(MarketId id, address owner, address receiver)
+        external
+        isSenderPermitted(owner)
+        nonReentrant
+        returns (uint256 lendAssets, uint256 collateralAssets)
+    {
+        require(receiver != address(0), Errors.ZeroAddress());
+        MarketData storage marketData = markets[id];
+        Market storage market = markets[id].market;
+        MarketStatus status = market.status;
+        require(status == MarketStatus.Stalled, Errors.WrongStatus(status));
+        require(block.timestamp >= market.repayPeriodEndTimestamp, Errors.RepayPeriodNotEnded());
 
+        mapping(address => UserPosition) storage positions = marketData.userPositions;
+        UserPosition storage ownerPosition = positions[owner];
+
+        (lendAssets, collateralAssets) = LendImpl.internalWithdrawDepositAndClaimCollateral(market, ownerPosition, owner, receiver);
+
+        market.loanToken.safeTransferFrom(address(market.vault), receiver, lendAssets);
+        market.collateralToken.safeTransfer(receiver, collateralAssets);
+    }
+
+    function _flashLoan(address location, address token, uint256 assets, bytes calldata callbackData) internal {
         uint256 fee = MarketMath.mulPercentUp(assets, flashLoanFeeRate);
-
-        token.safeTransfer(msg.sender, assets);
 
         IDahliaFlashLoanCallback(msg.sender).onDahliaFlashLoan(assets, fee, callbackData);
 
-        token.safeTransferFrom(msg.sender, address(this), assets);
+        token.safeTransferFrom(msg.sender, location, assets);
         if (fee > 0) {
             token.safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
         }
@@ -420,10 +411,28 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
+    function flashLoan(MarketId id, uint256 assets, bytes calldata callbackData) external {
+        require(assets != 0, Errors.ZeroAssets());
+        Market storage market = markets[id].market;
+        _validateMarketIsActive(market.status);
+        address token = market.loanToken;
+        address vault = address(market.vault);
+        token.safeTransferFrom(vault, msg.sender, assets);
+        _flashLoan(vault, token, assets, callbackData);
+    }
+
+    /// @inheritdoc IDahlia
+    function flashLoan(address token, uint256 assets, bytes calldata callbackData) external {
+        require(assets != 0, Errors.ZeroAssets());
+        token.safeTransfer(msg.sender, assets);
+        _flashLoan(address(this), token, assets, callbackData);
+    }
+
+    /// @inheritdoc IDahlia
     function accrueMarketInterest(MarketId id) external {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        _validateMarketDeployed(market.status);
+        _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(positions, market);
     }
@@ -486,35 +495,53 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function isMarketDeployed(MarketId id) external view virtual returns (bool) {
-        return markets[id].market.status != MarketStatus.None;
+    function isMarketDeployed(MarketId id) external view returns (bool) {
+        return markets[id].market.status != MarketStatus.Uninitialized;
+    }
+
+    function _setStatus(Market storage market, MarketId id, MarketStatus oldStatus, MarketStatus newStatus) internal {
+        market.status = newStatus;
+        emit MarketStatusChanged(id, oldStatus, newStatus);
     }
 
     /// @inheritdoc IDahlia
     function pauseMarket(MarketId id) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
-        require(market.status == MarketStatus.Active, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, market.status, MarketStatus.Paused);
-        market.status = MarketStatus.Paused;
+        MarketStatus status = market.status;
+        _validateMarketIsActive(status);
+        _setStatus(market, id, status, MarketStatus.Paused);
     }
 
     /// @inheritdoc IDahlia
     function unpauseMarket(MarketId id) external {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
-        require(market.status == MarketStatus.Paused, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, market.status, MarketStatus.Active);
-        market.status = MarketStatus.Active;
+        MarketStatus status = market.status;
+        require(status == MarketStatus.Paused, Errors.WrongStatus(status));
+        _setStatus(market, id, status, MarketStatus.Active);
+    }
+
+    function staleMarket(MarketId id) external onlyOwner {
+        Market storage market = markets[id].market;
+        MarketStatus status = market.status;
+        _validateMarketIsActiveOrPaused(status);
+        // Check if the price is stalled
+        try market.oracle.getPrice() returns (uint256 price, bool isBadData) {
+            require(isBadData || price == 0, Errors.OraclePriceNotStalled());
+        } catch {
+            // Do nothing if the price is not available to allow stale the market
+        }
+        market.repayPeriodEndTimestamp = uint48(block.timestamp + dahliaRegistry.getValue(Constants.VALUE_ID_REPAY_PERIOD));
+        _setStatus(market, id, status, MarketStatus.Stalled);
     }
 
     /// @inheritdoc IDahlia
     function deprecateMarket(MarketId id) external onlyOwner {
         Market storage market = markets[id].market;
-        _validateMarketDeployed(market.status);
-        require(market.status != MarketStatus.Deprecated, Errors.CannotChangeMarketStatus());
-        emit MarketStatusChanged(id, market.status, MarketStatus.Deprecated);
-        market.status = MarketStatus.Deprecated;
+        MarketStatus status = market.status;
+        _validateMarketIsActiveOrPaused(status);
+        _setStatus(market, id, status, MarketStatus.Deprecated);
     }
 
     /// @inheritdoc IDahlia
@@ -522,31 +549,37 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = markets[id].market;
         _checkDahliaOwnerOrVaultOwner(market.vault);
         _validateLiquidationBonusRate(liquidationBonusRate, market.lltv);
-        emit LiquidationBonusRateChanged(liquidationBonusRate);
+        emit LiquidationBonusRateChanged(id, liquidationBonusRate);
         market.liquidationBonusRate = liquidationBonusRate.toUint24();
     }
 
-    /// @notice Validates the current market status is not None.
+    /// @notice Validates the current market status is Active Or Paused Or Deprecated Or Stalled and the repay period has not ended.
+    /// @param market The current market.
+    function _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(Market storage market) internal view {
+        MarketStatus status = market.status;
+        if (status == MarketStatus.Stalled) {
+            require(block.timestamp < market.repayPeriodEndTimestamp, Errors.RepayPeriodEnded());
+        } else {
+            _validateMarketIsActiveOrPausedOrDeprecated(status);
+        }
+    }
+
+    /// @notice Validates the current market status is Active Or Paused.
     /// @param status The current market status.
-    function _validateMarketDeployed(MarketStatus status) internal pure {
-        require(status != MarketStatus.None, Errors.MarketNotDeployed());
+    function _validateMarketIsActiveOrPaused(MarketStatus status) internal pure {
+        require(status == MarketStatus.Active || status == MarketStatus.Paused, Errors.WrongStatus(status));
+    }
+
+    /// @notice Validates the current market status is Active Or Paused Or Deprecated.
+    /// @param status The current market status.
+    function _validateMarketIsActiveOrPausedOrDeprecated(MarketStatus status) internal pure {
+        require(status == MarketStatus.Active || status == MarketStatus.Paused || status == MarketStatus.Deprecated, Errors.WrongStatus(status));
     }
 
     /// @notice Validates the current market status is active.
     /// @param status The current market status.
-    function _validateMarketActive(MarketStatus status) internal pure {
-        if (status == MarketStatus.Deprecated) {
-            revert Errors.MarketDeprecated();
-        } else if (status == MarketStatus.Paused) {
-            revert Errors.MarketPaused();
-        }
-    }
-
-    /// @notice Validates the current market status is deployed and active.
-    /// @param status The current market status.
-    function _validateMarketDeployedAndActive(MarketStatus status) internal pure {
-        _validateMarketDeployed(status);
-        _validateMarketActive(status);
+    function _validateMarketIsActive(MarketStatus status) internal pure {
+        require(status == MarketStatus.Active, Errors.WrongStatus(status));
     }
 
     /// @notice Validates if the current sender is the WrappedVault contract.

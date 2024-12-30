@@ -11,9 +11,10 @@ interface IDahlia {
     type MarketId is uint32;
 
     enum MarketStatus {
-        None,
+        Uninitialized,
         Active,
         Paused,
+        Stalled,
         Deprecated
     }
 
@@ -41,14 +42,16 @@ interface IDahlia {
         // --- 28 bytes
         IIrm irm; // 20 bytes
         uint64 ratePerSec; // 8 bytes // store refreshed rate per second
-        // --- 20 bytes
+        // --- 26 bytes
         IWrappedVault vault; // 20 bytes
+        uint48 repayPeriodEndTimestamp; // 6 bytes
         // --- having all 256 bytes at the end makes deployment size smaller
         uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
         uint256 totalLendPrincipalAssets; // 32 bytes // store user total initial lend assets
+        uint256 totalCollateralAssets; // 32 bytes
     }
 
     struct UserPosition {
@@ -95,9 +98,9 @@ interface IDahlia {
     event SetLLTVRange(uint256 minLltv, uint256 maxLltv);
 
     /// @dev Emitted when a new liquidation bonus rate range is set.
-    /// @param minLltv Minimum liquidation bonus rate.
-    /// @param maxLltv Maximum liquidation bonus rate.
-    event SetLiquidationBonusRateRange(uint256 minLltv, uint256 maxLltv);
+    /// @param minLiquidationBonusRate Minimum liquidation bonus rate.
+    /// @param maxLiquidationBonusRate Maximum liquidation bonus rate.
+    event SetLiquidationBonusRateRange(uint256 minLiquidationBonusRate, uint256 maxLiquidationBonusRate);
 
     /// @dev Emitted when the market status changes.
     /// @param id Market id.
@@ -106,8 +109,9 @@ interface IDahlia {
     event MarketStatusChanged(IDahlia.MarketId indexed id, IDahlia.MarketStatus from, IDahlia.MarketStatus to);
 
     /// @dev Emitted when the liquidation bonus rate changes.
+    /// @param id Market id.
     /// @param liquidationBonusRate The updated liquidation bonus rate.
-    event LiquidationBonusRateChanged(uint256 liquidationBonusRate);
+    event LiquidationBonusRateChanged(IDahlia.MarketId indexed id, uint256 liquidationBonusRate);
 
     /// @dev Emitted when a new market is deployed.
     /// @param id Market id.
@@ -146,6 +150,18 @@ interface IDahlia {
     /// @param assets Amount of assets withdrawn.
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
+
+    /// @dev Emitted when user calls final withdrawal on Stalled market
+    /// @param id Market id.
+    /// @param caller Address of the caller.
+    /// @param receiver Address receiving the withdrawn assets.
+    /// @param owner Address of the position owner.
+    /// @param assets Amount of assets withdrawn.
+    /// @param collateralAssets Amount of collateral assets withdrawn.
+    /// @param shares Amount of shares burned.
+    event WithdrawDepositAndClaimCollateral(
+        IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 collateralAssets, uint256 shares
+    );
 
     /// @dev Emitted when assets are borrowed.
     /// @param id Market id.
@@ -314,20 +330,27 @@ interface IDahlia {
 
     /// @notice Lend `assets` on behalf of a user, with optional callback.
     /// @dev Should be called via wrapped vault.
+    /// @dev Either `assets` or `shares` must be zero.
     /// @param id Market id.
     /// @param assets Amount of assets to lend.
     /// @param owner Owner of the increased lend position.
+    /// @return assetsSupplied Amount of assets to lend.
     /// @return sharesSupplied Amount of shares minted.
-    function lend(MarketId id, uint256 assets, address owner) external returns (uint256 sharesSupplied);
+    function lend(MarketId id, uint256 assets, uint256 shares, address owner) external returns (uint256 assetsSupplied, uint256 sharesSupplied);
 
     /// @notice Withdraw `assets` by `shares` on behalf of a user, sending to a receiver.
     /// @dev Should be invoked through a wrapped vault.
+    /// @dev Either `assets` or `shares` must be zero.
     /// @param id Market id.
-    /// @param shares Amount of shares to burn.
+    /// @param assets Amount of assets to withdraw.
+    /// @param shares Amount of shares to withdraw.
     /// @param receiver Address receiving the assets.
     /// @param owner Owner of the lend position.
     /// @return assetsWithdrawn Amount of assets withdrawn.
-    function withdraw(MarketId id, uint256 shares, address receiver, address owner) external returns (uint256 assetsWithdrawn);
+    /// @return sharesWithdrawn Amount of shares withdrawn.
+    function withdraw(MarketId id, uint256 assets, uint256 shares, address receiver, address owner)
+        external
+        returns (uint256 assetsWithdrawn, uint256 sharesWithdrawn);
 
     /// @notice Transfer lend shares between two users.
     /// @dev Should be invoked through a wrapped vault.
@@ -336,14 +359,6 @@ interface IDahlia {
     /// @param receiver Address receiving the assets.
     /// @param amount Amount of assets to transfer.
     function transferLendShares(MarketId id, address owner, address receiver, uint256 amount) external returns (bool);
-
-    /// @notice Claim accrued interest for the position.
-    /// @dev Should be invoked through a wrapped vault.
-    /// @param id Market id.
-    /// @param receiver Address receiving the assets.
-    /// @param owner Owner of the lend position.
-    /// @return shares Amount of interest in shares should be burned.
-    function claimInterest(MarketId id, address receiver, address owner) external returns (uint256 shares);
 
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
     /// @dev Should be invoked through a wrapped vault.
@@ -426,11 +441,17 @@ interface IDahlia {
     /// @param receiver Address receiving the collateral assets.
     function withdrawCollateral(MarketId id, uint256 assets, address owner, address receiver) external;
 
-    /// @notice Execute a flash loan.
-    /// @param token Borrowed token address.
+    /// @notice Execute a flash loan for borrow token.
+    /// @param token Market id.
     /// @param assets Amount to borrow.
     /// @param data Data for `onDahliaFlashLoan` callback.
     function flashLoan(address token, uint256 assets, bytes calldata data) external;
+
+    /// @notice Execute a flash loan for lending token.
+    /// @param id Market id.
+    /// @param assets Amount to borrow.
+    /// @param data Data for `onDahliaFlashLoan` callback.
+    function flashLoan(MarketId id, uint256 assets, bytes calldata data) external;
 
     /// @notice Accrue interest for market parameters.
     /// @param id Market id.

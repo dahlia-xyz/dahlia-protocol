@@ -28,7 +28,7 @@ contract RepayIntegrationTest is Test {
     function test_int_repay_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.repay(marketIdFuzz, assets, 0, $.alice, TestConstants.EMPTY_CALLBACK);
     }
 
@@ -81,7 +81,7 @@ contract RepayIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowAssets, pos.borrowed - amountRepaid, "total borrow");
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "RECEIVER balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + amountRepaid, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed + amountRepaid, "Dahlia balance");
     }
 
     function test_int_repay_byShares(TestTypes.MarketPosition memory pos, uint256 sharesRepaid) public {
@@ -113,7 +113,7 @@ contract RepayIntegrationTest is Test {
         assertEq(stateAfter.totalBorrowShares, expectedBorrowShares, "total borrow shares");
 
         assertEq($.loanToken.balanceOf($.alice), pos.borrowed, "RECEIVER balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), pos.lent - pos.borrowed + expectedAmountRepaid, "Dahlia balance");
     }
 
     function test_int_repay_maxOnBehalf(uint256 shares) public {

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
@@ -13,15 +11,14 @@ import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 /// @title BorrowImpl library
 /// @notice Implements borrowing protocol functions
 library BorrowImpl {
-    using SafeERC20 for IERC20;
+    using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
-    using SafeCastLib for uint256;
-    using MarketMath for uint256;
 
     // Add collateral to a borrower's position
     function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
         ownerPosition.collateral += assets.toUint128();
+        market.totalCollateralAssets += assets;
 
         emit IDahlia.SupplyCollateral(market.id, msg.sender, owner, assets);
     }
@@ -35,6 +32,7 @@ library BorrowImpl {
         address receiver
     ) internal {
         ownerPosition.collateral -= assets.toUint128(); // Decrease collateral
+        market.totalCollateralAssets -= assets;
 
         // Ensure sufficient collateral for withdrawal
         if (ownerPosition.borrowShares > 0) {
@@ -92,8 +90,10 @@ library BorrowImpl {
             shares = assets.toSharesDown(market.totalBorrowAssets, market.totalBorrowShares);
             // Avoid arithmetic overflow when we have shares tail
             uint256 owned = ownerPosition.borrowShares;
-            if (shares > owned && (shares - owned) < SharesMathLib.SHARES_OFFSET) {
-                shares = owned;
+            if (shares > owned) {
+                if ((shares - owned) < SharesMathLib.SHARES_OFFSET) {
+                    shares = owned;
+                }
             }
         } else {
             assets = shares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);

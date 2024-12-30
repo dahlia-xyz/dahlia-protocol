@@ -30,7 +30,7 @@ contract BorrowIntegrationTest is Test {
     function test_int_borrow_marketNotDeployed(IDahlia.MarketId marketIdFuzz, uint256 assets) public {
         vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
         vm.prank($.alice);
-        vm.expectRevert(Errors.MarketNotDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
         $.dahlia.borrow(marketIdFuzz, assets, $.alice, $.alice);
     }
 
@@ -171,6 +171,6 @@ contract BorrowIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).totalBorrowAssets, amountBorrowed, "total borrow");
         assertEq(userPos.borrowShares, expectedBorrowShares, "borrow share");
         assertEq($.loanToken.balanceOf($.bob), amountBorrowed, "receiver balance");
-        assertEq($.loanToken.balanceOf(address($.dahlia)), amountLent - amountBorrowed, "dahlia balance");
+        assertEq($.loanToken.balanceOf(address($.vault)), amountLent - amountBorrowed, "dahlia balance");
     }
 }
