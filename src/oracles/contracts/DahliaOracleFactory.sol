@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { PythOracleBase } from "../abstracts/PythOracleBase.sol";
-import { PythOracleBase } from "../abstracts/PythOracleBase.sol";
 import { ChainlinkOracleWithMaxDelay } from "./ChainlinkOracleWithMaxDelay.sol";
 import { DualOracleChainlinkUniV3 } from "./DualOracleChainlinkUniV3.sol";
-import { PythOracle } from "./PythOracle.sol";
 
 import { UniswapOracleV3SingleTwap } from "./UniswapOracleV3SingleTwap.sol";
 
 contract DahliaOracleFactory {
     event SetTimelockAddress(address indexed timelockAddress);
     event SetUniswapStaticOracleAddres(address indexed uniswapStaticOracleAddres);
-    event SetPythOracleAddress(address indexed pythOracleAddress);
     event ChainlinkOracleCreated(address indexed oracleAddress, ChainlinkOracleWithMaxDelay.Params params, ChainlinkOracleWithMaxDelay.Delays maxDelays);
     event UniswapOracleCreated(address indexed oracleAddress, UniswapOracleV3SingleTwap.OracleParams params);
     event DualOracleChainlinkUniV3Created(
@@ -21,19 +17,15 @@ contract DahliaOracleFactory {
         ChainlinkOracleWithMaxDelay.Delays chainlinkMaxDelays,
         UniswapOracleV3SingleTwap.OracleParams uniswapParams
     );
-    event PythOracleCreated(address indexed oracleAddress, PythOracleBase.PythOracleParams params);
 
     address public immutable timelockAddress;
     address public immutable uniswapStaticOracleAddress;
-    address public immutable pythOracleAddress;
 
-    constructor(address timelockAddress_, address uniswapStaticOracleAddress_, address pythOracleAddress_) {
+    constructor(address timelockAddress_, address uniswapStaticOracleAddress_) {
         timelockAddress = timelockAddress_;
         emit SetTimelockAddress(timelockAddress_);
         uniswapStaticOracleAddress = uniswapStaticOracleAddress_;
         emit SetUniswapStaticOracleAddres(uniswapStaticOracleAddress_);
-        pythOracleAddress = pythOracleAddress_;
-        emit SetPythOracleAddress(address(this));
     }
 
     function createChainlinkOracle(ChainlinkOracleWithMaxDelay.Params memory params, ChainlinkOracleWithMaxDelay.Delays memory maxDelays)
@@ -59,12 +51,6 @@ contract DahliaOracleFactory {
         DualOracleChainlinkUniV3 oracle =
             new DualOracleChainlinkUniV3(timelockAddress, chainlinkParams, chainlinkMaxDelays, uniswapParams, uniswapStaticOracleAddress);
         emit DualOracleChainlinkUniV3Created(address(oracle), chainlinkParams, chainlinkMaxDelays, uniswapParams);
-        return oracle;
-    }
-
-    function createPythOracle(PythOracleBase.PythOracleParams memory params) external returns (PythOracle) {
-        PythOracle oracle = new PythOracle(timelockAddress, params, pythOracleAddress);
-        emit PythOracleCreated(address(oracle), params);
         return oracle;
     }
 }

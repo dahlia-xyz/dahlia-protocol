@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 library Mainnet {
     address internal constant UNISWAP_STATIC_ORACLE_ADDRESS = 0xB210CE856631EeEB767eFa666EC7C1C57738d438;
-    address internal constant PYTH_BERACHAIN_ADDRESS = 0x2880aB155794e7179c9eE2e38200202908C17B43;
     address internal constant COMPTROLLER_ADDRESS = 0x168200cF227D4543302686124ac28aE0eaf2cA0B;
     address internal constant CIRCUIT_BREAKER_ADDRESS = 0xfd3065C629ee890Fd74F43b802c2fea4B7279B8c;
     address internal constant TIMELOCK_ADDRESS = 0x8412ebf45bAC1B340BbE8F318b928C466c4E39CA;
@@ -87,6 +86,4 @@ library Mainnet {
     address internal constant UNI_USD_CHAINLINK_ORACLE = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
     address internal constant USDC_USD_CHAINLINK_ORACLE = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
     address internal constant UNI_WETH_CHAINLINK_ORACLE = 0xD6aA3D25116d8dA79Ea0246c4826EB951872e02e;
-    //    address internal constant PYTH_WETH_USD_PRICE_FEED_ADDRESS = 0x9d4294bbcd1174d6f2003ec365831e64cc31d9f6f15a2b85399db8d5000960f6;
-    bytes32 internal constant PYTH_WETH_USD_PRICE_FEED = 0x9d4294bbcd1174d6f2003ec365831e64cc31d9f6f15a2b85399db8d5000960f6;
 }
