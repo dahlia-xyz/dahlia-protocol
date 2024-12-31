@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
+import { DahliaOracleFactory } from "../src/oracles/contracts/DahliaOracleFactory.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 import { Script } from "forge-std/Script.sol";
 import { console2 as console } from "forge-std/Test.sol";
 
 abstract contract BaseScript is Script {
     using LibString for *;
+
+    string public constant DAHLIA_ORACLE_FACTORY_SALT = "DAHLIA_ORACLE_FACTORY_V0.0.1";
 
     address internal deployer;
     uint256 internal privateKey;
@@ -26,6 +29,18 @@ abstract contract BaseScript is Script {
         string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         console.log(prefix, addressUrl, blockUrl);
+    }
+
+    function _calculateDahliaOracleFactoryExpectedAddress(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
+        internal
+        view
+        returns (address)
+    {
+        bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
+        bytes memory encodedArgs = abi.encode(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+        bytes32 initCodeHash = hashInitCode(type(DahliaOracleFactory).creationCode, encodedArgs);
+        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
+        return expectedAddress;
     }
 
     modifier broadcaster() {

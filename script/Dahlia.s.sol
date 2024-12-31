@@ -11,6 +11,8 @@ import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
+
+import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -146,6 +148,24 @@ contract DeployDahlia is BaseScript {
         }
     }
 
+    function _deployDahliaOracleFactory(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
+        internal
+        returns (DahliaOracleFactory)
+    {
+        // TODO: Maybe we need to pass uniswap address in the creation method? Since there is no such one on the cartio
+        bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
+        address expectedAddress = _calculateDahliaOracleFactoryExpectedAddress(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+        if (expectedAddress.code.length > 0) {
+            console.log("DahliaOracleFactory already deployed");
+            return DahliaOracleFactory(expectedAddress);
+        } else {
+            DahliaOracleFactory oracleFactory = new DahliaOracleFactory{ salt: salt }(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+            address oracleFactoryAddress = address(oracleFactory);
+            require(expectedAddress == oracleFactoryAddress);
+            return oracleFactory;
+        }
+    }
+
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
@@ -192,7 +212,11 @@ contract DeployDahlia is BaseScript {
         );
         _printContract("Irm:                        ", address(irm));
 
-        // Oracle
+        address uniswapStaticOracleAddress = vm.envAddress("UNISWAP_STATIC_ORACLE_ADDRESS");
+        address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
+
+        DahliaOracleFactory oracleFactory = _deployDahliaOracleFactory(dahliaOwner, uniswapStaticOracleAddress, pythStaticOracleAddress);
+        _printContract("DahliaOracleFactory:       ", address(oracleFactory));
 
         uint256 contractSize = dahlia.code.length;
         console.log("Dahlia contract size:", contractSize);

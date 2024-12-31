@@ -7,7 +7,8 @@
   "scripts": {
     "prepare": "pnpm tsx setup.ts submodules",
     "setup": "pnpm tsx setup.ts",
-    "contracts": "pnpm tsx setup-contracts.ts"
+    "contracts": "pnpm tsx setup-contracts.ts",
+    "deploy-pyth-oracle": "pnpm tsx deploy-pyth-oracle.ts"
   },
   "author": {
     "name": "Dahlia Labs",

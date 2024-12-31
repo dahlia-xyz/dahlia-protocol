@@ -1,28 +1,12 @@
 import { execa } from "execa";
 import * as process from "node:process";
-import { createPublicClient, http } from "viem";
-import type { GetBlockNumberReturnType } from "viem";
-import { mainnet } from "viem/chains";
+
+import { envs, privateKey } from "./consts";
+import { waitForRpc } from "./waitForRpc";
 
 const env = { ...process.env, NX_VERBOSE_LOGGING: "true" };
 const $$ = execa({ verbose: "full" });
 // const $ = execa({ env, verbose: "short" });
-
-const waitForRpc = async (rpcUrl: string): Promise<GetBlockNumberReturnType> => {
-  const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
-
-  while (true) {
-    let currentBlockNumber = undefined;
-    try {
-      currentBlockNumber = await client.getBlockNumber();
-    } catch (err) {}
-    if (currentBlockNumber !== undefined) {
-      return currentBlockNumber;
-    }
-    console.log("RPC is not ready yet, retrying...");
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Sleep for 1 second
-  }
-};
 
 await $$({ env })`pnpm nx run dahlia:otterscan`;
 
@@ -68,18 +52,13 @@ const deployContracts = async (rpcPort: string, otterscanPort: string): Promise<
    * (8) 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
    * (9) 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
    */
-  let private_key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   await $$({
     cwd: "..",
     env: {
-      PRIVATE_KEY: private_key,
-      DAHLIA_OWNER: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      DAHLIA_PRIVATE_KEY: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
-      FEES_RECIPIENT: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-      POINTS_FACTORY: "0x19112AdBDAfB465ddF0b57eCC07E68110Ad09c50",
+      ...envs,
       OTTERSCAN_PORT: otterscanPort,
     },
-  })`forge script script/Dahlia.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${private_key}`;
+  })`forge script script/Dahlia.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${privateKey}`;
 };
 
 await deployContracts(process.env.MAINNET_RPC_PORT || "8546", process.env.MAINNET_OTT_PORT || "28546");
