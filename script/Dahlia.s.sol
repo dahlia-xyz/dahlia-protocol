@@ -12,7 +12,6 @@ import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
-import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -148,24 +147,6 @@ contract DeployDahlia is BaseScript {
         }
     }
 
-    function _deployDahliaOracleFactory(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
-        internal
-        returns (DahliaOracleFactory)
-    {
-        // TODO: Maybe we need to pass uniswap address in the creation method? Since there is no such one on the cartio
-        bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
-        address expectedAddress = _calculateDahliaOracleFactoryExpectedAddress(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
-        if (expectedAddress.code.length > 0) {
-            console.log("DahliaOracleFactory already deployed");
-            return DahliaOracleFactory(expectedAddress);
-        } else {
-            DahliaOracleFactory oracleFactory = new DahliaOracleFactory{ salt: salt }(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
-            address oracleFactoryAddress = address(oracleFactory);
-            require(expectedAddress == oracleFactoryAddress);
-            return oracleFactory;
-        }
-    }
-
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
@@ -194,34 +175,30 @@ contract DeployDahlia is BaseScript {
         IrmFactory irmFactory = _deployIrmFactory();
         _printContract("IrmFactory:                ", address(irmFactory));
 
-        uint64 ZERO_UTIL_RATE = 158_247_046;
-        uint64 MIN_FULL_UTIL_RATE = 1_582_470_460;
-        uint64 MAX_FULL_UTIL_RATE = 3_164_940_920_000;
+        uint64 ZERO_UTIL_RATE = 31_649_410;
+        uint64 MIN_FULL_UTIL_RATE = 15_824_704_600;
+        uint64 MAX_FULL_UTIL_RATE = 158_247_046_000;
 
         IIrm irm = irmFactory.createVariableIrm(
             VariableIrm.Config({
-                minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                targetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                minTargetUtilization: 88 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                maxTargetUtilization: 92 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                targetUtilization: 90 * IrmConstants.UTILIZATION_100_PERCENT / 100,
                 minFullUtilizationRate: MIN_FULL_UTIL_RATE,
                 maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
                 zeroUtilizationRate: ZERO_UTIL_RATE,
-                rateHalfLife: 172_800,
+                rateHalfLife: 604_800, // 7 days
                 targetRatePercent: 0.2e18
             })
         );
         _printContract("Irm:                        ", address(irm));
 
-        address uniswapStaticOracleAddress = vm.envAddress("UNISWAP_STATIC_ORACLE_ADDRESS");
-        address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
-
-        DahliaOracleFactory oracleFactory = _deployDahliaOracleFactory(dahliaOwner, uniswapStaticOracleAddress, pythStaticOracleAddress);
-        _printContract("DahliaOracleFactory:       ", address(oracleFactory));
-
         uint256 contractSize = dahlia.code.length;
         console.log("Dahlia contract size:", contractSize);
         vm.stopBroadcast();
         vm.startBroadcast(vm.envUint("DAHLIA_PRIVATE_KEY"));
+        address owner = DahliaRegistry(registry).owner();
+        console.log("Dahlia Registry owner:", owner);
         DahliaRegistry(registry).setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, wrappedVaultFactory);
         vm.stopBroadcast();
     }

@@ -55,11 +55,11 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
         quoteFeed = params.quoteFeed;
         _setMaximumOracleDelays(delays);
 
-        int32 baseTokenDecimals = getDecimals(params.baseToken);
+        int32 baseTokenDecimals = getDecimals(params.baseToken); // 95434 354543 * 10^-8
         int32 quoteTokenDecimals = getDecimals(params.quoteToken);
-        uint256 precision = (quoteTokenDecimals + getFeedDecimals(params.baseFeed) - getFeedDecimals(params.quoteFeed) - baseTokenDecimals).toUint256();
+        uint256 precision = (36 + quoteTokenDecimals + getFeedDecimals(params.baseFeed) - getFeedDecimals(params.quoteFeed) - baseTokenDecimals).toUint256();
 
-        ORACLE_PRECISION = 10 ** (36 + precision);
+        ORACLE_PRECISION = 10 ** precision;
     }
 
     function getDecimals(address token) internal view returns (int32) {

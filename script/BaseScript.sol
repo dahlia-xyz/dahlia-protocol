@@ -31,6 +31,24 @@ abstract contract BaseScript is Script {
         console.log(prefix, addressUrl, blockUrl);
     }
 
+    function _deployDahliaOracleFactory(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
+        internal
+        returns (DahliaOracleFactory)
+    {
+        // TODO: Maybe we need to pass uniswap address in the creation method? Since there is no such one on the cartio
+        bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
+        address expectedAddress = _calculateDahliaOracleFactoryExpectedAddress(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+        if (expectedAddress.code.length > 0) {
+            console.log("DahliaOracleFactory already deployed");
+            return DahliaOracleFactory(expectedAddress);
+        } else {
+            DahliaOracleFactory oracleFactory = new DahliaOracleFactory{ salt: salt }(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+            address oracleFactoryAddress = address(oracleFactory);
+            require(expectedAddress == oracleFactoryAddress);
+            return oracleFactory;
+        }
+    }
+
     function _calculateDahliaOracleFactoryExpectedAddress(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
         internal
         view
