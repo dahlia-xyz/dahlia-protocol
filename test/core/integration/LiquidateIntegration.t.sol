@@ -62,6 +62,7 @@ contract LiquidateIntegrationTest is Test {
         amountSeized = bound(amountSeized, 1, pos.collateral);
 
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
+        assertEq(pos.collateral, $.dahlia.getMarket($.marketId).totalCollateralAssets, "market total collateral assets");
 
         vm.warp(block.timestamp + elapsed);
 
@@ -73,9 +74,7 @@ contract LiquidateIntegrationTest is Test {
         // Bob is LIQUIDATOR
         vm.dahliaPrepareLoanBalanceFor($.bob, pos.borrowed, $);
         vm.startPrank($.bob);
-        if (positionLTV < $.marketConfig.lltv) {
-            vm.expectRevert(abi.encodeWithSelector(Errors.HealthyPositionLiquidation.selector, positionLTV, $.marketConfig.lltv));
-        }
+        vm.expectRevert(abi.encodeWithSelector(Errors.HealthyPositionLiquidation.selector, positionLTV, $.marketConfig.lltv));
         vm.resumeGasMetering();
         $.dahlia.liquidate($.marketId, $.alice, TestConstants.EMPTY_CALLBACK);
     }
@@ -170,6 +169,7 @@ contract LiquidateIntegrationTest is Test {
         assertEq(userPos.lendShares, 0, "lend shares");
         assertEq(userPos.borrowShares, 0, "borrow shares");
         assertEq(userPos.collateral, expectedLeftCollateral, "collateral");
+        assertEq(pos.collateral - returnSeizedCollateral, m.totalCollateralAssets, "market total collateral after liquidation");
         assertEq(m.totalLendAssets, pos.lent - _badDebtAssets, "total lend assets decreased with bad data");
         assertEq(m.totalLendShares, totalLentInShares, "total lend stay same with bas data");
         assertTrue(_bonusCollateral > 0, "_bonusCollateral must be positive");
@@ -243,6 +243,7 @@ contract LiquidateIntegrationTest is Test {
         assertEq(userPos.lendShares, 0, "lend shares");
         assertEq(userPos.borrowShares, 0, "borrow shares");
         assertEq(userPos.collateral, expectedLeftCollateral, "collateral");
+        assertEq(pos.collateral - returnSeizedCollateral, m.totalCollateralAssets, "market total collateral after liquidation");
         assertEq(m.totalLendAssets, lendBalance, "total lend assets decreased with bad data");
         assertEq(m.totalLendShares, prevTotalLentShares - _rescueShares, "total lend stay same with bas data");
         assertTrue(_bonusCollateral > 0, "_bonusCollateral must be positive");

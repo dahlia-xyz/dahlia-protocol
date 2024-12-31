@@ -6,7 +6,6 @@ import { LibString } from "@solady/utils/LibString.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 
 /// @title MarketMath
@@ -98,16 +97,6 @@ library MarketMath {
     function calcMaxBorrowAssets(uint256 collateralPrice, uint256 collateral, uint256 lltv) internal pure returns (uint256) {
         uint256 totalCollateralCapacity = collateralToLendUp(collateral, collateralPrice);
         return mulPercentUp(totalCollateralCapacity, lltv);
-    }
-
-    /// @dev Calculates the current Loan-to-Value (LTV) of a borrow position
-    function getLTV(uint256 totalBorrowAssets, uint256 totalBorrowShares, IDahlia.UserPosition memory position, uint256 collateralPrice)
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 borrowedAssets = position.borrowShares.toAssetsUp(totalBorrowAssets, totalBorrowShares);
-        return getLTV(borrowedAssets, position.collateral, collateralPrice);
     }
 
     /// @dev Calculates the LTV based on borrowed assets and collateral value
