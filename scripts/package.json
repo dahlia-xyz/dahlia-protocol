@@ -7,7 +7,11 @@
   "scripts": {
     "prepare": "pnpm tsx setup.ts submodules",
     "setup": "pnpm tsx setup.ts",
-    "contracts": "pnpm tsx setup-contracts.ts"
+    "contracts": "pnpm tsx setup-contracts.ts",
+    "contracts-cartio": "pnpm tsx setup-contracts-cartio.ts",
+    "deploy-pyth-oracle": "pnpm tsx deploy-pyth-oracle.ts",
+    "deploy-pyth-separately": "pnpm tsx deploy-pyth-separately.ts",
+    "deploy-pyth-separately-cartio": "pnpm tsx deploy-pyth-separately-cartio.ts"
   },
   "author": {
     "name": "Dahlia Labs",

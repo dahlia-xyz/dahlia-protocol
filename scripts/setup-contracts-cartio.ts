@@ -1,17 +1,21 @@
 import { execa } from "execa";
 import * as process from "node:process";
 
-import { envs, privateKey } from "./consts";
 import { waitForRpc } from "./waitForRpc";
 
 const env = { ...process.env, NX_VERBOSE_LOGGING: "true" };
 const $$ = execa({ verbose: "full" });
 // const $ = execa({ env, verbose: "short" });
 
+const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
+
+if (!deployerPrivateKey) {
+  throw new Error("Missing DEPLOYER_PRIVATE_KEY");
+}
+
 await $$({ env })`pnpm nx run dahlia:otterscan`;
 
-const deployContracts = async (rpcPort: string, otterscanPort: string): Promise<void> => {
-  const rpcUrl = `http://localhost:${rpcPort}`;
+const deployContracts = async (rpcUrl: string, otterscanPort: string): Promise<void> => {
   console.log(`Deploying contracts to rpcUrl=${rpcUrl}...`);
 
   const blockNumber = await waitForRpc(rpcUrl);
@@ -55,12 +59,17 @@ const deployContracts = async (rpcPort: string, otterscanPort: string): Promise<
   await $$({
     cwd: "..",
     env: {
-      ...envs,
+      PRIVATE_KEY: deployerPrivateKey,
+      DAHLIA_OWNER: "0x56929D12646A2045de60e16AA28b8b4c9Dfb0441",
+      DAHLIA_PRIVATE_KEY: deployerPrivateKey,
+      FEES_RECIPIENT: "0x56929D12646A2045de60e16AA28b8b4c9Dfb0441",
+      POINTS_FACTORY: "0x19112AdBDAfB465ddF0b57eCC07E68110Ad09c50",
       OTTERSCAN_PORT: otterscanPort,
     },
-  })`forge script script/Dahlia.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${privateKey}`;
+  })`forge script script/Dahlia.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${deployerPrivateKey} --verifier-url 'https://api.routescan.io/v2/network/testnet/evm/80000/etherscan' --etherscan-api-key "verifyContract"`;
 };
 
-await deployContracts(process.env.MAINNET_RPC_PORT || "8546", process.env.MAINNET_OTT_PORT || "28546");
-await deployContracts(process.env.SEPOLIA_RPC_PORT || "8547", process.env.SEPOLIA_OTT_PORT || "28547");
-await deployContracts(process.env.CARTIO_RPC_PORT || "8548", process.env.CARTIO_OTT_PORT || "28548");
+// await deployContracts(process.env.MAINNET_RPC_PORT || "8546", process.env.MAINNET_OTT_PORT || "28546");
+// await deployContracts(process.env.SEPOLIA_RPC_PORT || "8547", process.env.SEPOLIA_OTT_PORT || "28547");
+await deployContracts(process.env.CARTIO_RPC_URL, process.env.CARTIO_OTT_PORT || "28548");
+// --verifier-url 'https://api.routescan.io/v2/network/testnet/evm/80000/etherscan' --etherscan-api-key "verifyContract"

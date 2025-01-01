@@ -11,6 +11,7 @@ import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
+
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -174,30 +175,30 @@ contract DeployDahlia is BaseScript {
         IrmFactory irmFactory = _deployIrmFactory();
         _printContract("IrmFactory:                ", address(irmFactory));
 
-        uint64 ZERO_UTIL_RATE = 158_247_046;
-        uint64 MIN_FULL_UTIL_RATE = 1_582_470_460;
-        uint64 MAX_FULL_UTIL_RATE = 3_164_940_920_000;
+        uint64 ZERO_UTIL_RATE = 31_649_410;
+        uint64 MIN_FULL_UTIL_RATE = 15_824_704_600;
+        uint64 MAX_FULL_UTIL_RATE = 158_247_046_000;
 
         IIrm irm = irmFactory.createVariableIrm(
             VariableIrm.Config({
-                minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                targetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                minTargetUtilization: 88 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                maxTargetUtilization: 92 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                targetUtilization: 90 * IrmConstants.UTILIZATION_100_PERCENT / 100,
                 minFullUtilizationRate: MIN_FULL_UTIL_RATE,
                 maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
                 zeroUtilizationRate: ZERO_UTIL_RATE,
-                rateHalfLife: 172_800,
+                rateHalfLife: 604_800, // 7 days
                 targetRatePercent: 0.2e18
             })
         );
         _printContract("Irm:                        ", address(irm));
 
-        // Oracle
-
         uint256 contractSize = dahlia.code.length;
         console.log("Dahlia contract size:", contractSize);
         vm.stopBroadcast();
         vm.startBroadcast(vm.envUint("DAHLIA_PRIVATE_KEY"));
+        address owner = DahliaRegistry(registry).owner();
+        console.log("Dahlia Registry owner:", owner);
         DahliaRegistry(registry).setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, wrappedVaultFactory);
         vm.stopBroadcast();
     }
