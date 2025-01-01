@@ -442,7 +442,7 @@ interface IDahlia {
     function withdrawCollateral(MarketId id, uint256 assets, address owner, address receiver) external;
 
     /// @notice Execute a flash loan for borrow token.
-    /// @param token Market id.
+    /// @param token Borrowed token address.
     /// @param assets Amount to borrow.
     /// @param data Data for `onDahliaFlashLoan` callback.
     function flashLoan(address token, uint256 assets, bytes calldata data) external;

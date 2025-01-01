@@ -608,6 +608,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
 
     /// @inheritdoc IWrappedVault
     function mint(uint256 shares, address receiver) public returns (uint256 assets) {
+        _updateUserRewards(receiver);
         (assets,) = dahlia.lend(marketId, 0, shares, receiver);
         _deposit(receiver, assets, shares);
     }
