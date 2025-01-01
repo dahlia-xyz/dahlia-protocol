@@ -1,11 +1,14 @@
+#!/bin/sh
+set -x
+
 # WrappedVault
-forge verify-contract \
-  0x50adb4bc72919bce00da0382fae354f52555855c \
-  ./src/royco/contracts/WrappedVault.sol:WrappedVault \
-  --verifier-url "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" \
-  --etherscan-api-key "verifyContract" \
-  --num-of-optimizations 200 \
-  --compiler-version "v0.8.27+commit.40a35a09"
+#forge verify-contract \
+#  0xdf1f36377f2cc51993879713f405bd34e3abd35f \
+#  ./src/royco/contracts/WrappedVault.sol:WrappedVault \
+#  --verifier-url "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" \
+#  --etherscan-api-key "verifyContract" \
+#  --num-of-optimizations 200 \
+#  --compiler-version "v0.8.27+commit.40a35a09"
 
 ## DahliaRegistry
 #ENCODED_ARGS=$(cast abi-encode \
@@ -22,19 +25,21 @@ forge verify-contract \
 #  --constructor-args $ENCODED_ARGS
 #
 # Dahlia
-#ENCODED_ARGS=$(cast abi-encode \
-#  "constructor(address, address)" \
-#  0x56929D12646A2045de60e16AA28b8b4c9Dfb0441 \
-#  0x88dd1ae59f48199920b49bb9a1ce7db9226fe8fc)
-#
-#forge verify-contract \
-#  0x96B6424E595F6B0eEA6e2dA5Ea41Fc3e263B3804 \
-#  ./src/core/contracts/Dahlia.sol:Dahlia \
-#  --verifier-url "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" \
-#  --etherscan-api-key "verifyContract" \
-#  --num-of-optimizations 200 \
-#  --compiler-version "v0.8.27+commit.5d80cfab" \
-#  --constructor-args $ENCODED_ARGS
+ENCODED_ARGS=$(cast abi-encode \
+  "constructor(address, address)" \
+  0x56929D12646A2045de60e16AA28b8b4c9Dfb0441 \
+  0x7c12a2c6fb7a4a5fa6c482ca403d7701289471f2)
+
+forge verify-contract \
+  0x0a7e67a977cf9ab1de3781ec58625010050e446e \
+  ./src/core/contracts/Dahlia.sol:Dahlia \
+  --verifier-url "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" \
+  --etherscan-api-key "verifyContract" \
+  --num-of-optimizations 200 \
+  --via-ir \
+  --evm-version "cancun" \
+  --compiler-version "v0.8.27+commit.40a35a09" \
+  --constructor-args "$ENCODED_ARGS"
 
 # WrappedVaultFactory
 #ENCODED_ARGS=$(cast abi-encode \

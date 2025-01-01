@@ -51,7 +51,7 @@ abstract contract BaseScript is Script {
 
     function _calculateDahliaOracleFactoryExpectedAddress(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
         internal
-        view
+        pure
         returns (address)
     {
         bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
