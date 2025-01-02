@@ -80,7 +80,7 @@ library MarketMath {
     }
 
     /// @dev Calculates the maximum liquidation bonus rate based on the given LLTV
-    function getMaxLiquidationBonusRate(uint256 lltv) public pure returns (uint256) {
+    function getMaxLiquidationBonusRate(uint256 lltv) internal pure returns (uint256) {
         return FixedPointMathLib.min(Constants.DEFAULT_MAX_LIQUIDATION_BONUS_RATE, (Constants.LLTV_100_PERCENT - lltv) * 3 / 4);
     }
 

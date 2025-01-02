@@ -132,7 +132,7 @@ contract WrappedVaultFactory is Ownable2Step {
         external
         returns (WrappedVault wrappedVault)
     {
-        string memory newSymbol = getNextSymbol();
+        string memory newSymbol = _getNextSymbol();
         bytes32 salt = keccak256(abi.encodePacked(id, owner, name, initialFrontendFee));
         wrappedVault = WrappedVault(wrappedVaultImplementation.cloneDeterministic(salt));
         uint8 decimals = IERC20Metadata(loanToken).decimals() + SharesMathLib.VIRTUAL_SHARES_DECIMALS;
@@ -146,7 +146,7 @@ contract WrappedVaultFactory is Ownable2Step {
     }
 
     /// @dev Helper function to get the symbol for a new incentivized vault, ROY-DAH-0, ROY-DAH-1, etc.
-    function getNextSymbol() internal view returns (string memory) {
+    function _getNextSymbol() internal view returns (string memory) {
         return string.concat("ROY-DAH-", LibString.toString(incentivizedVaults.length));
     }
 }
