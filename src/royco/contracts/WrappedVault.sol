@@ -424,27 +424,25 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     /// @notice Calculate and store current rewards for an user. Checkpoint the rewardsPerToken value with the user.
     /// @param reward The reward token / points program to update rewards for
     /// @param user The user to update rewards for
-    function _updateUserRewards(address reward, address user) internal returns (UserRewards memory) {
+    function _updateUserRewards(address reward, address user) internal {
         RewardsPerToken memory rewardsPerToken_ = _updateRewardsPerToken(reward);
         UserRewards memory userRewards_ = rewardToUserToAR[reward][user];
 
         // We skip the storage changes if there are no changes to the rewards per token accumulator
-        if (userRewards_.checkpoint == rewardsPerToken_.accumulated) return userRewards_;
+        if (userRewards_.checkpoint == rewardsPerToken_.accumulated) return;
 
         // Calculate and update the new value user reserves.
-        userRewards_.accumulated += _calculateUserRewards(principal(user), userRewards_.checkpoint, rewardsPerToken_.accumulated).toUint128();
+        userRewards_.accumulated += _calculateUserRewards(principal(user), userRewards_.checkpoint, rewardsPerToken_.accumulated);
         userRewards_.checkpoint = rewardsPerToken_.accumulated;
 
         rewardToUserToAR[reward][user] = userRewards_;
         emit UserRewardsUpdated(reward, user, userRewards_.accumulated, userRewards_.checkpoint);
-
-        return userRewards_;
     }
 
     /// @notice Claim rewards for an user
     function _claim(address reward, address from, address to, uint256 amount) internal virtual {
         _updateUserRewards(reward, from);
-        rewardToUserToAR[reward][from].accumulated -= amount.toUint128();
+        rewardToUserToAR[reward][from].accumulated -= amount;
         _pushReward(reward, to, amount);
         emit Claimed(reward, from, to, amount);
     }
