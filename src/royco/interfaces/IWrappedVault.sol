@@ -6,20 +6,20 @@ interface IWrappedVault {
     function owner() external view returns (address);
 
     /// @param account The address to get the principal balance of
-    /// @return principal balance of given account
+    /// @return The principal balance of the given account
     function principal(address account) external view returns (uint256);
 
-    /// @return get total principal of all accounts
+    /// @return The total principal of all accounts
     function totalPrincipal() external view returns (uint256);
 
     /// @param shares The amount of shares to mint
     /// @param receiver The address to mint the fees for
-    /// @dev can be called only by Dahlia contract
+    /// @dev Can be called only by the Dahlia contract, used only to emit transfer event
     function mintFees(uint256 shares, address receiver) external;
 
     /// @param from The address to burn the shares for
     /// @param shares The amount of shares to burn
-    /// @dev can be called only by Dahlia contract
+    /// @dev Can be called only by the Dahlia contract, used only to emit transfer event
     function burnShares(address from, uint256 shares) external;
 
     /// @param to The address to send the rewards to

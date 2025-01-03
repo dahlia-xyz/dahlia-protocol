@@ -31,7 +31,6 @@ interface IDahlia {
         address loanToken; // 20 bytes
         // --- 32 bytes
         address collateralToken; // 20 bytes
-        // https://doc.confluxnetwork.org/docs/general/build/smart-contracts/gas-optimization/timestamps-and-blocknumbers
         uint48 updatedAt; // 6 bytes
         uint24 protocolFeeRate; // 3 bytes // taken from interest
         uint24 reserveFeeRate; // 3 bytes // taken from interest
@@ -41,7 +40,7 @@ interface IDahlia {
         uint64 fullUtilizationRate; // 8 bytes
         // --- 28 bytes
         IIrm irm; // 20 bytes
-        uint64 ratePerSec; // 8 bytes // store refreshed rate per second
+        uint64 ratePerSec; // 8 bytes // stores refreshed rate per second
         // --- 26 bytes
         IWrappedVault vault; // 20 bytes
         uint48 repayPeriodEndTimestamp; // 6 bytes
@@ -50,13 +49,13 @@ interface IDahlia {
         uint256 totalLendShares; // 32 bytes
         uint256 totalBorrowAssets; // 32 bytes
         uint256 totalBorrowShares; // 32 bytes
-        uint256 totalLendPrincipalAssets; // 32 bytes // store user total initial lend assets
+        uint256 totalLendPrincipalAssets; // 32 bytes // stores total principal (initially lent) assets
         uint256 totalCollateralAssets; // 32 bytes
     }
 
     struct UserPosition {
         uint128 lendShares;
-        uint128 lendPrincipalAssets; // store user initial lend assets
+        uint128 lendPrincipalAssets;
         uint128 borrowShares;
         uint128 collateral;
     }
@@ -67,7 +66,7 @@ interface IDahlia {
     }
 
     /// @dev Emitted when the DahliaRegistry is set.
-    /// @param dahliaRegistry Address of the new reserve fee recipient.
+    /// @param dahliaRegistry Address of the new Dahlia registry.
     event SetDahliaRegistry(address indexed dahliaRegistry);
 
     /// @dev Emitted when the protocol fee rate is updated.
@@ -151,7 +150,7 @@ interface IDahlia {
     /// @param shares Amount of shares burned.
     event Withdraw(IDahlia.MarketId indexed id, address caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);
 
-    /// @dev Emitted when user calls final withdrawal on Stalled market
+    /// @dev Emitted when user calls final withdrawal on Stalled market.
     /// @param id Market id.
     /// @param caller Address of the caller.
     /// @param receiver Address receiving the withdrawn assets.
@@ -334,9 +333,9 @@ interface IDahlia {
     /// @param id Market id.
     /// @param assets Amount of assets to lend.
     /// @param owner Owner of the increased lend position.
-    /// @return assetsSupplied Amount of assets to lend.
-    /// @return sharesSupplied Amount of shares minted.
-    function lend(MarketId id, uint256 assets, uint256 shares, address owner) external returns (uint256 assetsSupplied, uint256 sharesSupplied);
+    /// @return assetsLent Amount of lent assets.
+    /// @return sharesMinted Amount of shares minted.
+    function lend(MarketId id, uint256 assets, uint256 shares, address owner) external returns (uint256 assetsLent, uint256 sharesMinted);
 
     /// @notice Withdraw `assets` by `shares` on behalf of a user, sending to a receiver.
     /// @dev Should be invoked through a wrapped vault.
@@ -355,9 +354,9 @@ interface IDahlia {
     /// @notice Transfer lend shares between two users.
     /// @dev Should be invoked through a wrapped vault.
     /// @param id Market id.
-    /// @param owner Address owning the increased borrow position.
-    /// @param receiver Address receiving the assets.
-    /// @param amount Amount of assets to transfer.
+    /// @param owner Address owning the lend shares.
+    /// @param receiver Address receiving the lend shares.
+    /// @param amount Amount of lend shares to transfer.
     function transferLendShares(MarketId id, address owner, address receiver, uint256 amount) external returns (bool);
 
     /// @notice Estimates the interest rate after depositing a specified amount of assets.
@@ -441,16 +440,17 @@ interface IDahlia {
     /// @param receiver Address receiving the collateral assets.
     function withdrawCollateral(MarketId id, uint256 assets, address owner, address receiver) external;
 
-    /// @notice Execute a flash loan for borrow token.
-    /// @param token Borrowed token address.
-    /// @param assets Amount to borrow.
-    /// @param data Data for `onDahliaFlashLoan` callback.
+    /// @notice Initiate a flash loan for a specified collateral token.
+    /// @param token The address of the token to be borrowed.
+    /// @param assets The amount of the token to borrow.
+    /// @param data Arbitrary data passed to the `onDahliaFlashLoan` callback.
     function flashLoan(address token, uint256 assets, bytes calldata data) external;
 
-    /// @notice Execute a flash loan for lending token.
+    /// @notice Initiate a flash loan for a specified lending token within a market.
     /// @param id Market id.
-    /// @param assets Amount to borrow.
-    /// @param data Data for `onDahliaFlashLoan` callback.
+    /// @param assets The amount of the lending token to borrow.
+    /// @param data Arbitrary data passed to the `onDahliaFlashLoan` callback.
+    /// @dev The market id specifies the token to be borrowed.
     function flashLoan(MarketId id, uint256 assets, bytes calldata data) external;
 
     /// @notice Accrue interest for market parameters.
