@@ -23,18 +23,18 @@ contract WrappedVaultFactory is Ownable2Step {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
     constructor(
-        address wrappedVaultImplementation,
-        address protocolFeeRecipient,
-        uint256 protocolFee,
-        uint256 minimumFrontendFee,
-        address owner,
+        address _wrappedVaultImplementation,
+        address _protocolFeeRecipient,
+        uint256 _protocolFee,
+        uint256 _minimumFrontendFee,
+        address _owner,
         address _pointsFactory,
         address _dahlia
-    ) payable Ownable(owner) {
-        _setWrappedVaultImplementation(wrappedVaultImplementation);
-        _setProtocolFee(protocolFee);
-        _setProtocolFeeRecipient(protocolFeeRecipient);
-        _setMinimumReferralFee(minimumFrontendFee);
+    ) payable Ownable(_owner) {
+        _setWrappedVaultImplementation(_wrappedVaultImplementation);
+        _setProtocolFee(_protocolFee);
+        _setProtocolFeeRecipient(_protocolFeeRecipient);
+        _setMinimumReferralFee(_minimumFrontendFee);
         dahlia = _dahlia;
         emit DahliaUpdated(_dahlia);
         pointsFactory = _pointsFactory;
