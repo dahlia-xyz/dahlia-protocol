@@ -12,12 +12,12 @@ contract MarketMathTest is Test {
     using LibString for uint256;
 
     struct MarketData {
-        uint256 ta;
-        uint256 ts;
-        uint256 a;
-        uint256 s;
-        uint256 ra;
-        uint256 rs;
+        uint256 ta; // total assets
+        uint256 ts; // total shares
+        uint256 a; // assets
+        uint256 s; // shares
+        uint256 ra; // expected assets
+        uint256 rs; // expected shares
     }
 
     MarketData[] internal mathSets;
@@ -42,6 +42,17 @@ contract MarketMathTest is Test {
     function validate_lend(MarketData memory s, string memory index) internal pure {
         uint256 shares = SharesMathLib.toSharesDown(s.a, s.ta, s.ts);
         assertEq(shares, s.rs, index);
+    }
+
+    function test_toSharesDown() public pure {
+        assertEq(SharesMathLib.toSharesDown(1, 1, 1), 500_000);
+        assertEq(SharesMathLib.toSharesDown(1, 1, 0), 500_000);
+        assertEq(SharesMathLib.toSharesDown(1, 0, 1), SharesMathLib.SHARES_OFFSET + 1);
+        assertEq(SharesMathLib.toSharesDown(1, 0, 0), SharesMathLib.SHARES_OFFSET);
+        // accrued interest in total SharesMathLib.SHARES_OFFSET * 2
+        assertEq(SharesMathLib.toSharesDown(1, SharesMathLib.SHARES_OFFSET * 2, SharesMathLib.SHARES_OFFSET), 0);
+        assertEq(SharesMathLib.toSharesDown(1, SharesMathLib.SHARES_OFFSET, 1), 1);
+        assertEq(SharesMathLib.toSharesDown(0, SharesMathLib.SHARES_OFFSET, 1), 0);
     }
 
     function test_math_getPositionLtv() public pure {
