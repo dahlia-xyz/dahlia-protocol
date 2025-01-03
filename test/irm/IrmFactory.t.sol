@@ -56,13 +56,13 @@ contract IrmFactoryTest is Test {
     function test_irmFactory_variableIrm_reverts() public {
         // check minTargetUtilization overflow
         defaultConfig.maxTargetUtilization = IrmConstants.UTILIZATION_100_PERCENT + 1;
-        vm.expectRevert(IrmFactory.IncorrectConfig.selector);
+        vm.expectRevert(IrmFactory.MaxUtilizationTooHigh.selector);
         irmFactory.createVariableIrm(defaultConfig);
 
         // check minTargetUtilization > maxTargetUtilization
         defaultConfig.minTargetUtilization = 76 * IrmConstants.UTILIZATION_100_PERCENT / 100;
         defaultConfig.maxTargetUtilization = 75 * IrmConstants.UTILIZATION_100_PERCENT / 100;
-        vm.expectRevert(IrmFactory.IncorrectConfig.selector);
+        vm.expectRevert(IrmFactory.MinUtilizationOutOfRange.selector);
         irmFactory.createVariableIrm(defaultConfig);
 
         // check maxFullUtilizationRate > maxFullUtilizationRate
@@ -70,7 +70,7 @@ contract IrmFactoryTest is Test {
         defaultConfig.maxTargetUtilization = 75 * IrmConstants.UTILIZATION_100_PERCENT / 100;
         defaultConfig.minFullUtilizationRate = MAX_FULL_UTIL_RATE;
         defaultConfig.maxFullUtilizationRate = MIN_FULL_UTIL_RATE;
-        vm.expectRevert(IrmFactory.IncorrectConfig.selector);
+        vm.expectRevert(IrmFactory.FullUtilizationRateRangeInvalid.selector);
         irmFactory.createVariableIrm(defaultConfig);
     }
 }

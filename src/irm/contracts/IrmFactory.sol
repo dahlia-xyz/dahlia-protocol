@@ -9,35 +9,24 @@ import { IIrm } from "src/irm/interfaces/IIrm.sol";
 contract IrmFactory {
     event VariableIrmCreated(address indexed irmAddress, VariableIrm.Config config);
 
-    error IncorrectConfig();
-
-    uint256 internal constant CONFIG_PARAMS_BYTES_LENGTH = 8 * 32;
+    error MaxUtilizationTooHigh();
+    error MinUtilizationOutOfRange();
+    error FullUtilizationRateRangeInvalid();
 
     /// @dev returns the hash of the init code (creation code + ABI-encoded args) used in CREATE2
     /// @param creationCode the creation code of a contract C, as returned by type(C).creationCode
     /// @param args the ABI-encoded arguments to the constructor of C
-    function hashInitCode(bytes memory creationCode, bytes memory args) internal pure returns (bytes32) {
+    function hashInitCode(bytes memory creationCode, bytes memory args) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(creationCode, args));
     }
 
     function createVariableIrm(VariableIrm.Config memory config) external returns (IIrm irm) {
-        bytes32 salt;
-        assembly ("memory-safe") {
-            salt := keccak256(config, CONFIG_PARAMS_BYTES_LENGTH)
-        }
-        require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, IncorrectConfig());
-        require(config.minTargetUtilization < config.maxTargetUtilization, IncorrectConfig());
-        require(config.minFullUtilizationRate <= config.maxFullUtilizationRate, IncorrectConfig());
-        bytes memory encodedArgs = abi.encode(
-            config.minTargetUtilization,
-            config.maxTargetUtilization,
-            config.targetUtilization,
-            config.rateHalfLife,
-            config.minFullUtilizationRate,
-            config.maxFullUtilizationRate,
-            config.zeroUtilizationRate,
-            config.targetRatePercent
-        );
+        require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, MaxUtilizationTooHigh());
+        require(config.minTargetUtilization < config.maxTargetUtilization, MinUtilizationOutOfRange());
+        require(config.minFullUtilizationRate <= config.maxFullUtilizationRate, FullUtilizationRateRangeInvalid());
+
+        bytes memory encodedArgs = abi.encode(config);
+        bytes32 salt = keccak256(encodedArgs);
         bytes32 initCodeHash = hashInitCode(type(VariableIrm).creationCode, encodedArgs);
         address expectedAddress = Create2.computeAddress(salt, initCodeHash);
         if (expectedAddress.code.length > 0) {
