@@ -261,7 +261,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         ERC20Mock($.marketConfig.loanToken).setBalance($.alice, expectedAmountRepaid);
         $.loanToken.approve(address($.dahlia), expectedAmountRepaid);
         vm.resumeGasMetering();
-        $.dahlia.repay($.marketId, expectedAmountRepaid, 0, $.alice, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.repay($.marketId, 0, alicePosition.borrowShares, $.alice, TestConstants.EMPTY_CALLBACK);
         $.dahlia.withdrawCollateral($.marketId, pos.collateral, $.alice, $.alice);
         vm.pauseGasMetering();
         vm.stopPrank();
@@ -295,7 +295,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         ERC20Mock($.marketConfig.loanToken).setBalance($.alice, expectedAmountRepaid);
         $.loanToken.approve(address($.dahlia), expectedAmountRepaid);
         vm.resumeGasMetering();
-        $.dahlia.repayAndWithdraw($.marketId, pos.collateral, expectedAmountRepaid, 0, $.alice, $.alice);
+        $.dahlia.repayAndWithdraw($.marketId, pos.collateral, 0, alicePosition.borrowShares, $.alice, $.alice);
         vm.pauseGasMetering();
         vm.stopPrank();
 
