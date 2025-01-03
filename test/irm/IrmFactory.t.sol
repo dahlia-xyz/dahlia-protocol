@@ -48,6 +48,9 @@ contract IrmFactoryTest is Test {
         assertEq(irm.targetUtilization(), defaultConfig.targetUtilization);
         assertEq(irm.minTargetUtilization(), defaultConfig.minTargetUtilization);
         assertEq(irm.maxTargetUtilization(), defaultConfig.maxTargetUtilization);
+
+        VariableIrm irm2 = VariableIrm(address(irmFactory.createVariableIrm(defaultConfig)));
+        assertEq(address(irm), address(irm2));
     }
 
     function test_irmFactory_variableIrm_reverts() public {

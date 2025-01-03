@@ -20,7 +20,7 @@ contract IrmFactory {
         return keccak256(abi.encodePacked(creationCode, args));
     }
 
-    function createVariableIrm(VariableIrm.Config memory config) external returns (IIrm) {
+    function createVariableIrm(VariableIrm.Config memory config) external returns (IIrm irm) {
         bytes32 salt;
         assembly ("memory-safe") {
             salt := keccak256(config, CONFIG_PARAMS_BYTES_LENGTH)
@@ -28,7 +28,6 @@ contract IrmFactory {
         require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, IncorrectConfig());
         require(config.minTargetUtilization < config.maxTargetUtilization, IncorrectConfig());
         require(config.minFullUtilizationRate <= config.maxFullUtilizationRate, IncorrectConfig());
-        VariableIrm irm;
         bytes memory encodedArgs = abi.encode(
             config.minTargetUtilization,
             config.maxTargetUtilization,
@@ -45,10 +44,7 @@ contract IrmFactory {
             irm = VariableIrm(expectedAddress);
         } else {
             irm = new VariableIrm{ salt: salt }(config);
-            address irmAddress = address(irm);
-            require(expectedAddress == irmAddress);
         }
         emit VariableIrmCreated(address(irm), config);
-        return irm;
     }
 }
