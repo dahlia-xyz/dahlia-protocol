@@ -260,7 +260,7 @@ contract ManageMarketIntegrationTest is Test {
         IDahlia.MarketConfig memory marketConfig = ctx.createMarketConfig("USDC", "WBTC", BoundUtils.toPercent(80));
         marketConfig.owner = ownerFuzz;
         IDahlia.MarketId marketId = ctx.deployDahliaMarket(marketConfig);
-        assertEq(IDahlia.MarketId.unwrap(marketId), 2);
+        assertEq(IDahlia.MarketId.unwrap(marketId), 1);
         IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq(market.vault.owner(), ownerFuzz);
     }
@@ -270,7 +270,7 @@ contract ManageMarketIntegrationTest is Test {
         marketConfig.owner = address(0);
         vm.startPrank($.marketAdmin);
         IDahlia.MarketId marketId = $.dahlia.deployMarket(marketConfig);
-        assertEq(IDahlia.MarketId.unwrap(marketId), 2);
+        assertEq(IDahlia.MarketId.unwrap(marketId), 1);
         IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);
         assertEq(market.vault.owner(), $.marketAdmin);

@@ -146,7 +146,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketMath.getCollateralPrice(marketConfig.oracle); // validate oracle
         _validateLiquidationBonusRate(marketConfig.liquidationBonusRate, marketConfig.lltv);
 
-        id = MarketId.wrap(++marketSequence);
+        id = MarketId.wrap(marketSequence);
 
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
         address owner = marketConfig.owner == address(0) ? msg.sender : marketConfig.owner;
@@ -154,6 +154,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             id, marketConfig.loanToken, owner, marketConfig.name, fee
         );
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
+        marketSequence++;
     }
 
     /// @inheritdoc IDahlia
