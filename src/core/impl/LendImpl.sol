@@ -42,6 +42,9 @@ library LendImpl {
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalLendShares = market.totalLendShares;
         if (assets == 0) {
+            // If the user tries to withdraw a very small number of shares (less than SharesMathLib.SHARES_OFFSET),
+            // they might receive 0 assets due to rounding. It is recommended to use the "assets" parameter for
+            // partial withdrawals, while the "shares" parameter should be used for withdrawing all available assets (100%).
             assets = shares.toAssetsDown(totalLendAssets, totalLendShares);
         } else {
             shares = assets.toSharesUp(totalLendAssets, totalLendShares);
