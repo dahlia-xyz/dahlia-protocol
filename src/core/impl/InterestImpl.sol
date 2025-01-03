@@ -22,10 +22,6 @@ library InterestImpl {
         address protocolFeeRecipient,
         address reserveFeeRecipient
     ) internal {
-        if (address(market.irm) == address(0)) {
-            return;
-        }
-
         uint256 deltaTime = block.timestamp - market.updatedAt;
         if (deltaTime == 0) {
             return;
@@ -73,8 +69,8 @@ library InterestImpl {
     /// @return Updated market balances
     function getLastMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
-        uint256 deltaTime = block.timestamp - market.updatedAt;
-        if (deltaTime != 0 && totalBorrowAssets != 0 && address(market.irm) != address(0)) {
+        if (totalBorrowAssets != 0) {
+            uint256 deltaTime = block.timestamp - market.updatedAt;
             uint256 fullUtilizationRate = market.fullUtilizationRate;
             (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
                 IIrm(market.irm).calculateInterest(deltaTime, market.totalLendAssets, totalBorrowAssets, fullUtilizationRate);
@@ -90,8 +86,8 @@ library InterestImpl {
 
                 market.totalLendShares += sumOfFeeShares;
                 market.totalBorrowAssets += interestEarnedAssets;
-                market.updatedAt = uint48(block.timestamp);
             }
+            market.updatedAt = uint48(block.timestamp);
         }
         return market;
     }

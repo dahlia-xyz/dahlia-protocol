@@ -334,7 +334,9 @@ contract AccrueInterestIntegrationTest is Test {
         }
         vm.stopPrank();
         printMarketState("0", "carol and bob has equal position with 10% ltv");
-        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 7_912_352, "initial lend rate");
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_130, "initial lend rate");
+        validateUserPos("0", 0, 0, 0, 0);
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 5_647_210, "initial lend rate if deposit more assets");
         validateUserPos("0", 0, 0, 0, 0);
 
         vm.forward(1);
