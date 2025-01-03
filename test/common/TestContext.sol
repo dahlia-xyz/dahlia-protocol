@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Vm } from "@forge-std/Test.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
@@ -280,6 +281,28 @@ contract TestContext {
 
         address pointsFactory = address(new PointsFactory(roycoOwner));
         address wrappedVault = address(new WrappedVault());
+
+        vm.expectEmit(true, true, true, true);
+        emit Ownable.OwnershipTransferred(address(0), roycoOwner);
+
+        vm.expectEmit(true, true, true, true);
+        emit WrappedVaultFactory.WrappedVaultImplementationUpdated(wrappedVault);
+
+        vm.expectEmit(true, true, true, true);
+        emit WrappedVaultFactory.ProtocolFeeUpdated(protocolFee);
+
+        vm.expectEmit(true, true, true, true);
+        emit WrappedVaultFactory.ProtocolFeeRecipientUpdated(protocolFeeRecipient);
+
+        vm.expectEmit(true, true, true, true);
+        emit WrappedVaultFactory.ReferralFeeUpdated(minimumFrontendFee);
+
+        vm.expectEmit(true, true, true, true);
+        emit WrappedVaultFactory.DahliaUpdated(address(dahlia));
+
+        vm.expectEmit(true, true, true, true);
+        emit WrappedVaultFactory.PointsFactoryUpdated(pointsFactory);
+
         wrappedVaultFactory =
             new WrappedVaultFactory(wrappedVault, protocolFeeRecipient, protocolFee, minimumFrontendFee, roycoOwner, pointsFactory, address(dahlia));
 

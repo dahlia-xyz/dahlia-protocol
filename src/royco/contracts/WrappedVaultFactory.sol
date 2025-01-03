@@ -23,23 +23,22 @@ contract WrappedVaultFactory is Ownable2Step {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
     constructor(
-        address _wrappedVaultImplementation,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        uint256 _minimumFrontendFee,
-        address _owner,
+        address wrappedVaultImplementation,
+        address protocolFeeRecipient,
+        uint256 protocolFee,
+        uint256 minimumFrontendFee,
+        address owner,
         address _pointsFactory,
         address _dahlia
-    ) payable Ownable(_owner) {
-        if (_protocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
-        if (_minimumFrontendFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
-
-        _setWrappedVaultImplementation(_wrappedVaultImplementation);
-        protocolFeeRecipient = _protocolFeeRecipient;
-        protocolFee = _protocolFee;
-        minimumFrontendFee = _minimumFrontendFee;
-        pointsFactory = _pointsFactory;
+    ) payable Ownable(owner) {
+        _setWrappedVaultImplementation(wrappedVaultImplementation);
+        _setProtocolFee(protocolFee);
+        _setProtocolFeeRecipient(protocolFeeRecipient);
+        _setMinimumReferralFee(minimumFrontendFee);
         dahlia = _dahlia;
+        emit DahliaUpdated(_dahlia);
+        pointsFactory = _pointsFactory;
+        emit PointsFactoryUpdated(_pointsFactory);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -74,6 +73,8 @@ contract WrappedVaultFactory is Ownable2Step {
     event ProtocolFeeUpdated(uint256 newProtocolFee);
     event ReferralFeeUpdated(uint256 newReferralFee);
     event ProtocolFeeRecipientUpdated(address newRecipient);
+    event PointsFactoryUpdated(address newPointsFactory);
+    event DahliaUpdated(address newDahlia);
     event WrappedVaultCreated(
         ERC4626 indexed underlyingVaultAddress,
         WrappedVault indexed incentivizedVaultAddress,
@@ -93,30 +94,42 @@ contract WrappedVaultFactory is Ownable2Step {
         wrappedVaultImplementation = newWrappedVaultImplementation;
         emit WrappedVaultImplementationUpdated(newWrappedVaultImplementation);
     }
-    /// @param newWrappedVaultImplementation The new address of the Wrapped Vault implementation.
 
+    /// @param newWrappedVaultImplementation The new address of the Wrapped Vault implementation.
     function updateWrappedVaultImplementation(address newWrappedVaultImplementation) external payable onlyOwner {
         _setWrappedVaultImplementation(newWrappedVaultImplementation);
     }
 
-    /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
-    function updateProtocolFee(uint256 newProtocolFee) external onlyOwner {
+    function _setProtocolFee(uint256 newProtocolFee) internal {
         if (newProtocolFee > MAX_PROTOCOL_FEE) revert ProtocolFeeTooHigh();
         protocolFee = newProtocolFee;
         emit ProtocolFeeUpdated(newProtocolFee);
     }
+    /// @param newProtocolFee The new protocol fee to set for a given vault, must be less than MAX_PROTOCOL_FEE
 
-    /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults, must be less than MAX_MIN_REFERRAL_FEE
-    function updateMinimumReferralFee(uint256 newMinimumReferralFee) external onlyOwner {
+    function updateProtocolFee(uint256 newProtocolFee) external onlyOwner {
+        _setProtocolFee(newProtocolFee);
+    }
+
+    function _setMinimumReferralFee(uint256 newMinimumReferralFee) internal {
         if (newMinimumReferralFee > MAX_MIN_REFERRAL_FEE) revert ReferralFeeTooHigh();
         minimumFrontendFee = newMinimumReferralFee;
         emit ReferralFeeUpdated(newMinimumReferralFee);
     }
 
-    /// @param newRecipient The new protocol fee recipient to set for all incentivized vaults
-    function updateProtocolFeeRecipient(address newRecipient) external onlyOwner {
+    /// @param newMinimumReferralFee The new minimum referral fee to set for all incentivized vaults, must be less than MAX_MIN_REFERRAL_FEE
+    function updateMinimumReferralFee(uint256 newMinimumReferralFee) external onlyOwner {
+        _setMinimumReferralFee(newMinimumReferralFee);
+    }
+
+    function _setProtocolFeeRecipient(address newRecipient) internal {
         protocolFeeRecipient = newRecipient;
         emit ProtocolFeeRecipientUpdated(newRecipient);
+    }
+
+    /// @param newRecipient The new protocol fee recipient to set for all incentivized vaults
+    function updateProtocolFeeRecipient(address newRecipient) external onlyOwner {
+        _setProtocolFeeRecipient(newRecipient);
     }
 
     /*//////////////////////////////////////////////////////////////
