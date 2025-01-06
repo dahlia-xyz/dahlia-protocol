@@ -73,7 +73,7 @@ contract BorrowIntegrationTest is Test {
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
 
-        (, uint256 maxBorrowAssets, uint256 collateralPrice) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        (, uint256 maxBorrowAssets, uint256 collateralPrice) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
         assertEq(collateralPrice, pos.price);
 
         vm.prank($.alice);
@@ -103,27 +103,33 @@ contract BorrowIntegrationTest is Test {
         $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.alice);
     }
 
-    function test_int_getMaxBorrowableAmount(TestTypes.MarketPosition memory pos) public {
+    function test_int_getMaxBorrowableAmountRegular(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         $.oracle.setPrice(pos.price);
 
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
-        (uint256 borrowAssets1, uint256 maxBorrowAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
-        assertEq(borrowAssets1, 0, "no borrowed assets yet");
-        assertEq(maxBorrowAssets1, 0, "user can not borrow because no lending assets");
+        (uint256 borrowedAssets1, uint256 borrowableAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
+        assertEq(borrowedAssets1, 0, "no borrowed assets yet");
+        assertEq(borrowableAssets1, 0, "user can not borrow because no lending assets");
+        (uint256 borrowedAssets11, uint256 borrowableAssets11,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, pos.collateral);
+        assertEq(borrowedAssets11, 0, "no borrowed assets yet even with additional collateral");
+        assertEq(borrowableAssets11, 0, "user can not borrow because no lending assets with additional collateral");
 
         vm.dahliaLendBy($.carol, 1, $);
-        (uint256 borrowAssets2, uint256 maxBorrowAssets2,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
-        assertEq(borrowAssets2, 0, "borrowAssets2 no borrowed assets yet");
-        assertEq(maxBorrowAssets2, 1, "user can borrow 1 asset only");
+        (uint256 borrowedAssets2, uint256 borrowableAssets2,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
+        assertEq(borrowedAssets2, 0, "borrowedAssets2 no borrowed assets yet");
+        assertEq(borrowableAssets2, 1, "user can borrow 1 asset only");
+        (uint256 borrowedAssets22, uint256 borrowableAssets22,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, pos.collateral);
+        assertEq(borrowedAssets22, 0, "borrowedAssets22 no borrowed assets yet even with additional collateral");
+        assertEq(borrowableAssets22, 1, "user can borrow 1 asset only even with additional collateral");
 
         vm.dahliaLendBy($.carol, pos.lent - 1, $);
 
-        (uint256 borrowAssets3, uint256 maxBorrowAssets3,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
-        assertEq(borrowAssets3, 0, "borrowAssets3 no borrowed assets yet");
-        assertLe(maxBorrowAssets3, pos.lent, "user can borrow but still less then pos.lent");
+        (uint256 borrowedAssets3, uint256 borrowableAssets3,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
+        assertEq(borrowedAssets3, 0, "borrowedAssets3 no borrowed assets yet");
+        assertLe(borrowableAssets3, pos.lent, "user can borrow but still less then pos.lent");
 
         uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
 
@@ -135,10 +141,48 @@ contract BorrowIntegrationTest is Test {
         vm.pauseGasMetering();
         vm.stopPrank();
 
-        (uint256 borrowAssets4, uint256 maxBorrowAssets4,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
-        assertEq(borrowAssets4, pos.borrowed, "already borrowed asset");
+        (uint256 borrowedAssets4, uint256 borrowableAssets4,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
+        assertEq(borrowedAssets4, pos.borrowed, "already borrowed asset");
         assertEq(expectedBorrowShares, _shares, "check shares");
-        assertEq(maxBorrowAssets4, maxBorrowAssets3 - borrowAssets4, "still can borrow");
+        assertEq(borrowableAssets4, borrowableAssets3 - borrowedAssets4, "still can borrow");
+    }
+
+    function test_int_getMaxBorrowableAmountWithAdditionalCollateral(TestTypes.MarketPosition memory pos) public {
+        vm.pauseGasMetering();
+
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        $.oracle.setPrice(pos.price);
+
+        (uint256 borrowedAssets11, uint256 borrowableAssets11,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, pos.collateral);
+        assertEq(borrowedAssets11, 0, "no borrowed assets yet");
+        assertEq(borrowableAssets11, 0, "user can not borrow because no lending assets");
+
+        vm.dahliaLendBy($.carol, 1, $);
+        (uint256 borrowedAssets22, uint256 borrowableAssets22,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, pos.collateral);
+        assertEq(borrowedAssets22, 0, "borrowedAssets22 no borrowed assets yet even with additional collateral");
+        assertEq(borrowableAssets22, 1, "user can borrow 1 asset only even with additional collateral");
+
+        vm.dahliaLendBy($.carol, pos.lent - 1, $);
+
+        (uint256 borrowedAssets3, uint256 borrowableAssets3,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, pos.collateral);
+        assertEq(borrowedAssets3, 0, "borrowedAssets3 no borrowed assets yet");
+        assertLe(borrowableAssets3, pos.lent, "user can borrow but still less then pos.lent");
+
+        uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);
+
+        vm.dahliaApproveCollateralBy($.alice, pos.collateral, $);
+        vm.startPrank($.alice);
+        vm.expectEmit(true, true, true, true, address($.dahlia));
+        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        vm.resumeGasMetering();
+        uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
+        vm.pauseGasMetering();
+        vm.stopPrank();
+
+        (uint256 borrowedAssets4, uint256 borrowableAssets4,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
+        assertEq(borrowedAssets4, pos.borrowed, "already borrowed asset");
+        assertEq(expectedBorrowShares, _shares, "check shares");
+        assertEq(borrowableAssets4, borrowableAssets3 - borrowedAssets4, "still can borrow");
     }
 
     function test_int_borrow_byAssets(TestTypes.MarketPosition memory pos) public {

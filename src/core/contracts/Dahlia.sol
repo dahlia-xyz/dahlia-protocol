@@ -460,20 +460,20 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function getMaxBorrowableAmount(MarketId id, address userAddress)
+    function getMaxBorrowableAmount(MarketId id, address userAddress, uint256 additionalCollateral)
         external
         view
-        returns (uint256 borrowAssets, uint256 maxBorrowAssets, uint256 collateralPrice)
+        returns (uint256 borrowedAssets, uint256 borrowableAssets, uint256 collateralPrice)
     {
         MarketData storage marketData = markets[id];
         Market memory market = InterestImpl.getLastMarketState(marketData.market);
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         UserPosition memory position = marketData.userPositions[userAddress];
-        borrowAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
-        uint256 positionCapacity = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral, market.lltv);
-        uint256 leftToBorrow = positionCapacity > borrowAssets ? positionCapacity - borrowAssets : 0;
+        borrowedAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
+        uint256 positionCapacity = MarketMath.calcMaxBorrowAssets(collateralPrice, position.collateral + additionalCollateral, market.lltv);
+        uint256 leftToBorrow = positionCapacity > borrowedAssets ? positionCapacity - borrowedAssets : 0;
         uint256 availableLendAssets = market.totalLendAssets - market.totalBorrowAssets;
-        maxBorrowAssets = availableLendAssets.min(leftToBorrow);
+        borrowableAssets = availableLendAssets.min(leftToBorrow);
     }
 
     /// @inheritdoc IDahlia
