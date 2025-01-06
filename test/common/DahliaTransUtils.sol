@@ -57,10 +57,16 @@ library DahliaTransUtils {
         vm.stopPrank();
     }
 
-    function dahliaSupplyCollateralBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
+    function dahliaApproveCollateralBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
         ERC20Mock($.marketConfig.collateralToken).setBalance(lender, assets);
         vm.startPrank(lender);
         IERC20($.marketConfig.collateralToken).approve(address($.dahlia), assets);
+        vm.stopPrank();
+    }
+
+    function dahliaSupplyCollateralBy(Vm vm, address lender, uint256 assets, TestContext.MarketContext memory $) internal {
+        dahliaApproveCollateralBy(vm, lender, assets, $);
+        vm.startPrank(lender);
         $.dahlia.supplyCollateral($.marketId, assets, lender, TestConstants.EMPTY_CALLBACK);
         vm.stopPrank();
     }

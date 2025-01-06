@@ -228,10 +228,14 @@ interface IDahlia {
     /// @notice Get max borrowable assets for a user in a market.
     /// @param id Market id.
     /// @param userAddress User address.
-    function getMaxBorrowableAmount(MarketId id, address userAddress)
+    /// @param additionalCollateral Amount of additional collateral assets.
+    /// @return borrowedAssets Amount of borrowed assets.
+    /// @return borrowableAssets Amount of borrowable assets.
+    /// @return collateralPrice Collateral price.
+    function getMaxBorrowableAmount(MarketId id, address userAddress, uint256 additionalCollateral)
         external
         view
-        returns (uint256 maxBorrowAssets, uint256 borrowAssets, uint256 collateralPrice);
+        returns (uint256 borrowedAssets, uint256 borrowableAssets, uint256 collateralPrice);
 
     /// @notice Get user's loan-to-value ratio for a market.
     /// @param id Market id.

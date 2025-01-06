@@ -553,9 +553,9 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketProxy.maxRedeem($.alice), shares, "alice can withdraw all lent shares");
 
         vm.dahliaSupplyCollateralBy($.bob, pos.collateral, $);
-        (uint256 borrowAssets1, uint256 maxBorrowAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.bob);
-        assertEq(borrowAssets1, 0, "no borrowed assets yet");
-        assertGt(maxBorrowAssets1, 0, "user can borrow");
+        (uint256 borrowedAssets1, uint256 borrowableAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.bob, 0);
+        assertEq(borrowedAssets1, 0, "no borrowed assets yet");
+        assertGt(borrowableAssets1, 0, "user can borrow");
 
         vm.startPrank($.bob);
         vm.resumeGasMetering();

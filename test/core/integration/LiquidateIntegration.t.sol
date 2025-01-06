@@ -46,7 +46,7 @@ contract LiquidateIntegrationTest is Test {
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
         uint256 positionLTV = $.dahlia.getPositionLTV($.marketId, $.alice);
-        (uint256 borrowedAssets,,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice);
+        (uint256 borrowedAssets,,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
         vm.dahliaPrepareLoanBalanceFor($.bob, borrowedAssets, $);
 
         vm.prank($.bob);
