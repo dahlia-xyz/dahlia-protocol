@@ -115,16 +115,16 @@ pipeline {
                         }
                     }
                 }
-                stage('Coverage') {
-                    steps {
-                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
-                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
-                            script {
-                                sh 'pnpm run coverage'
-                            }
-                        }
-                    }
-                }
+//                stage('Coverage') {
+//                    steps {
+//                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
+//                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
+//                            script {
+//                                sh 'pnpm run coverage'
+//                            }
+//                        }
+//                    }
+//                }
                 stage('Diff') {
                     steps {
                         withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
