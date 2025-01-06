@@ -114,7 +114,7 @@ contract Timelock is Ownable2Step {
     }
 
     /// @notice Returns the current block timestamp.
-    function _getBlockTimestamp() internal view returns (uint256) {
+    function _getBlockTimestamp() private view returns (uint256) {
         return block.timestamp;
     }
 }

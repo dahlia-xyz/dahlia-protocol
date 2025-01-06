@@ -3,33 +3,33 @@ pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
-import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
-import { PythOracle } from "src/oracles/contracts/PythOracle.sol";
+
+import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
+import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
 contract DeployPythOracle is BaseScript {
-    function getPythOracleDeployData() internal view returns (PythOracle.Params memory params, PythOracle.Delays memory delays) {
+    function getPythOracleDeployData() internal view returns (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) {
         address baseToken = vm.envAddress("PYTH_ORACLE_BASE_TOKEN");
         bytes32 baseFeed = vm.envBytes32("PYTH_ORACLE_BASE_FEED");
         address quoteToken = vm.envAddress("PYTH_ORACLE_QUOTE_TOKEN");
         bytes32 quoteFeed = vm.envBytes32("PYTH_ORACLE_QUOTE_FEED");
         uint256 baseMaxDelay = vm.envUint("PYTH_ORACLE_BASE_MAX_DELAY");
         uint256 quoteMaxDelay = vm.envUint("PYTH_ORACLE_QUOTE_MAX_DELAY");
-        params = PythOracle.Params(baseToken, baseFeed, quoteToken, quoteFeed);
-        delays = PythOracle.Delays(baseMaxDelay, quoteMaxDelay);
+        params = DahliaPythOracle.Params(baseToken, baseFeed, quoteToken, quoteFeed);
+        delays = DahliaPythOracle.Delays(baseMaxDelay, quoteMaxDelay);
     }
 
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        address uniswapStaticOracleAddress = vm.envAddress("UNISWAP_STATIC_ORACLE_ADDRESS");
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
         console.log("Deployer address:", deployer);
-        address dahliaOracleFactoryAddress = _calculateDahliaOracleFactoryExpectedAddress(dahliaOwner, uniswapStaticOracleAddress, pythStaticOracleAddress);
+        address dahliaOracleFactoryAddress = _calculateDahliaPythOracleFactoryExpectedAddress(dahliaOwner, pythStaticOracleAddress);
         require(dahliaOracleFactoryAddress.code.length > 0);
         _printContract("DahliaOracleFactory:", dahliaOracleFactoryAddress);
-        DahliaOracleFactory oracleFactory = DahliaOracleFactory(dahliaOracleFactoryAddress);
-        (PythOracle.Params memory params, PythOracle.Delays memory delays) = getPythOracleDeployData();
-        PythOracle pythOracle = oracleFactory.createPythOracle(params, delays);
+        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(dahliaOracleFactoryAddress);
+        (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) = getPythOracleDeployData();
+        DahliaPythOracle pythOracle = oracleFactory.createPythOracle(params, delays);
         _printContract("PythOracle:", address(pythOracle));
         vm.stopBroadcast();
     }

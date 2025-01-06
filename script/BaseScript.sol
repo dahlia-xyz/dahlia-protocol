@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
-import { DahliaOracleFactory } from "../src/oracles/contracts/DahliaOracleFactory.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 import { Script } from "forge-std/Script.sol";
 import { console2 as console } from "forge-std/Test.sol";
+import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
 abstract contract BaseScript is Script {
     using LibString for *;
 
-    string public constant DAHLIA_ORACLE_FACTORY_SALT = "DAHLIA_ORACLE_FACTORY_V0.0.1";
+    string public constant DAHLIA_PYTH_ORACLE_FACTORY_SALT = "DAHLIA_PYTH_ORACLE_FACTORY_V0.0.1";
 
     address internal deployer;
     uint256 internal privateKey;
@@ -31,32 +31,25 @@ abstract contract BaseScript is Script {
         console.log(prefix, addressUrl, blockUrl);
     }
 
-    function _deployDahliaOracleFactory(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
-        internal
-        returns (DahliaOracleFactory)
-    {
+    function _deployDahliaPythOracleFactory(address timelockAddress_, address pythStaticOracleAddress_) internal returns (DahliaPythOracleFactory) {
         // TODO: Maybe we need to pass uniswap address in the creation method? Since there is no such one on the cartio
-        bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
-        address expectedAddress = _calculateDahliaOracleFactoryExpectedAddress(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
+        address expectedAddress = _calculateDahliaPythOracleFactoryExpectedAddress(timelockAddress_, pythStaticOracleAddress_);
         if (expectedAddress.code.length > 0) {
             console.log("DahliaOracleFactory already deployed");
-            return DahliaOracleFactory(expectedAddress);
+            return DahliaPythOracleFactory(expectedAddress);
         } else {
-            DahliaOracleFactory oracleFactory = new DahliaOracleFactory{ salt: salt }(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
+            DahliaPythOracleFactory oracleFactory = new DahliaPythOracleFactory{ salt: salt }(timelockAddress_, pythStaticOracleAddress_);
             address oracleFactoryAddress = address(oracleFactory);
             require(expectedAddress == oracleFactoryAddress);
             return oracleFactory;
         }
     }
 
-    function _calculateDahliaOracleFactoryExpectedAddress(address timelockAddress_, address uniswapStaticOracleAddress_, address pythStaticOracleAddress_)
-        internal
-        pure
-        returns (address)
-    {
-        bytes32 salt = keccak256(abi.encode(DAHLIA_ORACLE_FACTORY_SALT));
-        bytes memory encodedArgs = abi.encode(timelockAddress_, uniswapStaticOracleAddress_, pythStaticOracleAddress_);
-        bytes32 initCodeHash = hashInitCode(type(DahliaOracleFactory).creationCode, encodedArgs);
+    function _calculateDahliaPythOracleFactoryExpectedAddress(address timelockAddress_, address pythStaticOracleAddress_) internal pure returns (address) {
+        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
+        bytes memory encodedArgs = abi.encode(timelockAddress_, pythStaticOracleAddress_);
+        bytes32 initCodeHash = hashInitCode(type(DahliaPythOracleFactory).creationCode, encodedArgs);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
         return expectedAddress;
     }

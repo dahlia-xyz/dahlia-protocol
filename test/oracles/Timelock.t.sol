@@ -19,12 +19,12 @@ contract TimelockTest is Test {
     Timelock timelock;
     uint256 eta;
     bytes data;
-    string signature = hex"";
+    string signature = "";
 
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
-        oracleFactory = ctx.createOracleFactory();
+        oracleFactory = address(ctx.createPythOracleFactory());
         owner = ctx.createWallet("OWNER");
         timelock = new Timelock(owner, TIMELOCK_DELAY);
         timelockAddr = address(timelock);
