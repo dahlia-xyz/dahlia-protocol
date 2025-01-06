@@ -2,32 +2,27 @@
 pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
-import { UniswapOracleV3SingleTwapBase } from "src/oracles/abstracts/UniswapOracleV3SingleTwapBase.sol";
-import { Ownable, UniswapOracleV3SingleTwap } from "src/oracles/contracts/UniswapOracleV3SingleTwap.sol";
+import { DahliaUniswapV3Oracle, Ownable } from "src/oracles/contracts/DahliaUniswapV3Oracle.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { Mainnet } from "test/oracles/Constants.sol";
 
-contract UniswapOracleV3SingleTwapTest is Test {
+contract DahliaUniswapV3OracleTest is Test {
     using BoundUtils for Vm;
 
     TestContext ctx;
-    UniswapOracleV3SingleTwap oracle;
+    DahliaUniswapV3Oracle oracle;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
         address owner = ctx.createWallet("OWNER");
-
-        oracle = new UniswapOracleV3SingleTwap(
+        uint32 twapDuration = 900;
+        oracle = new DahliaUniswapV3Oracle(
             owner,
-            UniswapOracleV3SingleTwapBase.OracleParams({
-                baseToken: Mainnet.WETH_ERC20,
-                quoteToken: Mainnet.UNI_ERC20,
-                uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,
-                twapDuration: 900
-            }),
-            Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS
+            DahliaUniswapV3Oracle.Params({ baseToken: Mainnet.WETH_ERC20, quoteToken: Mainnet.UNI_ERC20, uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL }),
+            Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS,
+            twapDuration
         );
     }
 
@@ -61,21 +56,17 @@ contract UniswapOracleV3SingleTwapTest is Test {
     function test_oracle_uniswap_setTwapDurationTooShort() public {
         address owner = ctx.createWallet("OWNER");
         vm.prank(owner);
-        vm.expectRevert(UniswapOracleV3SingleTwapBase.TwapDurationIsTooShort.selector);
+        vm.expectRevert(DahliaUniswapV3Oracle.TwapDurationIsTooShort.selector);
         oracle.setTwapDuration(299);
     }
 
     function test_oracle_createWithShortTwapDuration() public {
-        vm.expectRevert(UniswapOracleV3SingleTwapBase.TwapDurationIsTooShort.selector);
-        new UniswapOracleV3SingleTwap(
+        vm.expectRevert(DahliaUniswapV3Oracle.TwapDurationIsTooShort.selector);
+        new DahliaUniswapV3Oracle(
             address(0x1),
-            UniswapOracleV3SingleTwapBase.OracleParams({
-                baseToken: Mainnet.WETH_ERC20,
-                quoteToken: Mainnet.UNI_ERC20,
-                uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL,
-                twapDuration: 200
-            }),
-            Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS
+            DahliaUniswapV3Oracle.Params({ baseToken: Mainnet.WETH_ERC20, quoteToken: Mainnet.UNI_ERC20, uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL }),
+            Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS,
+            200
         );
     }
 }

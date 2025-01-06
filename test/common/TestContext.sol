@@ -14,7 +14,10 @@ import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
-import { DahliaOracleFactory } from "src/oracles/contracts/DahliaOracleFactory.sol";
+import { DahliaChainlinkOracleFactory } from "src/oracles/contracts/DahliaChainlinkOracleFactory.sol";
+import { DahliaDualOracleFactory } from "src/oracles/contracts/DahliaDualOracleFactory.sol";
+import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
+import { DahliaUniswapV3OracleFactory } from "src/oracles/contracts/DahliaUniswapV3OracleFactory.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
@@ -64,6 +67,7 @@ contract TestContext {
     mapping(string => address) public wallets;
     mapping(string => address) public contracts;
     mapping(string => uint8) public defaultTokenDecimals;
+    address public immutable OWNER;
 
     constructor(Vm vm_) {
         defaultTokenDecimals["USDC"] = 6;
@@ -71,6 +75,7 @@ contract TestContext {
         defaultTokenDecimals["WETH"] = 18;
         defaultTokenDecimals["WBTC"] = 8;
         vm = vm_;
+        OWNER = createWallet("OWNER");
     }
 
     function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv, address owner)
@@ -311,13 +316,39 @@ contract TestContext {
         vm.stopPrank();
     }
 
-    function createOracleFactory() public returns (address) {
-        if (contracts["oracleFactory"] != address(0)) {
-            return contracts["oracleFactory"];
+    function createPythOracleFactory() public returns (DahliaPythOracleFactory factory) {
+        string memory index = "DahliaPythOracleFactory";
+        if (contracts[index] != address(0)) {
+            return DahliaPythOracleFactory(contracts[index]);
         }
-        address owner = createWallet("OWNER");
-        DahliaOracleFactory factory = new DahliaOracleFactory(owner, Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS, Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
-        contracts["oracleFactory"] = address(factory);
-        return address(factory);
+        factory = new DahliaPythOracleFactory(OWNER, Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
+        contracts[index] = address(factory);
+    }
+
+    function createUniswapOracleFactory() public returns (DahliaUniswapV3OracleFactory factory) {
+        string memory index = "UniswapOracleFactory";
+        if (contracts[index] != address(0)) {
+            return DahliaUniswapV3OracleFactory(contracts[index]);
+        }
+        factory = new DahliaUniswapV3OracleFactory(OWNER, Mainnet.UNISWAP_STATIC_ORACLE_ADDRESS);
+        contracts[index] = address(factory);
+    }
+
+    function createDualOracleFactory() public returns (DahliaDualOracleFactory factory) {
+        string memory index = "DualOracleFactory";
+        if (contracts[index] != address(0)) {
+            return DahliaDualOracleFactory(contracts[index]);
+        }
+        factory = new DahliaDualOracleFactory();
+        contracts[index] = address(factory);
+    }
+
+    function createChainlinkOracleFactory() public returns (DahliaChainlinkOracleFactory factory) {
+        string memory index = "DahliaChainlinkOracleFactory";
+        if (contracts[index] != address(0)) {
+            return DahliaChainlinkOracleFactory(contracts[index]);
+        }
+        factory = new DahliaChainlinkOracleFactory(OWNER);
+        contracts[index] = address(factory);
     }
 }

@@ -3,26 +3,26 @@ pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { PythOracle } from "src/oracles/contracts/PythOracle.sol";
+import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { Mainnet } from "test/oracles/Constants.sol";
 
-contract ChainlinkOracleWithMaxDelayTest is Test {
+contract DahliaPythOracleTest is Test {
     using BoundUtils for Vm;
 
     TestContext ctx;
-    PythOracle oracle;
-    PythOracle.Delays delays;
+    DahliaPythOracle oracle;
+    DahliaPythOracle.Delays delays;
 
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
         address owner = ctx.createWallet("OWNER");
-        delays = PythOracle.Delays({ baseMaxDelay: 86_400, quoteMaxDelay: 86_400 });
-        oracle = new PythOracle(
+        delays = DahliaPythOracle.Delays({ baseMaxDelay: 86_400, quoteMaxDelay: 86_400 });
+        oracle = new DahliaPythOracle(
             owner,
-            PythOracle.Params({
+            DahliaPythOracle.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace,
                 quoteToken: Mainnet.UNI_ERC20,
@@ -44,16 +44,16 @@ contract ChainlinkOracleWithMaxDelayTest is Test {
         vm.startPrank(alice);
 
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(alice)));
-        oracle.setMaximumOracleDelays(PythOracle.Delays({ quoteMaxDelay: 1, baseMaxDelay: 2 }));
+        oracle.setMaximumOracleDelays(DahliaPythOracle.Delays({ quoteMaxDelay: 1, baseMaxDelay: 2 }));
         vm.stopPrank();
     }
 
     function test_oracle_pythWithMaxDelay_setDelayOwner() public {
         vm.pauseGasMetering();
         address owner = ctx.createWallet("OWNER");
-        PythOracle.Delays memory newDelays = PythOracle.Delays({ quoteMaxDelay: 1, baseMaxDelay: 2 });
+        DahliaPythOracle.Delays memory newDelays = DahliaPythOracle.Delays({ quoteMaxDelay: 1, baseMaxDelay: 2 });
         vm.expectEmit(true, true, true, true, address(oracle));
-        emit PythOracle.SetMaximumOracleDelay(delays, newDelays);
+        emit DahliaPythOracle.MaximumOracleDelaysUpdated(delays, newDelays);
         vm.prank(owner);
         vm.resumeGasMetering();
         oracle.setMaximumOracleDelays(newDelays);

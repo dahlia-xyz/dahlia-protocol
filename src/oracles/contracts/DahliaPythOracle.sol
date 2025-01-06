@@ -7,26 +7,31 @@ import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
+
+import { DahliaOracleStaticAddress } from "src/oracles/abstracts/DahliaOracleStaticAddress.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 
-/// @title PythOracle
-/// @notice A contract for fetching price from PythOracle
-contract PythOracle is Ownable2Step, IDahliaOracle {
+/// @title DahliaPythOracle
+/// @notice A contract for fetching price from Pyth Oracle
+contract DahliaPythOracle is Ownable2Step, IDahliaOracle, DahliaOracleStaticAddress {
     using SafeCastLib for *;
     using FixedPointMathLib for uint256;
+
+    /// @notice Emitted when the contract is deployed
+    /// @param params Initial parameters
+    event ParamsUpdated(Params params);
 
     /// @notice Emitted when the max oracle delay is updated
     /// @param oldMaxDelays The previous max oracle delay settings
     /// @param newMaxDelays The new max oracle delay settings
-    event SetMaximumOracleDelay(Delays oldMaxDelays, Delays newMaxDelays);
+    event MaximumOracleDelaysUpdated(Delays oldMaxDelays, Delays newMaxDelays);
 
-    address public immutable pythStaticOracle; // 20 bytes
     uint256 public immutable ORACLE_PRECISION;
 
-    address public immutable baseToken; // 20 bytes
-    address public immutable quoteToken; // 20 bytes
-    bytes32 public immutable baseFeed; // 32 bytes
-    bytes32 public immutable quoteFeed; // 32 bytes
+    address public immutable BASE_TOKEN; // 20 bytes
+    address public immutable QUOTE_TOKEN; // 20 bytes
+    bytes32 public immutable BASE_FEED; // 32 bytes
+    bytes32 public immutable QUOTE_FEED; // 32 bytes
     uint256 public baseMaxDelay; // 32 bytes
     uint256 public quoteMaxDelay; // 32 bytes
 
@@ -46,13 +51,17 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
     /// @notice Initializes the contract with owner, oracle parameters, and Pyth static oracle address
     /// @param owner The address of the contract owner
     /// @param params The pyth oracle parameters
-    /// @param oracle The address of the Pyth static oracle
-    constructor(address owner, Params memory params, Delays memory delays, address oracle) Ownable(owner) {
-        pythStaticOracle = oracle;
-        baseToken = params.baseToken;
-        baseFeed = params.baseFeed;
-        quoteToken = params.quoteToken;
-        quoteFeed = params.quoteFeed;
+    /// @param staticOracleAddress The address of the Pyth static oracle
+    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress)
+        Ownable(owner)
+        DahliaOracleStaticAddress(staticOracleAddress)
+    {
+        BASE_TOKEN = params.baseToken;
+        BASE_FEED = params.baseFeed;
+        QUOTE_TOKEN = params.quoteToken;
+        QUOTE_FEED = params.quoteFeed;
+
+        emit ParamsUpdated(params);
         _setMaximumOracleDelays(delays);
 
         int32 baseTokenDecimals = getDecimals(params.baseToken); // 95434 354543 * 10^-8
@@ -67,13 +76,13 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
     }
 
     function getFeedDecimals(bytes32 feedId) internal view returns (int32) {
-        return IPyth(pythStaticOracle).getPriceUnsafe(feedId).expo;
+        return IPyth(_STATIC_ORACLE_ADDRESS).getPriceUnsafe(feedId).expo;
     }
 
     /// @inheritdoc IDahliaOracle
     function getPrice() external view returns (uint256 price, bool isBadData) {
-        PythStructs.Price memory basePrice = IPyth(pythStaticOracle).getPriceNoOlderThan(baseFeed, baseMaxDelay);
-        PythStructs.Price memory quotePrice = IPyth(pythStaticOracle).getPriceNoOlderThan(quoteFeed, quoteMaxDelay);
+        PythStructs.Price memory basePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(BASE_FEED, baseMaxDelay);
+        PythStructs.Price memory quotePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(QUOTE_FEED, quoteMaxDelay);
 
         price = ORACLE_PRECISION.mulDiv(basePrice.price.toUint256(), quotePrice.price.toUint256());
         isBadData = price == 0;
@@ -81,7 +90,7 @@ contract PythOracle is Ownable2Step, IDahliaOracle {
 
     /// @dev Internal function to update max oracle delays
     function _setMaximumOracleDelays(Delays memory delays) internal {
-        emit SetMaximumOracleDelay({ oldMaxDelays: Delays({ baseMaxDelay: baseMaxDelay, quoteMaxDelay: quoteMaxDelay }), newMaxDelays: delays });
+        emit MaximumOracleDelaysUpdated({ oldMaxDelays: Delays({ baseMaxDelay: baseMaxDelay, quoteMaxDelay: quoteMaxDelay }), newMaxDelays: delays });
         baseMaxDelay = delays.baseMaxDelay;
         quoteMaxDelay = delays.quoteMaxDelay;
     }

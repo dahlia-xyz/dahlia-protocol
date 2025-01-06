@@ -22,7 +22,7 @@ const deployContracts = async (rpcPort: string, otterscanPort: string): Promise<
       ...envs,
       OTTERSCAN_PORT: otterscanPort,
     },
-  })`forge script script/DeployDahliaOracleFactory.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${privateKey}`;
+  })`forge script script/DeployDahliaPythOracleFactory.s.sol --rpc-url ${rpcUrl} --broadcast --private-key ${privateKey}`;
 };
 
 // await deployContracts(process.env.MAINNET_RPC_PORT || "8546", process.env.MAINNET_OTT_PORT || "28546");
