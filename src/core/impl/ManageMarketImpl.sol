@@ -12,20 +12,20 @@ import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
 library ManageMarketImpl {
     using SafeCastLib for uint256;
 
-    function setProtocolFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
+    function setProtocolFeeRate(IDahlia.MarketId id, IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.protocolFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
 
         market.protocolFeeRate = uint24(newFee);
-        emit IDahlia.SetProtocolFeeRate(market.id, newFee);
+        emit IDahlia.SetProtocolFeeRate(id, newFee);
     }
 
-    function setReserveFeeRate(IDahlia.Market storage market, uint256 newFee) internal {
+    function setReserveFeeRate(IDahlia.MarketId id, IDahlia.Market storage market, uint256 newFee) internal {
         require(newFee != market.reserveFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
 
         market.reserveFeeRate = newFee.toUint24();
-        emit IDahlia.SetReserveFeeRate(market.id, newFee);
+        emit IDahlia.SetReserveFeeRate(id, newFee);
     }
 
     function deployMarket(
@@ -37,7 +37,6 @@ library ManageMarketImpl {
         IDahlia.Market storage market = markets[id].market;
         require(market.updatedAt == 0, Errors.MarketAlreadyDeployed());
 
-        market.id = id;
         market.loanToken = marketConfig.loanToken;
         market.collateralToken = marketConfig.collateralToken;
         market.oracle = marketConfig.oracle;

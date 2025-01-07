@@ -24,8 +24,7 @@ interface IDahlia {
     }
 
     struct Market {
-        // --- 28 bytes
-        MarketId id; // 4 bytes
+        // --- 24 bytes
         uint24 lltv; // 3 bytes
         MarketStatus status; // 1 byte
         address loanToken; // 20 bytes

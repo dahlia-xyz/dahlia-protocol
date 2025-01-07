@@ -16,15 +16,22 @@ library BorrowImpl {
     using SharesMathLib for uint256;
 
     // Add collateral to a borrower's position
-    function internalSupplyCollateral(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner) internal {
+    function internalSupplyCollateral(
+        IDahlia.MarketId id,
+        IDahlia.Market storage market,
+        IDahlia.UserPosition storage ownerPosition,
+        uint256 assets,
+        address owner
+    ) internal {
         ownerPosition.collateral += assets.toUint128();
         market.totalCollateralAssets += assets;
 
-        emit IDahlia.SupplyCollateral(market.id, msg.sender, owner, assets);
+        emit IDahlia.SupplyCollateral(id, msg.sender, owner, assets);
     }
 
     // Withdraw collateral from a borrower's position
     function internalWithdrawCollateral(
+        IDahlia.MarketId id,
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
@@ -44,14 +51,18 @@ library BorrowImpl {
             }
         }
 
-        emit IDahlia.WithdrawCollateral(market.id, msg.sender, owner, receiver, assets);
+        emit IDahlia.WithdrawCollateral(id, msg.sender, owner, receiver, assets);
     }
 
     // Borrow assets from the market
-    function internalBorrow(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, address owner, address receiver)
-        internal
-        returns (uint256)
-    {
+    function internalBorrow(
+        IDahlia.MarketId id,
+        IDahlia.Market storage market,
+        IDahlia.UserPosition storage ownerPosition,
+        uint256 assets,
+        address owner,
+        address receiver
+    ) internal returns (uint256) {
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalBorrowShares = market.totalBorrowShares;
@@ -75,15 +86,19 @@ library BorrowImpl {
         ownerPosition.borrowShares = ownerBorrowShares.toUint128();
         market.totalBorrowAssets = totalBorrowAssets;
         market.totalBorrowShares = totalBorrowShares;
-        emit IDahlia.DahliaBorrow(market.id, msg.sender, owner, receiver, assets, shares);
+        emit IDahlia.DahliaBorrow(id, msg.sender, owner, receiver, assets, shares);
         return shares;
     }
 
     // Repay borrowed assets
-    function internalRepay(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
-        internal
-        returns (uint256, uint256)
-    {
+    function internalRepay(
+        IDahlia.MarketId id,
+        IDahlia.Market storage market,
+        IDahlia.UserPosition storage ownerPosition,
+        uint256 assets,
+        uint256 shares,
+        address owner
+    ) internal returns (uint256, uint256) {
         MarketMath.validateExactlyOneZero(assets, shares);
         // Calculate assets or shares
         if (assets > 0) {
@@ -96,7 +111,7 @@ library BorrowImpl {
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 
-        emit IDahlia.DahliaRepay(market.id, msg.sender, owner, assets, shares);
+        emit IDahlia.DahliaRepay(id, msg.sender, owner, assets, shares);
         return (assets, shares);
     }
 }

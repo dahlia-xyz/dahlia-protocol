@@ -12,10 +12,14 @@ library LendImpl {
     using SafeCastLib for uint256;
     using SharesMathLib for uint256;
 
-    function internalLend(IDahlia.Market storage market, IDahlia.UserPosition storage ownerPosition, uint256 assets, uint256 shares, address owner)
-        internal
-        returns (uint256, uint256)
-    {
+    function internalLend(
+        IDahlia.MarketId id,
+        IDahlia.Market storage market,
+        IDahlia.UserPosition storage ownerPosition,
+        uint256 assets,
+        uint256 shares,
+        address owner
+    ) internal returns (uint256, uint256) {
         if (assets == 0) {
             assets = shares.toAssetsUp(market.totalLendAssets, market.totalLendShares);
         } else {
@@ -27,11 +31,12 @@ library LendImpl {
         market.totalLendShares += shares;
         market.totalLendAssets += assets;
 
-        emit IDahlia.Lend(market.id, msg.sender, owner, assets, shares);
+        emit IDahlia.Lend(id, msg.sender, owner, assets, shares);
         return (assets, shares);
     }
 
     function internalWithdraw(
+        IDahlia.MarketId id,
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
         uint256 assets,
@@ -58,11 +63,12 @@ library LendImpl {
         market.totalLendShares = totalLendShares - shares;
         market.totalLendAssets = totalLendAssets;
 
-        emit IDahlia.Withdraw(market.id, msg.sender, receiver, owner, assets, shares);
+        emit IDahlia.Withdraw(id, msg.sender, receiver, owner, assets, shares);
         return (assets, shares, ownerLendShares);
     }
 
     function internalWithdrawDepositAndClaimCollateral(
+        IDahlia.MarketId id,
         IDahlia.Market storage market,
         IDahlia.UserPosition storage ownerPosition,
         address owner,
@@ -85,6 +91,6 @@ library LendImpl {
         market.totalLendShares = totalLendShares - shares;
         market.totalLendAssets = totalLendAssets - lendAssets;
 
-        emit IDahlia.WithdrawDepositAndClaimCollateral(market.id, msg.sender, receiver, owner, lendAssets, collateralAssets, shares);
+        emit IDahlia.WithdrawDepositAndClaimCollateral(id, msg.sender, receiver, owner, lendAssets, collateralAssets, shares);
     }
 }

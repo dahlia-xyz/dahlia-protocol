@@ -17,6 +17,7 @@ library LiquidationImpl {
     using SafeCastLib for uint256;
 
     function internalLiquidate(
+        IDahlia.MarketId id,
         IDahlia.Market storage market,
         IDahlia.UserPosition storage borrowerPosition,
         IDahlia.UserPosition storage reservePosition,
@@ -74,17 +75,7 @@ library LiquidationImpl {
         repaidShares = borrowShares - badDebtShares;
 
         emit IDahlia.DahliaLiquidate(
-            market.id,
-            msg.sender,
-            borrower,
-            repaidAssets,
-            repaidShares,
-            seizedCollateral,
-            bonusCollateral,
-            badDebtAssets,
-            badDebtShares,
-            rescueAssets,
-            rescueShares
+            id, msg.sender, borrower, repaidAssets, repaidShares, seizedCollateral, bonusCollateral, badDebtAssets, badDebtShares, rescueAssets, rescueShares
         );
 
         return (repaidAssets, repaidShares, seizedCollateral);
