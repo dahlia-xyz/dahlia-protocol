@@ -37,6 +37,7 @@ runs = 256
 [rpc_endpoints]
 sepolia = "${SEPOLIA_RPC_URL}"
 mainnet = "${MAINNET_RPC_URL}"
+cartio = "https://teddilion-eth-cartio.berachain.com"
 
 [etherscan]
 # https://github.com/foundry-rs/foundry/issues/4484
