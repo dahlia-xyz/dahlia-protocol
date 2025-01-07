@@ -193,7 +193,8 @@ contract TestContext {
                 maxFullUtilizationRate: 3_164_940_920_000,
                 zeroUtilizationRate: 158_247_046,
                 rateHalfLife: 172_800,
-                targetRatePercent: 0.2e18
+                targetRatePercent: 0.2e18,
+                name: "Variable IRM_20"
             })
         );
         contracts["Irm"] = address(irm);

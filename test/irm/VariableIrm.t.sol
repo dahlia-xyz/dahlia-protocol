@@ -69,14 +69,15 @@ contract VariableIrmTest is Test {
                 maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
                 zeroUtilizationRate: ZERO_UTIL_RATE,
                 rateHalfLife: 172_800,
-                targetRatePercent: 0.2e18
+                targetRatePercent: 0.2e18,
+                name: "Variable IRM_20"
             })
         );
     }
 
     function test_version_name() external view {
         assertEq(rate.version(), 1);
-        assertEq(rate.name(), "Dahlia VariableIRM");
+        assertEq(rate.name(), "Variable IRM_20");
     }
 
     function test_VariableIrm_zeroUtilization() public returns (uint256 deltaTime) {
