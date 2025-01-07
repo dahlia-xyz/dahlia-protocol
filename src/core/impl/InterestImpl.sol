@@ -17,15 +17,16 @@ library InterestImpl {
 
     /// @dev Accrues interest for the specified market.
     function executeMarketAccrueInterest(
+        IDahlia.MarketId id,
         IDahlia.Market storage market,
         mapping(address => IDahlia.UserPosition) storage positions,
         address protocolFeeRecipient,
         address reserveFeeRecipient
     ) internal {
         uint256 deltaTime = block.timestamp - market.updatedAt;
-        if (deltaTime == 0) {
-            return;
-        }
+
+        if (deltaTime == 0) return;
+
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalBorrowAssets = market.totalBorrowAssets;
         (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
@@ -33,62 +34,67 @@ library InterestImpl {
 
         market.fullUtilizationRate = uint64(newFullUtilizationRate);
         market.ratePerSec = uint64(newRatePerSec);
-        if (interestEarnedAssets > 0) {
-            totalLendAssets += interestEarnedAssets;
 
-            uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
-            uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
-            uint256 totalLendShares = market.totalLendShares;
-            uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
-            uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(totalLendAssets - sumOfFeeAssets, totalLendShares);
+        if (interestEarnedAssets == 0) return;
 
-            totalLendShares += sumOfFeeShares;
+        totalLendAssets += interestEarnedAssets;
 
-            uint256 protocolFeeShares = protocolFeeAssets.toSharesDown(totalLendAssets, totalLendShares);
-            uint256 reserveFeeShares = sumOfFeeShares - protocolFeeShares;
+        uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
+        uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
+        uint256 totalLendShares = market.totalLendShares;
+        uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
+        uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(totalLendAssets - sumOfFeeAssets, totalLendShares);
 
-            if (protocolFeeShares > 0) {
-                positions[protocolFeeRecipient].lendShares += protocolFeeShares.toUint128();
-                market.vault.mintFees(protocolFeeShares, protocolFeeRecipient);
-            }
-            if (reserveFeeShares > 0) {
-                positions[reserveFeeRecipient].lendShares += reserveFeeShares.toUint128();
-                market.vault.mintFees(reserveFeeShares, reserveFeeRecipient);
-            }
+        totalLendShares += sumOfFeeShares;
 
-            market.totalLendShares = totalLendShares;
-            market.totalLendAssets = totalLendAssets;
-            market.totalBorrowAssets = totalBorrowAssets + interestEarnedAssets;
-            market.updatedAt = uint48(block.timestamp);
+        uint256 protocolFeeShares = protocolFeeAssets.toSharesDown(totalLendAssets, totalLendShares);
+        uint256 reserveFeeShares = sumOfFeeShares - protocolFeeShares;
 
-            emit IDahlia.DahliaAccrueInterest(market.id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+        if (protocolFeeShares > 0) {
+            positions[protocolFeeRecipient].lendShares += protocolFeeShares.toUint128();
+            market.vault.mintFees(protocolFeeShares, protocolFeeRecipient);
         }
+        if (reserveFeeShares > 0) {
+            positions[reserveFeeRecipient].lendShares += reserveFeeShares.toUint128();
+            market.vault.mintFees(reserveFeeShares, reserveFeeRecipient);
+        }
+
+        market.totalLendShares = totalLendShares;
+        market.totalLendAssets = totalLendAssets;
+        market.totalBorrowAssets = totalBorrowAssets + interestEarnedAssets;
+        market.updatedAt = uint48(block.timestamp);
+
+        emit IDahlia.DahliaAccrueInterest(id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
     }
 
     /// @notice Gets the expected market balances after interest accrual.
     /// @return Updated market balances
     function getLastMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
+        uint256 deltaTime = block.timestamp - market.updatedAt;
+        //we want to recompute ratePerSec and fullUtilizationRate for the last block to account changed totals
+        //if (deltaTime == 0) return;
+
+        uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalBorrowAssets = market.totalBorrowAssets;
-        if (totalBorrowAssets != 0) {
-            uint256 deltaTime = block.timestamp - market.updatedAt;
-            uint256 fullUtilizationRate = market.fullUtilizationRate;
-            (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
-                IIrm(market.irm).calculateInterest(deltaTime, market.totalLendAssets, totalBorrowAssets, fullUtilizationRate);
+        (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 newFullUtilizationRate) =
+            IIrm(market.irm).calculateInterest(deltaTime, totalLendAssets, totalBorrowAssets, market.fullUtilizationRate);
 
-            market.fullUtilizationRate = uint64(newFullUtilizationRate);
-            market.ratePerSec = uint64(newRatePerSec);
-            if (interestEarnedAssets != 0) {
-                market.totalLendAssets += interestEarnedAssets;
-                uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
-                uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
-                uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
-                uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(market.totalLendAssets - sumOfFeeAssets, market.totalLendShares);
+        market.fullUtilizationRate = uint64(newFullUtilizationRate);
+        market.ratePerSec = uint64(newRatePerSec);
 
-                market.totalLendShares += sumOfFeeShares;
-                market.totalBorrowAssets += interestEarnedAssets;
-            }
-            market.updatedAt = uint48(block.timestamp);
-        }
+        if (interestEarnedAssets == 0) return market;
+
+        totalLendAssets += interestEarnedAssets;
+
+        uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
+        uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
+        uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
+        uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(totalLendAssets - sumOfFeeAssets, market.totalLendShares);
+
+        market.totalLendShares += sumOfFeeShares;
+        market.totalLendAssets = totalLendAssets;
+        market.totalBorrowAssets = totalBorrowAssets + interestEarnedAssets;
+        market.updatedAt = uint48(block.timestamp);
         return market;
     }
 }

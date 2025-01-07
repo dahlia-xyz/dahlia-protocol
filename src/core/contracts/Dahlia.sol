@@ -85,7 +85,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketIsActive(market.status);
-        _accrueMarketInterest(marketData.userPositions, market);
+        _accrueMarketInterest(id, marketData.userPositions, market);
 
         ManageMarketImpl.setProtocolFeeRate(market, newFeeRate);
     }
@@ -96,7 +96,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketIsActive(market.status);
-        _accrueMarketInterest(marketData.userPositions, market);
+        _accrueMarketInterest(id, marketData.userPositions, market);
 
         ManageMarketImpl.setReserveFeeRate(market, newFeeRate);
     }
@@ -166,7 +166,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _permittedByWrappedVault(vault);
         _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
 
         return LendImpl.internalLend(market, positions[owner], assets, shares, owner);
     }
@@ -180,7 +180,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _permittedByWrappedVault(vault);
         _validateMarketIsActiveOrPausedOrDeprecated(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
         UserPosition storage ownerPosition = positions[owner];
 
         (uint256 _assets, uint256 _shares, uint256 ownerLendShares) = LendImpl.internalWithdraw(market, ownerPosition, assets, shares, owner, receiver);
@@ -246,7 +246,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
 
         borrowShares = BorrowImpl.internalBorrow(market, positions[owner], assets, owner, receiver);
 
@@ -265,7 +265,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
         UserPosition storage ownerPosition = positions[owner];
         BorrowImpl.internalSupplyCollateral(market, ownerPosition, collateralAssets, owner);
 
@@ -288,7 +288,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(market);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
         UserPosition storage ownerPosition = positions[owner];
         (repaidAssets, repaidShares) = BorrowImpl.internalRepay(market, ownerPosition, repayAssets, repayShares, owner);
         market.loanToken.safeTransferFrom(owner, address(market.vault), repaidAssets);
@@ -304,7 +304,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(market);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
 
         (assets, shares) = BorrowImpl.internalRepay(market, positions[owner], assets, shares, owner);
         if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
@@ -325,7 +325,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketIsActiveOrPausedOrDeprecated(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
 
         (repaidAssets, repaidShares, seizedCollateral) =
             LiquidationImpl.internalLiquidate(market, positions[borrower], positions[reserveFeeRecipient], borrower);
@@ -369,7 +369,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         Market storage market = marketData.market;
         _validateMarketIsActiveOrPausedOrDeprecatedOrStalledPeriod(market);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, positions, market);
 
         BorrowImpl.internalWithdrawCollateral(market, positions[owner], assets, owner, receiver);
 
@@ -434,12 +434,11 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketIsActive(market.status);
-        mapping(address => UserPosition) storage positions = marketData.userPositions;
-        _accrueMarketInterest(positions, market);
+        _accrueMarketInterest(id, marketData.userPositions, market);
     }
 
-    function _accrueMarketInterest(mapping(address => UserPosition) storage positions, Market storage market) internal {
-        InterestImpl.executeMarketAccrueInterest(market, positions, protocolFeeRecipient, reserveFeeRecipient);
+    function _accrueMarketInterest(MarketId id, mapping(address => UserPosition) storage positions, Market storage market) private {
+        InterestImpl.executeMarketAccrueInterest(id, market, positions, protocolFeeRecipient, reserveFeeRecipient);
     }
 
     /// @notice Checks if the sender is the market or the wrapped vault owner.
