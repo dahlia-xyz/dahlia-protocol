@@ -1,7 +1,7 @@
 import { execa } from "execa";
 import * as process from "node:process";
 
-import { envs, privateKey } from "./consts";
+import { envs, privateKey } from "./envs";
 import { waitForRpc } from "./waitForRpc";
 
 const env = { ...process.env, NX_VERBOSE_LOGGING: "true" };

@@ -1,7 +1,7 @@
 import { execa } from "execa";
 import * as process from "node:process";
 
-import { privateKey } from "./consts";
+import { privateKey } from "./envs";
 
 const $$ = execa({ verbose: "full" });
 

@@ -23,8 +23,11 @@ contract DeployPythOracle is BaseScript {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
+        uint256 timelockDelay = vm.envUint("TIMELOCK_DELAY");
+        address timelockAddress = _calculateTimelockExpectedAddress(dahliaOwner, timelockDelay);
+        require(timelockAddress.code.length > 0);
         console.log("Deployer address:", deployer);
-        address dahliaOracleFactoryAddress = _calculateDahliaPythOracleFactoryExpectedAddress(dahliaOwner, pythStaticOracleAddress);
+        address dahliaOracleFactoryAddress = _calculateDahliaPythOracleFactoryExpectedAddress(timelockAddress, pythStaticOracleAddress);
         require(dahliaOracleFactoryAddress.code.length > 0);
         _printContract("DahliaOracleFactory:", dahliaOracleFactoryAddress);
         DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(dahliaOracleFactoryAddress);
