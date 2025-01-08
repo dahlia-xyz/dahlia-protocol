@@ -1,4 +1,4 @@
-import { DEPLOY_ON_REMOTE } from "../utils";
+import { DEPLOY_ON_REMOTE } from "../envs";
 
 if (DEPLOY_ON_REMOTE) {
   throw new Error(

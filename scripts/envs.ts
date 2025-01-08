@@ -1,10 +1,21 @@
 import process from "node:process";
 
+import Network from "./network";
+
 if (!process.env.PRIVATE_KEY) {
   throw new Error("Missing PRIVATE_KEY");
 }
 
+if (!process.env.WALLET_ADDRESS) {
+  throw new Error("Missing WALLET_ADDRESS");
+}
+
+export const deployerWalletAddress = process.env.WALLET_ADDRESS;
 export const privateKey = process.env.PRIVATE_KEY;
+
+// TODO: Make Logs write to file
+
+export const DEPLOY_NETWORKS: Network[] = [Network.CARTIO];
 
 // WARNING! ENABLE THIS ONCE YOU HAVE TESTED ON DOCKER!!!
 export const DEPLOY_ON_REMOTE = false;
@@ -13,8 +24,8 @@ export const envs: Record<string, string> = {
   PRIVATE_KEY: privateKey,
   // Dahlia
   DAHLIA_PRIVATE_KEY: privateKey,
-  DAHLIA_OWNER: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-  FEES_RECIPIENT: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  DAHLIA_OWNER: deployerWalletAddress,
+  FEES_RECIPIENT: deployerWalletAddress,
   // Same address on all chains
   POINTS_FACTORY: "0x19112AdBDAfB465ddF0b57eCC07E68110Ad09c50",
   // Deploy Timelock
