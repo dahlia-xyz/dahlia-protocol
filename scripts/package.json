@@ -7,17 +7,13 @@
   "scripts": {
     "prepare": "pnpm tsx setup.ts submodules",
     "setup": "pnpm tsx setup.ts",
-    "contracts": "pnpm tsx setup-contracts.ts",
-    "contracts-cartio": "pnpm tsx setup-contracts-cartio.ts",
-    "deploy-only-dahlia": "pnpm tsx deploy-only-dahlia.ts",
-    "deploy-pyth-oracle": "pnpm tsx deploy-pyth-oracle.ts",
-    "deploy-pyth-separately": "pnpm tsx deploy-pyth-separately.ts",
-    "deploy-pyth-separately-cartio": "pnpm tsx deploy-pyth-separately-cartio.ts",
-    "recreate-docker-otterscan": "pnpm tsx ./local/recreate-docker-otterscan.ts",
-    "deploy-dahlia": "pnpm tsx ./local/deploy-dahlia.ts",
-    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx ./local/deploy-dahlia-pyth-oracle-factory.ts",
-    "deploy-dahlia-pyth-oracle": "pnpm tsx ./local/deploy-dahlia-pyth-oracle.ts",
-    "deploy-dahlia-markets": "pnpm tsx ./local/deploy-dahlia-markets.ts"
+    "recreate-docker-otterscan": "pnpm tsx local/recreate-docker-otterscan.ts",
+    "deploy-dahlia": "pnpm tsx local/deploy-dahlia.ts",
+    "deploy-timelock": "pnpm tsx local/deploy-timelock.ts",
+    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx local/deploy-dahlia-pyth-oracle-factory.ts",
+    "deploy-dahlia-pyth-oracle": "pnpm tsx local/deploy-dahlia-pyth-oracle.ts",
+    "deploy-dahlia-markets": "pnpm tsx local/deploy-dahlia-markets.ts",
+    "deploy-all": "pnpm tsx local/deploy-all.ts"
   },
   "author": {
     "name": "Dahlia Labs",

@@ -1,5 +1,5 @@
-import { deployContractsToLocalMainnet, deployContractsToLocalSepolia, deployContractsToLocalCartio } from "../utils";
+import { deployContractsToMainnet, deployContractsToSepolia, deployContractsToCartio } from "../utils";
 
-await deployContractsToLocalMainnet("script/Dahlia.s.sol");
-await deployContractsToLocalSepolia("script/Dahlia.s.sol");
-await deployContractsToLocalCartio("script/Dahlia.s.sol");
+await deployContractsToMainnet("script/Dahlia.s.sol");
+await deployContractsToSepolia("script/Dahlia.s.sol");
+await deployContractsToCartio("script/Dahlia.s.sol");

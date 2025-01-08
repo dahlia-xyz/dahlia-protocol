@@ -1,4 +1,4 @@
-import { clearPrefixOnEnvKeys, deployContractsToLocalCartio } from "../utils";
+import { clearPrefixOnEnvKeys, deployContractsToCartio } from "../utils";
 
-await deployContractsToLocalCartio("script/WrappedVault.s.sol", (envs) => clearPrefixOnEnvKeys(envs, "STONE_WETH"));
-await deployContractsToLocalCartio("script/WrappedVault.s.sol", (envs) => clearPrefixOnEnvKeys(envs, "WBERA_USDC"));
+await deployContractsToCartio("script/WrappedVault.s.sol", (envs) => clearPrefixOnEnvKeys(envs, "STONE_WETH"));
+await deployContractsToCartio("script/WrappedVault.s.sol", (envs) => clearPrefixOnEnvKeys(envs, "WBERA_USDC"));

@@ -1,5 +1,3 @@
-import { clearPrefixOnEnvKeys, deployContractsToLocalCartio } from "../utils";
+import { clearPrefixOnEnvKeys, deployContractsToCartio } from "../utils";
 
-await deployContractsToLocalCartio("script/DeployDahliaPythOracleFactory.s.sol", (envs) =>
-  clearPrefixOnEnvKeys(envs, "PYTH"),
-);
+await deployContractsToCartio("script/DeployDahliaPythOracleFactory.s.sol");
