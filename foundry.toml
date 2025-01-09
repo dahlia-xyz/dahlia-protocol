@@ -40,5 +40,5 @@ mainnet = "${MAINNET_RPC_URL}"
 
 [etherscan]
 # https://github.com/foundry-rs/foundry/issues/4484
-80000 = { key = "verifyContract", url = "https://teddilion-eth-cartio.berachain.com" }
-80084 = { key = "verifyContract", url = "https://bartio.rpc.berachain.com" }
+80000 = { key = "verifyContract", url = "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" }
+80084 = { key = "verifyContract", url = "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan" }

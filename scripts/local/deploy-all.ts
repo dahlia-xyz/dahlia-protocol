@@ -1,4 +1,4 @@
-import { DEPLOY_ON_REMOTE } from "../envs";
+import { DEPLOY_ON_REMOTE } from "../envs.ts";
 
 if (DEPLOY_ON_REMOTE) {
   throw new Error(

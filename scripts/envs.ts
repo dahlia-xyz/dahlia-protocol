@@ -1,6 +1,6 @@
 import process from "node:process";
 
-import Network from "./network";
+import Network from "./network.ts";
 
 if (!process.env.PRIVATE_KEY) {
   throw new Error("Missing PRIVATE_KEY");

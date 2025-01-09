@@ -1,10 +1,10 @@
-import { deployerWalletAddress } from "../envs";
+import { deployerWalletAddress } from "../envs.ts";
 import {
   recreateDockerOtterscan,
   sendMoneyToAddressOnAnvilCartio,
   sendMoneyToAddressOnAnvilMainnet,
   sendMoneyToAddressOnAnvilSepolia,
-} from "../utils";
+} from "../utils.ts";
 
 await recreateDockerOtterscan();
 

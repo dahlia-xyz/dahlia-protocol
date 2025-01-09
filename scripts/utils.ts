@@ -4,11 +4,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { DEPLOY_NETWORKS, DEPLOY_ON_REMOTE, envs, privateKey } from "./envs";
-import Network from "./network";
-import { waitForRpc } from "./waitForRpc";
+import { DEPLOY_NETWORKS, DEPLOY_ON_REMOTE, envs, privateKey } from "./envs.ts";
+import Network from "./network.ts";
+import { waitForRpc } from "./waitForRpc.ts";
 
-const env = { ...process.env, NX_VERBOSE_LOGGING: "true" };
+const env = { ...process.env, NX_VERBOSE_LOGGING: "true", NO_COLOR: "true", FORCE_COLOR: "false" };
 
 // Get the name of the current script being executed
 const scriptName = path.basename(process.argv[1], path.extname(process.argv[1])); // e.g., "app"
@@ -37,13 +37,13 @@ const writeOutputToConsoleAndFile = (child: any) => {
   logStream.write(`\n=== RUNNING COMMAND: ${cmdString} ===\n\n`);
 
   // 1) Send stdout to console + file in real time
-  child.stdout.on("data", (chunk) => {
+  child.stdout.on("data", (chunk: string) => {
     process.stdout.write(chunk); // console
     logStream.write(chunk); // file
   });
 
   // 2) Send stderr to console + file in real time
-  child.stderr.on("data", (chunk) => {
+  child.stderr.on("data", (chunk: string) => {
     process.stderr.write(chunk); // console
     logStream.write(chunk); // file
   });

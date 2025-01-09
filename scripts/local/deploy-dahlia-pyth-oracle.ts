@@ -1,4 +1,4 @@
-import { clearPrefixOnEnvKeys, deployContractsToCartio } from "../utils";
+import { clearPrefixOnEnvKeys, deployContractsToCartio } from "../utils.ts";
 
 await deployContractsToCartio("script/CreateDahliaPythOracle.s.sol", (envs) => {
   const withoutStone = clearPrefixOnEnvKeys(envs, "STONE_WETH");
