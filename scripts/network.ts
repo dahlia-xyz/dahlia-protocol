@@ -1,7 +1,7 @@
 enum Network {
-  MAINNET = "MAINNET",
-  SEPOLIA = "SEPOLIA",
-  CARTIO = "CARTIO",
+  MAINNET = "mainnet",
+  SEPOLIA = "sepolia",
+  CARTIO = "cartio",
 }
 
 export default Network;

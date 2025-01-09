@@ -1,5 +1,3 @@
-import { deployContractsToMainnet, deployContractsToSepolia, deployContractsToCartio } from "../utils.ts";
+import { deployContractsOnNetworks } from "../utils.ts";
 
-await deployContractsToMainnet("script/Dahlia.s.sol");
-await deployContractsToSepolia("script/Dahlia.s.sol");
-await deployContractsToCartio("script/Dahlia.s.sol");
+await deployContractsOnNetworks("script/Dahlia.s.sol");

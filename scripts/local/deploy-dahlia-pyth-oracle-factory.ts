@@ -1,3 +1,3 @@
-import { deployContractsToCartio } from "../utils.ts";
+import { deployContractsOnNetworks } from "../utils.ts";
 
-await deployContractsToCartio("script/DeployDahliaPythOracleFactory.s.sol");
+await deployContractsOnNetworks("script/DeployDahliaPythOracleFactory.s.sol");

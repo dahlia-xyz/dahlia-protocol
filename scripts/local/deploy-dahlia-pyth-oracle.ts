@@ -1,12 +1,3 @@
-import { clearPrefixOnEnvKeys, deployContractsToCartio } from "../utils.ts";
+import { deployContractsOnNetworks } from "../utils.ts";
 
-await deployContractsToCartio("script/CreateDahliaPythOracle.s.sol", (envs) => {
-  const withoutStone = clearPrefixOnEnvKeys(envs, "STONE_WETH");
-
-  return clearPrefixOnEnvKeys(withoutStone, "PYTH");
-});
-await deployContractsToCartio("script/CreateDahliaPythOracle.s.sol", (envs) => {
-  const withoutBera = clearPrefixOnEnvKeys(envs, "WBERA_USDC");
-
-  return clearPrefixOnEnvKeys(withoutBera, "PYTH");
-});
+await deployContractsOnNetworks("script/CreateDahliaPythOracle.s.sol", "PythOracles");

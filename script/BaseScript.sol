@@ -28,9 +28,9 @@ abstract contract BaseScript is Script {
     function _printContract(string memory prefix, address addr) internal {
         string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
         blockNumber++;
-        string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
+        //        string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
-        console.log(prefix, addressUrl, blockUrl);
+        console.log(prefix, addressUrl);
     }
 
     function _deployTimelock(address admin_, uint256 delay_) internal returns (Timelock) {

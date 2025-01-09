@@ -1,11 +1,12 @@
 import { execa } from "execa";
+import _ from "lodash";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-import { DEPLOY_NETWORKS, DEPLOY_ON_REMOTE, envs, privateKey } from "./envs.ts";
-import Network from "./network.ts";
+import { Config, load } from "./config.ts";
+import { DEPLOY_NETWORKS, DEPLOY_ON_REMOTE } from "./envs.ts";
 import { waitForRpc } from "./waitForRpc.ts";
 
 const env = { ...process.env, NX_VERBOSE_LOGGING: "true", NO_COLOR: "true", FORCE_COLOR: "false" };
@@ -66,7 +67,7 @@ const ANVIL_ACCOUNT_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
  * @param address
  * @param amount
  */
-const sendMoneyToAddressOnAnvil = async (rpcUrl: string, address: string, amount: number) => {
+export const sendMoneyToAddressOnAnvil = async (rpcUrl: string, address: string, amount: number) => {
   await waitForRpc(rpcUrl);
   // const last4DigitsOfReceiverAddress = address.slice(-4);
   // const logFilePath = `./logs/send-money-to-address-on-anvil-___${last4DigitsOfReceiverAddress}.log`;
@@ -87,145 +88,49 @@ const sendMoneyToAddressOnAnvil = async (rpcUrl: string, address: string, amount
   await child2;
 };
 
-export const sendMoneyToAddressOnAnvilMainnet = async (address: string, amount: number) => {
-  const rpcUrl = `http://localhost:${process.env.MAINNET_RPC_PORT}`;
-  await sendMoneyToAddressOnAnvil(rpcUrl, address, amount);
-};
-
-export const sendMoneyToAddressOnAnvilSepolia = async (address: string, amount: number) => {
-  const rpcUrl = `http://localhost:${process.env.SEPOLIA_RPC_PORT}`;
-  await sendMoneyToAddressOnAnvil(rpcUrl, address, amount);
-};
-
-export const sendMoneyToAddressOnAnvilCartio = async (address: string, amount: number) => {
-  const rpcUrl = `http://localhost:${process.env.CARTIO_RPC_PORT}`;
-  await sendMoneyToAddressOnAnvil(rpcUrl, address, amount);
-};
-
-/**
- * Clears network prefixes - example: MAINNET__POINTS_FACTORY -> POINTS_FACTORY
- * @param envs
- * @param keyPrefix - example: MAINNET
- */
-export const clearPrefixOnEnvKeys = (envs: Record<string, string>, keyPrefix: string): Record<string, string> => {
-  const prefix = `${keyPrefix}__`;
-  const result: Record<string, string> = {};
-  for (const [key, value] of Object.entries(envs)) {
-    if (key.includes(prefix)) {
-      result[key.replace(prefix, "")] = value;
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-};
-
-export const deployContracts = async (
-  rpcUrl: string,
-  scannerBaseUrl: string,
-  creationScriptPath: string,
-  network: string,
-  envModifyCallback?: (envs: Record<string, string>) => Record<string, string>,
-): Promise<void> => {
-  console.log(`Deploying contracts to rpcUrl=${rpcUrl}...`);
-  const blockNumber = await waitForRpc(rpcUrl);
-  console.log("blockNumber=" + blockNumber);
-
-  const deploymentEnvs = envModifyCallback ? envModifyCallback(envs) : envs;
-
+async function runScript(env: Readonly<Partial<Record<string, string>>>, creationScriptPath: string, cfg: Config) {
+  console.log("env", env);
   const child = $$({
+    env,
+    verbose: "full",
     cwd: "..",
-    env: {
-      ...clearPrefixOnEnvKeys(deploymentEnvs, network),
-      SCANNER_BASE_URL: scannerBaseUrl,
-    },
     stdout: "pipe",
     stderr: "pipe",
-  })`forge script ${creationScriptPath} --rpc-url ${rpcUrl} --broadcast --private-key ${privateKey}`;
+  })`forge script ${creationScriptPath} --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DAHLIA_PRIVATE_KEY}`;
   writeOutputToConsoleAndFile(child);
   await child;
-};
+}
 
-export const deployContractsToMainnet = async (
-  creationScriptPath: string,
-  envModifyCallback?: (envs: Record<string, string>) => Record<string, string>,
-): Promise<void> => {
-  if (!DEPLOY_NETWORKS.includes(Network.MAINNET)) {
-    return;
-  }
-
-  let rpcUrl;
-  let scannerBaseUrl;
-
-  if (DEPLOY_ON_REMOTE) {
-    if (!process.env.MAINNET_RPC_URL || !process.env.MAINNET_SCANNER_BASE_URL) {
-      throw new Error("Missing MAINNET_RPC_URL or MAINNET_SCANNER_BASE_URL");
+export const deployContractsOnNetworks = async (creationScriptPath: string, iter?: string): Promise<void> => {
+  for (const network of DEPLOY_NETWORKS) {
+    const cfg = load(network);
+    if (DEPLOY_ON_REMOTE) {
+      if (!cfg.RPC_URL || !cfg.SCANNER_BASE_URL) {
+        throw new Error("Missing RPC_URL or SCANNER_BASE_URL");
+      }
+    } else {
+      if (!cfg.RPC_PORT || !cfg.OTT_PORT) {
+        throw new Error("Missing RPC_PORT or OTT_PORT");
+      }
+      cfg.RPC_URL = `http://localhost:${cfg.RPC_PORT}`;
+      cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTT_PORT}`;
+      console.log(`Deploying contracts to rpcUrl=${cfg.RPC_URL}...`);
+      const blockNumber = await waitForRpc(cfg.RPC_URL);
+      console.log("blockNumber=" + blockNumber);
     }
-    rpcUrl = process.env.MAINNET_RPC_URL;
-    scannerBaseUrl = process.env.MAINNET_SCANNER_BASE_URL;
-  } else {
-    if (!process.env.MAINNET_RPC_PORT || !process.env.MAINNET_OTT_PORT) {
-      throw new Error("Missing MAINNET_RPC_PORT or MAINNET_OTT_PORT");
+
+    const env = _.pickBy(cfg, (value) => typeof value === "string");
+
+    if (iter) {
+      for (const subvalue of cfg[iter]) {
+        const env = {
+          ..._.pickBy(cfg, (value) => typeof value === "string"),
+          ...subvalue,
+        };
+        await runScript(env, creationScriptPath, cfg);
+      }
+    } else {
+      await runScript(env, creationScriptPath, cfg);
     }
-    rpcUrl = `http://localhost:${process.env.MAINNET_RPC_PORT}`;
-    scannerBaseUrl = `http://localhost:${process.env.MAINNET_OTT_PORT}`;
   }
-
-  await deployContracts(rpcUrl, scannerBaseUrl, creationScriptPath, Network.MAINNET, envModifyCallback);
-};
-
-export const deployContractsToSepolia = async (
-  creationScriptPath: string,
-  envModifyCallback?: (envs: Record<string, string>) => Record<string, string>,
-): Promise<void> => {
-  if (!DEPLOY_NETWORKS.includes(Network.SEPOLIA)) {
-    return;
-  }
-
-  let rpcUrl;
-  let scannerBaseUrl;
-
-  if (DEPLOY_ON_REMOTE) {
-    if (!process.env.SEPOLIA_RPC_URL || !process.env.SEPOLIA_SCANNER_BASE_URL) {
-      throw new Error("Missing SEPOLIA_RPC_URL or SEPOLIA_SCANNER_BASE_URL");
-    }
-    rpcUrl = process.env.SEPOLIA_RPC_URL;
-    scannerBaseUrl = process.env.SEPOLIA_SCANNER_BASE_URL;
-  } else {
-    if (!process.env.SEPOLIA_RPC_PORT || !process.env.SEPOLIA_OTT_PORT) {
-      throw new Error("Missing SEPOLIA_RPC_PORT or SEPOLIA_OTT_PORT");
-    }
-    rpcUrl = `http://localhost:${process.env.SEPOLIA_RPC_PORT}`;
-    scannerBaseUrl = `http://localhost:${process.env.SEPOLIA_OTT_PORT}`;
-  }
-
-  await deployContracts(rpcUrl, scannerBaseUrl, creationScriptPath, Network.SEPOLIA, envModifyCallback);
-};
-
-export const deployContractsToCartio = async (
-  creationScriptPath: string,
-  envModifyCallback?: (envs: Record<string, string>) => Record<string, string>,
-): Promise<void> => {
-  if (!DEPLOY_NETWORKS.includes(Network.CARTIO)) {
-    return;
-  }
-
-  let rpcUrl;
-  let scannerBaseUrl;
-
-  if (DEPLOY_ON_REMOTE) {
-    if (!process.env.CARTIO_RPC_URL || !process.env.CARTIO_SCANNER_BASE_URL) {
-      throw new Error("Missing CARTIO_RPC_URL or CARTIO_SCANNER_BASE_URL");
-    }
-    rpcUrl = process.env.CARTIO_RPC_URL;
-    scannerBaseUrl = process.env.CARTIO_SCANNER_BASE_URL;
-  } else {
-    if (!process.env.CARTIO_RPC_PORT || !process.env.CARTIO_OTT_PORT) {
-      throw new Error("Missing CARTIO_RPC_PORT or CARTIO_OTT_PORT");
-    }
-    rpcUrl = `http://localhost:${process.env.CARTIO_RPC_PORT}`;
-    scannerBaseUrl = `http://localhost:${process.env.CARTIO_OTT_PORT}`;
-  }
-
-  await deployContracts(rpcUrl, scannerBaseUrl, creationScriptPath, Network.CARTIO, envModifyCallback);
 };

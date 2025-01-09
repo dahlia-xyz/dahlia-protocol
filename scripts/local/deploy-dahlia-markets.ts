@@ -1,4 +1,3 @@
-import { clearPrefixOnEnvKeys, deployContractsToCartio } from "../utils.ts";
+import { deployContractsOnNetworks } from "../utils.ts";
 
-await deployContractsToCartio("script/WrappedVault.s.sol", (envs) => clearPrefixOnEnvKeys(envs, "STONE_WETH"));
-await deployContractsToCartio("script/WrappedVault.s.sol", (envs) => clearPrefixOnEnvKeys(envs, "WBERA_USDC"));
+await deployContractsOnNetworks("script/WrappedVault.s.sol", "WrappedVaults");
