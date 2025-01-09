@@ -181,6 +181,13 @@ function transform(file: Config, obj: any): TransformResult {
 
     if (_.isArray(p)) {
       for (let i = 0; i < p.length; i++) {
+        if (_.isPlainObject(p[i])) {
+          const transformed = transform(file, p[i]);
+          if (!changed && transformed.changed) {
+            changed = true;
+          }
+          p[i] = transformed.result;
+        }
         if (_.isString(p[i])) {
           p[i] = substitute(file, p[i]).replace;
         }
