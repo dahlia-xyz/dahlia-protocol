@@ -50,17 +50,8 @@ export function load(env?: string): Config {
 }
 
 function loadConfigFile(file: string): Config {
-  try {
-    const fileContents = fs.readFileSync(file, "utf8");
-    return yaml.load(fileContents) as Config;
-  } catch (e: any) {
-    // If the error is "file not found", ignore silently; otherwise, re-throw.
-    if (!/ENOENT:\s+no such file or directory/.test(e.message)) {
-      console.log("Error Loading " + file + ":", e);
-      throw e;
-    }
-  }
-  return Object();
+  const fileContents = fs.readFileSync(file, "utf8");
+  return yaml.load(fileContents, { filename: file }) as Config;
 }
 
 /**
