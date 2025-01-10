@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { Test, Vm } from "@forge-std/Test.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { DahliaOracleFactoryBase } from "src/oracles/abstracts/DahliaOracleFactoryBase.sol";
-
 import { DahliaOracleStaticAddress } from "src/oracles/abstracts/DahliaOracleStaticAddress.sol";
 import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
@@ -45,6 +44,8 @@ contract DahliaPythOracleFactoryTest is Test {
     function test_oracleFactory_pyth_wethUniWithBadDataFromPyth() public {
         vm.pauseGasMetering();
 
+        address timelock = address(ctx.createTimelock());
+
         DahliaPythOracle.Params memory params = DahliaPythOracle.Params({
             baseToken: Mainnet.WETH_ERC20,
             baseFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace,
@@ -54,7 +55,7 @@ contract DahliaPythOracleFactoryTest is Test {
         DahliaPythOracle.Delays memory delays = DahliaPythOracle.Delays({ baseMaxDelay: 86_400, quoteMaxDelay: 86_400 });
 
         vm.expectEmit(true, true, true, true);
-        emit Ownable.OwnershipTransferred(address(0), ctx.OWNER());
+        emit Ownable.OwnershipTransferred(address(0), timelock);
 
         vm.expectEmit(true, true, true, true);
         emit DahliaOracleStaticAddress.StaticOracleAddressUpdated(Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
