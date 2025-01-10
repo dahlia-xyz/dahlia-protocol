@@ -188,7 +188,8 @@ contract DeployDahlia is BaseScript {
                 maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
                 zeroUtilizationRate: ZERO_UTIL_RATE,
                 rateHalfLife: 604_800, // 7 days
-                targetRatePercent: 0.2e18
+                targetRatePercent: 0.2e18,
+                name: "Variable IRM_20"
             })
         );
         _printContract("Irm:                        ", address(irm));

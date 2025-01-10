@@ -18,6 +18,7 @@ import { DahliaChainlinkOracleFactory } from "src/oracles/contracts/DahliaChainl
 import { DahliaDualOracleFactory } from "src/oracles/contracts/DahliaDualOracleFactory.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 import { DahliaUniswapV3OracleFactory } from "src/oracles/contracts/DahliaUniswapV3OracleFactory.sol";
+import { Timelock } from "src/oracles/contracts/Timelock.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
@@ -68,6 +69,7 @@ contract TestContext {
     mapping(string => address) public contracts;
     mapping(string => uint8) public defaultTokenDecimals;
     address public immutable OWNER;
+    address public immutable ALICE;
 
     constructor(Vm vm_) {
         defaultTokenDecimals["USDC"] = 6;
@@ -76,6 +78,7 @@ contract TestContext {
         defaultTokenDecimals["WBTC"] = 8;
         vm = vm_;
         OWNER = createWallet("OWNER");
+        ALICE = createWallet("ALICE");
     }
 
     function bootstrapMarket(string memory loanTokenName, string memory collateralTokenName, uint256 lltv, address owner)
@@ -193,7 +196,8 @@ contract TestContext {
                 maxFullUtilizationRate: 3_164_940_920_000,
                 zeroUtilizationRate: 158_247_046,
                 rateHalfLife: 172_800,
-                targetRatePercent: 0.2e18
+                targetRatePercent: 0.2e18,
+                name: "Variable IRM_20"
             })
         );
         contracts["Irm"] = address(irm);
@@ -316,12 +320,22 @@ contract TestContext {
         vm.stopPrank();
     }
 
+    function createTimelock() public returns (address timelock) {
+        string memory index = "Timelock";
+        if (contracts[index] != address(0)) {
+            return contracts[index];
+        }
+        timelock = address(new Timelock(OWNER, TestConstants.TIMELOCK_DELAY));
+        contracts[index] = timelock;
+    }
+
     function createPythOracleFactory() public returns (DahliaPythOracleFactory factory) {
         string memory index = "DahliaPythOracleFactory";
         if (contracts[index] != address(0)) {
             return DahliaPythOracleFactory(contracts[index]);
         }
-        factory = new DahliaPythOracleFactory(OWNER, Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
+        address timelock = createTimelock();
+        factory = new DahliaPythOracleFactory(timelock, Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
         contracts[index] = address(factory);
     }
 

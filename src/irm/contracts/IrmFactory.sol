@@ -7,11 +7,12 @@ import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 contract IrmFactory {
-    event VariableIrmCreated(address indexed irmAddress, VariableIrm.Config config);
+    event VariableIrmCreated(address indexed caller, address indexed irmAddress);
 
     error MaxUtilizationTooHigh();
     error MinUtilizationOutOfRange();
     error FullUtilizationRateRangeInvalid();
+    error IrmNameIsNotSet();
 
     /// @dev returns the hash of the init code (creation code + ABI-encoded args) used in CREATE2
     /// @param creationCode the creation code of a contract C, as returned by type(C).creationCode
@@ -24,6 +25,7 @@ contract IrmFactory {
         require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, MaxUtilizationTooHigh());
         require(config.minTargetUtilization < config.maxTargetUtilization, MinUtilizationOutOfRange());
         require(config.minFullUtilizationRate <= config.maxFullUtilizationRate, FullUtilizationRateRangeInvalid());
+        require(bytes(config.name).length > 0, IrmNameIsNotSet());
 
         bytes memory encodedArgs = abi.encode(config);
         bytes32 salt = keccak256(encodedArgs);
@@ -33,7 +35,7 @@ contract IrmFactory {
             irm = VariableIrm(expectedAddress);
         } else {
             irm = new VariableIrm{ salt: salt }(config);
+            emit VariableIrmCreated(msg.sender, address(irm));
         }
-        emit VariableIrmCreated(address(irm), config);
     }
 }
