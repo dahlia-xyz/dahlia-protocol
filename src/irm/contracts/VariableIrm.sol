@@ -42,6 +42,8 @@ contract VariableIrm is IIrm {
         /// @notice Percentage of delta between full and zero utilization rates
         /// e.g., 0.2e18, 18 decimals
         uint256 targetRatePercent;
+        /// @notice IRM name
+        string name;
     }
 
     uint256 public immutable minFullUtilizationRate;
@@ -52,6 +54,7 @@ contract VariableIrm is IIrm {
     uint24 public immutable maxTargetUtilization; // 3 bytes
     uint24 public immutable targetUtilization; // 3 bytes
     uint24 public immutable rateHalfLife; // 3 bytes
+    string public name;
 
     /// @param _config Config parameters for variable interest rate
     constructor(Config memory _config) {
@@ -63,11 +66,7 @@ contract VariableIrm is IIrm {
         maxTargetUtilization = _config.maxTargetUtilization.toUint24();
         targetUtilization = _config.targetUtilization.toUint24();
         rateHalfLife = _config.rateHalfLife.toUint24();
-    }
-
-    /// @inheritdoc IIrm
-    function name() external pure returns (string memory) {
-        return string(abi.encodePacked("Dahlia VariableIRM"));
+        name = _config.name;
     }
 
     /// @inheritdoc IIrm

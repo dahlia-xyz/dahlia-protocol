@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
 
+import { console } from "@forge-std/console.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -16,6 +17,7 @@ contract IrmFactoryTest is Test {
     uint64 constant ZERO_UTIL_RATE = 158_247_046;
     uint64 constant MIN_FULL_UTIL_RATE = 1_582_470_460;
     uint64 constant MAX_FULL_UTIL_RATE = 3_164_940_920_000;
+    string constant NAME = "Variable IRM_20";
 
     uint256 ORACLE_PRECISION = 1e18;
     TestContext ctx;
@@ -34,7 +36,8 @@ contract IrmFactoryTest is Test {
             maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
             zeroUtilizationRate: ZERO_UTIL_RATE,
             rateHalfLife: 172_800,
-            targetRatePercent: 0.2e18
+            targetRatePercent: 0.2e18,
+            name: NAME
         });
     }
 
@@ -51,6 +54,8 @@ contract IrmFactoryTest is Test {
 
         VariableIrm irm2 = VariableIrm(address(irmFactory.createVariableIrm(defaultConfig)));
         assertEq(address(irm), address(irm2));
+        console.log(irm2.name());
+        assertEq(NAME, irm2.name());
     }
 
     function test_irmFactory_variableIrm_reverts() public {
