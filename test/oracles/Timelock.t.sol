@@ -6,15 +6,14 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { Timelock } from "src/oracles/contracts/Timelock.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
+import { TestConstants } from "test/common/TestContext.sol";
 
 contract TimelockTest is Test {
     using BoundUtils for Vm;
 
-    uint256 constant TIMELOCK_DELAY = 3 days;
     uint256 constant NEW_TIMELOCK_DELAY = 2 days;
     TestContext ctx;
     address owner;
-    address oracleFactory;
     address timelockAddr;
     Timelock timelock;
     uint256 eta;
@@ -24,10 +23,9 @@ contract TimelockTest is Test {
     function setUp() public {
         vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
-        oracleFactory = address(ctx.createPythOracleFactory());
-        owner = ctx.createWallet("OWNER");
-        timelock = new Timelock(owner, TIMELOCK_DELAY);
-        timelockAddr = address(timelock);
+        owner = ctx.OWNER();
+        timelockAddr = ctx.createTimelock();
+        timelock = Timelock(timelockAddr);
 
         eta = block.timestamp + timelock.delay() + 1;
     }
@@ -123,7 +121,7 @@ contract TimelockTest is Test {
         vm.prank(owner);
         bytes32 txHash = timelock.queueTransaction(timelockAddr, 0, signature, data, eta);
 
-        vm.forward(TIMELOCK_DELAY + 1);
+        vm.forward(TestConstants.TIMELOCK_DELAY + 1);
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true, timelockAddr);
