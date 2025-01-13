@@ -1,5 +1,4 @@
-import { DEPLOY_ON_REMOTE } from "../envs.ts";
-import { deployContractsOnNetworks } from "../utils.ts";
+import { deployContractsOnNetworks, DEPLOY_ON_REMOTE } from "../utils.ts";
 
 if (DEPLOY_ON_REMOTE) {
   throw new Error(
@@ -8,10 +7,10 @@ if (DEPLOY_ON_REMOTE) {
 }
 
 await import("./recreate-docker-otterscan.ts");
-await deployContractsOnNetworks("script/DeployIrmFactory.s.sol");
-await deployContractsOnNetworks("script/CreateVariableIrm.s.sol", "VariableIRMs");
-await deployContractsOnNetworks("script/Dahlia.s.sol");
-await deployContractsOnNetworks("script/DeployTimelock.s.sol");
-await deployContractsOnNetworks("script/DeployDahliaPythOracleFactory.s.sol");
-await deployContractsOnNetworks("script/CreateDahliaPythOracle.s.sol", "PythOracles");
-await deployContractsOnNetworks("script/WrappedVault.s.sol", "WrappedVaults");
+await deployContractsOnNetworks("DeployIrmFactory.s.sol");
+await deployContractsOnNetworks("CreateVariableIrm.s.sol", "VariableIRMs");
+await deployContractsOnNetworks("Dahlia.s.sol");
+await deployContractsOnNetworks("DeployTimelock.s.sol");
+await deployContractsOnNetworks("DeployDahliaPythOracleFactory.s.sol");
+await deployContractsOnNetworks("CreateDahliaPythOracle.s.sol", "PythOracles");
+await deployContractsOnNetworks("WrappedVault.s.sol", "WrappedVaults");

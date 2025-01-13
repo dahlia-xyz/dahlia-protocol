@@ -1,6 +1,5 @@
 import { execa } from "execa";
 import fs from "fs";
-import yaml from "js-yaml";
 import _ from "lodash";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
@@ -8,9 +7,17 @@ import process from "node:process";
 import stripAnsi from "strip-ansi";
 
 import { Config, configDeployedName, load, loadConfigFile, saveConfigFile } from "./config.ts";
-import { DEPLOY_NETWORKS, DEPLOY_ON_REMOTE } from "./envs.ts";
-import Network from "./network.ts";
 import { waitForRpc } from "./waitForRpc.ts";
+
+export enum Network {
+  MAINNET = "mainnet",
+  SEPOLIA = "sepolia",
+  CARTIO = "cartio",
+}
+export const DEPLOY_NETWORKS: Network[] = [Network.CARTIO];
+
+// WARNING! ENABLE THIS ONCE YOU HAVE TESTED ON DOCKER!!!
+export const DEPLOY_ON_REMOTE = false;
 
 let isPatched = false;
 async function interceptAllOutput(): Promise<void> {
@@ -87,7 +94,7 @@ async function runScript(
   const { stdout } = await $$({
     env,
     cwd: "..",
-  })`forge script ${creationScriptPath} --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DAHLIA_PRIVATE_KEY}`;
+  })`forge script script/${creationScriptPath} --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DAHLIA_PRIVATE_KEY}`;
 
   for (const line of stdout.split(/\r?\n/)) {
     const match = line.match(/^\s*(\S+)=(0x[a-fA-F0-9]+)\s*$/);
