@@ -1,16 +1,19 @@
-import { deployContractsOnNetworks, DEPLOY_ON_REMOTE } from "./utils.ts";
+import { Command } from "commander";
 
-if (DEPLOY_ON_REMOTE) {
-  throw new Error(
-    "You are trying to deploy on remote all in once, before deleting this blocker - make sure you know what are you doing.",
-  );
-}
+import { deployContractsOnNetworks } from "./utils.ts";
+
+const program = new Command();
+
+program.option("-r, --remote", "Deploy on remote", false).parse(process.argv);
+
+const options = program.opts<{ remote: boolean }>();
+const remote = options.remote;
 
 await import("./recreate-docker-otterscan.ts");
-await deployContractsOnNetworks("DeployIrmFactory.s.sol");
-await deployContractsOnNetworks("CreateVariableIrm.s.sol", "VariableIRMs");
-await deployContractsOnNetworks("Dahlia.s.sol");
-await deployContractsOnNetworks("DeployTimelock.s.sol");
-await deployContractsOnNetworks("DeployDahliaPythOracleFactory.s.sol");
-await deployContractsOnNetworks("CreateDahliaPythOracle.s.sol", "PythOracles");
-await deployContractsOnNetworks("WrappedVault.s.sol", "WrappedVaults");
+await deployContractsOnNetworks({ script: "DeployIrmFactory.s.sol", remote });
+await deployContractsOnNetworks({ script: "CreateVariableIrm.s.sol", iterator: "VariableIRMs", remote });
+await deployContractsOnNetworks({ script: "Dahlia.s.sol", remote });
+await deployContractsOnNetworks({ script: "DeployTimelock.s.sol", remote });
+await deployContractsOnNetworks({ script: "DeployDahliaPythOracleFactory.s.sol", remote });
+await deployContractsOnNetworks({ script: "CreateDahliaPythOracle.s.sol", iterator: "PythOracles", remote });
+await deployContractsOnNetworks({ script: "WrappedVault.s.sol", iterator: "WrappedVaults", remote });

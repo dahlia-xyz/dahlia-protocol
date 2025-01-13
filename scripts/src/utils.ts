@@ -16,9 +16,6 @@ export enum Network {
 }
 export const DEPLOY_NETWORKS: Network[] = [Network.CARTIO];
 
-// WARNING! ENABLE THIS ONCE YOU HAVE TESTED ON DOCKER!!!
-export const DEPLOY_ON_REMOTE = false;
-
 let isPatched = false;
 async function interceptAllOutput(): Promise<void> {
   if (isPatched) return;
@@ -108,11 +105,17 @@ async function runScript(
   }
 }
 
-export const deployContractsOnNetworks = async (creationScriptPath: string, iter?: string): Promise<void> => {
+export interface Params {
+  script: string;
+  iterator?: string;
+  remote?: boolean;
+}
+
+export const deployContractsOnNetworks = async (params: Params): Promise<void> => {
   const deployedContracts = loadConfigFile(configDeployedName);
   for (const network of DEPLOY_NETWORKS) {
     const cfg: Config = load(network, deployedContracts[network]);
-    if (DEPLOY_ON_REMOTE) {
+    if (params.remote) {
       if (!cfg.RPC_URL || !cfg.SCANNER_BASE_URL) {
         throw new Error("Missing RPC_URL or SCANNER_BASE_URL");
       }
@@ -128,17 +131,17 @@ export const deployContractsOnNetworks = async (creationScriptPath: string, iter
 
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
-    if (iter) {
-      for (const [index, subvalue] of cfg[iter].entries()) {
+    if (params.iterator) {
+      for (const [index, subvalue] of cfg[params.iterator].entries()) {
         const env = {
           ..._.pickBy(cfg, (value) => typeof value === "string"),
           ...subvalue,
           INDEX: index,
         };
-        await runScript(env, creationScriptPath, cfg, network, deployedContracts);
+        await runScript(env, params.script, cfg, network, deployedContracts);
       }
     } else {
-      await runScript(env, creationScriptPath, cfg, network, deployedContracts);
+      await runScript(env, params.script, cfg, network, deployedContracts);
     }
   }
   saveConfigFile(configDeployedName, deployedContracts);
