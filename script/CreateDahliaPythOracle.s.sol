@@ -24,7 +24,7 @@ contract DeployPythOracle is BaseScript {
         (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) = getPythOracleDeployData();
         DahliaPythOracle pythOracle = oracleFactory.createPythOracle(params, delays);
         string memory contractName = string(abi.encodePacked("PYTH_ORACLE_", INDEX));
-        _printContract("PythOracle:", address(pythOracle), contractName);
+        _printContract(contractName, address(pythOracle));
         vm.stopBroadcast();
     }
 }

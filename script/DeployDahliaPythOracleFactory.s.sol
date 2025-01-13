@@ -10,7 +10,7 @@ contract DeployDahliaPythOracleFactory is BaseScript {
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
         address timelockAddress = vm.envAddress("TIMELOCK");
         DahliaPythOracleFactory oracleFactory = _deployDahliaPythOracleFactory(timelockAddress, pythStaticOracleAddress);
-        _printContract("DahliaPythOracleFactory:", address(oracleFactory), "PYTH_ORACLE_FACTORY");
+        _printContract("PYTH_ORACLE_FACTORY", address(oracleFactory));
         vm.stopBroadcast();
     }
 }

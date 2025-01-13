@@ -36,7 +36,7 @@ contract DeployPythOracle is BaseScript {
         );
 
         string memory contractName = string(abi.encodePacked("IRM_", INDEX));
-        _printContract("IRM:", address(irm), contractName);
+        _printContract(contractName, address(irm));
         vm.stopBroadcast();
     }
 }

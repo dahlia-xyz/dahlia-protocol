@@ -10,7 +10,7 @@ contract DeployTimelock is BaseScript {
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         uint256 timelockDelay = vm.envUint("TIMELOCK_DELAY");
         Timelock timelock = _deployTimelock(dahliaOwner, timelockDelay);
-        _printContract("Timelock:", address(timelock), "TIMELOCK");
+        _printContract("TIMELOCK", address(timelock));
         vm.stopBroadcast();
     }
 }

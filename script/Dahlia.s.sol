@@ -142,14 +142,14 @@ contract DeployDahlia is BaseScript {
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
         address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
         address pointsFactory = _deployPointsFactory(pointsFactoryFromEnv, dahliaOwner);
-        _printContract("PointsFactory:              ", pointsFactory, "POINTS_FACTORY");
+        _printContract("POINTS_FACTORY", pointsFactory);
         address wrappedVault = _deployWrappedVault();
-        _printContract("WrappedVault Implementation:", wrappedVault, "WRAPPED_VAULT_IMPLEMENTATION");
+        _printContract("WRAPPED_VAULT_IMPLEMENTATION", wrappedVault);
         address registry = _deployDahliaRegistry(dahliaOwner);
-        _printContract("Registry:                   ", registry, "REGISTRY");
+        _printContract("REGISTRY", registry);
         // Deploy the contract
         address dahlia = _deployDahlia(dahliaOwner, registry);
-        _printContract("Dahlia:                     ", dahlia, "DAHLIA_ADDRESS");
+        _printContract("DAHLIA_ADDRESS", dahlia);
         address wrappedVaultFactory = _deployWrappedVaultFactory(
             wrappedVault,
             feesRecipient,
@@ -159,7 +159,7 @@ contract DeployDahlia is BaseScript {
             pointsFactory,
             dahlia
         );
-        _printContract("WrappedVaultFactory:        ", wrappedVaultFactory, "WRAPPED_VAULT_FACTORY");
+        _printContract("WRAPPED_VAULT_FACTORY", wrappedVaultFactory);
 
         uint256 contractSize = dahlia.code.length;
         console.log("Dahlia contract size:", contractSize);

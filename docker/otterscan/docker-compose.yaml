@@ -62,7 +62,7 @@ services:
       - cartio_anvil
     environment:
       #      - DISABLE_CONFIG_OVERWRITE=1
-      - ERIGON_URL=http://localhost:${CARTIO_RPC_PORT:-8547}
+      - ERIGON_URL=http://localhost:${CARTIO_RPC_PORT:-8548}
     ports:
       - "${CARTIO_OTT_PORT:-28548}:80"
 #  sourcify:

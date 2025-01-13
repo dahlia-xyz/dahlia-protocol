@@ -1,6 +1,5 @@
 import { load } from "../config.ts";
-import Network from "../network.ts";
-import { recreateDockerOtterscan, sendMoneyToAddressOnAnvil } from "../utils.ts";
+import { Network, recreateDockerOtterscan, sendMoneyToAddressOnAnvil } from "../utils.ts";
 
 await recreateDockerOtterscan();
 

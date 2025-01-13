@@ -60,7 +60,7 @@ export function loadConfigFile(file: string): Config {
 }
 
 export function saveConfigFile(file: string, config: Config): void {
-  fs.writeFileSync(file, yaml.dump(config));
+  fs.writeFileSync(file, yaml.dump(config, { sortKeys: true }));
 }
 
 /**

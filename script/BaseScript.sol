@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
+import { Script } from "@forge-std/Script.sol";
+import { console } from "@forge-std/console.sol";
 import { LibString } from "@solady/utils/LibString.sol";
-import { Script } from "forge-std/Script.sol";
-import { console2 as console } from "forge-std/Test.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 import { Timelock } from "src/oracles/contracts/Timelock.sol";
 
@@ -32,13 +32,12 @@ abstract contract BaseScript is Script {
         console.log("Deployer address:", deployer);
     }
 
-    function _printContract(string memory prefix, address addr, string memory name) internal {
+    function _printContract(string memory name, address addr) internal {
         string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
         blockNumber++;
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
-        console.log(prefix, addressUrl);
         string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
-        console.log(env);
+        console.log(env, addressUrl);
     }
 
     function _deployTimelock(address admin_, uint256 delay_) internal returns (Timelock) {

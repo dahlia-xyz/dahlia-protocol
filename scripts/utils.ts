@@ -97,7 +97,7 @@ async function runScript(
   })`forge script script/${creationScriptPath} --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DAHLIA_PRIVATE_KEY}`;
 
   for (const line of stdout.split(/\r?\n/)) {
-    const match = line.match(/^\s*(\S+)=(0x[a-fA-F0-9]+)\s*$/);
+    const match = line.match(/^\s*(\S+)=(0x[a-fA-F0-9]+)\s+.*$/);
     if (match) {
       const [, name, address] = match;
       if (deployedContracts[network] === undefined) {
