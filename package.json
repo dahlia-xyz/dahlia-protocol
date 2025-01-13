@@ -29,15 +29,15 @@
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.1",
-    "@types/node": "^22.10.5",
+    "@types/node": "^22.10.6",
     "husky": "^9.1.7",
-    "nx": "20.3.0",
+    "nx": "20.3.1",
     "prettier": "^3.4.2",
     "prettier-plugin-toml": "^2.0.1",
     "solhint": "^5.0.4",
     "surya": "^0.4.12",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.3"
   },
   "prettier": {
     "printWidth": 120,
