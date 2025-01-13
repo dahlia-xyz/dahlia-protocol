@@ -1,4 +1,4 @@
-import { deployContractsOnNetworks, DEPLOY_ON_REMOTE } from "../utils.ts";
+import { deployContractsOnNetworks, DEPLOY_ON_REMOTE } from "./utils.ts";
 
 if (DEPLOY_ON_REMOTE) {
   throw new Error(

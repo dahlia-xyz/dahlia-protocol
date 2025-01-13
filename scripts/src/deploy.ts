@@ -1,6 +1,6 @@
 import { Command } from "commander";
 
-import { deployContractsOnNetworks } from "../utils.ts";
+import { deployContractsOnNetworks } from "./utils.ts";
 
 const program = new Command();
 

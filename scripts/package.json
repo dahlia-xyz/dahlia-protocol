@@ -5,8 +5,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "prepare": "pnpm tsx setup.ts submodules",
-    "setup": "pnpm tsx setup.ts",
+    "prepare": "pnpm tsx src/setup.ts submodules",
+    "setup": "pnpm tsx src/setup.ts",
     "recreate-docker-otterscan": "pnpm tsx src/recreate-docker-otterscan.ts",
     "deploy-irm-factory": "pnpm tsx src/deploy.ts --script DeployIrmFactory.s.sol",
     "deploy-irm": "pnpm tsx src/deploy.ts --script CreateVariableIrm.s.sol --iterator VariableIRMs",

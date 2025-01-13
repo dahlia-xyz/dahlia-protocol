@@ -25,8 +25,8 @@ let environmentTypes: string[] | undefined;
 let environments: Record<string, any>;
 let config: Config;
 
-export const configName = "config.yml";
-export const configDeployedName = "config-deployed.yml";
+export const configName = "configs/default.yml";
+export const configDeployedName = "configs/deployed.yml";
 
 /**
  * Loads and returns a config object, resolving environment and variable substitutions.
