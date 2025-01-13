@@ -17,14 +17,24 @@ export enum Network {
 }
 export const DEPLOY_NETWORKS: Network[] = [Network.CARTIO];
 
+export interface Params {
+  script: string;
+  iterator?: string;
+  remote?: boolean;
+}
+
 let isPatched = false;
 async function interceptAllOutput(): Promise<void> {
   if (isPatched) return;
   isPatched = true;
 
   const program = new Command();
-  program.option("-s, --script <path>", "Path to the .s.sol file", "").parse(process.argv);
-  const args = program.opts<{ script: string }>();
+  program
+    .option("-s, --script <path>", "Path to the .s.sol file", "")
+    .option("-i, --iterator <name>", "Name of the iterator from config.yaml")
+    .option("-r, --remote", "Deploy on remote", false)
+    .parse(process.argv);
+  const args = program.opts<Params>();
 
   const scriptName = path.basename(process.argv[1], path.extname(process.argv[1])); // e.g., "app"
   const currentUnixSeconds = Math.floor(Date.now() / 1000);
@@ -107,12 +117,6 @@ async function runScript(
       deployedContracts[network][name] = address;
     }
   }
-}
-
-export interface Params {
-  script: string;
-  iterator?: string;
-  remote?: boolean;
 }
 
 export const deployContractsOnNetworks = async (params: Params): Promise<void> => {

@@ -6,7 +6,7 @@ import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 
-contract DeployIrmFactory is BaseScript {
+contract IrmFactoryScript is BaseScript {
     function _deployIrmFactory() internal returns (address) {
         bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
         bytes32 initCodeHash = hashInitCode(type(IrmFactory).creationCode);

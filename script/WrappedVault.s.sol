@@ -6,7 +6,7 @@ import { console } from "@forge-std/console.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { IDahlia, IDahliaOracle, IIrm } from "src/core/interfaces/IDahlia.sol";
 
-contract DeployWrappedVault is BaseScript {
+contract WrappedVaultScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaAddress = vm.envAddress("DAHLIA_ADDRESS");

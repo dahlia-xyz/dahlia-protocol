@@ -6,7 +6,7 @@ import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
-contract DeployPythOracle is BaseScript {
+contract VariableIrmScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         IrmFactory irmFactory = IrmFactory(vm.envAddress("IRM_FACTORY"));

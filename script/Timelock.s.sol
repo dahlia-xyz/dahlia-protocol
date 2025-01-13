@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { BaseScript } from "./BaseScript.sol";
 import { Timelock } from "src/oracles/contracts/Timelock.sol";
 
-contract DeployTimelock is BaseScript {
+contract TimelockScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");

@@ -5,7 +5,7 @@ import { BaseScript } from "./BaseScript.sol";
 import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
-contract DeployPythOracle is BaseScript {
+contract DahliaPythOracleScript is BaseScript {
     function getPythOracleDeployData() internal view returns (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) {
         address baseToken = vm.envAddress("PYTH_ORACLE_BASE_TOKEN");
         bytes32 baseFeed = vm.envBytes32("PYTH_ORACLE_BASE_FEED");

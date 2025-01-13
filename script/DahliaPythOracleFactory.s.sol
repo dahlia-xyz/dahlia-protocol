@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { BaseScript } from "./BaseScript.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
-contract DeployDahliaPythOracleFactory is BaseScript {
+contract DahliaPythOracleFactoryScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");

@@ -10,10 +10,10 @@ const options = program.opts<{ remote: boolean }>();
 const remote = options.remote;
 
 await import("./recreate-docker-otterscan.ts");
-await deployContractsOnNetworks({ script: "DeployIrmFactory.s.sol", remote });
-await deployContractsOnNetworks({ script: "CreateVariableIrm.s.sol", iterator: "VariableIRMs", remote });
+await deployContractsOnNetworks({ script: "IrmFactory.s.sol", remote });
+await deployContractsOnNetworks({ script: "VariableIrm.s.sol", iterator: "VariableIRMs", remote });
 await deployContractsOnNetworks({ script: "Dahlia.s.sol", remote });
 await deployContractsOnNetworks({ script: "Timelock.s.sol", remote });
-await deployContractsOnNetworks({ script: "DeployDahliaPythOracleFactory.s.sol", remote });
-await deployContractsOnNetworks({ script: "CreateDahliaPythOracle.s.sol", iterator: "PythOracles", remote });
+await deployContractsOnNetworks({ script: "DahliaPythOracleFactory.s.sol", remote });
+await deployContractsOnNetworks({ script: "DahliaPythOracle.s.sol", iterator: "PythOracles", remote });
 await deployContractsOnNetworks({ script: "WrappedVault.s.sol", iterator: "WrappedVaults", remote });
