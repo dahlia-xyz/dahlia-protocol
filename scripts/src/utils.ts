@@ -1,3 +1,4 @@
+import { Command } from "commander";
 import { execa } from "execa";
 import fs from "fs";
 import _ from "lodash";
@@ -21,10 +22,14 @@ async function interceptAllOutput(): Promise<void> {
   if (isPatched) return;
   isPatched = true;
 
+  const program = new Command();
+  program.option("-s, --script <path>", "Path to the .s.sol file", "").parse(process.argv);
+  const args = program.opts<{ script: string }>();
+
   const scriptName = path.basename(process.argv[1], path.extname(process.argv[1])); // e.g., "app"
   const currentUnixSeconds = Math.floor(Date.now() / 1000);
 
-  const filePath = `./logs/${scriptName}-${currentUnixSeconds}.log`;
+  const filePath = `./logs/${scriptName}-${args.script}-${currentUnixSeconds}.log`;
   if (fs.existsSync(filePath)) {
     await fsPromises.unlink(filePath);
   }

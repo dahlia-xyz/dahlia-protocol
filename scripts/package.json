@@ -11,7 +11,7 @@
     "deploy-irm-factory": "pnpm tsx src/deploy.ts --script DeployIrmFactory.s.sol",
     "deploy-irm": "pnpm tsx src/deploy.ts --script CreateVariableIrm.s.sol --iterator VariableIRMs",
     "deploy-dahlia": "pnpm tsx src/deploy.ts --script Dahlia.s.sol",
-    "deploy-timelock": "pnpm tsx src/deploy.ts --script DeployTimelock.s.sol",
+    "deploy-timelock": "pnpm tsx src/deploy.ts --script Timelock.s.sol",
     "deploy-dahlia-pyth-oracle-factory": "pnpm tsx src/deploy.ts --script DeployDahliaPythOracleFactory.s.sol",
     "deploy-dahlia-pyth-oracle": "pnpm tsx src/deploy.ts --script CreateDahliaPythOracle.s.sol --iterator PythOracles",
     "deploy-dahlia-markets": "pnpm tsx src/deploy.ts --script WrappedVault.s.sol --iterator WrappedVaults",
