@@ -26,7 +26,7 @@ let environments: Record<string, any>;
 let config: Config;
 
 export const configName = "configs/default.yml";
-export const configDeployedName = "configs/deployed.yml";
+export const configDeployedName = (remote?: boolean) => (remote ? "configs/remote.yml" : "configs/docker.yml");
 
 /**
  * Loads and returns a config object, resolving environment and variable substitutions.

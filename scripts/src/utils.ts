@@ -112,7 +112,8 @@ export interface Params {
 }
 
 export const deployContractsOnNetworks = async (params: Params): Promise<void> => {
-  const deployedContracts = loadConfigFile(configDeployedName);
+  const deployedName = configDeployedName(params.remote);
+  const deployedContracts = loadConfigFile(deployedName);
   for (const network of DEPLOY_NETWORKS) {
     const cfg: Config = load(network, deployedContracts[network]);
     if (params.remote) {
@@ -144,5 +145,5 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
       await runScript(env, params.script, cfg, network, deployedContracts);
     }
   }
-  saveConfigFile(configDeployedName, deployedContracts);
+  saveConfigFile(deployedName, deployedContracts);
 };
