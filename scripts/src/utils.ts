@@ -35,21 +35,20 @@ async function interceptAllOutput(): Promise<void> {
   const originalStdoutWrite = process.stdout.write;
   const originalStderrWrite = process.stderr.write;
 
-  // Monkey-patch process.stdout.write
-  process.stdout.write = function (chunk, encoding?: any, callback?: any) {
-    // Write the same data to your log file
+  const writeToLog = (chunk: any): void => {
     const message = typeof chunk === "string" ? chunk : chunk.toString();
     logStream.write(stripAnsi(message));
-    // Pass the data to the original console
+  };
+
+  // Monkey-patch process.stdout.write
+  process.stdout.write = function (chunk, encoding?: any, callback?: any) {
+    writeToLog(chunk);
     return originalStdoutWrite.call(process.stdout, chunk, encoding, callback);
   };
 
   // Monkey-patch process.stderr.write
   process.stderr.write = function (chunk, encoding?: any, callback?: any) {
-    // Write the same data to your log file
-    const message = typeof chunk === "string" ? chunk : chunk.toString();
-    logStream.write(stripAnsi(message));
-    // Pass the data to the original console
+    writeToLog(chunk);
     return originalStderrWrite.call(process.stderr, chunk, encoding, callback);
   };
 }
