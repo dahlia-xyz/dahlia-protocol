@@ -2,8 +2,6 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
-import { console } from "@forge-std/console.sol";
-
 import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
@@ -21,19 +19,12 @@ contract DeployPythOracle is BaseScript {
 
     function run() public {
         vm.startBroadcast(deployer);
-        address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
-        uint256 timelockDelay = vm.envUint("TIMELOCK_DELAY");
-        address timelockAddress = _calculateTimelockExpectedAddress(dahliaOwner, timelockDelay);
-        require(timelockAddress.code.length > 0, "Timelock is not deployed");
-        console.log("Deployer address:", deployer);
-        address dahliaOracleFactoryAddress = _calculateDahliaPythOracleFactoryExpectedAddress(timelockAddress, pythStaticOracleAddress);
-        require(dahliaOracleFactoryAddress.code.length > 0, "DahliaOracleFactory is not deployed");
-        _printContract("DahliaOracleFactory:", dahliaOracleFactoryAddress);
-        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(dahliaOracleFactoryAddress);
+        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(vm.envAddress("PYTH_ORACLE_FACTORY"));
+        string memory INDEX = vm.envString("INDEX");
         (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) = getPythOracleDeployData();
         DahliaPythOracle pythOracle = oracleFactory.createPythOracle(params, delays);
-        _printContract("PythOracle:", address(pythOracle));
+        string memory contractName = string(abi.encodePacked("PYTH_ORACLE_", INDEX));
+        _printContract("PythOracle:", address(pythOracle), contractName);
         vm.stopBroadcast();
     }
 }

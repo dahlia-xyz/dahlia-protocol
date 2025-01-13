@@ -46,7 +46,16 @@ cartio:
     WETH: "0x2d93FbcE4CffC15DD385A80B3f4CC1D4E76C38b3" # WETH https://80000.testnet.routescan.io/token/0x2d93FbcE4CffC15DD385A80B3f4CC1D4E76C38b3
   PYTH_STATIC_ORACLE_ADDRESS: "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21"
   DAHLIA_ADDRESS: "0x9c09762d077feccd27b1b59728c6269bab0fe638"
-  IRM: "0x0002ae679915cd33e301a9d552cf972a93ec6327"
+  VariableIRMs:
+    - ZERO_UTIL_RATE: "31649410"
+      MIN_FULL_UTIL_RATE: "15824704600"
+      MAX_FULL_UTIL_RATE: "158247046000"
+      MIN_TARGET_UTILIZATION: "88000" # 88%
+      MAX_TARGET_UTILIZATION: "92000" # 92%
+      TARGET_UTILIZATION: "90000" # 90%
+      RATE_HALF_LIFE: "604800" # 7 days
+      TARGET_RATE_PERCENT: "200000000000000000" # 0.2e18
+      IRM_NAME: "Variable IRM_20"
   PythOracles:
     - PYTH_ORACLE_BASE_TOKEN: ${cartio.erc20.STONE}
       PYTH_ORACLE_BASE_FEED: "0xc1304032f924ebde0d52dd804ff7e7d095f7b4d4eff809cae7f12b7136e089c0"
@@ -64,12 +73,14 @@ cartio:
     - NAME: "STONE/WETH (92% LLTV)"
       COLLATERAL: ${cartio.erc20.STONE} # STONE https://80000.testnet.routescan.io/address/0x1da4dF975FE40dde074cBF19783928Da7246c515
       LOAN: ${cartio.erc20.WETH}
-      ORACLE: "0xe3b61f75d2457e34f11bb01f945a6c7336518e43" # https://80000.testnet.routescan.io/address/0xe3b61f75d2457e34f11bb01f945a6c7336518e43/contract/80000/code
+      ORACLE: ${PYTH_ORACLE_0} # see config-deployed.yml
       LLTV: "92000" # 92%
       LIQUIDATION_BONUS_RATE: "6000" # 6%
+      IRM: ${IRM_0} # see config-deployed.yml
     - NAME: "WBERA/USDC (80% LLTV)"
       COLLATERAL: ${cartio.erc20.WBERA} # WBERA https://80000.testnet.routescan.io/token/0x6969696969696969696969696969696969696969
       LOAN: ${cartio.erc20.USDC} # USDC https://80000.testnet.routescan.io/token/0x015fd589F4f1A33ce4487E12714e1B15129c9329
-      ORACLE: "0x5e9d4e86741d384d52fd2054f523692376ec6ce6" # https://80000.testnet.routescan.io/address/0x5e9D4E86741D384D52fd2054F523692376Ec6cE6/contract/80000/code
+      ORACLE: ${PYTH_ORACLE_1} # see config-deployed.yml
       LLTV: "80000" # 80%
       LIQUIDATION_BONUS_RATE: "15000" # 15%
+      IRM: ${IRM_0} # see config-deployed.yml

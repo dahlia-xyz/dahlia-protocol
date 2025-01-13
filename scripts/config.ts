@@ -5,9 +5,6 @@ import _ from "lodash";
 import moment from "moment";
 import sh from "shelljs";
 
-// import yargs from "yargs";
-// import { hideBin } from "yargs/helpers";
-
 // A minimal interface for your top-level config structure.
 // Feel free to refine based on your actual config schema.
 export interface Config {
@@ -28,12 +25,16 @@ let environmentTypes: string[] | undefined;
 let environments: Record<string, any>;
 let config: Config;
 
+export const configName = "config.yml";
+export const configDeployedName = "config-deployed.yml";
+
 /**
  * Loads and returns a config object, resolving environment and variable substitutions.
  * @param env - An optional environment override (e.g. 'dev', 'stage', 'prod', etc.)
+ * @param deployedContracts - additional contracts already deployed
  */
-export function load(env?: string): Config {
-  config = loadConfig();
+export function load(env?: string, deployedContracts?: Config): Config {
+  config = _.merge({}, loadConfigFile(configName), deployedContracts);
   environments = config.environments || Object();
 
   envId = getEnvId(config, env);
@@ -49,34 +50,17 @@ export function load(env?: string): Config {
   return config;
 }
 
-function loadConfigFile(file: string): Config {
-  const fileContents = fs.readFileSync(file, "utf8");
-  return yaml.load(fileContents, { filename: file }) as Config;
+export function loadConfigFile(file: string): Config {
+  if (fs.existsSync(file)) {
+    const fileContents = fs.readFileSync(file, "utf8");
+    return yaml.load(fileContents, { filename: file }) as Config;
+  } else {
+    return {};
+  }
 }
 
-/**
- * Loads a single config.yml or, if not found, attempts to load multiple .yml files
- * from a config directory, merging them into one object.
- */
-function loadConfig(): Config {
-  const cwd = process.cwd();
-  if (fs.existsSync("config.yml")) {
-    // Single config file mode
-    return loadConfigFile("config.yml") || {};
-  } else {
-    // Multi-file mode
-    multiFile = true;
-    const templ: Config = {};
-    const files = fs.readdirSync("config");
-
-    for (const fileName of files) {
-      if (fileName.endsWith(".yml")) {
-        const keyName = fileName.substring(0, fileName.length - ".yml".length);
-        templ[keyName] = loadConfigFile("config/" + fileName);
-      }
-    }
-    return templ;
-  }
+export function saveConfigFile(file: string, config: Config): void {
+  fs.writeFileSync(file, yaml.dump(config));
 }
 
 /**
@@ -137,7 +121,7 @@ function substitute(file: Config, p: string): SubstituteResult {
       return String(replacement);
     } else {
       // Leave as-is if not found anywhere
-      throw new Error("Could not find replacement for ${" + term + "}");
+      return match;
     }
   });
   return { success, replace: replaced };

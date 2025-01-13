@@ -10,6 +10,12 @@ import { Timelock } from "src/oracles/contracts/Timelock.sol";
 abstract contract BaseScript is Script {
     using LibString for *;
 
+    string public constant IRM_FACTORY_SALT = "IRM_FACTORY_V0.0.1";
+    string public constant POINTS_FACTORY_SALT = "POINTS_FACTORY_V0.0.1";
+    string public constant WRAPPED_VAULT_SALT = "WRAPPED_VAULT_V0.0.1";
+    string public constant DAHLIA_REGISTRY_SALT = "DAHLIA_REGISTRY_V0.0.1";
+    string public constant DAHLIA_SALT = "DAHLIA_V0.0.1";
+    string public constant WRAPPED_VAULT_FACTORY_SALT = "WRAPPED_VAULT_FACTORY_V0.0.1";
     string public constant DAHLIA_PYTH_ORACLE_FACTORY_SALT = "DAHLIA_PYTH_ORACLE_FACTORY_V0.0.1";
     string public constant TIMELOCK_SALT = "TIMELOCK_V0.0.1";
 
@@ -23,14 +29,16 @@ abstract contract BaseScript is Script {
         deployer = vm.rememberKey(privateKey);
         blockNumber = vm.getBlockNumber();
         scannerBaseUrl = vm.envString("SCANNER_BASE_URL");
+        console.log("Deployer address:", deployer);
     }
 
-    function _printContract(string memory prefix, address addr) internal {
+    function _printContract(string memory prefix, address addr, string memory name) internal {
         string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
         blockNumber++;
-        //        string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         console.log(prefix, addressUrl);
+        string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
+        console.log(env);
     }
 
     function _deployTimelock(address admin_, uint256 delay_) internal returns (Timelock) {

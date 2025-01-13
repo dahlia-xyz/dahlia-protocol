@@ -7,14 +7,15 @@
   "scripts": {
     "prepare": "pnpm tsx setup.ts submodules",
     "setup": "pnpm tsx setup.ts",
-    "recreate-docker-otterscan": "pnpm tsx local/recreate-docker-otterscan.ts",
-    "deploy-dahlia": "pnpm tsx local/deploy-dahlia.ts",
-    "deploy-irm-factory": "pnpm tsx local/deploy-irm-factory.ts",
-    "deploy-timelock": "pnpm tsx local/deploy-timelock.ts",
-    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx local/deploy-dahlia-pyth-oracle-factory.ts",
-    "deploy-dahlia-pyth-oracle": "pnpm tsx local/deploy-dahlia-pyth-oracle.ts",
-    "deploy-dahlia-markets": "pnpm tsx local/deploy-dahlia-markets.ts",
-    "deploy-all": "pnpm tsx local/deploy-all.ts"
+    "recreate-docker-otterscan": "pnpm tsx src/recreate-docker-otterscan.ts",
+    "deploy-irm-factory": "pnpm tsx src/deploy.ts --file script/DeployIrmFactory.s.sol",
+    "deploy-irm": "pnpm tsx src/deploy.ts --file script/CreateVariableIrm.s.sol --iterator VariableIRMs",
+    "deploy-dahlia": "pnpm tsx src/deploy.ts --file script/Dahlia.s.sol",
+    "deploy-timelock": "pnpm tsx src/deploy.ts --file script/DeployTimelock.s.sol",
+    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx src/deploy.ts --file script/DeployDahliaPythOracleFactory.s.sol",
+    "deploy-dahlia-pyth-oracle": "pnpm tsx src/deploy.ts --file script/CreateDahliaPythOracle.s.sol --iterator PythOracles",
+    "deploy-dahlia-markets": "pnpm tsx src/deploy.ts --file script/WrappedVault.s.sol --iterator WrappedVaults",
+    "deploy-all": "pnpm tsx src/deploy-all.ts"
   },
   "author": {
     "name": "Dahlia Labs",
@@ -25,7 +26,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.17.14",
     "@types/shelljs": "^0.8.15",
-    "@types/yargs": "^17.0.33",
+    "commander": "^13.0.0",
     "execa": "^9.3.1",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
@@ -34,8 +35,7 @@
     "strip-ansi": "^7.1.0",
     "tsx": "^4.19.0",
     "typescript": "^5.0.4",
-    "viem": "^2.7.6",
-    "yargs": "^17.7.2"
+    "viem": "^2.7.6"
   },
   "prettier": {
     "printWidth": 120,

@@ -8,10 +8,6 @@ import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
-import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
-import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
-
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -25,13 +21,6 @@ import { TestConstants } from "test/common/TestConstants.sol";
 // https://github.com/foundry-rs/forge-std/blob/f73c73d2018eb6a111f35e4dae7b4f27401e9421/src/StdUtils.sol#L122-L134
 // Solana independent implementation
 // https://github.com/Genesis3800/CREATE2Factory/blob/main/src/Create2.sol
-
-string constant POINTS_FACTORY_SALT = "POINTS_FACTORY_V0.0.1";
-string constant WRAPPED_VAULT_SALT = "WRAPPED_VAULT_V0.0.1";
-string constant DAHLIA_REGISTRY_SALT = "DAHLIA_REGISTRY_V0.0.1";
-string constant DAHLIA_SALT = "DAHLIA_V0.0.1";
-string constant WRAPPED_VAULT_FACTORY_SALT = "WRAPPED_VAULT_FACTORY_V0.0.1";
-string constant IRM_FACTORY_SALT = "IRM_FACTORY_V0.0.1";
 
 // Kindof example https://github.com/0xsend/sendapp/blob/5fbf335a481d101d0ffd6649c2cfdc0bc1c20e16/packages/contracts/script/DeploySendAccountFactory.s.sol#L19
 
@@ -151,17 +140,16 @@ contract DeployDahlia is BaseScript {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
-        console.log("Deployer address:", deployer);
         address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
         address pointsFactory = _deployPointsFactory(pointsFactoryFromEnv, dahliaOwner);
-        _printContract("PointsFactory:              ", pointsFactory);
+        _printContract("PointsFactory:              ", pointsFactory, "POINTS_FACTORY");
         address wrappedVault = _deployWrappedVault();
-        _printContract("WrappedVault Implementation:", wrappedVault);
+        _printContract("WrappedVault Implementation:", wrappedVault, "WRAPPED_VAULT_IMPLEMENTATION");
         address registry = _deployDahliaRegistry(dahliaOwner);
-        _printContract("Registry:                   ", registry);
+        _printContract("Registry:                   ", registry, "REGISTRY");
         // Deploy the contract
         address dahlia = _deployDahlia(dahliaOwner, registry);
-        _printContract("Dahlia:                     ", dahlia);
+        _printContract("Dahlia:                     ", dahlia, "DAHLIA_ADDRESS");
         address wrappedVaultFactory = _deployWrappedVaultFactory(
             wrappedVault,
             feesRecipient,
@@ -171,28 +159,7 @@ contract DeployDahlia is BaseScript {
             pointsFactory,
             dahlia
         );
-        _printContract("WrappedVaultFactory:        ", wrappedVaultFactory);
-        IrmFactory irmFactory = _deployIrmFactory();
-        _printContract("IrmFactory:                ", address(irmFactory));
-
-        uint64 ZERO_UTIL_RATE = 31_649_410;
-        uint64 MIN_FULL_UTIL_RATE = 15_824_704_600;
-        uint64 MAX_FULL_UTIL_RATE = 158_247_046_000;
-
-        IIrm irm = irmFactory.createVariableIrm(
-            VariableIrm.Config({
-                minTargetUtilization: 88 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                maxTargetUtilization: 92 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                targetUtilization: 90 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                minFullUtilizationRate: MIN_FULL_UTIL_RATE,
-                maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
-                zeroUtilizationRate: ZERO_UTIL_RATE,
-                rateHalfLife: 604_800, // 7 days
-                targetRatePercent: 0.2e18,
-                name: "Variable IRM_20"
-            })
-        );
-        _printContract("Irm:                        ", address(irm));
+        _printContract("WrappedVaultFactory:        ", wrappedVaultFactory, "WRAPPED_VAULT_FACTORY");
 
         uint256 contractSize = dahlia.code.length;
         console.log("Dahlia contract size:", contractSize);

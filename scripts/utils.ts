@@ -1,13 +1,15 @@
 import { execa } from "execa";
 import fs from "fs";
+import yaml from "js-yaml";
 import _ from "lodash";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import stripAnsi from "strip-ansi";
 
-import { Config, load } from "./config.ts";
+import { Config, configDeployedName, load, loadConfigFile, saveConfigFile } from "./config.ts";
 import { DEPLOY_NETWORKS, DEPLOY_ON_REMOTE } from "./envs.ts";
+import Network from "./network.ts";
 import { waitForRpc } from "./waitForRpc.ts";
 
 let isPatched = false;
@@ -74,17 +76,35 @@ export const sendMoneyToAddressOnAnvil = async (rpcUrl: string, address: string,
   await $$`cast send --rpc-url ${rpcUrl} --from ${ANVIL_ACCOUNT_ADDRESS} ${address} --value ${amount} --unlocked`;
 };
 
-async function runScript(env: Readonly<Partial<Record<string, string>>>, creationScriptPath: string, cfg: Config) {
+async function runScript(
+  env: Readonly<Partial<Record<string, string>>>,
+  creationScriptPath: string,
+  cfg: Config,
+  network: Network,
+  deployedContracts: Config,
+) {
   console.log("env", env);
-  await $$({
+  const { stdout } = await $$({
     env,
     cwd: "..",
   })`forge script ${creationScriptPath} --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DAHLIA_PRIVATE_KEY}`;
+
+  for (const line of stdout.split(/\r?\n/)) {
+    const match = line.match(/^\s*(\S+)=(0x[a-fA-F0-9]+)\s*$/);
+    if (match) {
+      const [, name, address] = match;
+      if (deployedContracts[network] === undefined) {
+        deployedContracts[network] = {};
+      }
+      deployedContracts[network][name] = address;
+    }
+  }
 }
 
 export const deployContractsOnNetworks = async (creationScriptPath: string, iter?: string): Promise<void> => {
+  const deployedContracts = loadConfigFile(configDeployedName);
   for (const network of DEPLOY_NETWORKS) {
-    const cfg = load(network);
+    const cfg: Config = load(network, deployedContracts[network]);
     if (DEPLOY_ON_REMOTE) {
       if (!cfg.RPC_URL || !cfg.SCANNER_BASE_URL) {
         throw new Error("Missing RPC_URL or SCANNER_BASE_URL");
@@ -102,15 +122,17 @@ export const deployContractsOnNetworks = async (creationScriptPath: string, iter
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
     if (iter) {
-      for (const subvalue of cfg[iter]) {
+      for (const [index, subvalue] of cfg[iter].entries()) {
         const env = {
           ..._.pickBy(cfg, (value) => typeof value === "string"),
           ...subvalue,
+          INDEX: index,
         };
-        await runScript(env, creationScriptPath, cfg);
+        await runScript(env, creationScriptPath, cfg, network, deployedContracts);
       }
     } else {
-      await runScript(env, creationScriptPath, cfg);
+      await runScript(env, creationScriptPath, cfg, network, deployedContracts);
     }
   }
+  saveConfigFile(configDeployedName, deployedContracts);
 };
