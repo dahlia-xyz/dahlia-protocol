@@ -153,7 +153,7 @@ contract LiquidateIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaLiquidate(
+        emit IDahlia.Liquidate(
             $.marketId, $.bob, $.alice, repaidAssets, repaidShares, _seizedCollateral, _bonusCollateral, _badDebtAssets, _badDebtShares, 0, 0
         );
         vm.resumeGasMetering();
@@ -214,7 +214,7 @@ contract LiquidateIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaLiquidate(
+        emit IDahlia.Liquidate(
             $.marketId,
             $.bob,
             $.alice,

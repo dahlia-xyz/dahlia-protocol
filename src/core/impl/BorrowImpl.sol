@@ -86,7 +86,7 @@ library BorrowImpl {
         ownerPosition.borrowShares = ownerBorrowShares.toUint128();
         market.totalBorrowAssets = totalBorrowAssets;
         market.totalBorrowShares = totalBorrowShares;
-        emit IDahlia.DahliaBorrow(id, msg.sender, owner, receiver, assets, shares);
+        emit IDahlia.Borrow(id, msg.sender, owner, receiver, assets, shares);
         return shares;
     }
 
@@ -111,7 +111,7 @@ library BorrowImpl {
         market.totalBorrowShares -= shares;
         market.totalBorrowAssets = market.totalBorrowAssets.zeroFloorSub(assets);
 
-        emit IDahlia.DahliaRepay(id, msg.sender, owner, assets, shares);
+        emit IDahlia.Repay(id, msg.sender, owner, assets, shares);
         return (assets, shares);
     }
 }
