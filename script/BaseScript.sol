@@ -10,8 +10,6 @@ abstract contract BaseScript is Script {
     using LibString for *;
 
     address internal deployer;
-    uint256 internal privateKey;
-    uint256 internal blockNumber;
     string internal scannerBaseUrl;
 
     string internal constant DEPLOYED_REGISTRY = "DEPLOYED_REGISTRY";
@@ -24,16 +22,13 @@ abstract contract BaseScript is Script {
     string internal constant POINTS_FACTORY = "POINTS_FACTORY";
 
     function setUp() public virtual {
-        privateKey = vm.envUint("PRIVATE_KEY");
-        deployer = vm.rememberKey(privateKey);
-        blockNumber = vm.getBlockNumber();
+        deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
         scannerBaseUrl = vm.envString("SCANNER_BASE_URL");
         console.log("Deployer address:", deployer);
     }
 
     function _printContract(string memory name, address addr) internal {
         string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
-        blockNumber++;
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
         console.log(env, addressUrl);
