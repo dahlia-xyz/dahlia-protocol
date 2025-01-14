@@ -5,10 +5,12 @@ import { Script } from "@forge-std/Script.sol";
 import { console } from "@forge-std/console.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 
+library Deploy {
+    string internal constant DAHLIA_ADDRESS = "DAHLIA_ADDRESS";
+}
+
 abstract contract BaseScript is Script {
     using LibString for *;
-
-    string public constant DAHLIA_SALT = "DAHLIA_V0.0.1";
 
     address internal deployer;
     uint256 internal privateKey;
