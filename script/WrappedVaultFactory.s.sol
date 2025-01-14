@@ -15,10 +15,10 @@ contract WrappedVaultFactoryScript is BaseScript {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
-        address pointsFactory = vm.envAddress("POINTS_FACTORY");
-        address wrappedVaultImplementation = vm.envAddress("WRAPPED_VAULT_IMPLEMENTATION");
+        address pointsFactory = vm.envAddress(POINTS_FACTORY);
+        address wrappedVaultImplementation = vm.envAddress(WRAPPED_VAULT_IMPLEMENTATION);
         address dahlia = vm.envAddress(DAHLIA_ADDRESS);
-        DahliaRegistry registry = DahliaRegistry(vm.envAddress("REGISTRY"));
+        DahliaRegistry registry = DahliaRegistry(vm.envAddress(REGISTRY));
         uint256 protocolFee = vm.envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
         uint256 minimumFrontendFee = vm.envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
 
