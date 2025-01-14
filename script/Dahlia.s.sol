@@ -6,7 +6,6 @@ import { console } from "@forge-std/console.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
-import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 
@@ -23,20 +22,6 @@ import { TestConstants } from "test/common/TestConstants.sol";
 // Kindof example https://github.com/0xsend/sendapp/blob/5fbf335a481d101d0ffd6649c2cfdc0bc1c20e16/packages/contracts/script/DeploySendAccountFactory.s.sol#L19
 
 contract DeployDahlia is BaseScript {
-    function _deployWrappedVault() internal returns (address) {
-        bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_SALT));
-        bytes32 initCodeHash = hashInitCode(type(WrappedVault).creationCode);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        if (expectedAddress.code.length > 0) {
-            console.log("WrappedVault already deployed");
-            return expectedAddress;
-        } else {
-            address wrappedVault = address(new WrappedVault{ salt: salt }());
-            require(expectedAddress == wrappedVault);
-            return wrappedVault;
-        }
-    }
-
     function _deployDahlia(address dahliaOwner, address registry) internal returns (address) {
         bytes32 salt = keccak256(abi.encode(DAHLIA_SALT));
         bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
@@ -90,8 +75,7 @@ contract DeployDahlia is BaseScript {
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
         address pointsFactory = vm.envAddress("POINTS_FACTORY");
-        address wrappedVault = _deployWrappedVault();
-        _printContract("WRAPPED_VAULT_IMPLEMENTATION", wrappedVault);
+        address wrappedVault = vm.envAddress("WRAPPED_VAULT_IMPLEMENTATION");
         address registry = vm.envAddress("REGISTRY");
         // Deploy the contract
         address dahlia = _deployDahlia(dahliaOwner, registry);
