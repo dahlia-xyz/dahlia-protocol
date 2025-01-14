@@ -73,7 +73,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.startPrank($.alice);
         $.loanToken.approve(address($.dahlia), amountRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaRepay($.marketId, $.alice, $.alice, amountRepaid, expectedRepaidShares);
+        emit IDahlia.Repay($.marketId, $.alice, $.alice, amountRepaid, expectedRepaidShares);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
 
@@ -115,7 +115,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
 
         vm.startPrank(caller);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaRepay($.marketId, caller, $.alice, amountRepaid, expectedRepaidShares);
+        emit IDahlia.Repay($.marketId, caller, $.alice, amountRepaid, expectedRepaidShares);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawCollateral($.marketId, caller, $.alice, $.alice, amountCollateral);
 
@@ -155,7 +155,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
         vm.startPrank($.alice);
         $.loanToken.approve(address($.dahlia), expectedAmountRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaRepay($.marketId, $.alice, $.alice, expectedAmountRepaid, sharesRepaid);
+        emit IDahlia.Repay($.marketId, $.alice, $.alice, expectedAmountRepaid, sharesRepaid);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawCollateral($.marketId, $.alice, $.alice, $.alice, amountCollateral);
         vm.resumeGasMetering();
