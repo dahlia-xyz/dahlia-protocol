@@ -9,6 +9,7 @@
     "setup": "pnpm tsx src/setup.ts",
     "recreate-docker-otterscan": "pnpm tsx src/recreate-docker-otterscan.ts",
     "deploy-points-factory": "pnpm tsx src/deploy.ts --script PointsFactory.s.sol",
+    "deploy-dahlia-registry": "pnpm tsx src/deploy.ts --script DahliaRegistry.s.sol",
     "deploy-irm-factory": "pnpm tsx src/deploy.ts --script IrmFactory.s.sol",
     "deploy-irm": "pnpm tsx src/deploy.ts --script VariableIrm.s.sol --iterator VariableIRMs",
     "deploy-dahlia": "pnpm tsx src/deploy.ts --script Dahlia.s.sol",

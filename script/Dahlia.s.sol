@@ -37,21 +37,6 @@ contract DeployDahlia is BaseScript {
         }
     }
 
-    function _deployDahliaRegistry(address dahliaOwner) internal returns (address) {
-        bytes32 salt = keccak256(abi.encode(DAHLIA_REGISTRY_SALT));
-        bytes memory encodedArgs = abi.encode(dahliaOwner);
-        bytes32 initCodeHash = hashInitCode(type(DahliaRegistry).creationCode, encodedArgs);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        if (expectedAddress.code.length > 0) {
-            console.log("DahliaRegistry already deployed");
-            return expectedAddress;
-        } else {
-            address registry = address(new DahliaRegistry{ salt: salt }(dahliaOwner));
-            require(expectedAddress == registry);
-            return registry;
-        }
-    }
-
     function _deployDahlia(address dahliaOwner, address registry) internal returns (address) {
         bytes32 salt = keccak256(abi.encode(DAHLIA_SALT));
         bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
@@ -107,8 +92,7 @@ contract DeployDahlia is BaseScript {
         address pointsFactory = vm.envAddress("POINTS_FACTORY");
         address wrappedVault = _deployWrappedVault();
         _printContract("WRAPPED_VAULT_IMPLEMENTATION", wrappedVault);
-        address registry = _deployDahliaRegistry(dahliaOwner);
-        _printContract("REGISTRY", registry);
+        address registry = vm.envAddress("REGISTRY");
         // Deploy the contract
         address dahlia = _deployDahlia(dahliaOwner, registry);
         _printContract("DAHLIA_ADDRESS", dahlia);
