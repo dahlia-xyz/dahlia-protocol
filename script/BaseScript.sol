@@ -9,7 +9,6 @@ abstract contract BaseScript is Script {
     using LibString for *;
 
     string public constant DAHLIA_SALT = "DAHLIA_V0.0.1";
-    string public constant WRAPPED_VAULT_FACTORY_SALT = "WRAPPED_VAULT_FACTORY_V0.0.1";
 
     address internal deployer;
     uint256 internal privateKey;
