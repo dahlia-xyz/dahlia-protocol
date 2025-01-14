@@ -8,11 +8,9 @@ contract IrmFactoryScript is BaseScript {
     string public constant IRM_FACTORY_SALT = "IrmFactory_V1";
 
     function run() public {
-        vm.startBroadcast(deployer);
         bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
         bytes memory initCode = type(IrmFactory).creationCode;
         string memory name = type(IrmFactory).name;
         deploy(name, DEPLOYED_IRM_FACTORY, salt, initCode);
-        vm.stopBroadcast();
     }
 }

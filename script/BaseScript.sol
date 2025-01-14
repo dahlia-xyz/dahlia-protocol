@@ -58,7 +58,13 @@ abstract contract BaseScript is Script {
         }
     }
 
-    function deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal returns (address addr) {
+    modifier broadcaster() {
+        vm.startBroadcast(deployer);
+        _;
+        vm.stopBroadcast();
+    }
+
+    function deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal broadcaster returns (address addr) {
         return _create2(name, varName, salt, initCode);
     }
 }

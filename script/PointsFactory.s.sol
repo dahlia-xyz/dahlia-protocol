@@ -8,7 +8,6 @@ contract PointsFactoryScript is BaseScript {
     string public constant POINTS_FACTORY_SALT = "PointsFactory_V1";
 
     function run() public {
-        vm.startBroadcast(deployer);
         address pointsFactoryFromEnv = vm.envOr(POINTS_FACTORY, address(0));
         if (pointsFactoryFromEnv == address(0)) {
             address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
@@ -18,6 +17,5 @@ contract PointsFactoryScript is BaseScript {
             string memory name = type(PointsFactory).name;
             deploy(name, POINTS_FACTORY, salt, initCode);
         }
-        vm.stopBroadcast();
     }
 }
