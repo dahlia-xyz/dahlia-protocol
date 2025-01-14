@@ -27,7 +27,7 @@ abstract contract BaseScript is Script {
         console.log("Deployer address:", deployer);
     }
 
-    function _printContract(string memory name, address addr) internal {
+    function _printContract(string memory name, address addr) internal view {
         string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
