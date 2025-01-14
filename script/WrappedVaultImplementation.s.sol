@@ -19,7 +19,7 @@ contract WrappedVaultImplementationScript is BaseScript {
             bytes memory initCode = type(WrappedVault).creationCode;
             vault = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract("WRAPPED_VAULT_IMPLEMENTATION", vault);
+        _printContract(WRAPPED_VAULT_IMPLEMENTATION, vault);
         vm.stopBroadcast();
     }
 }

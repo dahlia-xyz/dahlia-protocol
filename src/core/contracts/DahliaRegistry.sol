@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { IDahliaRegistry } from "src/core/interfaces/IDahliaRegistry.sol";

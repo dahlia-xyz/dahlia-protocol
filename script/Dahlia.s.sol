@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { BaseScript, Deploy } from "./BaseScript.sol";
+import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
 import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
@@ -12,7 +12,7 @@ contract DeployDahlia is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        address registry = vm.envAddress("REGISTRY");
+        address registry = vm.envAddress(REGISTRY);
         bytes32 salt = keccak256(abi.encode(DAHLIA_SALT));
         address dahlia = CREATE3.predictDeterministicAddress(salt);
         if (dahlia.code.length > 0) {
@@ -22,7 +22,7 @@ contract DeployDahlia is BaseScript {
             bytes memory initCode = abi.encodePacked(type(Dahlia).creationCode, encodedArgs);
             dahlia = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract(Deploy.DAHLIA_ADDRESS, dahlia);
+        _printContract(DAHLIA_ADDRESS, dahlia);
         vm.stopBroadcast();
     }
 }

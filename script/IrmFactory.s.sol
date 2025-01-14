@@ -19,7 +19,7 @@ contract IrmFactoryScript is BaseScript {
             bytes memory initCode = type(IrmFactory).creationCode;
             factory = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract("IRM_FACTORY", factory);
+        _printContract(IRM_FACTORY, factory);
         vm.stopBroadcast();
     }
 }

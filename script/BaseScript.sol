@@ -5,10 +5,6 @@ import { Script } from "@forge-std/Script.sol";
 import { console } from "@forge-std/console.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 
-library Deploy {
-    string internal constant DAHLIA_ADDRESS = "DAHLIA_ADDRESS";
-}
-
 abstract contract BaseScript is Script {
     using LibString for *;
 
@@ -16,6 +12,15 @@ abstract contract BaseScript is Script {
     uint256 internal privateKey;
     uint256 internal blockNumber;
     string internal scannerBaseUrl;
+
+    string internal constant REGISTRY = "REGISTRY";
+    string internal constant DAHLIA_ADDRESS = "DAHLIA_ADDRESS";
+    string internal constant PYTH_ORACLE_FACTORY = "PYTH_ORACLE_FACTORY";
+    string internal constant WRAPPED_VAULT_FACTORY = "WRAPPED_VAULT_FACTORY";
+    string internal constant WRAPPED_VAULT_IMPLEMENTATION = "WRAPPED_VAULT_IMPLEMENTATION";
+    string internal constant IRM_FACTORY = "IRM_FACTORY";
+    string internal constant POINTS_FACTORY = "POINTS_FACTORY";
+    string internal constant TIMELOCK = "TIMELOCK";
 
     function setUp() public virtual {
         privateKey = vm.envUint("PRIVATE_KEY");

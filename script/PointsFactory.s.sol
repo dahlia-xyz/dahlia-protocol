@@ -11,9 +11,9 @@ contract PointsFactoryScript is BaseScript {
 
     function run() public {
         vm.startBroadcast(deployer);
-        address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
+        address pointsFactoryFromEnv = vm.envOr(POINTS_FACTORY, address(0));
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        if (pointsFactoryFromEnv != address(0)) {
+        if (pointsFactoryFromEnv != address(0) && pointsFactoryFromEnv.code.length > 0) {
             console.log("PointsFactory already deployed");
         } else {
             bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
@@ -25,7 +25,7 @@ contract PointsFactoryScript is BaseScript {
                 bytes memory initCode = abi.encodePacked(type(PointsFactory).creationCode, encodedArgs);
                 factory = CREATE3.deployDeterministic(initCode, salt);
             }
-            _printContract("POINTS_FACTORY", factory);
+            _printContract(POINTS_FACTORY, factory);
         }
         vm.stopBroadcast();
     }

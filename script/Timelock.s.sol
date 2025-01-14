@@ -22,7 +22,7 @@ contract TimelockScript is BaseScript {
             bytes memory initCode = abi.encodePacked(type(Timelock).creationCode, encodedArgs);
             timelock = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract("TIMELOCK", timelock);
+        _printContract(TIMELOCK, timelock);
         vm.stopBroadcast();
     }
 }
