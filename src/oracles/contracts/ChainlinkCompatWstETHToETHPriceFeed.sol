@@ -5,7 +5,7 @@ import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfac
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { Errors } from "src/oracles/helpers/Errors.sol";
 
-/// @dev copied used methods from https://github.com/lidofinance/core/blob/master/contracts/0.6.12/WstETH.sol
+/// @dev Interface for wstETH, taken from https://github.com/lidofinance/core/blob/master/contracts/0.6.12/WstETH.sol
 interface IWstETH is IERC20Metadata {
     /**
      * @notice Get amount of stETH for a one wstETH
@@ -16,7 +16,7 @@ interface IWstETH is IERC20Metadata {
 
 /// @title ChainlinkCompatWstETHToETHPriceFeed
 /// @notice Oracle to convert wstETH-ETH using a stETH-ETH Chainlink feed.
-/// @dev adapted from https://github.com/lidofinance/wsteth-eth-price-feed/blob/main/contracts/AAVECompatWstETHToETHPriceFeed.sol
+/// @dev Adapted from https://github.com/lidofinance/wsteth-eth-price-feed/blob/main/contracts/AAVECompatWstETHToETHPriceFeed.sol
 contract ChainlinkCompatWstETHToETHPriceFeed is AggregatorV3Interface {
     error UnsupportedMethod();
     error BadWstETHToStETH();
