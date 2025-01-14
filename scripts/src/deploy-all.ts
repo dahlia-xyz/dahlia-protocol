@@ -10,6 +10,7 @@ const options = program.opts<{ remote: boolean }>();
 const remote = options.remote;
 
 await import("./recreate-docker-otterscan.ts");
+await deployContractsOnNetworks({ script: "PointsFactory.s.sol", remote });
 await deployContractsOnNetworks({ script: "IrmFactory.s.sol", remote });
 await deployContractsOnNetworks({ script: "VariableIrm.s.sol", iterator: "VariableIRMs", remote });
 await deployContractsOnNetworks({ script: "Dahlia.s.sol", remote });

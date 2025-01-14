@@ -8,7 +8,6 @@ import { LibString } from "@solady/utils/LibString.sol";
 abstract contract BaseScript is Script {
     using LibString for *;
 
-    string public constant POINTS_FACTORY_SALT = "POINTS_FACTORY_V0.0.1";
     string public constant WRAPPED_VAULT_SALT = "WRAPPED_VAULT_V0.0.1";
     string public constant DAHLIA_REGISTRY_SALT = "DAHLIA_REGISTRY_V0.0.1";
     string public constant DAHLIA_SALT = "DAHLIA_V0.0.1";

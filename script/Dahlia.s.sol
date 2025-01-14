@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
-import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
@@ -24,25 +23,6 @@ import { TestConstants } from "test/common/TestConstants.sol";
 // Kindof example https://github.com/0xsend/sendapp/blob/5fbf335a481d101d0ffd6649c2cfdc0bc1c20e16/packages/contracts/script/DeploySendAccountFactory.s.sol#L19
 
 contract DeployDahlia is BaseScript {
-    function _deployPointsFactory(address pointsFactoryEnvAddress, address daliaOwner) internal returns (address) {
-        if (pointsFactoryEnvAddress != address(0)) {
-            return pointsFactoryEnvAddress;
-        } else {
-            bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
-            bytes memory encodedArgs = abi.encode(daliaOwner);
-            bytes32 initCodeHash = hashInitCode(type(PointsFactory).creationCode, encodedArgs);
-            address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-            if (expectedAddress.code.length > 0) {
-                console.log("PointsFactory already deployed");
-                return expectedAddress;
-            } else {
-                address pointsFactory = address(new PointsFactory{ salt: salt }(daliaOwner));
-                require(expectedAddress == pointsFactory);
-                return pointsFactory;
-            }
-        }
-    }
-
     function _deployWrappedVault() internal returns (address) {
         bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_SALT));
         bytes32 initCodeHash = hashInitCode(type(WrappedVault).creationCode);
@@ -124,9 +104,7 @@ contract DeployDahlia is BaseScript {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
-        address pointsFactoryFromEnv = vm.envOr("POINTS_FACTORY", address(0));
-        address pointsFactory = _deployPointsFactory(pointsFactoryFromEnv, dahliaOwner);
-        _printContract("POINTS_FACTORY", pointsFactory);
+        address pointsFactory = vm.envAddress("POINTS_FACTORY");
         address wrappedVault = _deployWrappedVault();
         _printContract("WRAPPED_VAULT_IMPLEMENTATION", wrappedVault);
         address registry = _deployDahliaRegistry(dahliaOwner);
