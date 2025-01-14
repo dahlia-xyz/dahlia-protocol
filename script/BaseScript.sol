@@ -4,7 +4,6 @@ pragma solidity >=0.8.27;
 import { Script } from "@forge-std/Script.sol";
 import { console } from "@forge-std/console.sol";
 import { LibString } from "@solady/utils/LibString.sol";
-import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 import { Timelock } from "src/oracles/contracts/Timelock.sol";
 
 abstract contract BaseScript is Script {
@@ -58,29 +57,6 @@ abstract contract BaseScript is Script {
         bytes32 salt = keccak256(abi.encode(TIMELOCK_SALT));
         bytes memory encodedArgs = abi.encode(admin_, delay_);
         bytes32 initCodeHash = hashInitCode(type(Timelock).creationCode, encodedArgs);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        return expectedAddress;
-    }
-
-    function _deployDahliaPythOracleFactory(address timelockAddress_, address pythStaticOracleAddress_) internal returns (DahliaPythOracleFactory) {
-        // TODO: Maybe we need to pass uniswap address in the creation method? Since there is no such one on the cartio
-        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
-        address expectedAddress = _calculateDahliaPythOracleFactoryExpectedAddress(timelockAddress_, pythStaticOracleAddress_);
-        if (expectedAddress.code.length > 0) {
-            console.log("DahliaOracleFactory already deployed");
-            return DahliaPythOracleFactory(expectedAddress);
-        } else {
-            DahliaPythOracleFactory oracleFactory = new DahliaPythOracleFactory{ salt: salt }(timelockAddress_, pythStaticOracleAddress_);
-            address oracleFactoryAddress = address(oracleFactory);
-            require(expectedAddress == oracleFactoryAddress);
-            return oracleFactory;
-        }
-    }
-
-    function _calculateDahliaPythOracleFactoryExpectedAddress(address timelockAddress_, address pythStaticOracleAddress_) internal pure returns (address) {
-        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
-        bytes memory encodedArgs = abi.encode(timelockAddress_, pythStaticOracleAddress_);
-        bytes32 initCodeHash = hashInitCode(type(DahliaPythOracleFactory).creationCode, encodedArgs);
         address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
         return expectedAddress;
     }

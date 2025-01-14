@@ -9,6 +9,11 @@ contract DahliaDualOracle is IDahliaOracle {
     IDahliaOracle public immutable ORACLE_PRIMARY;
     IDahliaOracle public immutable ORACLE_SECONDARY;
 
+    /// @notice Emitted when the contract is deployed
+    /// @param primary address of Primary oracle
+    /// @param secondary address of Secondary oracle
+    event ParamsUpdated(IDahliaOracle indexed primary, IDahliaOracle indexed secondary);
+
     /// @notice Initializes the contract
     /// @param primary address of Primary oracle
     /// @param secondary address of Secondary oracle
@@ -17,6 +22,7 @@ contract DahliaDualOracle is IDahliaOracle {
         ORACLE_SECONDARY = secondary;
         ORACLE_PRIMARY.getPrice(); // should support getPrice
         ORACLE_SECONDARY.getPrice(); // should support getPrice
+        emit ParamsUpdated(primary, secondary);
     }
 
     /// @inheritdoc IDahliaOracle

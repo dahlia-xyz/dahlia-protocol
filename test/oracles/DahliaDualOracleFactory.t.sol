@@ -42,6 +42,12 @@ contract DahliaDualOracleFactoryTest is Test {
             900
         );
 
+        vm.expectEmit(true, true, true, true);
+        emit DahliaDualOracle.ParamsUpdated(primary, secondary);
+
+        vm.expectEmit(true, false, true, true, address(oracleFactory));
+        emit DahliaDualOracleFactory.DahliaDualOracleCreated(address(this), address(0));
+
         DahliaDualOracle oracle = oracleFactory.createDualOracle(primary, secondary);
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
