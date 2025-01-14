@@ -135,7 +135,7 @@ contract BorrowIntegrationTest is Test {
 
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.Borrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -173,7 +173,7 @@ contract BorrowIntegrationTest is Test {
         vm.dahliaApproveCollateralBy($.alice, pos.collateral, $);
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.Borrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -196,7 +196,7 @@ contract BorrowIntegrationTest is Test {
 
         vm.startPrank($.alice);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.Borrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.borrow($.marketId, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();

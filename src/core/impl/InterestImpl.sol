@@ -64,7 +64,7 @@ library InterestImpl {
         market.totalBorrowAssets = totalBorrowAssets + interestEarnedAssets;
         market.updatedAt = uint48(block.timestamp);
 
-        emit IDahlia.DahliaAccrueInterest(id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+        emit IDahlia.AccrueInterest(id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
     }
 
     /// @notice Gets the expected market balances after interest accrual.
@@ -72,7 +72,7 @@ library InterestImpl {
     function getLastMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
         uint256 deltaTime = block.timestamp - market.updatedAt;
         //we want to recompute ratePerSec and fullUtilizationRate for the last block to account changed totals
-        //if (deltaTime == 0) return;
+        //if (deltaTime == 0) return market;
 
         uint256 totalLendAssets = market.totalLendAssets;
         uint256 totalBorrowAssets = market.totalBorrowAssets;

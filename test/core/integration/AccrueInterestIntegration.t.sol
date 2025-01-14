@@ -129,7 +129,7 @@ contract AccrueInterestIntegrationTest is Test {
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit IDahlia.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, 0, 0);
+            emit IDahlia.AccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, 0, 0);
         }
 
         vm.resumeGasMetering();
@@ -192,7 +192,7 @@ contract AccrueInterestIntegrationTest is Test {
                 emit InitializableERC20.Transfer(address(0), $.reserveFeeRecipient, reserveFeeShares);
             }
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit IDahlia.DahliaAccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+            emit IDahlia.AccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
         }
         vm.resumeGasMetering();
         $.dahlia.accrueMarketInterest($.marketId);
@@ -311,6 +311,8 @@ contract AccrueInterestIntegrationTest is Test {
         });
         uint32 protocolFee = BoundUtils.toPercent(1);
         uint32 reserveFee = BoundUtils.toPercent(1);
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 0, "start lend rate");
+        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 0, "start lend rate if deposit more assets");
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaLendBy($.bob, pos.lent, $);

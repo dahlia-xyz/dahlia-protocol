@@ -66,7 +66,7 @@ contract RepayIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaRepay($.marketId, $.bob, $.alice, amountRepaid, expectedRepaidShares);
+        emit IDahlia.Repay($.marketId, $.bob, $.alice, amountRepaid, expectedRepaidShares);
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) = $.dahlia.repay($.marketId, amountRepaid, 0, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
@@ -97,7 +97,7 @@ contract RepayIntegrationTest is Test {
 
         vm.prank($.bob);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaRepay($.marketId, $.bob, $.alice, expectedAmountRepaid, sharesRepaid);
+        emit IDahlia.Repay($.marketId, $.bob, $.alice, expectedAmountRepaid, sharesRepaid);
         vm.resumeGasMetering();
         (uint256 returnAssets, uint256 returnShares) = $.dahlia.repay($.marketId, 0, sharesRepaid, $.alice, TestConstants.EMPTY_CALLBACK);
         vm.pauseGasMetering();
