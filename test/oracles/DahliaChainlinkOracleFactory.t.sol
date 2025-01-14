@@ -62,6 +62,9 @@ contract DahliaChainlinkOracleFactoryTest is Test {
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 1_611_859_162_144_102_979_080_952_870_358_934);
         assertEq(isBadData, false);
+
+        DahliaChainlinkOracle oracle2 = oracleFactory.createChainlinkOracle(params, delays);
+        assertEq(address(oracle), address(oracle2), "should be the same address");
     }
 
     function test_oracleFactory_paxg_chainlink() public {

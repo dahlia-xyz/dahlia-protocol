@@ -84,5 +84,8 @@ contract DahliaPythOracleFactoryTest is Test {
         assertEq(price, 349_637_857_989_881_860_139_699_580_376_458_729_677);
         assertEq(((price * 1e18) / 1e18) / 1e36, 349); // 349 UNI per 1 WETH
         assertEq(isBadData, false);
+
+        DahliaPythOracle oracle2 = oracleFactory.createPythOracle(params, delays);
+        assertEq(address(oracle), address(oracle2), "should be the same address");
     }
 }

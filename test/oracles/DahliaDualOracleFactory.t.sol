@@ -47,6 +47,9 @@ contract DahliaDualOracleFactoryTest is Test {
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2404); // 2404 USDC per 1 WETH
         assertEq(isBadData, false);
+
+        DahliaDualOracle oracle2 = oracleFactory.createDualOracle(primary, secondary);
+        assertEq(address(oracle), address(oracle2), "should be the same address");
     }
 
     function test_oracleFactory_dual_wethUniFromChainlink() public {
