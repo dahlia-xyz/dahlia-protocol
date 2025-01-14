@@ -13,7 +13,7 @@ contract DahliaRegistryScript is BaseScript {
         string memory name = type(DahliaRegistry).name;
         bytes memory encodedArgs = abi.encode(deployer); // this is not a mistake we deploy registry to be able set values
         bytes memory initCode = abi.encodePacked(type(DahliaRegistry).creationCode, encodedArgs);
-        _create3(name, DEPLOYED_REGISTRY, salt, initCode);
+        deploy(name, DEPLOYED_REGISTRY, salt, initCode);
         vm.stopBroadcast();
     }
 }

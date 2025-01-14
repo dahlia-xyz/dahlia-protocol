@@ -15,7 +15,7 @@ contract DeployDahlia is BaseScript {
         bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
         bytes memory initCode = abi.encodePacked(type(Dahlia).creationCode, encodedArgs);
         string memory name = type(Dahlia).name;
-        _create3(name, DEPLOYED_DAHLIA, salt, initCode);
+        deploy(name, DEPLOYED_DAHLIA, salt, initCode);
         vm.stopBroadcast();
     }
 }

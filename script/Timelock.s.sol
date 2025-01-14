@@ -15,7 +15,7 @@ contract TimelockScript is BaseScript {
         bytes memory encodedArgs = abi.encode(dahliaOwner, timelockDelay);
         bytes memory initCode = abi.encodePacked(type(Timelock).creationCode, encodedArgs);
         string memory name = type(Timelock).name;
-        _create3(name, DEPLOYED_TIMELOCK, salt, initCode);
+        deploy(name, DEPLOYED_TIMELOCK, salt, initCode);
         vm.stopBroadcast();
     }
 }

@@ -25,7 +25,7 @@ contract WrappedVaultFactoryScript is BaseScript {
         bytes memory encodedArgs = abi.encode(wrappedVaultImplementation, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);
         bytes memory initCode = abi.encodePacked(type(WrappedVaultFactory).creationCode, encodedArgs);
         string memory name = type(WrappedVaultFactory).name;
-        address factory = _create3(name, DEPLOYED_WRAPPED_VAULT_FACTORY, salt, initCode);
+        address factory = deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, salt, initCode);
         address owner = registry.owner();
         if (owner == deployer) {
             console.log("Dahlia Registry owner:", owner);

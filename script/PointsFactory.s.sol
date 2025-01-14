@@ -16,7 +16,7 @@ contract PointsFactoryScript is BaseScript {
             bytes memory encodedArgs = abi.encode(dahliaOwner);
             bytes memory initCode = abi.encodePacked(type(PointsFactory).creationCode, encodedArgs);
             string memory name = type(PointsFactory).name;
-            _create3(name, POINTS_FACTORY, salt, initCode);
+            deploy(name, POINTS_FACTORY, salt, initCode);
         }
         vm.stopBroadcast();
     }

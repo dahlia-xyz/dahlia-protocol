@@ -39,7 +39,7 @@ abstract contract BaseScript is Script {
         console.log(env, addressUrl);
     }
 
-    function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal returns (address addr) {
+    function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {
         bytes32 codeHash = keccak256(initCode);
         addr = vm.computeCreate2Address(salt, codeHash);
         if (addr.code.length > 0) {
@@ -53,7 +53,7 @@ abstract contract BaseScript is Script {
         }
     }
 
-    function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal returns (address addr) {
+    function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {
         addr = CREATE3.predictDeterministicAddress(salt);
         if (addr.code.length > 0) {
             console.log(name, "already deployed");
@@ -61,5 +61,9 @@ abstract contract BaseScript is Script {
             addr = CREATE3.deployDeterministic(initCode, salt);
             _printContract(varName, addr);
         }
+    }
+
+    function deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal returns (address addr) {
+        return _create2(name, varName, salt, initCode);
     }
 }

@@ -12,7 +12,7 @@ contract WrappedVaultImplementationScript is BaseScript {
         bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_SALT));
         bytes memory initCode = type(WrappedVault).creationCode;
         string memory name = type(WrappedVault).name;
-        _create3(name, DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION, salt, initCode);
+        deploy(name, DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION, salt, initCode);
         vm.stopBroadcast();
     }
 }
