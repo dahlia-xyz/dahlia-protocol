@@ -13,11 +13,15 @@ contract PointsFactoryScript is BaseScript {
         vm.startBroadcast(deployer);
         address pointsFactoryFromEnv = vm.envOr(POINTS_FACTORY, address(0));
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
+        bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
+        address factory = CREATE3.predictDeterministicAddress(salt);
         if (pointsFactoryFromEnv != address(0) && pointsFactoryFromEnv.code.length > 0) {
-            console.log("PointsFactory already deployed");
+            if (pointsFactoryFromEnv != factory) {
+                console.log("PointsFactory already deployed by Royco");
+            } else {
+                console.log("PointsFactory already deployed by Dahlia");
+            }
         } else {
-            bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
-            address factory = CREATE3.predictDeterministicAddress(salt);
             if (factory.code.length > 0) {
                 console.log("PointsFactory already deployed");
             } else {
