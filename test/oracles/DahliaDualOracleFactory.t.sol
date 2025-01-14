@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import { Test, Vm } from "@forge-std/Test.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { DahliaChainlinkOracle } from "src/oracles/contracts/DahliaChainlinkOracle.sol";
 import { DahliaDualOracle } from "src/oracles/contracts/DahliaDualOracle.sol";
 import { DahliaDualOracleFactory } from "src/oracles/contracts/DahliaDualOracleFactory.sol";
@@ -42,19 +43,21 @@ contract DahliaDualOracleFactoryTest is Test {
             900
         );
 
+        address oracleAddress = CREATE3.predictDeterministicAddress(keccak256(abi.encode(primary, secondary)), address(oracleFactory));
+
         vm.expectEmit(true, true, true, true);
         emit DahliaDualOracle.ParamsUpdated(primary, secondary);
 
-        vm.expectEmit(true, false, true, true, address(oracleFactory));
-        emit DahliaDualOracleFactory.DahliaDualOracleCreated(address(this), address(0));
+        vm.expectEmit(true, true, true, true, address(oracleFactory));
+        emit DahliaDualOracleFactory.DahliaDualOracleCreated(address(this), oracleAddress);
 
-        DahliaDualOracle oracle = oracleFactory.createDualOracle(primary, secondary);
-        (uint256 price, bool isBadData) = oracle.getPrice();
+        address oracle = oracleFactory.createDualOracle(primary, secondary);
+        (uint256 price, bool isBadData) = DahliaDualOracle(oracle).getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2404); // 2404 USDC per 1 WETH
         assertEq(isBadData, false);
 
-        DahliaDualOracle oracle2 = oracleFactory.createDualOracle(primary, secondary);
+        address oracle2 = oracleFactory.createDualOracle(primary, secondary);
         assertEq(address(oracle), address(oracle2), "should be the same address");
     }
 
@@ -76,9 +79,9 @@ contract DahliaDualOracleFactoryTest is Test {
             900
         );
 
-        DahliaDualOracle oracle = oracleFactory.createDualOracle(primary, secondary);
+        address oracle = oracleFactory.createDualOracle(primary, secondary);
 
-        (uint256 price, bool isBadData) = oracle.getPrice();
+        (uint256 price, bool isBadData) = DahliaDualOracle(oracle).getPrice();
         assertEq(price, 338_921_318_918_776_963_008_316_417_223_772_858_717);
         assertEq(((price * 1e18) / 1e18) / 1e36, 338); // 338 UNI per 1 WETH
         assertEq(isBadData, false);
@@ -102,9 +105,9 @@ contract DahliaDualOracleFactoryTest is Test {
             900
         );
 
-        DahliaDualOracle oracle = oracleFactory.createDualOracle(primary, secondary);
+        address oracle = oracleFactory.createDualOracle(primary, secondary);
 
-        (uint256 price, bool isBadData) = oracle.getPrice();
+        (uint256 price, bool isBadData) = DahliaDualOracle(oracle).getPrice();
         assertEq(price, 342_170_188_147_668_813_010_937_084_335_830_514_402);
         assertEq(((price * 1e18) / 1e18) / 1e36, 342); // 342 UNI per 1 WETH
         assertEq(isBadData, false);
