@@ -408,7 +408,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
             token.safeTransferFrom(msg.sender, protocolFeeRecipient, fee);
         }
 
-        emit DahliaFlashLoan(msg.sender, token, assets, fee);
+        emit FlashLoan(msg.sender, token, assets, fee);
     }
 
     /// @inheritdoc IDahlia

@@ -112,7 +112,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.Borrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -139,7 +139,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.SupplyCollateral($.marketId, caller, $.alice, pos.collateral);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, caller, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
+        emit IDahlia.Borrow($.marketId, caller, $.alice, $.bob, pos.borrowed, expectedBorrowShares);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral, pos.borrowed, $.alice, $.bob);
         vm.pauseGasMetering();
@@ -176,14 +176,14 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.SupplyCollateral($.marketId, $.alice, $.alice, pos.collateral - 1);
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaBorrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed / 2, expectedBorrowShares / 2);
+        emit IDahlia.Borrow($.marketId, $.alice, $.alice, $.bob, pos.borrowed / 2, expectedBorrowShares / 2);
         vm.resumeGasMetering();
         uint256 _shares = $.dahlia.supplyAndBorrow($.marketId, pos.collateral - 1, pos.borrowed / 2, $.alice, $.bob);
         assertEq(_shares, expectedBorrowShares / 2, "returned shares amount");
         vm.pauseGasMetering();
         vm.forward(1); // we expect accrue interest will not allow to borrow second initially allowed
         vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.DahliaAccrueInterest($.marketId, 292_291_602, 116_916_640_800, 0, 0);
+        emit IDahlia.AccrueInterest($.marketId, 292_291_602, 116_916_640_800, 0, 0);
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientCollateral.selector, 800_000_000_116_916_640_800, 800e18)); // InsufficientCollateral
         vm.resumeGasMetering();
         $.dahlia.supplyAndBorrow($.marketId, 1, pos.borrowed / 2, $.alice, $.bob);
