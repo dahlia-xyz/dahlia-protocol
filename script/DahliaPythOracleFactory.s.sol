@@ -7,24 +7,22 @@ import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
 contract DahliaPythOracleFactoryScript is BaseScript {
-    function _deployDahliaPythOracleFactory(address timelockAddress, address pythStaticOracleAddress) internal returns (address factory) {
-        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
-        factory = CREATE3.predictDeterministicAddress(salt);
-        if (factory.code.length > 0) {
-            console.log("DahliaOracleFactory already deployed");
-        } else {
-            bytes memory encodedArgs = abi.encode(timelockAddress, pythStaticOracleAddress);
-            bytes memory initCode = abi.encodePacked(type(DahliaPythOracleFactory).creationCode, encodedArgs);
-            factory = CREATE3.deployDeterministic(initCode, salt);
-        }
-    }
+    string public constant DAHLIA_PYTH_ORACLE_FACTORY_SALT = "DahliaPythOracleFactory_V1";
 
     function run() public {
         vm.startBroadcast(deployer);
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
-        address timelockAddress = vm.envAddress("TIMELOCK");
-        address oracleFactory = _deployDahliaPythOracleFactory(timelockAddress, pythStaticOracleAddress);
-        _printContract("PYTH_ORACLE_FACTORY", oracleFactory);
+        address timelock = vm.envAddress("TIMELOCK");
+        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
+        address factory = CREATE3.predictDeterministicAddress(salt);
+        if (factory.code.length > 0) {
+            console.log("DahliaOracleFactory already deployed");
+        } else {
+            bytes memory encodedArgs = abi.encode(timelock, pythStaticOracleAddress);
+            bytes memory initCode = abi.encodePacked(type(DahliaPythOracleFactory).creationCode, encodedArgs);
+            factory = CREATE3.deployDeterministic(initCode, salt);
+        }
+        _printContract("PYTH_ORACLE_FACTORY", factory);
         vm.stopBroadcast();
     }
 }

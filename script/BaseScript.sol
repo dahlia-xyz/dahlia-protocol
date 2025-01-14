@@ -4,19 +4,15 @@ pragma solidity >=0.8.27;
 import { Script } from "@forge-std/Script.sol";
 import { console } from "@forge-std/console.sol";
 import { LibString } from "@solady/utils/LibString.sol";
-import { Timelock } from "src/oracles/contracts/Timelock.sol";
 
 abstract contract BaseScript is Script {
     using LibString for *;
 
-    string public constant IRM_FACTORY_SALT = "IRM_FACTORY_V0.0.1";
     string public constant POINTS_FACTORY_SALT = "POINTS_FACTORY_V0.0.1";
     string public constant WRAPPED_VAULT_SALT = "WRAPPED_VAULT_V0.0.1";
     string public constant DAHLIA_REGISTRY_SALT = "DAHLIA_REGISTRY_V0.0.1";
     string public constant DAHLIA_SALT = "DAHLIA_V0.0.1";
     string public constant WRAPPED_VAULT_FACTORY_SALT = "WRAPPED_VAULT_FACTORY_V0.0.1";
-    string public constant DAHLIA_PYTH_ORACLE_FACTORY_SALT = "DAHLIA_PYTH_ORACLE_FACTORY_V0.0.1";
-    string public constant TIMELOCK_SALT = "TIMELOCK_V0.0.1";
 
     address internal deployer;
     uint256 internal privateKey;
@@ -37,28 +33,6 @@ abstract contract BaseScript is Script {
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
         console.log(env, addressUrl);
-    }
-
-    function _deployTimelock(address admin_, uint256 delay_) internal returns (Timelock) {
-        bytes32 salt = keccak256(abi.encode(TIMELOCK_SALT));
-        address expectedAddress = _calculateTimelockExpectedAddress(admin_, delay_);
-        if (expectedAddress.code.length > 0) {
-            console.log("Timelock already deployed");
-            return Timelock(expectedAddress);
-        } else {
-            Timelock timelock = new Timelock{ salt: salt }(admin_, delay_);
-            address timelockAddress = address(timelock);
-            require(expectedAddress == timelockAddress);
-            return timelock;
-        }
-    }
-
-    function _calculateTimelockExpectedAddress(address admin_, uint256 delay_) internal pure returns (address) {
-        bytes32 salt = keccak256(abi.encode(TIMELOCK_SALT));
-        bytes memory encodedArgs = abi.encode(admin_, delay_);
-        bytes32 initCodeHash = hashInitCode(type(Timelock).creationCode, encodedArgs);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        return expectedAddress;
     }
 
     modifier broadcaster() {

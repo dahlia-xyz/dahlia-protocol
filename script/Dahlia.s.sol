@@ -7,7 +7,6 @@ import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
-import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
@@ -118,21 +117,6 @@ contract DeployDahlia is BaseScript {
             );
             require(expectedAddress == wrappedVaultFactory);
             return wrappedVaultFactory;
-        }
-    }
-
-    function _deployIrmFactory() internal returns (IrmFactory) {
-        bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
-        bytes32 initCodeHash = hashInitCode(type(IrmFactory).creationCode);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        if (expectedAddress.code.length > 0) {
-            console.log("IrmFactory already deployed");
-            return IrmFactory(expectedAddress);
-        } else {
-            IrmFactory irmFactory = new IrmFactory{ salt: salt }();
-            address irmFactoryAddress = address(irmFactory);
-            require(expectedAddress == irmFactoryAddress);
-            return irmFactory;
         }
     }
 
