@@ -9,7 +9,7 @@ import { IIrm } from "src/irm/interfaces/IIrm.sol";
 contract VariableIrmScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
-        IrmFactory irmFactory = IrmFactory(vm.envAddress("IRM_FACTORY"));
+        IrmFactory irmFactory = IrmFactory(vm.envAddress(DEPLOYED_IRM_FACTORY));
         uint256 ZERO_UTIL_RATE = vm.envUint("ZERO_UTIL_RATE");
         uint256 MIN_FULL_UTIL_RATE = vm.envUint("MIN_FULL_UTIL_RATE");
         uint256 MAX_FULL_UTIL_RATE = vm.envUint("MAX_FULL_UTIL_RATE");
@@ -35,7 +35,7 @@ contract VariableIrmScript is BaseScript {
             })
         );
 
-        string memory contractName = string(abi.encodePacked("IRM_", INDEX));
+        string memory contractName = string(abi.encodePacked("DEPLOYED_IRM_", INDEX));
         _printContract(contractName, address(irm));
         vm.stopBroadcast();
     }

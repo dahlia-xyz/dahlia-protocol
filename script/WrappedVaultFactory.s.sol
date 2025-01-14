@@ -16,9 +16,9 @@ contract WrappedVaultFactoryScript is BaseScript {
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         address feesRecipient = vm.envAddress("FEES_RECIPIENT");
         address pointsFactory = vm.envAddress(POINTS_FACTORY);
-        address wrappedVaultImplementation = vm.envAddress(WRAPPED_VAULT_IMPLEMENTATION);
-        address dahlia = vm.envAddress(DAHLIA_ADDRESS);
-        DahliaRegistry registry = DahliaRegistry(vm.envAddress(REGISTRY));
+        address wrappedVaultImplementation = vm.envAddress(DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION);
+        address dahlia = vm.envAddress(DEPLOYED_DAHLIA);
+        DahliaRegistry registry = DahliaRegistry(vm.envAddress(DEPLOYED_REGISTRY));
         uint256 protocolFee = vm.envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
         uint256 minimumFrontendFee = vm.envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
 
@@ -32,7 +32,7 @@ contract WrappedVaultFactoryScript is BaseScript {
             bytes memory initCode = abi.encodePacked(type(WrappedVaultFactory).creationCode, encodedArgs);
             factory = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract(WRAPPED_VAULT_FACTORY, factory);
+        _printContract(DEPLOYED_WRAPPED_VAULT_FACTORY, factory);
         address owner = registry.owner();
         if (owner == deployer) {
             console.log("Dahlia Registry owner:", owner);

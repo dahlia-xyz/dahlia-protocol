@@ -21,7 +21,7 @@ contract DahliaRegistryScript is BaseScript {
             bytes memory initCode = abi.encodePacked(type(DahliaRegistry).creationCode, encodedArgs);
             factory = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract(REGISTRY, factory);
+        _printContract(DEPLOYED_REGISTRY, factory);
         vm.stopBroadcast();
     }
 }

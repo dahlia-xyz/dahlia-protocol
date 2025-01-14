@@ -12,7 +12,7 @@ contract DahliaPythOracleFactoryScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
-        address timelock = vm.envAddress(TIMELOCK);
+        address timelock = vm.envAddress(DEPLOYED_TIMELOCK);
         bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
         address factory = CREATE3.predictDeterministicAddress(salt);
         if (factory.code.length > 0) {
@@ -22,7 +22,7 @@ contract DahliaPythOracleFactoryScript is BaseScript {
             bytes memory initCode = abi.encodePacked(type(DahliaPythOracleFactory).creationCode, encodedArgs);
             factory = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract(PYTH_ORACLE_FACTORY, factory);
+        _printContract(DEPLOYED_PYTH_ORACLE_FACTORY, factory);
         vm.stopBroadcast();
     }
 }

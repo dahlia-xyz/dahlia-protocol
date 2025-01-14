@@ -8,7 +8,7 @@ contract DahliaRegistryTransferScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        DahliaRegistry registry = DahliaRegistry(vm.envAddress(REGISTRY));
+        DahliaRegistry registry = DahliaRegistry(vm.envAddress(DEPLOYED_REGISTRY));
 
         address owner = registry.owner();
         if (owner == deployer) {

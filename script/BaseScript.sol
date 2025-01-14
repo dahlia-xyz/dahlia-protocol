@@ -13,14 +13,14 @@ abstract contract BaseScript is Script {
     uint256 internal blockNumber;
     string internal scannerBaseUrl;
 
-    string internal constant REGISTRY = "REGISTRY";
-    string internal constant DAHLIA_ADDRESS = "DAHLIA_ADDRESS";
-    string internal constant PYTH_ORACLE_FACTORY = "PYTH_ORACLE_FACTORY";
-    string internal constant WRAPPED_VAULT_FACTORY = "WRAPPED_VAULT_FACTORY";
-    string internal constant WRAPPED_VAULT_IMPLEMENTATION = "WRAPPED_VAULT_IMPLEMENTATION";
-    string internal constant IRM_FACTORY = "IRM_FACTORY";
+    string internal constant DEPLOYED_REGISTRY = "DEPLOYED_REGISTRY";
+    string internal constant DEPLOYED_DAHLIA = "DEPLOYED_DAHLIA";
+    string internal constant DEPLOYED_PYTH_ORACLE_FACTORY = "DEPLOYED_PYTH_ORACLE_FACTORY";
+    string internal constant DEPLOYED_WRAPPED_VAULT_FACTORY = "DEPLOYED_WRAPPED_VAULT_FACTORY";
+    string internal constant DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION = "DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION";
+    string internal constant DEPLOYED_IRM_FACTORY = "DEPLOYED_IRM_FACTORY";
+    string internal constant DEPLOYED_TIMELOCK = "DEPLOYED_TIMELOCK";
     string internal constant POINTS_FACTORY = "POINTS_FACTORY";
-    string internal constant TIMELOCK = "TIMELOCK";
 
     function setUp() public virtual {
         privateKey = vm.envUint("PRIVATE_KEY");

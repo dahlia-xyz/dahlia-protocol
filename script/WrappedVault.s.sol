@@ -9,7 +9,7 @@ import { IDahlia, IDahliaOracle, IIrm } from "src/core/interfaces/IDahlia.sol";
 contract WrappedVaultScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
-        address dahliaAddress = vm.envAddress("DAHLIA_ADDRESS");
+        Dahlia dahlia = Dahlia(vm.envAddress(DEPLOYED_DAHLIA));
         IIrm irm = IIrm(vm.envAddress("IRM"));
         Dahlia.MarketConfig memory config = IDahlia.MarketConfig({
             loanToken: vm.envAddress("LOAN"),
@@ -21,7 +21,6 @@ contract WrappedVaultScript is BaseScript {
             name: vm.envString("NAME"),
             owner: vm.envAddress("DAHLIA_OWNER")
         });
-        Dahlia dahlia = Dahlia(dahliaAddress);
         if (!dahlia.dahliaRegistry().isIrmAllowed(irm)) {
             dahlia.dahliaRegistry().allowIrm(irm);
         }

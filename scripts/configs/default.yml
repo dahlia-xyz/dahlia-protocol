@@ -74,14 +74,14 @@ cartio:
     - NAME: "STONE/WETH (92% LLTV)"
       COLLATERAL: ${cartio.erc20.STONE} # STONE https://80000.testnet.routescan.io/address/0x1da4dF975FE40dde074cBF19783928Da7246c515
       LOAN: ${cartio.erc20.WETH}
-      ORACLE: ${PYTH_ORACLE_0} # see config-deployed.yml
+      ORACLE: ${DEPLOYED_PYTH_ORACLE_0} # see config-deployed.yml
       LLTV: "92000" # 92%
       LIQUIDATION_BONUS_RATE: "6000" # 6%
-      IRM: ${IRM_0} # see config-deployed.yml
+      IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
     - NAME: "WBERA/USDC (80% LLTV)"
       COLLATERAL: ${cartio.erc20.WBERA} # WBERA https://80000.testnet.routescan.io/token/0x6969696969696969696969696969696969696969
       LOAN: ${cartio.erc20.USDC} # USDC https://80000.testnet.routescan.io/token/0x015fd589F4f1A33ce4487E12714e1B15129c9329
-      ORACLE: ${PYTH_ORACLE_1} # see config-deployed.yml
+      ORACLE: ${DEPLOYED_PYTH_ORACLE_1} # see config-deployed.yml
       LLTV: "80000" # 80%
       LIQUIDATION_BONUS_RATE: "15000" # 15%
-      IRM: ${IRM_0} # see config-deployed.yml
+      IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml

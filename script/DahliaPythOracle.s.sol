@@ -19,11 +19,11 @@ contract DahliaPythOracleScript is BaseScript {
 
     function run() public {
         vm.startBroadcast(deployer);
-        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(vm.envAddress("PYTH_ORACLE_FACTORY"));
+        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(vm.envAddress(DEPLOYED_PYTH_ORACLE_FACTORY));
         string memory INDEX = vm.envString("INDEX");
         (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) = getPythOracleDeployData();
         address pythOracle = oracleFactory.createPythOracle(params, delays);
-        string memory contractName = string(abi.encodePacked("PYTH_ORACLE_", INDEX));
+        string memory contractName = string(abi.encodePacked("DEPLOYED_PYTH_ORACLE_", INDEX));
         _printContract(contractName, pythOracle);
         vm.stopBroadcast();
     }

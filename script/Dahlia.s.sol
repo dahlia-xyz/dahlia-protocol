@@ -12,7 +12,7 @@ contract DeployDahlia is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        address registry = vm.envAddress(REGISTRY);
+        address registry = vm.envAddress(DEPLOYED_REGISTRY);
         bytes32 salt = keccak256(abi.encode(DAHLIA_SALT));
         address dahlia = CREATE3.predictDeterministicAddress(salt);
         if (dahlia.code.length > 0) {
@@ -22,7 +22,7 @@ contract DeployDahlia is BaseScript {
             bytes memory initCode = abi.encodePacked(type(Dahlia).creationCode, encodedArgs);
             dahlia = CREATE3.deployDeterministic(initCode, salt);
         }
-        _printContract(DAHLIA_ADDRESS, dahlia);
+        _printContract(DEPLOYED_DAHLIA, dahlia);
         vm.stopBroadcast();
     }
 }
