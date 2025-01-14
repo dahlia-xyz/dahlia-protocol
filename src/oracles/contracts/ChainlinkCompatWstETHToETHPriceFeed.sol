@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { Errors } from "../helpers/Errors.sol";
 import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import { Errors } from "src/oracles/helpers/Errors.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @dev Interface for wstETH, taken from https://github.com/lidofinance/core/blob/master/contracts/0.6.12/WstETH.sol
 interface IWstETH is IERC20Metadata {
@@ -30,6 +30,7 @@ contract ChainlinkCompatWstETHToETHPriceFeed is AggregatorV3Interface {
 
     uint8 internal immutable _DECIMAL;
     int256 internal immutable _WST_ETH_PRECISION;
+    int256 internal immutable _STETH_ETH_PRECISION;
     IWstETH public immutable WST_ETH;
     AggregatorV3Interface public immutable STETH_TO_ETH_FEED;
 
@@ -43,6 +44,7 @@ contract ChainlinkCompatWstETHToETHPriceFeed is AggregatorV3Interface {
         STETH_TO_ETH_FEED = params.stEthToEthFeed;
         _DECIMAL = STETH_TO_ETH_FEED.decimals();
         _WST_ETH_PRECISION = int256(10 ** WST_ETH.decimals());
+        _STETH_ETH_PRECISION = int256(10 ** STETH_TO_ETH_FEED.decimals());
 
         emit ParamsUpdated(params);
     }
@@ -68,10 +70,9 @@ contract ChainlinkCompatWstETHToETHPriceFeed is AggregatorV3Interface {
         require(wstETHToStETH > 0, BadWstETHToStETH());
 
         (roundId, answer, startedAt, updatedAt, answeredInRound) = STETH_TO_ETH_FEED.latestRoundData();
-        // TODO: do we need this?
-        //        if (answer > 10 ** _decimal) {
-        //            answer = 10 ** _decimal;
-        //        }
+        if (answer > _STETH_ETH_PRECISION) {
+            answer = _STETH_ETH_PRECISION;
+        }
         answer = answer * wstETHToStETH / _WST_ETH_PRECISION;
     }
 }
