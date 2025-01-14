@@ -12,13 +12,12 @@ contract DahliaRegistryScript is BaseScript {
 
     function run() public {
         vm.startBroadcast(deployer);
-        address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
         bytes32 salt = keccak256(abi.encode(DAHLIA_REGISTRY_SALT));
         address factory = CREATE3.predictDeterministicAddress(salt);
         if (factory.code.length > 0) {
             console.log("DahliaRegistry already deployed");
         } else {
-            bytes memory encodedArgs = abi.encode(dahliaOwner);
+            bytes memory encodedArgs = abi.encode(deployer); // this is not a mistake we deploy registry to be able set values
             bytes memory initCode = abi.encodePacked(type(DahliaRegistry).creationCode, encodedArgs);
             factory = CREATE3.deployDeterministic(initCode, salt);
         }

@@ -21,3 +21,4 @@ await deployContractsOnNetworks({ script: "Timelock.s.sol", remote });
 await deployContractsOnNetworks({ script: "DahliaPythOracleFactory.s.sol", remote });
 await deployContractsOnNetworks({ script: "DahliaPythOracle.s.sol", iterator: "PythOracles", remote });
 await deployContractsOnNetworks({ script: "WrappedVault.s.sol", iterator: "WrappedVaults", remote });
+await deployContractsOnNetworks({ script: "DahliaRegistryTransfer.s.sol", remote });
