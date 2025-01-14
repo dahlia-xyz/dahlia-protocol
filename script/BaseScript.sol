@@ -3,6 +3,7 @@ pragma solidity >=0.8.27;
 
 import { Script } from "@forge-std/Script.sol";
 import { console } from "@forge-std/console.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { LibString } from "@solady/utils/LibString.sol";
 
 abstract contract BaseScript is Script {
@@ -38,35 +39,27 @@ abstract contract BaseScript is Script {
         console.log(env, addressUrl);
     }
 
-    modifier broadcaster() {
-        vm.startBroadcast(deployer);
-        _;
-        vm.stopBroadcast();
+    function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal returns (address addr) {
+        bytes32 codeHash = keccak256(initCode);
+        addr = vm.computeCreate2Address(salt, codeHash);
+        if (addr.code.length > 0) {
+            console.log(name, "already deployed");
+        } else {
+            assembly {
+                addr := create2(0, add(initCode, 0x20), mload(initCode), salt)
+                if iszero(addr) { revert(0, 0) }
+            }
+            _printContract(varName, addr);
+        }
     }
 
-    struct DeployReturn {
-        address _address;
-        bytes constructorParams;
-        string contractName;
-    }
-
-    function _updateEnv(address, bytes memory, string memory) internal pure {
-        console.log("_updateEnv is deprecated");
-    }
-
-    function deploy(function() returns (address, bytes memory, string memory) _deployFunction)
-        internal
-        broadcaster
-        returns (address _address, bytes memory _constructorParams, string memory _contractName)
-    {
-        (_address, _constructorParams, _contractName) = _deployFunction();
-        console.log("_constructorParams:");
-        console.logBytes(_constructorParams);
-        console.log(_contractName, "deployed to _address:", _address);
-        _updateEnv(_address, _constructorParams, _contractName);
-    }
-
-    function deploy(function() returns (DeployReturn memory) _deployFunction) internal broadcaster returns (DeployReturn memory _return) {
-        _return = _deployFunction();
+    function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal returns (address addr) {
+        addr = CREATE3.predictDeterministicAddress(salt);
+        if (addr.code.length > 0) {
+            console.log(name, "already deployed");
+        } else {
+            addr = CREATE3.deployDeterministic(initCode, salt);
+            _printContract(varName, addr);
+        }
     }
 }

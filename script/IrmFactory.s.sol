@@ -2,8 +2,6 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
-import { console } from "@forge-std/console.sol";
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 
 contract IrmFactoryScript is BaseScript {
@@ -12,14 +10,9 @@ contract IrmFactoryScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
-        address factory = CREATE3.predictDeterministicAddress(salt);
-        if (factory.code.length > 0) {
-            console.log("IrmFactory already deployed:");
-        } else {
-            bytes memory initCode = type(IrmFactory).creationCode;
-            factory = CREATE3.deployDeterministic(initCode, salt);
-        }
-        _printContract(DEPLOYED_IRM_FACTORY, factory);
+        bytes memory initCode = type(IrmFactory).creationCode;
+        string memory name = type(IrmFactory).name;
+        _create3(name, DEPLOYED_IRM_FACTORY, salt, initCode);
         vm.stopBroadcast();
     }
 }

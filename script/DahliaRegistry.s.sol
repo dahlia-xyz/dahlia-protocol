@@ -2,9 +2,6 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
-import { console } from "@forge-std/console.sol";
-
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 
 contract DahliaRegistryScript is BaseScript {
@@ -13,15 +10,10 @@ contract DahliaRegistryScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         bytes32 salt = keccak256(abi.encode(DAHLIA_REGISTRY_SALT));
-        address factory = CREATE3.predictDeterministicAddress(salt);
-        if (factory.code.length > 0) {
-            console.log("DahliaRegistry already deployed");
-        } else {
-            bytes memory encodedArgs = abi.encode(deployer); // this is not a mistake we deploy registry to be able set values
-            bytes memory initCode = abi.encodePacked(type(DahliaRegistry).creationCode, encodedArgs);
-            factory = CREATE3.deployDeterministic(initCode, salt);
-        }
-        _printContract(DEPLOYED_REGISTRY, factory);
+        string memory name = type(DahliaRegistry).name;
+        bytes memory encodedArgs = abi.encode(deployer); // this is not a mistake we deploy registry to be able set values
+        bytes memory initCode = abi.encodePacked(type(DahliaRegistry).creationCode, encodedArgs);
+        _create3(name, DEPLOYED_REGISTRY, salt, initCode);
         vm.stopBroadcast();
     }
 }

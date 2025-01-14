@@ -2,9 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
-import { console } from "@forge-std/console.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
 
 contract PointsFactoryScript is BaseScript {
     string public constant POINTS_FACTORY_SALT = "PointsFactory_V1";
@@ -12,24 +10,13 @@ contract PointsFactoryScript is BaseScript {
     function run() public {
         vm.startBroadcast(deployer);
         address pointsFactoryFromEnv = vm.envOr(POINTS_FACTORY, address(0));
-        address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
-        address factory = CREATE3.predictDeterministicAddress(salt);
-        if (pointsFactoryFromEnv != address(0) && pointsFactoryFromEnv.code.length > 0) {
-            if (pointsFactoryFromEnv != factory) {
-                console.log("PointsFactory already deployed by Royco");
-            } else {
-                console.log("PointsFactory already deployed by Dahlia");
-            }
-        } else {
-            if (factory.code.length > 0) {
-                console.log("PointsFactory already deployed");
-            } else {
-                bytes memory encodedArgs = abi.encode(dahliaOwner);
-                bytes memory initCode = abi.encodePacked(type(PointsFactory).creationCode, encodedArgs);
-                factory = CREATE3.deployDeterministic(initCode, salt);
-            }
-            _printContract(POINTS_FACTORY, factory);
+        if (pointsFactoryFromEnv == address(0)) {
+            address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
+            bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
+            bytes memory encodedArgs = abi.encode(dahliaOwner);
+            bytes memory initCode = abi.encodePacked(type(PointsFactory).creationCode, encodedArgs);
+            string memory name = type(PointsFactory).name;
+            _create3(name, POINTS_FACTORY, salt, initCode);
         }
         vm.stopBroadcast();
     }
