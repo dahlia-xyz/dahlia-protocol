@@ -3,19 +3,19 @@ pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
 import { console } from "@forge-std/console.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
 contract DahliaPythOracleFactoryScript is BaseScript {
-    function _deployDahliaPythOracleFactory(address timelockAddress, address pythStaticOracleAddress) internal returns (DahliaPythOracleFactory factory) {
+    function _deployDahliaPythOracleFactory(address timelockAddress, address pythStaticOracleAddress) internal returns (address factory) {
         bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
-        bytes memory encodedArgs = abi.encode(timelockAddress, pythStaticOracleAddress);
-        bytes32 initCodeHash = hashInitCode(type(DahliaPythOracleFactory).creationCode, encodedArgs);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        if (expectedAddress.code.length > 0) {
+        factory = CREATE3.predictDeterministicAddress(salt);
+        if (factory.code.length > 0) {
             console.log("DahliaOracleFactory already deployed");
-            factory = DahliaPythOracleFactory(expectedAddress);
         } else {
-            factory = new DahliaPythOracleFactory{ salt: salt }(timelockAddress, pythStaticOracleAddress);
+            bytes memory encodedArgs = abi.encode(timelockAddress, pythStaticOracleAddress);
+            bytes memory initCode = abi.encodePacked(type(DahliaPythOracleFactory).creationCode, encodedArgs);
+            factory = CREATE3.deployDeterministic(initCode, salt);
         }
     }
 
@@ -23,8 +23,8 @@ contract DahliaPythOracleFactoryScript is BaseScript {
         vm.startBroadcast(deployer);
         address pythStaticOracleAddress = vm.envAddress("PYTH_STATIC_ORACLE_ADDRESS");
         address timelockAddress = vm.envAddress("TIMELOCK");
-        DahliaPythOracleFactory oracleFactory = _deployDahliaPythOracleFactory(timelockAddress, pythStaticOracleAddress);
-        _printContract("PYTH_ORACLE_FACTORY", address(oracleFactory));
+        address oracleFactory = _deployDahliaPythOracleFactory(timelockAddress, pythStaticOracleAddress);
+        _printContract("PYTH_ORACLE_FACTORY", oracleFactory);
         vm.stopBroadcast();
     }
 }
