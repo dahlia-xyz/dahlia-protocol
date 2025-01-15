@@ -56,6 +56,25 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors, IERC2612, E
         decimals = _decimals;
     }
 
+    /**
+     * @notice copied from OpenZeppelin ERC20.sol
+     * @dev Updates `from` s allowance for `spender` based on spent `value`.
+     *
+     * Does not update the allowance value in case of infinite allowance.
+     * Revert if not enough allowance is available.
+     *
+     * Does not emit an {Approval} event.
+     */
+    function _spendAllowance(address from, uint256 value) internal virtual {
+        uint256 currentAllowance = allowance[from][msg.sender];
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= value, ERC20InsufficientAllowance(msg.sender, currentAllowance, value));
+            unchecked {
+                _approve(from, msg.sender, currentAllowance - value, false);
+            }
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////
                                ERC20 LOGIC
     //////////////////////////////////////////////////////////////*/
