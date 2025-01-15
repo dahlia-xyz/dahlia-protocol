@@ -36,7 +36,7 @@ contract ChainlinkWstETHToETHTest is Test {
         assertEq(updatedAt, updatedAt1, "updatedAt=updatedAt");
         assertEq(answeredInRound, answeredInRound1, "answeredInRound=answeredInRound1");
         assertEq(answer1, 999_133_585_167_552_700, "answer1"); // almost 1e18
-        assertLt(answer1, int256(10 ** stEthToEthFeed.decimals()));
+        assertLt(answer1, int256(10 ** stEthToEthFeed.decimals())); // < 1 ether
 
         assertEq(roundId, 36_893_488_147_419_103_486, "roundId");
         assertEq(startedAt, 1_736_913_811, "startedAt");
