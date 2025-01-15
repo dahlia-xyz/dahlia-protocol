@@ -9,14 +9,14 @@ contract PointsFactoryScript is BaseScript {
     string public constant POINTS_FACTORY_SALT = "PointsFactory_V1";
 
     function run() public {
-        address pointsFactoryFromEnv = envOr(POINTS_FACTORY, address(0));
-        address dahliaOwner = envAddress("DAHLIA_OWNER");
+        address pointsFactoryFromEnv = _envOr(POINTS_FACTORY, address(0));
+        address dahliaOwner = _envAddress("DAHLIA_OWNER");
         string memory name = type(PointsFactory).name;
         if (pointsFactoryFromEnv == address(0)) {
             bytes32 salt = keccak256(abi.encode(POINTS_FACTORY_SALT));
             bytes memory encodedArgs = abi.encode(dahliaOwner);
             bytes memory initCode = abi.encodePacked(type(PointsFactory).creationCode, encodedArgs);
-            deploy(name, POINTS_FACTORY, salt, initCode);
+            _deploy(name, POINTS_FACTORY, salt, initCode);
         } else {
             console.log(name, "- already deployed");
         }

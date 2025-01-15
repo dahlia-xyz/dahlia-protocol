@@ -10,27 +10,27 @@ import { IDahlia, IDahliaOracle, IIrm } from "src/core/interfaces/IDahlia.sol";
 
 contract WrappedVaultScript is BaseScript {
     function run() public {
-        Dahlia dahlia = Dahlia(envAddress(DEPLOYED_DAHLIA));
-        IIrm irm = IIrm(envAddress("IRM"));
+        Dahlia dahlia = Dahlia(_envAddress(DEPLOYED_DAHLIA));
+        IIrm irm = IIrm(_envAddress("IRM"));
         Dahlia.MarketConfig memory config = IDahlia.MarketConfig({
-            loanToken: envAddress("LOAN"),
-            collateralToken: envAddress("COLLATERAL"),
-            oracle: IDahliaOracle(envAddress("ORACLE")),
+            loanToken: _envAddress("LOAN"),
+            collateralToken: _envAddress("COLLATERAL"),
+            oracle: IDahliaOracle(_envAddress("ORACLE")),
             irm: irm,
-            lltv: envUint("LLTV"),
-            liquidationBonusRate: envUint("LIQUIDATION_BONUS_RATE"),
-            name: envString("NAME"),
-            owner: envAddress("DAHLIA_OWNER")
+            lltv: _envUint("LLTV"),
+            liquidationBonusRate: _envUint("LIQUIDATION_BONUS_RATE"),
+            name: _envString("NAME"),
+            owner: _envAddress("DAHLIA_OWNER")
         });
-        DahliaRegistry registry = DahliaRegistry(envAddress(DEPLOYED_REGISTRY));
-        string memory INDEX = envString("INDEX");
+        DahliaRegistry registry = DahliaRegistry(_envAddress(DEPLOYED_REGISTRY));
+        string memory INDEX = _envString("INDEX");
 
         string memory contractName = string(abi.encodePacked("DEPLOYED_MARKET_", INDEX));
-        address marketAddress = envOr(contractName, address(0));
+        address marketAddress = _envOr(contractName, address(0));
         if (marketAddress.code.length == 0 && marketAddress == address(0)) {
             vm.startBroadcast(deployer);
             if (registry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY) == address(0)) {
-                address factory = envAddress(DEPLOYED_WRAPPED_VAULT_FACTORY);
+                address factory = _envAddress(DEPLOYED_WRAPPED_VAULT_FACTORY);
                 console.log("Set ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY in registry", factory);
                 registry.setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, factory);
             }

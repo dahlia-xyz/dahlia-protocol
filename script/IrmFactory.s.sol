@@ -11,6 +11,6 @@ contract IrmFactoryScript is BaseScript {
         bytes32 salt = keccak256(abi.encode(IRM_FACTORY_SALT));
         bytes memory initCode = type(IrmFactory).creationCode;
         string memory name = type(IrmFactory).name;
-        deploy(name, DEPLOYED_IRM_FACTORY, salt, initCode);
+        _deploy(name, DEPLOYED_IRM_FACTORY, salt, initCode);
     }
 }

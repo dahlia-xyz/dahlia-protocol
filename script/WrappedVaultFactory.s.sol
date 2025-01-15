@@ -8,18 +8,18 @@ contract WrappedVaultFactoryScript is BaseScript {
     string public constant WRAPPED_VAULT_FACTORY_SALT = "WrappedVaultFactory_V1";
 
     function run() public {
-        address dahliaOwner = envAddress("DAHLIA_OWNER");
-        address feesRecipient = envAddress("FEES_RECIPIENT");
-        address pointsFactory = envAddress(POINTS_FACTORY);
-        address wrappedVaultImplementation = envAddress(DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION);
-        address dahlia = envAddress(DEPLOYED_DAHLIA);
-        uint256 protocolFee = envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
-        uint256 minimumFrontendFee = envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
+        address dahliaOwner = _envAddress("DAHLIA_OWNER");
+        address feesRecipient = _envAddress("FEES_RECIPIENT");
+        address pointsFactory = _envAddress(POINTS_FACTORY);
+        address wrappedVaultImplementation = _envAddress(DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION);
+        address dahlia = _envAddress(DEPLOYED_DAHLIA);
+        uint256 protocolFee = _envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
+        uint256 minimumFrontendFee = _envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
 
         bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_FACTORY_SALT));
         bytes memory encodedArgs = abi.encode(wrappedVaultImplementation, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);
         bytes memory initCode = abi.encodePacked(type(WrappedVaultFactory).creationCode, encodedArgs);
         string memory name = type(WrappedVaultFactory).name;
-        deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, salt, initCode);
+        _deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, salt, initCode);
     }
 }

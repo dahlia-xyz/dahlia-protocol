@@ -23,7 +23,7 @@ abstract contract BaseScript is Script {
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
-        scannerBaseUrl = envString("SCANNER_BASE_URL");
+        scannerBaseUrl = _envString("SCANNER_BASE_URL");
         console.log("Deployer address:", deployer);
     }
 
@@ -64,31 +64,31 @@ abstract contract BaseScript is Script {
         vm.stopBroadcast();
     }
 
-    function deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal broadcaster returns (address addr) {
+    function _deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal broadcaster returns (address addr) {
         return _create2(name, varName, salt, initCode);
     }
 
-    function envString(string memory name) internal view returns (string memory value) {
+    function _envString(string memory name) internal view returns (string memory value) {
         value = vm.envString(name);
         console.log(string(abi.encodePacked(name, ": '", value, "'")));
     }
 
-    function envAddress(string memory name) internal view returns (address value) {
+    function _envAddress(string memory name) internal view returns (address value) {
         value = vm.envAddress(name);
         console.log(string(abi.encodePacked(name, ": '", value.toHexString(), "'")));
     }
 
-    function envBytes32(string memory name) internal view returns (bytes32 value) {
+    function _envBytes32(string memory name) internal view returns (bytes32 value) {
         value = vm.envBytes32(name);
         console.log(string(abi.encodePacked(name, ": '", uint256(value).toHexString(), "'")));
     }
 
-    function envOr(string memory name, address defaultValue) internal view returns (address value) {
+    function _envOr(string memory name, address defaultValue) internal view returns (address value) {
         value = vm.envOr(name, defaultValue);
         console.log(string(abi.encodePacked(name, ": '", value.toHexString(), "'")));
     }
 
-    function envUint(string memory name) internal view returns (uint256 value) {
+    function _envUint(string memory name) internal view returns (uint256 value) {
         value = vm.envUint(name);
         console.log(string(abi.encodePacked(name, ": ", value.toString())));
     }
