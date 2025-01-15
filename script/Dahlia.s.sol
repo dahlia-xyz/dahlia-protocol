@@ -8,7 +8,7 @@ contract DeployDahlia is BaseScript {
     bytes32 private constant _SALT = keccak256(abi.encode("Dahlia_V1"));
 
     function run() public {
-        address dahliaOwner = _envAddress("DAHLIA_OWNER");
+        address dahliaOwner = _envAddress(DAHLIA_OWNER);
         address registry = _envAddress(DEPLOYED_REGISTRY);
         bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
         bytes memory initCode = abi.encodePacked(type(Dahlia).creationCode, encodedArgs);

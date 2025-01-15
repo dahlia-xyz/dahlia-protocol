@@ -10,7 +10,7 @@ import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleF
 contract DahliaPythOracleScript is BaseScript {
     function run() public {
         DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(_envAddress(DEPLOYED_PYTH_ORACLE_FACTORY));
-        string memory INDEX = _envString("INDEX");
+        string memory INDEX = _envString(INDEX);
         address baseToken = _envAddress("PYTH_ORACLE_BASE_TOKEN");
         bytes32 baseFeed = _envBytes32("PYTH_ORACLE_BASE_FEED");
         address quoteToken = _envAddress("PYTH_ORACLE_QUOTE_TOKEN");

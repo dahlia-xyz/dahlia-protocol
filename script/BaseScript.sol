@@ -19,7 +19,11 @@ abstract contract BaseScript is Script {
     string internal constant DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION = "DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION";
     string internal constant DEPLOYED_IRM_FACTORY = "DEPLOYED_IRM_FACTORY";
     string internal constant DEPLOYED_TIMELOCK = "DEPLOYED_TIMELOCK";
+
+    string internal constant DAHLIA_OWNER = "DAHLIA_OWNER";
+    string internal constant INDEX = "INDEX";
     string internal constant POINTS_FACTORY = "POINTS_FACTORY";
+    string internal constant TIMELOCK_DELAY = "TIMELOCK_DELAY";
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));

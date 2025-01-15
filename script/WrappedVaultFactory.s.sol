@@ -8,7 +8,7 @@ contract WrappedVaultFactoryScript is BaseScript {
     bytes32 private constant _SALT = keccak256(abi.encode("WrappedVaultFactory_V1"));
 
     function run() public {
-        address dahliaOwner = _envAddress("DAHLIA_OWNER");
+        address dahliaOwner = _envAddress(DAHLIA_OWNER);
         address feesRecipient = _envAddress("FEES_RECIPIENT");
         address pointsFactory = _envAddress(POINTS_FACTORY);
         address wrappedVaultImplementation = _envAddress(DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION);

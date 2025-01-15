@@ -71,17 +71,17 @@ cartio:
       PYTH_ORACLE_BASE_MAX_DELAY: "86400"
       PYTH_ORACLE_QUOTE_MAX_DELAY: "86400"
   WrappedVaults:
-    - NAME: "STONE/WETH (92% LLTV)"
-      COLLATERAL: ${cartio.erc20.STONE} # STONE https://80000.testnet.routescan.io/address/0x1da4dF975FE40dde074cBF19783928Da7246c515
-      LOAN: ${cartio.erc20.WETH}
-      ORACLE: ${DEPLOYED_PYTH_ORACLE_0} # see config-deployed.yml
-      LLTV: "92000" # 92%
-      LIQUIDATION_BONUS_RATE: "6000" # 6%
-      IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
-    - NAME: "WBERA/USDC (80% LLTV)"
-      COLLATERAL: ${cartio.erc20.WBERA} # WBERA https://80000.testnet.routescan.io/token/0x6969696969696969696969696969696969696969
-      LOAN: ${cartio.erc20.USDC} # USDC https://80000.testnet.routescan.io/token/0x015fd589F4f1A33ce4487E12714e1B15129c9329
-      ORACLE: ${DEPLOYED_PYTH_ORACLE_1} # see config-deployed.yml
-      LLTV: "80000" # 80%
-      LIQUIDATION_BONUS_RATE: "15000" # 15%
-      IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
+    - MARKET_NAME: "STONE/WETH (92% LLTV)"
+      MARKET_COLLATERAL: ${cartio.erc20.STONE} # STONE https://80000.testnet.routescan.io/address/0x1da4dF975FE40dde074cBF19783928Da7246c515
+      MARKET_LOAN: ${cartio.erc20.WETH}
+      MARKET_ORACLE: ${DEPLOYED_PYTH_ORACLE_0} # see config-deployed.yml
+      MARKET_LLTV: "92000" # 92%
+      MARKET_LIQUIDATION_BONUS_RATE: "6000" # 6%
+      MARKET_IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
+    - MARKET_NAME: "WBERA/USDC (80% LLTV)"
+      MARKET_COLLATERAL: ${cartio.erc20.WBERA} # WBERA https://80000.testnet.routescan.io/token/0x6969696969696969696969696969696969696969
+      MARKET_LOAN: ${cartio.erc20.USDC} # USDC https://80000.testnet.routescan.io/token/0x015fd589F4f1A33ce4487E12714e1B15129c9329
+      MARKET_ORACLE: ${DEPLOYED_PYTH_ORACLE_1} # see config-deployed.yml
+      MARKET_LLTV: "80000" # 80%
+      MARKET_LIQUIDATION_BONUS_RATE: "15000" # 15%
+      MARKET_IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml

@@ -9,29 +9,20 @@ import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 
 contract VariableIrmScript is BaseScript {
     function run() public {
-        IrmFactory irmFactory = IrmFactory(_envAddress(DEPLOYED_IRM_FACTORY));
-        uint256 ZERO_UTIL_RATE = _envUint("ZERO_UTIL_RATE");
-        uint256 MIN_FULL_UTIL_RATE = _envUint("MIN_FULL_UTIL_RATE");
-        uint256 MAX_FULL_UTIL_RATE = _envUint("MAX_FULL_UTIL_RATE");
-        uint256 MIN_TARGET_UTILIZATION = _envUint("MIN_TARGET_UTILIZATION");
-        uint256 MAX_TARGET_UTILIZATION = _envUint("MAX_TARGET_UTILIZATION");
-        uint256 TARGET_UTILIZATION = _envUint("TARGET_UTILIZATION");
-        uint256 RATE_HALF_LIFE = _envUint("RATE_HALF_LIFE");
-        uint256 TARGET_RATE_PERCENT = _envUint("TARGET_RATE_PERCENT");
-        string memory name = _envString("IRM_NAME");
-        string memory INDEX = _envString("INDEX");
-
         VariableIrm.Config memory config = VariableIrm.Config({
-            minTargetUtilization: MIN_TARGET_UTILIZATION,
-            maxTargetUtilization: MAX_TARGET_UTILIZATION,
-            targetUtilization: TARGET_UTILIZATION,
-            minFullUtilizationRate: MIN_FULL_UTIL_RATE,
-            maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
-            zeroUtilizationRate: ZERO_UTIL_RATE,
-            rateHalfLife: RATE_HALF_LIFE,
-            targetRatePercent: TARGET_RATE_PERCENT,
-            name: name
+            minTargetUtilization: _envUint("MIN_TARGET_UTILIZATION"),
+            maxTargetUtilization: _envUint("MAX_TARGET_UTILIZATION"),
+            targetUtilization: _envUint("TARGET_UTILIZATION"),
+            minFullUtilizationRate: _envUint("MIN_FULL_UTIL_RATE"),
+            maxFullUtilizationRate: _envUint("MAX_FULL_UTIL_RATE"),
+            zeroUtilizationRate: _envUint("ZERO_UTIL_RATE"),
+            rateHalfLife: _envUint("RATE_HALF_LIFE"),
+            targetRatePercent: _envUint("TARGET_RATE_PERCENT"),
+            name: _envString("IRM_NAME")
         });
+        IrmFactory irmFactory = IrmFactory(_envAddress(DEPLOYED_IRM_FACTORY));
+        string memory INDEX = _envString(INDEX);
+
         bytes memory encodedArgs = abi.encode(config);
         bytes32 salt = keccak256(encodedArgs);
         address irm = CREATE3.predictDeterministicAddress(salt, address(irmFactory));
