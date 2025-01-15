@@ -23,18 +23,27 @@ contract WrappedVaultScript is BaseScript {
             owner: envAddress("DAHLIA_OWNER")
         });
         DahliaRegistry registry = DahliaRegistry(envAddress(DEPLOYED_REGISTRY));
+        string memory INDEX = envString("INDEX");
 
-        vm.startBroadcast(deployer);
-        if (registry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY) == address(0)) {
-            address factory = envAddress(DEPLOYED_WRAPPED_VAULT_FACTORY);
-            console.log("Set ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY in registry", factory);
-            registry.setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, factory);
+        string memory contractName = string(abi.encodePacked("DEPLOYED_MARKET_", INDEX));
+        address marketAddress = envOr(contractName, address(0));
+        if (marketAddress.code.length == 0 && marketAddress == address(0)) {
+            vm.startBroadcast(deployer);
+            if (registry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY) == address(0)) {
+                address factory = envAddress(DEPLOYED_WRAPPED_VAULT_FACTORY);
+                console.log("Set ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY in registry", factory);
+                registry.setAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY, factory);
+            }
+            if (!dahlia.dahliaRegistry().isIrmAllowed(irm)) {
+                dahlia.dahliaRegistry().allowIrm(irm);
+            }
+            IDahlia.MarketId id = dahlia.deployMarket(config);
+            IDahlia.Market memory market = dahlia.getMarket(id);
+            console.log("MarketId:", IDahlia.MarketId.unwrap(id));
+            _printContract(contractName, address(market.vault));
+            vm.stopBroadcast();
+        } else {
+            console.log(contractName, "already deployed");
         }
-        if (!dahlia.dahliaRegistry().isIrmAllowed(irm)) {
-            dahlia.dahliaRegistry().allowIrm(irm);
-        }
-        IDahlia.MarketId id = dahlia.deployMarket(config);
-        console.log("MarketId:", IDahlia.MarketId.unwrap(id));
-        vm.stopBroadcast();
     }
 }
