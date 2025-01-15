@@ -23,14 +23,16 @@ contract DahliaPythOracleTest is Test {
         ctx = new TestContext(vm);
         delays = DahliaPythOracle.Delays({ baseMaxDelay: 86_400, quoteMaxDelay: 86_400 });
         DahliaPythOracleFactory factory = ctx.createPythOracleFactory();
-        oracle = factory.createPythOracle(
-            DahliaPythOracle.Params({
-                baseToken: Mainnet.WETH_ERC20,
-                baseFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace,
-                quoteToken: Mainnet.UNI_ERC20,
-                quoteFeed: 0x78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501
-            }),
-            delays
+        oracle = DahliaPythOracle(
+            factory.createPythOracle(
+                DahliaPythOracle.Params({
+                    baseToken: Mainnet.WETH_ERC20,
+                    baseFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace,
+                    quoteToken: Mainnet.UNI_ERC20,
+                    quoteFeed: 0x78d185a741d07edb3412b09008b7c5cfb9bbbd7d568bf00ba737b456ba171501
+                }),
+                delays
+            )
         );
     }
 

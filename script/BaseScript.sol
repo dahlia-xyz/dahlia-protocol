@@ -1,57 +1,65 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.27;
 
+import { Script } from "@forge-std/Script.sol";
+import { console } from "@forge-std/console.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { LibString } from "@solady/utils/LibString.sol";
-import { Script } from "forge-std/Script.sol";
-import { console2 as console } from "forge-std/Test.sol";
-import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
 abstract contract BaseScript is Script {
     using LibString for *;
 
-    string public constant DAHLIA_PYTH_ORACLE_FACTORY_SALT = "DAHLIA_PYTH_ORACLE_FACTORY_V0.0.1";
-
     address internal deployer;
-    uint256 internal privateKey;
-    uint256 internal blockNumber;
-    string internal otterscanPort;
+    string internal scannerBaseUrl;
+
+    string internal constant DEPLOYED_REGISTRY = "DEPLOYED_REGISTRY";
+    string internal constant DEPLOYED_DAHLIA = "DEPLOYED_DAHLIA";
+    string internal constant DEPLOYED_PYTH_ORACLE_FACTORY = "DEPLOYED_PYTH_ORACLE_FACTORY";
+    string internal constant DEPLOYED_WRAPPED_VAULT_FACTORY = "DEPLOYED_WRAPPED_VAULT_FACTORY";
+    string internal constant DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION = "DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION";
+    string internal constant DEPLOYED_IRM_FACTORY = "DEPLOYED_IRM_FACTORY";
+    string internal constant DEPLOYED_TIMELOCK = "DEPLOYED_TIMELOCK";
+
+    string internal constant DAHLIA_OWNER = "DAHLIA_OWNER";
+    string internal constant INDEX = "INDEX";
+    string internal constant POINTS_FACTORY = "POINTS_FACTORY";
+    string internal constant TIMELOCK_DELAY = "TIMELOCK_DELAY";
 
     function setUp() public virtual {
-        privateKey = vm.envUint("PRIVATE_KEY");
-        deployer = vm.rememberKey(privateKey);
-        blockNumber = vm.getBlockNumber();
-        otterscanPort = vm.envOr("OTTERSCAN_PORT", string("80"));
+        deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
+        scannerBaseUrl = _envString("SCANNER_BASE_URL");
+        console.log("Deployer address:", deployer);
     }
 
-    function _printContract(string memory prefix, address addr) internal {
-        string memory host = string(abi.encodePacked("http://localhost:", otterscanPort, "/"));
-        blockNumber++;
-        string memory blockUrl = string(abi.encodePacked(host, "block/", (blockNumber).toString()));
+    function _printContract(string memory name, address addr) internal view {
+        string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
-        console.log(prefix, addressUrl, blockUrl);
+        string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
+        console.log(env, addressUrl);
     }
 
-    function _deployDahliaPythOracleFactory(address timelockAddress_, address pythStaticOracleAddress_) internal returns (DahliaPythOracleFactory) {
-        // TODO: Maybe we need to pass uniswap address in the creation method? Since there is no such one on the cartio
-        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
-        address expectedAddress = _calculateDahliaPythOracleFactoryExpectedAddress(timelockAddress_, pythStaticOracleAddress_);
-        if (expectedAddress.code.length > 0) {
-            console.log("DahliaOracleFactory already deployed");
-            return DahliaPythOracleFactory(expectedAddress);
+    function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {
+        bytes32 codeHash = keccak256(initCode);
+        addr = vm.computeCreate2Address(salt, codeHash);
+        if (addr.code.length > 0) {
+            console.log(name, "already deployed");
         } else {
-            DahliaPythOracleFactory oracleFactory = new DahliaPythOracleFactory{ salt: salt }(timelockAddress_, pythStaticOracleAddress_);
-            address oracleFactoryAddress = address(oracleFactory);
-            require(expectedAddress == oracleFactoryAddress);
-            return oracleFactory;
+            assembly {
+                addr := create2(0, add(initCode, 0x20), mload(initCode), salt)
+                if iszero(addr) { revert(0, 0) }
+            }
+            _printContract(varName, addr);
         }
     }
 
-    function _calculateDahliaPythOracleFactoryExpectedAddress(address timelockAddress_, address pythStaticOracleAddress_) internal pure returns (address) {
-        bytes32 salt = keccak256(abi.encode(DAHLIA_PYTH_ORACLE_FACTORY_SALT));
-        bytes memory encodedArgs = abi.encode(timelockAddress_, pythStaticOracleAddress_);
-        bytes32 initCodeHash = hashInitCode(type(DahliaPythOracleFactory).creationCode, encodedArgs);
-        address expectedAddress = vm.computeCreate2Address(salt, initCodeHash);
-        return expectedAddress;
+    function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {
+        addr = CREATE3.predictDeterministicAddress(salt);
+        if (addr.code.length > 0) {
+            console.log(name, "already deployed");
+        } else {
+            addr = CREATE3.deployDeterministic(initCode, salt);
+            _printContract(varName, addr);
+        }
     }
 
     modifier broadcaster() {
@@ -60,29 +68,32 @@ abstract contract BaseScript is Script {
         vm.stopBroadcast();
     }
 
-    struct DeployReturn {
-        address _address;
-        bytes constructorParams;
-        string contractName;
+    function _deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal broadcaster returns (address addr) {
+        return _create2(name, varName, salt, initCode);
     }
 
-    function _updateEnv(address, bytes memory, string memory) internal pure {
-        console.log("_updateEnv is deprecated");
+    function _envString(string memory name) internal view returns (string memory value) {
+        value = vm.envString(name);
+        console.log(string(abi.encodePacked(name, ": '", value, "'")));
     }
 
-    function deploy(function() returns (address, bytes memory, string memory) _deployFunction)
-        internal
-        broadcaster
-        returns (address _address, bytes memory _constructorParams, string memory _contractName)
-    {
-        (_address, _constructorParams, _contractName) = _deployFunction();
-        console.log("_constructorParams:");
-        console.logBytes(_constructorParams);
-        console.log(_contractName, "deployed to _address:", _address);
-        _updateEnv(_address, _constructorParams, _contractName);
+    function _envAddress(string memory name) internal view returns (address value) {
+        value = vm.envAddress(name);
+        console.log(string(abi.encodePacked(name, ": '", value.toHexString(), "'")));
     }
 
-    function deploy(function() returns (DeployReturn memory) _deployFunction) internal broadcaster returns (DeployReturn memory _return) {
-        _return = _deployFunction();
+    function _envBytes32(string memory name) internal view returns (bytes32 value) {
+        value = vm.envBytes32(name);
+        console.log(string(abi.encodePacked(name, ": '", uint256(value).toHexString(), "'")));
+    }
+
+    function _envOr(string memory name, address defaultValue) internal view returns (address value) {
+        value = vm.envOr(name, defaultValue);
+        console.log(string(abi.encodePacked(name, ": '", value.toHexString(), "'")));
+    }
+
+    function _envUint(string memory name) internal view returns (uint256 value) {
+        value = vm.envUint(name);
+        console.log(string(abi.encodePacked(name, ": ", value.toString())));
     }
 }

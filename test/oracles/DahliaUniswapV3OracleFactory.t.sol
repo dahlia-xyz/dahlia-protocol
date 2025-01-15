@@ -62,10 +62,13 @@ contract DahliaUniswapV3OracleFactoryTest is Test {
         vm.expectEmit(true, false, true, true, address(oracleFactory));
         emit DahliaUniswapV3OracleFactory.DahliaUniswapV3OracleCreated(address(this), address(0));
 
-        DahliaUniswapV3Oracle oracle = oracleFactory.createUniswapOracle(params, twapDuration);
-        (uint256 price, bool isBadData) = oracle.getPrice();
+        address oracle = oracleFactory.createUniswapOracle(params, twapDuration);
+        (uint256 price, bool isBadData) = DahliaUniswapV3Oracle(oracle).getPrice();
         assertEq(price, 2_412_486_481_775_144_671_894_069_994);
         assertEq(((price * 1e18) / 1e6) / 1e36, 2412); // 2412 USDC per 1 WETH
         assertEq(isBadData, false);
+
+        address oracle2 = oracleFactory.createUniswapOracle(params, twapDuration);
+        assertEq(oracle, oracle2, "should be the same address");
     }
 }
