@@ -2,13 +2,13 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
+import { console } from "@forge-std/console.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 contract VariableIrmScript is BaseScript {
     function run() public {
-        vm.startBroadcast(deployer);
         IrmFactory irmFactory = IrmFactory(envAddress(DEPLOYED_IRM_FACTORY));
         uint256 ZERO_UTIL_RATE = envUint("ZERO_UTIL_RATE");
         uint256 MIN_FULL_UTIL_RATE = envUint("MIN_FULL_UTIL_RATE");
@@ -21,22 +21,28 @@ contract VariableIrmScript is BaseScript {
         string memory name = envString("IRM_NAME");
         string memory INDEX = envString("INDEX");
 
-        IIrm irm = irmFactory.createVariableIrm(
-            VariableIrm.Config({
-                minTargetUtilization: MIN_TARGET_UTILIZATION,
-                maxTargetUtilization: MAX_TARGET_UTILIZATION,
-                targetUtilization: TARGET_UTILIZATION,
-                minFullUtilizationRate: MIN_FULL_UTIL_RATE,
-                maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
-                zeroUtilizationRate: ZERO_UTIL_RATE,
-                rateHalfLife: RATE_HALF_LIFE,
-                targetRatePercent: TARGET_RATE_PERCENT,
-                name: name
-            })
-        );
-
+        VariableIrm.Config memory config = VariableIrm.Config({
+            minTargetUtilization: MIN_TARGET_UTILIZATION,
+            maxTargetUtilization: MAX_TARGET_UTILIZATION,
+            targetUtilization: TARGET_UTILIZATION,
+            minFullUtilizationRate: MIN_FULL_UTIL_RATE,
+            maxFullUtilizationRate: MAX_FULL_UTIL_RATE,
+            zeroUtilizationRate: ZERO_UTIL_RATE,
+            rateHalfLife: RATE_HALF_LIFE,
+            targetRatePercent: TARGET_RATE_PERCENT,
+            name: name
+        });
+        bytes memory encodedArgs = abi.encode(config);
+        bytes32 salt = keccak256(encodedArgs);
+        address irm = CREATE3.predictDeterministicAddress(salt, address(irmFactory));
         string memory contractName = string(abi.encodePacked("DEPLOYED_IRM_", INDEX));
-        _printContract(contractName, address(irm));
-        vm.stopBroadcast();
+        if (irm.code.length == 0) {
+            vm.startBroadcast(deployer);
+            irm = irmFactory.createVariableIrm(config);
+            _printContract(contractName, irm);
+            vm.stopBroadcast();
+        } else {
+            console.log(contractName, "already deployed");
+        }
     }
 }

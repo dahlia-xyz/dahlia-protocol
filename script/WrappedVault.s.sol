@@ -33,8 +33,8 @@ contract WrappedVaultScript is BaseScript {
         if (!dahlia.dahliaRegistry().isIrmAllowed(irm)) {
             dahlia.dahliaRegistry().allowIrm(irm);
         }
-        vm.stopBroadcast();
         IDahlia.MarketId id = dahlia.deployMarket(config);
         console.log("MarketId:", IDahlia.MarketId.unwrap(id));
+        vm.stopBroadcast();
     }
 }
