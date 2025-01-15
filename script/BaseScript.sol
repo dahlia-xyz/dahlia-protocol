@@ -23,7 +23,7 @@ abstract contract BaseScript is Script {
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
-        scannerBaseUrl = vm.envString("SCANNER_BASE_URL");
+        scannerBaseUrl = envString("SCANNER_BASE_URL");
         console.log("Deployer address:", deployer);
     }
 
@@ -66,5 +66,30 @@ abstract contract BaseScript is Script {
 
     function deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal broadcaster returns (address addr) {
         return _create2(name, varName, salt, initCode);
+    }
+
+    function envString(string memory name) internal view returns (string memory value) {
+        value = vm.envString(name);
+        console.log(string(abi.encodePacked(name, ": '", value, "'")));
+    }
+
+    function envAddress(string memory name) internal view returns (address value) {
+        value = vm.envAddress(name);
+        console.log(string(abi.encodePacked(name, ": '", value.toHexString(), "'")));
+    }
+
+    function envBytes32(string memory name) internal view returns (bytes32 value) {
+        value = vm.envBytes32(name);
+        console.log(string(abi.encodePacked(name, ": '", uint256(value).toHexString(), "'")));
+    }
+
+    function envOr(string memory name, address defaultValue) internal view returns (address value) {
+        value = vm.envOr(name, defaultValue);
+        console.log(string(abi.encodePacked(name, ": '", value.toHexString(), "'")));
+    }
+
+    function envUint(string memory name) internal view returns (uint256 value) {
+        value = vm.envUint(name);
+        console.log(string(abi.encodePacked(name, ": ", value.toString())));
     }
 }

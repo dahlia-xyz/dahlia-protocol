@@ -6,8 +6,8 @@ import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 
 contract DahliaRegistryTransferScript is BaseScript {
     function run() public {
-        address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        DahliaRegistry registry = DahliaRegistry(vm.envAddress(DEPLOYED_REGISTRY));
+        address dahliaOwner = envAddress("DAHLIA_OWNER");
+        DahliaRegistry registry = DahliaRegistry(envAddress(DEPLOYED_REGISTRY));
 
         address owner = registry.owner();
         if (owner == deployer) {

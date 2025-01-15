@@ -8,13 +8,13 @@ contract WrappedVaultFactoryScript is BaseScript {
     string public constant WRAPPED_VAULT_FACTORY_SALT = "WrappedVaultFactory_V1";
 
     function run() public {
-        address dahliaOwner = vm.envAddress("DAHLIA_OWNER");
-        address feesRecipient = vm.envAddress("FEES_RECIPIENT");
-        address pointsFactory = vm.envAddress(POINTS_FACTORY);
-        address wrappedVaultImplementation = vm.envAddress(DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION);
-        address dahlia = vm.envAddress(DEPLOYED_DAHLIA);
-        uint256 protocolFee = vm.envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
-        uint256 minimumFrontendFee = vm.envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
+        address dahliaOwner = envAddress("DAHLIA_OWNER");
+        address feesRecipient = envAddress("FEES_RECIPIENT");
+        address pointsFactory = envAddress(POINTS_FACTORY);
+        address wrappedVaultImplementation = envAddress(DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION);
+        address dahlia = envAddress(DEPLOYED_DAHLIA);
+        uint256 protocolFee = envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
+        uint256 minimumFrontendFee = envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
 
         bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_FACTORY_SALT));
         bytes memory encodedArgs = abi.encode(wrappedVaultImplementation, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);

@@ -101,7 +101,7 @@ async function runScript(
   network: Network,
   deployedContracts: Config,
 ) {
-  console.log("env", env);
+  // console.log("env", env);
   const { stdout } = await $$({
     env,
     cwd: "..",
