@@ -15,7 +15,7 @@ export enum Network {
   SEPOLIA = "sepolia",
   CARTIO = "cartio",
 }
-export const DEPLOY_NETWORKS: Network[] = [Network.CARTIO];
+export const DEPLOY_NETWORKS: Network[] = [Network.MAINNET, Network.CARTIO];
 
 export interface Params {
   script: string;
@@ -141,13 +141,17 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
     if (params.iterator) {
-      for (const [index, subvalue] of cfg[params.iterator].entries()) {
-        const env = {
-          ..._.pickBy(cfg, (value) => typeof value === "string"),
-          ...subvalue,
-          INDEX: index,
-        };
-        await runScript(env, params.script, cfg, network, deployedContracts);
+      if (cfg[params.iterator]) {
+        for (const [index, subvalue] of cfg[params.iterator].entries()) {
+          const env = {
+            ..._.pickBy(cfg, (value) => typeof value === "string"),
+            ...subvalue,
+            INDEX: index,
+          };
+          await runScript(env, params.script, cfg, network, deployedContracts);
+        }
+      } else {
+        console.log("Skipped deployment of", params.iterator);
       }
     } else {
       await runScript(env, params.script, cfg, network, deployedContracts);
