@@ -33,7 +33,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     event RewardsPerTokenUpdated(address reward, uint256 accumulated);
     event UserRewardsUpdated(address reward, address user, uint256 accumulated, uint256 checkpoint);
     event Claimed(address reward, address user, address receiver, uint256 claimed);
-    event FeesClaimed(address claimant, address incentiveToken, uint256 owed);
+    event FeesClaimed(address claimant, address incentiveToken);
     event RewardsTokenAdded(address reward);
     event FrontendFeeUpdated(uint256 frontendFee);
 
@@ -91,6 +91,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     /// @dev RewardsPerToken.accumulated is scaled up to prevent loss of incentives
     uint256 public constant RPT_PRECISION = 1e27;
 
+    /// @dev The address of the underlying vault being incentivized
+    IWrappedVault public VAULT;
     /// @dev The underlying asset being deposited into the vault
     address private DEPOSIT_ASSET;
     /// @dev The address of the canonical points program factory
@@ -143,6 +145,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         _initializeOwner(_owner);
         _initializeERC20(_name, _symbol, _decimals);
 
+        VAULT = IWrappedVault(address(this));
         WRAPPED_VAULT_FACTORY = WrappedVaultFactory(msg.sender);
         if (initialFrontendFee < WRAPPED_VAULT_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
 
@@ -179,6 +182,9 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     function addRewardsToken(address rewardsToken) public payable onlyOwner {
         // Check if max rewards offered limit has been reached
         if (rewards.length == MAX_REWARDS) revert MaxRewardsReached();
+
+        // No need to check because address(VAULT) always = address(this)
+        // if (rewardsToken == address(VAULT)) revert InvalidReward();
 
         if (rewardsToken == address(this)) revert InvalidReward();
 
@@ -217,7 +223,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         uint256 owed = rewardToClaimantToFees[reward][msg.sender];
         delete rewardToClaimantToFees[reward][msg.sender];
         _pushReward(reward, to, owed);
-        emit FeesClaimed(msg.sender, reward, owed);
+        emit FeesClaimed(msg.sender, reward);
     }
 
     /// @param reward The reward token / points program
@@ -464,25 +470,6 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         dahlia.transferLendShares(marketId, from, to, amount);
         emit Transfer(from, to, amount);
         return true;
-    }
-
-    /**
-     * @notice copied from OpenZeppelin ERC20.sol
-     * @dev Updates `from` s allowance for `spender` based on spent `value`.
-     *
-     * Does not update the allowance value in case of infinite allowance.
-     * Revert if not enough allowance is available.
-     *
-     * Does not emit an {Approval} event.
-     */
-    function _spendAllowance(address from, uint256 value) internal virtual {
-        uint256 currentAllowance = allowance[from][msg.sender];
-        if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= value, ERC20InsufficientAllowance(msg.sender, currentAllowance, value));
-            unchecked {
-                _approve(from, msg.sender, currentAllowance - value, false);
-            }
-        }
     }
 
     /// @notice Allows the owner to claim the rewards from the burned shares
