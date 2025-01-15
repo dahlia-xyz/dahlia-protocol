@@ -14,16 +14,16 @@ interface IWstETH is IERC20Metadata {
     function stEthPerToken() external view returns (uint256);
 }
 
-/// @title ChainlinkCompatWstETHToETHPriceFeed
+/// @title ChainlinkWstETHToETH
 /// @notice Oracle to convert wstETH-ETH using a stETH-ETH Chainlink feed.
 /// @dev Adapted from https://github.com/lidofinance/wsteth-eth-price-feed/blob/main/contracts/AAVECompatWstETHToETHPriceFeed.sol
-contract ChainlinkCompatWstETHToETHPriceFeed is AggregatorV3Interface {
+contract ChainlinkWstETHToETH is AggregatorV3Interface {
     error UnsupportedMethod();
     error BadWstETHToStETH();
 
     struct Params {
         address wstEth;
-        AggregatorV3Interface stEthToEthFeed;
+        address stEthToEthFeed;
     }
 
     event ParamsUpdated(Params params);
@@ -34,14 +34,11 @@ contract ChainlinkCompatWstETHToETHPriceFeed is AggregatorV3Interface {
     IWstETH public immutable WST_ETH;
     AggregatorV3Interface public immutable STETH_TO_ETH_FEED;
 
-    uint256 public stEthToEthMaxDelay;
-
     constructor(Params memory params) {
-        require(params.wstEth != address(0), Errors.ZeroAddress());
-        require(address(params.stEthToEthFeed) != address(0), Errors.ZeroAddress());
+        require(params.wstEth != address(0) && params.stEthToEthFeed != address(0), Errors.ZeroAddress());
 
         WST_ETH = IWstETH(params.wstEth);
-        STETH_TO_ETH_FEED = params.stEthToEthFeed;
+        STETH_TO_ETH_FEED = AggregatorV3Interface(params.stEthToEthFeed);
         _DECIMAL = STETH_TO_ETH_FEED.decimals();
         _WST_ETH_PRECISION = int256(10 ** WST_ETH.decimals());
         _STETH_ETH_PRECISION = int256(10 ** STETH_TO_ETH_FEED.decimals());
