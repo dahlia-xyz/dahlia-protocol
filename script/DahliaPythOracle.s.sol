@@ -2,6 +2,8 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
+import { console } from "@forge-std/console.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
 import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
@@ -18,13 +20,20 @@ contract DahliaPythOracleScript is BaseScript {
     }
 
     function run() public {
-        vm.startBroadcast(deployer);
         DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(envAddress(DEPLOYED_PYTH_ORACLE_FACTORY));
         string memory INDEX = envString("INDEX");
         (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) = getPythOracleDeployData();
-        address pythOracle = oracleFactory.createPythOracle(params, delays);
+        bytes memory encodedArgs = abi.encode(oracleFactory.timelockAddress(), params, delays, oracleFactory.STATIC_ORACLE_ADDRESS());
+        bytes32 salt = keccak256(encodedArgs);
+        address pythOracle = CREATE3.predictDeterministicAddress(salt, address(oracleFactory));
         string memory contractName = string(abi.encodePacked("DEPLOYED_PYTH_ORACLE_", INDEX));
-        _printContract(contractName, pythOracle);
-        vm.stopBroadcast();
+        if (pythOracle.code.length == 0) {
+            vm.startBroadcast(deployer);
+            pythOracle = oracleFactory.createPythOracle(params, delays);
+            _printContract(contractName, pythOracle);
+            vm.stopBroadcast();
+        } else {
+            console.log(pythOracle, "already deployed");
+        }
     }
 }
