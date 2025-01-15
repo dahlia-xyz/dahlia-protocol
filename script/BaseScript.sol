@@ -19,6 +19,7 @@ abstract contract BaseScript is Script {
     string internal constant DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION = "DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION";
     string internal constant DEPLOYED_IRM_FACTORY = "DEPLOYED_IRM_FACTORY";
     string internal constant DEPLOYED_TIMELOCK = "DEPLOYED_TIMELOCK";
+    string internal constant DEPLOYED_CHAINLINK_WSTETH_ETH = "DEPLOYED_CHAINLINK_WSTETH_ETH";
 
     string internal constant DAHLIA_OWNER = "DAHLIA_OWNER";
     string internal constant INDEX = "INDEX";
@@ -48,8 +49,8 @@ abstract contract BaseScript is Script {
                 addr := create2(0, add(initCode, 0x20), mload(initCode), salt)
                 if iszero(addr) { revert(0, 0) }
             }
-            _printContract(varName, addr);
         }
+        _printContract(varName, addr);
     }
 
     function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {

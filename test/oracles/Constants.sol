@@ -67,7 +67,9 @@ library Mainnet {
     address internal constant UNI_ERC20 = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984;
     address internal constant USDC_ERC20 = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address internal constant WBTC_ERC20 = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address internal constant WSTETH_ERC20 = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0; // https://etherscan.io/token/0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
     address internal constant WETH_ERC20 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address internal constant STETH_ETH_CHAINLINK_ORACLE = 0x86392dC19c0b719886221c78AB11eb8Cf5c52812; // https://data.chain.link/feeds/ethereum/mainnet/steth-eth
     address internal constant AAVE_USD_CHAINLINK_ORACLE = 0x547a514d5e3769680Ce22B2361c10Ea13619e8a9;
     address internal constant APE_USD_CHAINLINK_ORACLE = 0xD10aBbC76679a20055E167BB80A24ac851b37056;
     address internal constant WBTC_BTC_CHAINLINK_ORACLE = 0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23;

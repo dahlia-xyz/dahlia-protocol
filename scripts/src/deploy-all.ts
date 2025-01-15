@@ -11,6 +11,7 @@ const remote = options.remote;
 
 await import("./recreate-docker-otterscan.ts");
 await deployContractsOnNetworks({ script: "PointsFactory.s.sol", remote });
+await deployContractsOnNetworks({ script: "ChainlinkWstETHToETH.s.sol", remote, iterator: "ChainlinkWstETHToETH" });
 await deployContractsOnNetworks({ script: "WrappedVaultImplementation.s.sol", remote });
 await deployContractsOnNetworks({ script: "DahliaRegistry.s.sol", remote });
 await deployContractsOnNetworks({ script: "IrmFactory.s.sol", remote });
@@ -18,7 +19,7 @@ await deployContractsOnNetworks({ script: "VariableIrm.s.sol", iterator: "Variab
 await deployContractsOnNetworks({ script: "Dahlia.s.sol", remote });
 await deployContractsOnNetworks({ script: "WrappedVaultFactory.s.sol", remote });
 await deployContractsOnNetworks({ script: "Timelock.s.sol", remote });
-await deployContractsOnNetworks({ script: "DahliaPythOracleFactory.s.sol", remote });
+await deployContractsOnNetworks({ script: "DahliaPythOracleFactory.s.sol", remote, iterator: "PythOracleFactory" });
 await deployContractsOnNetworks({ script: "DahliaPythOracle.s.sol", iterator: "PythOracles", remote });
 await deployContractsOnNetworks({ script: "WrappedVault.s.sol", iterator: "WrappedVaults", remote });
 await deployContractsOnNetworks({ script: "DahliaRegistryTransfer.s.sol", remote });
