@@ -13,13 +13,6 @@ contract IrmFactory {
     error FullUtilizationRateRangeInvalid();
     error IrmNameIsNotSet();
 
-    /// @dev returns the hash of the init code (creation code + ABI-encoded args) used in CREATE2
-    /// @param creationCode the creation code of a contract C, as returned by type(C).creationCode
-    /// @param args the ABI-encoded arguments to the constructor of C
-    function hashInitCode(bytes memory creationCode, bytes memory args) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(creationCode, args));
-    }
-
     function createVariableIrm(VariableIrm.Config memory config) external returns (address irm) {
         require(config.maxTargetUtilization < IrmConstants.UTILIZATION_100_PERCENT, MaxUtilizationTooHigh());
         require(config.minTargetUtilization < config.maxTargetUtilization, MinUtilizationOutOfRange());

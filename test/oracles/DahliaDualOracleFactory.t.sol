@@ -8,7 +8,6 @@ import { DahliaChainlinkOracle } from "src/oracles/contracts/DahliaChainlinkOrac
 import { DahliaDualOracle } from "src/oracles/contracts/DahliaDualOracle.sol";
 import { DahliaDualOracleFactory } from "src/oracles/contracts/DahliaDualOracleFactory.sol";
 import { DahliaUniswapV3Oracle } from "src/oracles/contracts/DahliaUniswapV3Oracle.sol";
-import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { Mainnet } from "test/oracles/Constants.sol";
@@ -26,7 +25,7 @@ contract DahliaDualOracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUsdc() public {
-        DahliaChainlinkOracle primary = ctx.createChainlinkOracleFactory().createChainlinkOracle(
+        address primary = ctx.createChainlinkOracleFactory().createChainlinkOracle(
             DahliaChainlinkOracle.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
@@ -38,7 +37,7 @@ contract DahliaDualOracleFactoryTest is Test {
             DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 86_400, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 })
         );
 
-        DahliaUniswapV3Oracle secondary = ctx.createUniswapOracleFactory().createUniswapOracle(
+        address secondary = ctx.createUniswapOracleFactory().createUniswapOracle(
             DahliaUniswapV3Oracle.Params({ baseToken: Mainnet.WETH_ERC20, quoteToken: Mainnet.USDC_ERC20, uniswapV3PairAddress: Mainnet.WETH_USDC_UNI_V3_POOL }),
             900
         );
@@ -62,7 +61,7 @@ contract DahliaDualOracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUniFromChainlink() public {
-        IDahliaOracle primary = ctx.createChainlinkOracleFactory().createChainlinkOracle(
+        address primary = ctx.createChainlinkOracleFactory().createChainlinkOracle(
             DahliaChainlinkOracle.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(address(0)),
@@ -74,7 +73,7 @@ contract DahliaDualOracleFactoryTest is Test {
             DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 0, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 })
         );
 
-        IDahliaOracle secondary = ctx.createUniswapOracleFactory().createUniswapOracle(
+        address secondary = ctx.createUniswapOracleFactory().createUniswapOracle(
             DahliaUniswapV3Oracle.Params({ baseToken: Mainnet.WETH_ERC20, quoteToken: Mainnet.UNI_ERC20, uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL }),
             900
         );
@@ -88,7 +87,7 @@ contract DahliaDualOracleFactoryTest is Test {
     }
 
     function test_oracleFactory_dual_wethUniWithBadDataFromUni() public {
-        IDahliaOracle primary = ctx.createChainlinkOracleFactory().createChainlinkOracle(
+        address primary = ctx.createChainlinkOracleFactory().createChainlinkOracle(
             DahliaChainlinkOracle.Params({
                 baseToken: Mainnet.WETH_ERC20,
                 baseFeedPrimary: AggregatorV3Interface(address(0)),
@@ -100,7 +99,7 @@ contract DahliaDualOracleFactoryTest is Test {
             DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 0, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 10, quoteMaxDelaySecondary: 0 })
         );
 
-        IDahliaOracle secondary = ctx.createUniswapOracleFactory().createUniswapOracle(
+        address secondary = ctx.createUniswapOracleFactory().createUniswapOracle(
             DahliaUniswapV3Oracle.Params({ baseToken: Mainnet.WETH_ERC20, quoteToken: Mainnet.UNI_ERC20, uniswapV3PairAddress: Mainnet.UNI_ETH_UNI_V3_POOL }),
             900
         );
