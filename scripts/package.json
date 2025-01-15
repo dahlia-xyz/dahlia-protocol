@@ -16,7 +16,7 @@
     "deploy-wrapped-vault-implementation": "pnpm tsx src/deploy.ts --script WrappedVaultImplementation.s.sol",
     "deploy-wrapped-vault-factory": "pnpm tsx src/deploy.ts --script WrappedVaultFactory.s.sol",
     "deploy-timelock": "pnpm tsx src/deploy.ts --script Timelock.s.sol",
-    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx src/deploy.ts --script DahliaPythOracleFactory.s.sol",
+    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx src/deploy.ts --script DahliaPythOracleFactory.s.sol --iterator PythOracleFactory",
     "deploy-chainlink-wsteth-eth": "pnpm tsx src/deploy.ts --script ChainlinkWstETHToETH.s.sol --iterator ChainlinkWstETHToETH",
     "deploy-dahlia-pyth-oracle": "pnpm tsx src/deploy.ts --script DahliaPythOracle.s.sol --iterator PythOracles",
     "deploy-dahlia-markets": "pnpm tsx src/deploy.ts --script WrappedVault.s.sol --iterator WrappedVaults",
