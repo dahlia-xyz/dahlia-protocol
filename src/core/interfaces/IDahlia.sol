@@ -190,6 +190,7 @@ interface IDahlia {
     /// @param badDebtShares Amount of bad debt shares realized.
     /// @param rescuedAssets Amount of assets rescued from reserve.
     /// @param rescuedShares Amount of shares rescued from reserve.
+    /// @param collateralPrice Collateral price.
     event Liquidate(
         IDahlia.MarketId indexed id,
         address indexed caller,
@@ -201,7 +202,8 @@ interface IDahlia {
         uint256 badDebtAssets,
         uint256 badDebtShares,
         uint256 rescuedAssets,
-        uint256 rescuedShares
+        uint256 rescuedShares,
+        uint256 collateralPrice
     );
 
     /// @dev Emitted when interest is accrued.

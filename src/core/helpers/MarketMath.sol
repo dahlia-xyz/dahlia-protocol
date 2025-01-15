@@ -102,7 +102,7 @@ library MarketMath {
     /// @dev Calculates the LTV based on borrowed assets and collateral value
     function getLTV(uint256 borrowedAssets, uint256 collateral, uint256 collateralPrice) internal pure returns (uint256) {
         uint256 totalCollateralCapacity = collateralToLendUp(collateral, collateralPrice);
-        return borrowedAssets.mulDivUp(Constants.LLTV_100_PERCENT, totalCollateralCapacity);
+        return totalCollateralCapacity == 0 ? 0 : borrowedAssets.mulDivUp(Constants.LLTV_100_PERCENT, totalCollateralCapacity);
     }
 
     /// @dev Fetches the current collateral price from the oracle

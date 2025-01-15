@@ -75,7 +75,18 @@ library LiquidationImpl {
         repaidShares = borrowShares - badDebtShares;
 
         emit IDahlia.Liquidate(
-            id, msg.sender, borrower, repaidAssets, repaidShares, seizedCollateral, bonusCollateral, badDebtAssets, badDebtShares, rescueAssets, rescueShares
+            id,
+            msg.sender,
+            borrower,
+            repaidAssets,
+            repaidShares,
+            seizedCollateral,
+            bonusCollateral,
+            badDebtAssets,
+            badDebtShares,
+            rescueAssets,
+            rescueShares,
+            collateralPrice
         );
 
         return (repaidAssets, repaidShares, seizedCollateral);

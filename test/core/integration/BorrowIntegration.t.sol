@@ -109,7 +109,11 @@ contract BorrowIntegrationTest is Test {
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         $.oracle.setPrice(pos.price);
 
+        assertEq($.dahlia.getPositionLTV($.marketId, $.alice), 0, "0 ltv");
+
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
+        assertEq($.dahlia.getPositionLTV($.marketId, $.alice), 0, "still 0 ltv");
+
         (uint256 borrowedAssets1, uint256 borrowableAssets1,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
         assertEq(borrowedAssets1, 0, "no borrowed assets yet");
         assertEq(borrowableAssets1, 0, "user can not borrow because no lending assets");
@@ -118,6 +122,7 @@ contract BorrowIntegrationTest is Test {
         assertEq(borrowableAssets11, 0, "user can not borrow because no lending assets with additional collateral");
 
         vm.dahliaLendBy($.carol, 1, $);
+        assertEq($.dahlia.getPositionLTV($.marketId, $.alice), 0, "still 0 ltv");
         (uint256 borrowedAssets2, uint256 borrowableAssets2,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
         assertEq(borrowedAssets2, 0, "borrowedAssets2 no borrowed assets yet");
         assertEq(borrowableAssets2, 1, "user can borrow 1 asset only");
@@ -142,6 +147,9 @@ contract BorrowIntegrationTest is Test {
         vm.stopPrank();
 
         (uint256 borrowedAssets4, uint256 borrowableAssets4,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, 0);
+        uint256 userLtv = $.dahlia.getPositionLTV($.marketId, $.alice);
+        assertGt(userLtv, 0, "above 0 ltv");
+        assertLe(userLtv, $.dahlia.getMarket($.marketId).lltv, "user.ltv <= market.lltv");
         assertEq(borrowedAssets4, pos.borrowed, "already borrowed asset");
         assertEq(expectedBorrowShares, _shares, "check shares");
         assertEq(borrowableAssets4, borrowableAssets3 - borrowedAssets4, "still can borrow");

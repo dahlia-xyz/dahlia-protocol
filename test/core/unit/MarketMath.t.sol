@@ -61,5 +61,8 @@ contract MarketMathTest is Test {
         assertEq(MarketMath.getLTV(1000, 2000, 1e36), 0.5e5); // 50% LTV
         assertEq(MarketMath.getLTV(2000, 2000, 1e36), 1e5); // 100% LTV
         assertEq(MarketMath.getLTV(4000, 2000, 1e36), 2e5); // 200% LTV
+        assertEq(MarketMath.getLTV(4000, 0, 1e36), 0); // 0% LTV if no collateral
+        assertEq(MarketMath.getLTV(4000, 2000, 0), 0); // 0% LTV if 0 price
+        assertEq(MarketMath.getLTV(0, 2000, 1e36), 0); // 0% LTV if no borrowed assets
     }
 }
