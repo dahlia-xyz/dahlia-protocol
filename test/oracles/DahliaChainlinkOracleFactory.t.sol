@@ -58,24 +58,29 @@ contract DahliaChainlinkOracleFactoryTest is Test {
         emit DahliaChainlinkOracleFactory.DahliaChainlinkOracleCreated(address(this), address(0));
 
         /// @dev USDC is collateral, WBTC is loan, then result is 0.000016xxx
-        DahliaChainlinkOracle oracle = oracleFactory.createChainlinkOracle(params, delays);
+        DahliaChainlinkOracle oracle = DahliaChainlinkOracle(oracleFactory.createChainlinkOracle(params, delays));
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 1_611_859_162_144_102_979_080_952_870_358_934);
         assertEq(isBadData, false);
+
+        address oracle2 = oracleFactory.createChainlinkOracle(params, delays);
+        assertEq(address(oracle), oracle2, "should be the same address");
     }
 
     function test_oracleFactory_paxg_chainlink() public {
         /// @dev PAXG is collateral, USDC is loan, then result is 2617
-        DahliaChainlinkOracle oracle = oracleFactory.createChainlinkOracle(
-            DahliaChainlinkOracle.Params({
-                baseToken: 0x45804880De22913dAFE09f4980848ECE6EcbAf78,
-                baseFeedPrimary: AggregatorV3Interface(0x7C4561Bb0F2d6947BeDA10F667191f6026E7Ac0c),
-                baseFeedSecondary: AggregatorV3Interface(address(0)),
-                quoteToken: Mainnet.USDC_ERC20,
-                quoteFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
-                quoteFeedSecondary: AggregatorV3Interface(address(0))
-            }),
-            DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 86_400, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 })
+        DahliaChainlinkOracle oracle = DahliaChainlinkOracle(
+            oracleFactory.createChainlinkOracle(
+                DahliaChainlinkOracle.Params({
+                    baseToken: 0x45804880De22913dAFE09f4980848ECE6EcbAf78,
+                    baseFeedPrimary: AggregatorV3Interface(0x7C4561Bb0F2d6947BeDA10F667191f6026E7Ac0c),
+                    baseFeedSecondary: AggregatorV3Interface(address(0)),
+                    quoteToken: Mainnet.USDC_ERC20,
+                    quoteFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
+                    quoteFeedSecondary: AggregatorV3Interface(address(0))
+                }),
+                DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 86_400, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 })
+            )
         );
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_617_340_351_185_118_511_851_185_118);
@@ -84,16 +89,18 @@ contract DahliaChainlinkOracleFactoryTest is Test {
     }
 
     function test_oracleFactory_wethUsdc() public {
-        DahliaChainlinkOracle oracle = oracleFactory.createChainlinkOracle(
-            DahliaChainlinkOracle.Params({
-                baseToken: Mainnet.WETH_ERC20,
-                baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
-                baseFeedSecondary: AggregatorV3Interface(address(0)),
-                quoteToken: Mainnet.USDC_ERC20,
-                quoteFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
-                quoteFeedSecondary: AggregatorV3Interface(address(0))
-            }),
-            DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 86_400, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 })
+        DahliaChainlinkOracle oracle = DahliaChainlinkOracle(
+            oracleFactory.createChainlinkOracle(
+                DahliaChainlinkOracle.Params({
+                    baseToken: Mainnet.WETH_ERC20,
+                    baseFeedPrimary: AggregatorV3Interface(Mainnet.ETH_USD_CHAINLINK_ORACLE),
+                    baseFeedSecondary: AggregatorV3Interface(address(0)),
+                    quoteToken: Mainnet.USDC_ERC20,
+                    quoteFeedPrimary: AggregatorV3Interface(Mainnet.USDC_USD_CHAINLINK_ORACLE),
+                    quoteFeedSecondary: AggregatorV3Interface(address(0))
+                }),
+                DahliaChainlinkOracle.Delays({ baseMaxDelayPrimary: 86_400, baseMaxDelaySecondary: 0, quoteMaxDelayPrimary: 86_400, quoteMaxDelaySecondary: 0 })
+            )
         );
         (uint256 price, bool isBadData) = oracle.getPrice();
         assertEq(price, 2_404_319_134_993_499_349_934_993_499);

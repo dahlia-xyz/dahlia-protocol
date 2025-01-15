@@ -187,18 +187,20 @@ contract TestContext {
         if (contracts["IrmFactory"] == address(0)) {
             contracts["IrmFactory"] = address(new IrmFactory());
         }
-        irm = IrmFactory(contracts["IrmFactory"]).createVariableIrm(
-            VariableIrm.Config({
-                minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                targetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
-                minFullUtilizationRate: 1_582_470_460,
-                maxFullUtilizationRate: 3_164_940_920_000,
-                zeroUtilizationRate: 158_247_046,
-                rateHalfLife: 172_800,
-                targetRatePercent: 0.2e18,
-                name: "Variable IRM_20"
-            })
+        irm = IIrm(
+            IrmFactory(contracts["IrmFactory"]).createVariableIrm(
+                VariableIrm.Config({
+                    minTargetUtilization: 75 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                    maxTargetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                    targetUtilization: 85 * IrmConstants.UTILIZATION_100_PERCENT / 100,
+                    minFullUtilizationRate: 1_582_470_460,
+                    maxFullUtilizationRate: 3_164_940_920_000,
+                    zeroUtilizationRate: 158_247_046,
+                    rateHalfLife: 172_800,
+                    targetRatePercent: 0.2e18,
+                    name: "Variable IRM_20"
+                })
+            )
         );
         contracts["Irm"] = address(irm);
     }

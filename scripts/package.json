@@ -5,14 +5,21 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "prepare": "pnpm tsx setup.ts submodules",
-    "setup": "pnpm tsx setup.ts",
-    "contracts": "pnpm tsx setup-contracts.ts",
-    "contracts-cartio": "pnpm tsx setup-contracts-cartio.ts",
-    "deploy-only-dahlia": "pnpm tsx deploy-only-dahlia.ts",
-    "deploy-pyth-oracle": "pnpm tsx deploy-pyth-oracle.ts",
-    "deploy-pyth-separately": "pnpm tsx deploy-pyth-separately.ts",
-    "deploy-pyth-separately-cartio": "pnpm tsx deploy-pyth-separately-cartio.ts"
+    "prepare": "pnpm tsx src/setup.ts submodules",
+    "setup": "pnpm tsx src/setup.ts",
+    "recreate-docker-otterscan": "pnpm tsx src/recreate-docker-otterscan.ts",
+    "deploy-points-factory": "pnpm tsx src/deploy.ts --script PointsFactory.s.sol",
+    "deploy-dahlia-registry": "pnpm tsx src/deploy.ts --script DahliaRegistry.s.sol",
+    "deploy-irm-factory": "pnpm tsx src/deploy.ts --script IrmFactory.s.sol",
+    "deploy-irm": "pnpm tsx src/deploy.ts --script VariableIrm.s.sol --iterator VariableIRMs",
+    "deploy-dahlia": "pnpm tsx src/deploy.ts --script Dahlia.s.sol",
+    "deploy-wrapped-vault-implementation": "pnpm tsx src/deploy.ts --script WrappedVaultImplementation.s.sol",
+    "deploy-wrapped-vault-factory": "pnpm tsx src/deploy.ts --script WrappedVaultFactory.s.sol",
+    "deploy-timelock": "pnpm tsx src/deploy.ts --script Timelock.s.sol",
+    "deploy-dahlia-pyth-oracle-factory": "pnpm tsx src/deploy.ts --script DahliaPythOracleFactory.s.sol",
+    "deploy-dahlia-pyth-oracle": "pnpm tsx src/deploy.ts --script DahliaPythOracle.s.sol --iterator PythOracles",
+    "deploy-dahlia-markets": "pnpm tsx src/deploy.ts --script WrappedVault.s.sol --iterator WrappedVaults",
+    "deploy-all": "pnpm tsx src/deploy-all.ts"
   },
   "author": {
     "name": "Dahlia Labs",
@@ -20,10 +27,19 @@
     "url": "https://github.com/dahlia-xyz"
   },
   "devDependencies": {
-    "execa": "^9.3.1",
-    "tsx": "^4.19.0",
-    "typescript": "^5.0.4",
-    "viem": "^2.7.6"
+    "@types/js-yaml": "^4.0.9",
+    "@types/lodash": "^4.17.14",
+    "@types/shelljs": "^0.8.15",
+    "commander": "^13.0.0",
+    "execa": "^9.5.2",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.30.1",
+    "shelljs": "^0.8.5",
+    "strip-ansi": "^7.1.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "viem": "^2.22.8"
   },
   "prettier": {
     "printWidth": 120,
