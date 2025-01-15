@@ -8,21 +8,18 @@ import { DahliaPythOracle } from "src/oracles/contracts/DahliaPythOracle.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 
 contract DahliaPythOracleScript is BaseScript {
-    function getPythOracleDeployData() internal view returns (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) {
+    function run() public {
+        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(_envAddress(DEPLOYED_PYTH_ORACLE_FACTORY));
+        string memory INDEX = _envString("INDEX");
         address baseToken = _envAddress("PYTH_ORACLE_BASE_TOKEN");
         bytes32 baseFeed = _envBytes32("PYTH_ORACLE_BASE_FEED");
         address quoteToken = _envAddress("PYTH_ORACLE_QUOTE_TOKEN");
         bytes32 quoteFeed = _envBytes32("PYTH_ORACLE_QUOTE_FEED");
         uint256 baseMaxDelay = _envUint("PYTH_ORACLE_BASE_MAX_DELAY");
         uint256 quoteMaxDelay = _envUint("PYTH_ORACLE_QUOTE_MAX_DELAY");
-        params = DahliaPythOracle.Params(baseToken, baseFeed, quoteToken, quoteFeed);
-        delays = DahliaPythOracle.Delays(baseMaxDelay, quoteMaxDelay);
-    }
+        DahliaPythOracle.Params memory params = DahliaPythOracle.Params(baseToken, baseFeed, quoteToken, quoteFeed);
+        DahliaPythOracle.Delays memory delays = DahliaPythOracle.Delays(baseMaxDelay, quoteMaxDelay);
 
-    function run() public {
-        DahliaPythOracleFactory oracleFactory = DahliaPythOracleFactory(_envAddress(DEPLOYED_PYTH_ORACLE_FACTORY));
-        string memory INDEX = _envString("INDEX");
-        (DahliaPythOracle.Params memory params, DahliaPythOracle.Delays memory delays) = getPythOracleDeployData();
         bytes memory encodedArgs = abi.encode(oracleFactory.timelockAddress(), params, delays, oracleFactory.STATIC_ORACLE_ADDRESS());
         bytes32 salt = keccak256(encodedArgs);
         address pythOracle = CREATE3.predictDeterministicAddress(salt, address(oracleFactory));

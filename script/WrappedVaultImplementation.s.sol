@@ -5,12 +5,11 @@ import { BaseScript } from "./BaseScript.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 
 contract WrappedVaultImplementationScript is BaseScript {
-    string public constant WRAPPED_VAULT_SALT = "WrappedVault_V1";
+    bytes32 private constant _SALT = keccak256(abi.encode("WrappedVault_V1"));
 
     function run() public {
-        bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_SALT));
         bytes memory initCode = type(WrappedVault).creationCode;
         string memory name = type(WrappedVault).name;
-        _deploy(name, DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION, salt, initCode);
+        _deploy(name, DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION, _SALT, initCode);
     }
 }

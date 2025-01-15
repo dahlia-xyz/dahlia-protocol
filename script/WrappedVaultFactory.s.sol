@@ -5,7 +5,7 @@ import { BaseScript } from "./BaseScript.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 
 contract WrappedVaultFactoryScript is BaseScript {
-    string public constant WRAPPED_VAULT_FACTORY_SALT = "WrappedVaultFactory_V1";
+    bytes32 private constant _SALT = keccak256(abi.encode("WrappedVaultFactory_V1"));
 
     function run() public {
         address dahliaOwner = _envAddress("DAHLIA_OWNER");
@@ -16,10 +16,9 @@ contract WrappedVaultFactoryScript is BaseScript {
         uint256 protocolFee = _envUint("WRAPPED_VAULT_FACTORY_PROTOCOL_FEE");
         uint256 minimumFrontendFee = _envUint("WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE");
 
-        bytes32 salt = keccak256(abi.encode(WRAPPED_VAULT_FACTORY_SALT));
         bytes memory encodedArgs = abi.encode(wrappedVaultImplementation, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);
         bytes memory initCode = abi.encodePacked(type(WrappedVaultFactory).creationCode, encodedArgs);
         string memory name = type(WrappedVaultFactory).name;
-        _deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, salt, initCode);
+        _deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, _SALT, initCode);
     }
 }
