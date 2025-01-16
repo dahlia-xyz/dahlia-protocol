@@ -100,13 +100,14 @@ async function runScript(
   deployedContracts: Config,
 ) {
   // console.log("env", env);
+  console.log(`network=${network}: Deploying contracts rpcUrl=${cfg.RPC_URL}`);
   const { stdout } = await $$({
     env,
     cwd: "..",
   })`forge script script/${script}.s.sol --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DEPLOYER_PRIVATE_KEY}`;
 
   for (const line of stdout.split(/\r?\n/)) {
-    const match = line.match(/^\s*(\S+)=(0x[a-fA-F0-9]+)\s+.*$/);
+    const match = line.match(/^\s*([A-Za-z0-9_]+)=(0x[a-fA-F0-9]+|\d+)\b/);
     if (match) {
       const [, name, address] = match;
       if (deployedContracts[network] === undefined) {
@@ -134,7 +135,6 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
       cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTT_PORT}`;
     }
     await waitForRpc(cfg.RPC_URL);
-    //console.log(`network=${network}: Deploying contracts rpcUrl=${cfg.RPC_URL} blockNumber=${blockNumber}`);
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
     // If is an Array iterate each value

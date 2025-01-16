@@ -37,6 +37,7 @@ abstract contract BaseScript is Script {
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
         console.log(env, addressUrl);
+        console.log(string(abi.encodePacked(name, "_BLOCK=", (block.number).toString())));
     }
 
     function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {

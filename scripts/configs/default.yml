@@ -24,7 +24,6 @@ VariableIrm:
 mainnet:
   RPC_URL: ${MAINNET_RPC_URL}
   SCANNER_BASE_URL: https://etherscan.io
-  BLOCK_NUMBER: "21429439"
   RPC_PORT: "8546"
   OTT_PORT: "28546"
   erc20:
@@ -41,7 +40,6 @@ mainnet:
 sepolia:
   RPC_URL: ${SEPOLIA_RPC_URL}
   SCANNER_BASE_URL: https://sepolia.etherscan.io
-  BLOCK_NUMBER: "7338791"
   RPC_PORT: "8547"
   OTT_PORT: "28547"
   erc20:
@@ -55,7 +53,6 @@ sepolia:
 bartio:
   RPC_URL: https://bartio.rpc.berachain.com
   SCANNER_BASE_URL: https://bartio.beratrail.io
-  BLOCK_NUMBER: "80085"
   RPC_PORT: "8549"
   OTT_PORT: "28549"
   erc20:
@@ -69,7 +66,6 @@ bartio:
 cartio:
   RPC_URL: https://teddilion-eth-cartio.berachain.com
   SCANNER_BASE_URL: https://80000.testnet.routescan.io
-  BLOCK_NUMBER: "80084"
   RPC_PORT: "8548"
   OTT_PORT: "28548"
   erc20:
