@@ -1,13 +1,14 @@
 {
   "name": "scripts",
   "description": "Dahlia Scripts",
-  "license": "BSL",
+  "license": "MIT",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "prepare": "pnpm tsx src/setup.ts submodules",
     "setup": "pnpm tsx src/setup.ts",
     "recreate-docker-otterscan": "pnpm tsx src/recreate-docker-otterscan.ts",
+    "deploy-all": "pnpm tsx src/deploy-all.ts",
     "deploy-points-factory": "pnpm tsx src/deploy.ts --script PointsFactory",
     "deploy-dahlia-registry": "pnpm tsx src/deploy.ts --script DahliaRegistry",
     "deploy-irm-factory": "pnpm tsx src/deploy.ts --script IrmFactory",
@@ -20,13 +21,11 @@
     "deploy-chainlink-wsteth-eth": "pnpm tsx src/deploy.ts --script ChainlinkWstETHToETH",
     "deploy-dahlia-pyth-oracle": "pnpm tsx src/deploy.ts --script DahliaPythOracle",
     "deploy-wrapped-vault": "pnpm tsx src/deploy.ts --script WrappedVault",
-    "deploy-dahlia-registry-transfer": "pnpm tsx src/deploy.ts --script DahliaRegistryTransfer",
-    "deploy-all": "pnpm tsx src/deploy-all.ts"
+    "deploy-dahlia-registry-transfer": "pnpm tsx src/deploy.ts --script DahliaRegistryTransfer"
   },
   "author": {
     "name": "Dahlia Labs",
-    "email": "info@dahlia.xyz",
-    "url": "https://github.com/dahlia-xyz"
+    "email": "info@dahlia.xyz"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

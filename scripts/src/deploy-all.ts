@@ -12,8 +12,8 @@ program.option("-r, --remote", "Deploy on remote", false).parse(process.argv);
 const options = program.opts<{ remote: boolean }>();
 const remote = options.remote;
 
-await import("./recreate-docker-otterscan.ts");
-await deployContractsOnNetworks({ script: "PointsFactory", remote });
+if (!remote) await import("./recreate-docker-otterscan.ts");
+if (!remote) await deployContractsOnNetworks({ script: "PointsFactory", remote });
 await deployContractsOnNetworks({ script: "ChainlinkWstETHToETH", remote });
 await deployContractsOnNetworks({ script: "WrappedVaultImplementation", remote });
 await deployContractsOnNetworks({ script: "DahliaRegistry", remote });
