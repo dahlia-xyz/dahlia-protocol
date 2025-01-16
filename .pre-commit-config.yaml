@@ -89,7 +89,7 @@ repos:
         name: solhint src/ https://github.com/protofire/solhint/blob/develop/docs/rules.md .
         entry: solhint
         language: node
-        additional_dependencies: [solhint@5.0.3]
+        additional_dependencies: [solhint@5.0.4]
         files: \.sol$
         exclude: ^(test/.*|script/.*)$
         args: ["--formatter", "unix", "--config", "src/.solhint.json", "--max-warnings", "0"]

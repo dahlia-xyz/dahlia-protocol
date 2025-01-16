@@ -44,12 +44,6 @@ abstract contract InitializableERC20 is Initializable, IERC20Errors, IERC2612, E
 
     mapping(address => mapping(address => uint256)) public allowance;
 
-    /*//////////////////////////////////////////////////////////////
-                               CONSTRUCTOR
-    //////////////////////////////////////////////////////////////*/
-
-    constructor() { }
-
     function _initializeERC20(string memory _name, string memory _symbol, uint8 _decimals) internal onlyInitializing {
         name = _name;
         symbol = _symbol;
