@@ -348,7 +348,9 @@ contract AccrueInterestIntegrationTest is Test {
         vm.forward(blocks - 1);
         validateUserPos("1 ", 857_999_927, 857_999_927, 858, 858);
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_145, "lend rate after 10000 blocks");
+        assertEq($.vault.previewRateAfterDeposit(address($.loanToken), 0), 8_750_145, "lend rate after 10000 blocks using vault");
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 5_647_219, "lend rate if deposit more assets");
+        assertEq($.vault.previewRateAfterDeposit(address($.loanToken), pos.lent), 5_647_219, "lend rate if deposit more assets using vault");
         vm.dahliaClaimInterestBy($.carol, $);
         validateUserPos("1 claim by carol", 857_999_927, 857_999_927, 858, 858);
         assertEq($.dahlia.getMarket($.marketId).ratePerSec, 175_002_615);
