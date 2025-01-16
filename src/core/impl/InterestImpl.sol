@@ -69,7 +69,7 @@ library InterestImpl {
 
     /// @notice Gets the expected market balances after interest accrual.
     /// @return Updated market balances
-    function getLastMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
+    function getLatestMarketState(IDahlia.Market memory market) internal view returns (IDahlia.Market memory) {
         uint256 deltaTime = block.timestamp - market.updatedAt;
         //we want to recompute ratePerSec and fullUtilizationRate for the last block to account changed totals
         //if (deltaTime == 0) return market;

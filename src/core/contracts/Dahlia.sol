@@ -230,7 +230,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @param lendAssets The amount of assets to deposit into the market.
     /// @return rate The expected rate after depositing `lendAssets` into the market.
     function previewLendRateAfterDeposit(MarketId id, uint256 lendAssets) external view returns (uint256 rate) {
-        Market memory market = InterestImpl.getLastMarketState(markets[id].market);
+        Market memory market = InterestImpl.getLatestMarketState(markets[id].market);
         if (lendAssets > 0) {
             market.totalLendAssets += lendAssets;
             (, uint256 newRatePerSec,) = IIrm(market.irm).calculateInterest(0, market.totalLendAssets, market.totalBorrowAssets, market.fullUtilizationRate);
@@ -450,7 +450,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     /// @inheritdoc IDahlia
     function getMarket(MarketId id) external view returns (Market memory) {
-        return InterestImpl.getLastMarketState(markets[id].market);
+        return InterestImpl.getLatestMarketState(markets[id].market);
     }
 
     /// @inheritdoc IDahlia
@@ -465,7 +465,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         returns (uint256 borrowedAssets, uint256 borrowableAssets, uint256 collateralPrice)
     {
         MarketData storage marketData = markets[id];
-        Market memory market = InterestImpl.getLastMarketState(marketData.market);
+        Market memory market = InterestImpl.getLatestMarketState(marketData.market);
         collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         UserPosition memory position = marketData.userPositions[userAddress];
         borrowedAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
@@ -478,7 +478,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     /// @inheritdoc IDahlia
     function getPositionLTV(MarketId id, address userAddress) external view returns (uint256 ltv) {
         MarketData storage marketData = markets[id];
-        Market memory market = InterestImpl.getLastMarketState(marketData.market);
+        Market memory market = InterestImpl.getLatestMarketState(marketData.market);
         uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
         UserPosition storage position = marketData.userPositions[userAddress];
         uint256 borrowedAssets = position.borrowShares.toAssetsUp(market.totalBorrowAssets, market.totalBorrowShares);
@@ -489,7 +489,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function getPositionInterest(MarketId id, address userAddress) external view returns (uint256 assets, uint256 shares) {
         MarketData storage marketData = markets[id];
         UserPosition memory position = marketData.userPositions[userAddress];
-        Market memory state = InterestImpl.getLastMarketState(marketData.market);
+        Market memory state = InterestImpl.getLatestMarketState(marketData.market);
         uint256 lendShares = position.lendPrincipalAssets.toSharesDown(state.totalLendAssets, state.totalLendShares);
         shares = position.lendShares - lendShares;
         assets = shares.toAssetsDown(state.totalLendAssets, state.totalLendShares);
