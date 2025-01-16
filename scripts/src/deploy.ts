@@ -1,6 +1,8 @@
 import { Command } from "commander";
 
-import { deployContractsOnNetworks, Params } from "./utils.ts";
+import { deployContractsOnNetworks, interceptAllOutput, Params } from "./utils.ts";
+
+await interceptAllOutput();
 
 const program = new Command();
 

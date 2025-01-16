@@ -1,6 +1,9 @@
 import { Command } from "commander";
+import _ from "lodash";
 
-import { deployContractsOnNetworks } from "./utils.ts";
+import { deployContractsOnNetworks, interceptAllOutput } from "./utils.ts";
+
+await interceptAllOutput();
 
 const program = new Command();
 

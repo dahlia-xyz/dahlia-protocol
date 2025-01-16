@@ -22,13 +22,6 @@ multiline_func_header = "attributes_first" # improve readability
 sort_imports = true
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
-#[profile.default.optimizer_details]
-#constantOptimizer = false
-#yul = true
-#
-#[profile.default.optimizer_details.yulDetails]
-#stackAllocation = true
-
 [profile.default.fuzz]
 runs = 256
 [profile.default.invariant]

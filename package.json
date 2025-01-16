@@ -9,8 +9,7 @@
     "size": "forge build --sizes src/core/contracts/ src/irm/contracts src/oracles/contracts",
     "blockscout": "nx run docker-blockscout:setup",
     "otterscan": "nx run docker-otterscan:setup",
-    "contracts": "nx run scripts:contracts",
-    "build:forge": "FOUNDRY_PROFILE=build forge build",
+    "test": "forge test",
     "lint": "pre-commit run --all-files",
     "coverage": "forge coverage --no-match-coverage='test/|script/' --ir-minimum",
     "lcov": "forge coverage --no-match-coverage='test/|script/' --ir-minimum --report lcov",
@@ -18,7 +17,6 @@
     "clean": "forge clean",
     "slither": "slither --filter-paths '(node_modules/|lib/)' .",
     "desc": "surya describe src/core/contracts/Dahlia.sol",
-    "mdreport": "surya mdreport report.md src/core/contracts/Dahlia.sol",
     "snapshot": "forge snapshot",
     "diff": "forge snapshot --diff",
     "prepare": "husky"

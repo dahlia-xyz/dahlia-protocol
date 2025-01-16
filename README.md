@@ -7,6 +7,7 @@
 + [Tech Stack](#tech-stack)
 + [Setup](#setup)
 + [Run Tests](#run-tests)
++ [Lint](#lint)
 
 <!-- tocstop -->
 
@@ -42,3 +43,13 @@ To execute tests, perform the following steps:
 ```shell
 forge test
 ```
+
+## Lint
+
+We use [pre-commit](https://pre-commit.com/) to lint the project
+
+```shell
+pnpm run lint
+```
+
+Lint process covering `solhint`, `forge fmt`, `forge test` and many other checks

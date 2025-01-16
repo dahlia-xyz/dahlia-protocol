@@ -22,17 +22,29 @@ export interface Params {
   remote: boolean;
 }
 
-let isPatched = false;
-async function interceptAllOutput(): Promise<void> {
-  if (isPatched) return;
-  isPatched = true;
-
+export async function interceptAllOutput(): Promise<void> {
   const program = new Command();
   program
     .option("-s, --script <path>", "Path to the .s.sol file", "")
     .option("-r, --remote", "Deploy on remote", false)
     .parse(process.argv);
   const args = program.opts<Params>();
+
+  if (_.isUndefined(process.env["PRIVATE_KEY"])) {
+    if (args.remote) {
+      throw Error("Missing required deployer PRIVATE_KEY environment variable");
+    } else {
+      process.env["PRIVATE_KEY"] = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+    }
+  }
+
+  if (_.isUndefined(process.env["WALLET_ADDRESS"])) {
+    if (args.remote) {
+      throw Error("Missing required owner WALLET_ADDRESS environment variable to own all deployed contracts");
+    } else {
+      process.env["WALLET_ADDRESS"] = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+    }
+  }
 
   const scriptName = path.basename(process.argv[1], path.extname(process.argv[1])); // e.g., "app"
   const currentUnixSeconds = Math.floor(Date.now() / 1000);
@@ -65,8 +77,6 @@ async function interceptAllOutput(): Promise<void> {
     return originalStderrWrite.call(process.stderr, chunk, encoding, callback);
   };
 }
-
-await interceptAllOutput();
 
 const $$ = execa({ extendEnv: true, verbose: "full", stdout: ["pipe", "inherit"], stderr: ["pipe", "inherit"] });
 
