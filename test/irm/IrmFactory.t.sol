@@ -2,14 +2,12 @@
 pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
-
 import { console } from "@forge-std/console.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
+import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
-
-import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 
 contract IrmFactoryTest is Test {
     using BoundUtils for Vm;

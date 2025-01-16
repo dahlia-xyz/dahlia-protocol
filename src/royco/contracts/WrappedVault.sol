@@ -511,23 +511,21 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
     /// @notice Calculates the rate a user would receive in rewards after depositing assets
     /// @return The rate of rewards, measured in wei of rewards token per wei of assets per second, scaled up by 1e18 to avoid precision loss
     function previewRateAfterDeposit(address reward, uint256 assets) public view returns (uint256) {
-        RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
-        if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return 0;
-
         // Check if Dahlia market deposits are enabled
         IDahlia.MarketId id = marketId;
         if (dahlia.getMarket(id).status != IDahlia.MarketStatus.Active) return 0;
 
-        // 18 decimals if reward token = lend token
-        uint256 rewardsRate = SoladyMath.divWad(rewardsInterval.rate, totalPrincipal() + assets);
-
+        uint256 rewardsRate = 0;
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             // 18 decimals
-            uint256 dahliaRate = dahlia.previewLendRateAfterDeposit(id, assets);
-            rewardsRate += dahliaRate;
+            rewardsRate = dahlia.previewLendRateAfterDeposit(id, assets);
         }
-        return rewardsRate;
+
+        RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
+        if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return rewardsRate;
+
+        return rewardsRate + SoladyMath.divWad(rewardsInterval.rate, totalPrincipal() + assets);
     }
 
     /*//////////////////////////////////////////////////////////////
