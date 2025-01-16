@@ -10,7 +10,6 @@ tmp/
 docs/
 
 # Dotenv file
-/.env
 .env.local
 
 # Node modules
