@@ -23,7 +23,7 @@ import {
 import { IDahliaRegistry } from "src/core/interfaces/IDahliaRegistry.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
-import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
 
 /// @title Dahlia
 /// @notice The Dahlia contract.
@@ -150,7 +150,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
         address owner = marketConfig.owner == address(0) ? msg.sender : marketConfig.owner;
-        IWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
+        IDahliaWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
             id, marketConfig.loanToken, owner, marketConfig.name, fee
         );
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
@@ -162,7 +162,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(owner != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        IWrappedVault vault = market.vault;
+        IDahliaWrappedVault vault = market.vault;
         _permittedByWrappedVault(vault);
         _validateMarketIsActive(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
@@ -176,7 +176,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        IWrappedVault vault = market.vault;
+        IDahliaWrappedVault vault = market.vault;
         _permittedByWrappedVault(vault);
         _validateMarketIsActiveOrPausedOrDeprecated(market.status);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
@@ -203,7 +203,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(receiver != address(0), Errors.ZeroAddress());
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
-        IWrappedVault vault = market.vault;
+        IDahliaWrappedVault vault = market.vault;
         _permittedByWrappedVault(vault);
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         UserPosition storage ownerPosition = positions[owner];
@@ -443,7 +443,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     /// @notice Checks if the sender is the market or the wrapped vault owner.
     /// @param vault The wrapped vault associated with the market.
-    function _checkDahliaOwnerOrVaultOwner(IWrappedVault vault) internal view {
+    function _checkDahliaOwnerOrVaultOwner(IDahliaWrappedVault vault) internal view {
         address sender = _msgSender();
         require(sender == owner() || sender == vault.owner(), Errors.NotPermitted(sender));
     }
@@ -585,7 +585,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
     /// @notice Validates if the current sender is the WrappedVault contract.
     /// @param vault WrappedVault contract address
-    function _permittedByWrappedVault(IWrappedVault vault) internal view {
+    function _permittedByWrappedVault(IDahliaWrappedVault vault) internal view {
         require(msg.sender == address(vault), Errors.NotPermitted(msg.sender));
     }
 }

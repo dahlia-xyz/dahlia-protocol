@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Points } from "@royco/Points.sol";
 import { PointsFactory } from "@royco/PointsFactory.sol";
+import { IWrappedVault } from "@royco/interfaces/IWrappedVault.sol";
 import { Ownable } from "@solady/auth/Ownable.sol";
 import { FixedPointMathLib as SoladyMath } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
@@ -11,7 +12,7 @@ import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
-import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
 import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 
 /// @title WrappedVault
@@ -19,7 +20,7 @@ import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 /// @dev A token inheriting from ERC20Rewards will reward token holders with a rewards token.
 /// The rewarded amount will be a fixed wei per second, distributed proportionally to token holders
 /// by the size of their holdings.
-contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
+contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
     using SafeTransferLib for address;
     using SafeCastLib for uint256;
     using FixedPointMathLib for uint256;
@@ -145,7 +146,7 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         _initializeOwner(_owner);
         _initializeERC20(_name, _symbol, _decimals);
 
-        VAULT = IWrappedVault(address(this));
+        VAULT = this;
         WRAPPED_VAULT_FACTORY = WrappedVaultFactory(msg.sender);
         if (initialFrontendFee < WRAPPED_VAULT_FACTORY.minimumFrontendFee()) revert FrontendFeeBelowMinimum();
 
@@ -542,12 +543,12 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         return dahlia.getMarket(marketId).totalLendAssets;
     }
 
-    /// @inheritdoc IWrappedVault
+    /// @inheritdoc IDahliaWrappedVault
     function principal(address account) public view returns (uint256) {
         return dahlia.getPosition(marketId, account).lendPrincipalAssets;
     }
 
-    /// @inheritdoc IWrappedVault
+    /// @inheritdoc IDahliaWrappedVault
     function totalPrincipal() public view returns (uint256) {
         return dahlia.getMarket(marketId).totalLendPrincipalAssets;
     }
@@ -596,13 +597,13 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         _deposit(receiver, assets, shares);
     }
 
-    /// @inheritdoc IWrappedVault
+    /// @inheritdoc IDahliaWrappedVault
     function mintFees(uint256 shares, address receiver) external {
         require(msg.sender == address(dahlia), NotDahlia());
         _mint(receiver, shares);
     }
 
-    /// @inheritdoc IWrappedVault
+    /// @inheritdoc IDahliaWrappedVault
     function burnShares(address from, uint256 shares) external {
         require(msg.sender == address(dahlia), NotDahlia());
         _updateUserRewards(from);
@@ -703,8 +704,8 @@ contract WrappedVault is Ownable, InitializableERC20, IWrappedVault {
         return SharesMathLib.toAssetsDown(shares, market.totalLendAssets, market.totalLendShares);
     }
 
-    /// @inheritdoc IWrappedVault
-    function owner() public view virtual override(IWrappedVault, Ownable) returns (address result) {
+    /// @inheritdoc IDahliaWrappedVault
+    function owner() public view virtual override(IDahliaWrappedVault, Ownable) returns (address result) {
         return super.owner();
     }
 }

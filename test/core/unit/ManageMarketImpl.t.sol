@@ -7,7 +7,7 @@ import { Errors } from "src/core/helpers/Errors.sol";
 import { ManageMarketImpl } from "src/core/impl/ManageMarketImpl.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
 import { TestContext } from "test/common/TestContext.sol";
 
 contract ManageMarketImplUnitTest is Test {
@@ -18,7 +18,7 @@ contract ManageMarketImplUnitTest is Test {
         ctx = new TestContext(vm);
     }
 
-    function test_unit_manage_deployMarket_success(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
+    function test_unit_manage_deployMarket_success(IDahlia.MarketConfig memory marketParamsFuzz, IDahliaWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
         marketParamsFuzz.liquidationBonusRate =
@@ -45,7 +45,7 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(address(market.vault), address(vault), "marketProxy != vault");
     }
 
-    function test_unit_manage_deployMarket_alreadyDeployed(IDahlia.MarketConfig memory marketParamsFuzz, IWrappedVault vault) public {
+    function test_unit_manage_deployMarket_alreadyDeployed(IDahlia.MarketConfig memory marketParamsFuzz, IDahliaWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
         marketParamsFuzz.liquidationBonusRate =

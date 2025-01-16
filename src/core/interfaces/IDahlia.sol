@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
-import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
 
 /// @title IDahlia
 /// @notice Interface for main Dahlia protocol functions
@@ -41,7 +41,7 @@ interface IDahlia {
         IIrm irm; // 20 bytes
         uint64 ratePerSec; // 8 bytes // stores refreshed rate per second
         // --- 26 bytes
-        IWrappedVault vault; // 20 bytes
+        IDahliaWrappedVault vault; // 20 bytes
         uint48 repayPeriodEndTimestamp; // 6 bytes
         // --- having all 256 bytes at the end makes deployment size smaller
         uint256 totalLendAssets; // 32 bytes // principal + interest - bad debt
@@ -115,7 +115,7 @@ interface IDahlia {
     /// @param id Market id.
     /// @param vault Address of the Royco WrappedVault associated with the market.
     /// @param marketConfig Configuration parameters for the market.
-    event DeployMarket(IDahlia.MarketId indexed id, IWrappedVault indexed vault, IDahlia.MarketConfig marketConfig);
+    event DeployMarket(IDahlia.MarketId indexed id, IDahliaWrappedVault indexed vault, IDahlia.MarketConfig marketConfig);
 
     /// @dev Emitted when collateral is supplied.
     /// @param id Market id.

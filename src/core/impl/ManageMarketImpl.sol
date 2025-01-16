@@ -5,7 +5,7 @@ import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-import { IWrappedVault } from "src/royco/interfaces/IWrappedVault.sol";
+import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
 
 /// @title ManageMarketImpl library
 /// @notice Implements market deployment and protocol fee
@@ -32,7 +32,7 @@ library ManageMarketImpl {
         mapping(IDahlia.MarketId => IDahlia.MarketData) storage markets,
         IDahlia.MarketId id,
         IDahlia.MarketConfig memory marketConfig,
-        IWrappedVault vault
+        IDahliaWrappedVault vault
     ) internal {
         IDahlia.Market storage market = markets[id].market;
         require(market.updatedAt == 0, Errors.MarketAlreadyDeployed());
