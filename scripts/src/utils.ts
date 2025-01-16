@@ -19,8 +19,7 @@ export const DEPLOY_NETWORKS: Network[] = [Network.MAINNET, Network.CARTIO];
 
 export interface Params {
   script: string;
-  iterator?: string;
-  remote?: boolean;
+  remote: boolean;
 }
 
 let isPatched = false;
@@ -31,7 +30,6 @@ async function interceptAllOutput(): Promise<void> {
   const program = new Command();
   program
     .option("-s, --script <path>", "Path to the .s.sol file", "")
-    .option("-i, --iterator <name>", "Name of the iterator from config.yaml")
     .option("-r, --remote", "Deploy on remote", false)
     .parse(process.argv);
   const args = program.opts<Params>();
@@ -96,7 +94,7 @@ export const sendMoneyToAddressOnAnvil = async (rpcUrl: string, address: string,
 
 async function runScript(
   env: Readonly<Partial<Record<string, string>>>,
-  creationScriptPath: string,
+  script: string,
   cfg: Config,
   network: Network,
   deployedContracts: Config,
@@ -105,7 +103,7 @@ async function runScript(
   const { stdout } = await $$({
     env,
     cwd: "..",
-  })`forge script script/${creationScriptPath} --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DEPLOYER_PRIVATE_KEY}`;
+  })`forge script script/${script}.s.sol --rpc-url ${cfg.RPC_URL} --broadcast --private-key ${cfg.DEPLOYER_PRIVATE_KEY}`;
 
   for (const line of stdout.split(/\r?\n/)) {
     const match = line.match(/^\s*(\S+)=(0x[a-fA-F0-9]+)\s+.*$/);
@@ -133,28 +131,27 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
         throw new Error("Missing RPC_PORT or OTT_PORT");
       }
       cfg.RPC_URL = `http://localhost:${cfg.RPC_PORT}`;
-      const blockNumber = await waitForRpc(cfg.RPC_URL);
       cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTT_PORT}`;
-      console.log(`Deploying contracts to rpcUrl=${cfg.RPC_URL}... blockNumber=${blockNumber}`);
     }
-
+    await waitForRpc(cfg.RPC_URL);
+    //console.log(`network=${network}: Deploying contracts rpcUrl=${cfg.RPC_URL} blockNumber=${blockNumber}`);
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
-    if (params.iterator) {
-      if (cfg[params.iterator]) {
-        for (const [index, subvalue] of cfg[params.iterator].entries()) {
-          const env = {
-            ..._.pickBy(cfg, (value) => typeof value === "string"),
-            ...subvalue,
-            INDEX: index,
-          };
-          await runScript(env, params.script, cfg, network, deployedContracts);
-        }
-      } else {
-        console.log("Skipped deployment of", params.iterator);
+    // If is an Array iterate each value
+    if (_.isArray(cfg[params.script])) {
+      for (const [index, value] of cfg[params.script].entries()) {
+        const env = {
+          ..._.pickBy(cfg, (value) => typeof value === "string"),
+          ...value,
+          INDEX: index,
+        };
+        await runScript(env, params.script, cfg, network, deployedContracts);
       }
-    } else {
+    } else if (_.isUndefined(cfg[params.script])) {
+      // If no value, run always script
       await runScript(env, params.script, cfg, network, deployedContracts);
+    } else {
+      console.log(`network=${network}: Skipped deployment of ${params.script}`);
     }
   }
   saveConfigFile(deployedName, deployedContracts);
