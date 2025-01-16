@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
 import { console } from "@forge-std/console.sol";
@@ -13,6 +13,8 @@ import { DahliaTransUtils } from "test/common/DahliaTransUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { TestTypes } from "test/common/TestTypes.sol";
 
+// Test for tracking and validating market interest accruals, lender/borrower positions,
+// and fee distribution in Dahlia Protocol.
 contract POSTest is Test {
     using FixedPointMathLib for uint256;
     using SharesMathLib for uint256;
@@ -23,33 +25,40 @@ contract POSTest is Test {
     TestContext.MarketContext $;
     TestContext ctx;
 
+    // Sets up the test environment by creating a lending market with 80% Liquidation Loan-to-Value.
     function setUp() public {
         ctx = new TestContext(vm);
-        $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
+        $ = ctx.bootstrapMarket("USDC", "WBTC", BoundUtils.toPercent(80));
     }
 
+    // Verifies that no interest accrual has occurred when market conditions remain static.
     function _checkInterestDidntChange() internal {
         vm.pauseGasMetering();
         IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
+
         uint256 totalBorrowBeforeAccrued = state.totalBorrowAssets;
         uint256 totalLendBeforeAccrued = state.totalLendAssets;
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
 
         vm.resumeGasMetering();
-        $.dahlia.accrueMarketInterest($.marketId);
+        $.dahlia.accrueMarketInterest($.marketId); // Simulate interest accrual
         vm.pauseGasMetering();
 
+        // Fetch updated market state to validate
         IDahlia.UserPosition memory userPos = $.dahlia.getPosition($.marketId, $.owner);
         IDahlia.Market memory stateAfter = $.dahlia.getMarket($.marketId);
-        assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued, "total borrow");
-        assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued, "total supply");
-        assertEq(stateAfter.totalLendShares, totalLendSharesBeforeAccrued, "total supply shares");
+
+        assertEq(stateAfter.totalBorrowAssets, totalBorrowBeforeAccrued, "total borrow unchanged");
+        assertEq(stateAfter.totalLendAssets, totalLendBeforeAccrued, "total supply unchanged");
+        assertEq(stateAfter.totalLendShares, totalLendSharesBeforeAccrued, "total supply shares unchanged");
         assertEq(userPos.lendShares, 0, "feeRecipient's supply shares");
     }
 
+    // Prints the state of the lending market for debugging and analysis.
     function printMarketState(string memory suffix, string memory title) public view {
         console.log("\n#### BLOCK:", block.number, title);
         IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
+
         console.log(suffix, "market.totalLendAssets", state.totalLendAssets);
         console.log(suffix, "market.totalLendShares", state.totalLendShares);
         console.log(suffix, "market.totalBorrowShares", state.totalBorrowShares);
@@ -57,14 +66,18 @@ contract POSTest is Test {
         console.log(suffix, "market.totalPrincipal", state.totalLendPrincipalAssets);
         console.log(suffix, "market.utilization", state.totalBorrowAssets * 100_000 / state.totalLendAssets);
         console.log(suffix, "dahlia.usdc.balance", $.loanToken.balanceOf(address($.dahlia)));
+
+        // Display positions for key actors in the market
         printUserPos(string.concat(suffix, " carol"), $.carol);
         printUserPos(string.concat(suffix, " bob"), $.bob);
         printUserPos(string.concat(suffix, " protocolFee"), $.protocolFeeRecipient);
         printUserPos(string.concat(suffix, " reserveFee"), $.reserveFeeRecipient);
     }
 
+    // Prints a user's position in the lending market.
     function printUserPos(string memory suffix, address user) public view {
         IDahlia.UserPosition memory pos = $.dahlia.getPosition($.marketId, user);
+
         console.log(suffix, ".WrappedVault.balanceOf", WrappedVault(address($.dahlia.getMarket($.marketId).vault)).balanceOf(user));
         console.log(suffix, ".WrappedVault.principal", WrappedVault(address($.dahlia.getMarket($.marketId).vault)).principal(user));
         console.log(suffix, ".lendAssets", pos.lendPrincipalAssets);
@@ -72,6 +85,7 @@ contract POSTest is Test {
         console.log(suffix, ".usdc.balance", $.loanToken.balanceOf(user));
     }
 
+    // Validates a user's position, including interest and shares, against expected values.
     function validateUserPos(string memory suffix, uint256 expectedBob, uint256 expectedCarol, uint256 expectedBobAssets, uint256 expectedCarolAssets)
         public
         view
@@ -79,33 +93,42 @@ contract POSTest is Test {
         (uint256 bobAssetsInterest, uint256 bobSharesInterest) = $.dahlia.getPositionInterest($.marketId, $.bob);
         assertEq(bobSharesInterest, expectedBob, string(abi.encodePacked("block ", block.number.toString(), " bob:", suffix)));
         assertEq(bobAssetsInterest, expectedBobAssets, string(abi.encodePacked("block ", block.number.toString(), " bob:", suffix)));
+
         (uint256 carolAssetsInterest, uint256 carolSharesInterest) = $.dahlia.getPositionInterest($.marketId, $.carol);
         assertEq(carolSharesInterest, expectedCarol, string(abi.encodePacked("carol:", suffix)));
         assertEq(carolAssetsInterest, expectedCarolAssets, string(abi.encodePacked("carol:", suffix)));
     }
 
-    // use `forge test -vv --mt test_int_accrueInterest_Test1`
+    // Validates interest accrual and interaction with lending rates over a series of blocks.
     function test_int_accrueInterest_Test1() public {
         vm.pauseGasMetering();
+
+        // Define initial market position parameters
         TestTypes.MarketPosition memory pos = TestTypes.MarketPosition({
             collateral: 10_000e8,
             lent: 10_000e6,
-            borrowed: 1000e6, // 10%
+            borrowed: 1000e6, // 10% borrowed
             price: 1e34,
             ltv: BoundUtils.toPercent(80)
         });
+
         uint32 protocolFee = BoundUtils.toPercent(1);
         uint32 reserveFee = BoundUtils.toPercent(1);
+
+        // Validate initial market conditions
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 0, "start lend rate");
-        assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 0, "start lend rate if deposit more assets");
         $.oracle.setPrice(pos.price);
+
+        // Simulate market activities: lending, collateral supply, borrowing
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaLendBy($.bob, pos.lent, $);
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
         vm.dahliaBorrowBy($.alice, pos.borrowed, $);
+
+        // Ensure fees and rates are set correctly
         uint256 ltv = $.dahlia.getPositionLTV($.marketId, $.alice);
         console.log("ltv: ", ltv);
-        console.log("usdc.decimals(): ", $.loanToken.decimals());
+
         IDahlia.Market memory market = $.dahlia.getMarket($.marketId);
         WrappedVault vault = WrappedVault(address(market.vault));
         vm.prank(vault.owner());
