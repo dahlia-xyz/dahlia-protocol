@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import { Test, Vm } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
@@ -274,6 +275,7 @@ contract ManageMarketIntegrationTest is Test {
         IDahlia.Market memory market = $.dahlia.getMarket(marketId);
         assertEq($.dahlia.isMarketDeployed(marketId), true);
         assertEq(market.vault.owner(), $.marketAdmin);
+        assertEq(IERC20Metadata(address(market.vault)).symbol(), "ROY-DAH-1");
         vm.stopPrank();
     }
 }

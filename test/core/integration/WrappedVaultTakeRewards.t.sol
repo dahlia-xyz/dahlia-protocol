@@ -8,6 +8,7 @@ import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { ERC20 } from "@solmate/tokens/ERC20.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
+import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -121,6 +122,11 @@ contract WrappedVaultTakeRewardsTest is Test {
         vm.label(address(rewardToken2), "Reward Token GHO");
         vm.label(REGULAR_USER, "RegularUser");
         vm.label(REFERRAL_USER, "ReferralUser");
+    }
+
+    function test_int_royco_WrappedVaultFactory_PermittedOnlyDahlia() public {
+        vm.expectRevert(abi.encodeWithSelector(WrappedVaultFactory.PermittedOnlyDahlia.selector, address(this), address($.dahlia)));
+        testFactory.wrapVault(IDahlia.MarketId.wrap(1), address($.loanToken), address(this), "Test Market", 0);
     }
 
     function testTakeRewards() public {

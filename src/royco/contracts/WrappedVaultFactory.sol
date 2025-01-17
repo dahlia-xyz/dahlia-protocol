@@ -68,6 +68,7 @@ contract WrappedVaultFactory is Ownable2Step {
     error InvalidWrappedVaultImplementation();
     error ProtocolFeeTooHigh();
     error ReferralFeeTooHigh();
+    error PermittedOnlyDahlia(address caller, address expectedCaller);
 
     event WrappedVaultImplementationUpdated(address newWrappedVaultImplementation);
     event ProtocolFeeUpdated(uint256 newProtocolFee);
@@ -145,7 +146,8 @@ contract WrappedVaultFactory is Ownable2Step {
         external
         returns (WrappedVault wrappedVault)
     {
-        string memory newSymbol = _getNextSymbol();
+        require(msg.sender == dahlia, PermittedOnlyDahlia(msg.sender, dahlia));
+        string memory newSymbol = string.concat("ROY-DAH-", LibString.toString(IDahlia.MarketId.unwrap(id)));
         bytes32 salt = keccak256(abi.encodePacked(id, owner, name, initialFrontendFee));
         wrappedVault = WrappedVault(wrappedVaultImplementation.cloneDeterministic(salt));
         uint8 decimals = IERC20Metadata(loanToken).decimals() + SharesMathLib.VIRTUAL_SHARES_DECIMALS;
@@ -156,10 +158,5 @@ contract WrappedVaultFactory is Ownable2Step {
 
         // Emit wrapped vault address as both `underlyingVaultAddress` and `incentivizedVaultAddress`
         emit WrappedVaultCreated(ERC4626(address(wrappedVault)), wrappedVault, owner, address(wrappedVault.asset()), initialFrontendFee, name, newSymbol);
-    }
-
-    /// @dev Helper function to get the symbol for a new incentivized vault, ROY-DAH-0, ROY-DAH-1, etc.
-    function _getNextSymbol() internal view returns (string memory) {
-        return string.concat("ROY-DAH-", LibString.toString(incentivizedVaults.length));
     }
 }
