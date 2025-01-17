@@ -445,6 +445,14 @@ interface IDahlia {
     /// @param receiver Address receiving the collateral assets.
     function withdrawCollateral(MarketId id, uint256 assets, address owner, address receiver) external;
 
+    /// @notice Final withdrawal by lender from `stalled` market his portion of lending assets and portion of collateral assets based on his lending assets
+    /// @param id Market id.
+    /// @param owner the owner of the lending deposit
+    /// @param receiver - receiver of funds
+    /// @return lendAssets - amount of lend assets received
+    /// @return collateralAssets - amount of collateral assets received as replacement of missing lend assets
+    function withdrawDepositAndClaimCollateral(MarketId id, address owner, address receiver) external returns (uint256 lendAssets, uint256 collateralAssets);
+
     /// @notice Initiate a flash loan for a specified collateral token.
     /// @param token The address of the token to be borrowed.
     /// @param assets The amount of the token to borrow.
