@@ -47,24 +47,63 @@
 `-- royco
     |-- contracts
     |   |-- WrappedVault.sol
-    |   |   - Forked from `@royco/WrappedVault.sol` and modified for Dahlia lending support
+    |   |   - Copied from `@royco/WrappedVault.sol` with Dahlia lending support
     |   `-- WrappedVaultFactory.sol
-    |       - Forked from `@royco/WrappedVaultFactory.sol` and modified for Dahlia lending support
+    |       - Copied from `@royco/WrappedVaultFactory.sol` and modified for Dahlia lending support
     |-- interfaces
     |   `-- IDahliaWrappedVault.sol
-    |       - Forked from `@royco/interfaces/IWrappedVault.sol` and extended
+    |       - Copied from `@royco/interfaces/IWrappedVault.sol` and extended
     |-- periphery
     |   `-- InitializableERC20.sol
-    |       - Forked from `@royco/periphery/InitializableERC20.sol`
+    |       - Copied from `@royco/periphery/InitializableERC20.sol`
     `-- (Purpose: Royco contracts adapted for supporting Dahlia lending protocol)
 ```
 
 ## Design Highlights
 
-- **WrappedVault.sol**
-  - Preserves 100% ABI compatibility with the original Royco contract.
-  - Retrieves its `balanceOf()` from the Dahlia protocol rather than storing share balances internally.
-  - Uses the original principal assets for reward rate calculations.
-  - Incorporates the Dahlia lending rate in the `previewRateAfterDeposit()` function.
-- **WrappedVaultFactory.sol**
-  - The `wrapVault()` function is restricted to be callable only by `Dahlia.sol`, diverging from Royco's original permissionless implementation of the `wrapVault()` function.
+The Dahlia protocol is designed to extend the functionality of the ROYCO protocol by enhancing lending rewards and seamlessly integrating them into ROYCO rewards.
+
+### WrappedVault.sol
+
+To achieve this, we adapted three key contracts from ROYCO, improving the logic of the WrappedVault. Key enhancements include:
+
+- Preserved ABI Compatibility: The contract maintains 100% ABI compatibility with the original ROYCO contract.
+- Controlled Asset Management: The Dahlia contract has full control over the assets in the WrappedVault, ensuring strict security by preventing unauthorized withdrawals to arbitrary addresses.
+- Connection to Dahlia Market: The WrappedVault integrates with the Dahlia market by passing the Dahlia contract address and a market ID.
+- Enhanced Functions:
+- rewardsToInterval: Extended to include accrued lending interest as additional ROYCO rewards.
+- previewRateAfterDeposit: Calculates the impact of lending interest within Dahlia and integrates it into reward computations.
+- balanceOf: Retrieves issued shares directly from Dahlia, eliminating the need for WrappedVault to track them.
+- principal: Accurately accounts for deposited assets to ensure rewards are distributed only to users providing liquidity through ROYCO.
+
+The modified WrappedVault adheres to the ERC-4626 standard, maintaining compatibility while incorporating these improvements.
+
+### WrappedVaultFactory.sol
+
+- Enhanced Access Control: The wrapVault() function can only be invoked by Dahlia.sol, breaking compatibility with the original ROYCO implementation.
+
+IDahliaWrappedVault.sol
+
+- Extends IWrappedVault.sol to add access to additional functions.
+
+### Dahlia.sol
+
+The Dahlia contract introduces several new features and capabilities:
+
+- Market Creation: New markets can only be created by the Dahlia contract, accessible by any user.
+- Market Configuration: Each market has its own IRM, oracle, borrowing/lending tokens, and LLTV parameters (see MarketConfig struct).
+- Restricted Functionality:
+- lend() and withdraw() can only be invoked through the WrappedVault.
+- Collateral can be supplied by any user, including non-ROYCO users, who can borrow lending tokens from ROYCO lenders.
+
+Administrative Controls:
+
+- Pause Market: Dahlia admins and market owners can pause a market, restricting new deposits and borrows. Users can only repay loans and withdraw collateral or lending tokens.
+- Deprecate Market: Only Dahlia admins can mark a market as deprecated. This state is similar to a pause but is irreversible.
+- Stall Market: Dahlia admins can mark a market as stalled in case of critical issues (e.g., oracle failure). In this mode:
+- Borrowers can repay loans and withdraw collateral during a fixed period (VALUE_ID_REPAY_PERIOD, default is 2 weeks).
+- Lenders must wait until the end of the repayment period to withdraw their portion of lending and collateral assets if lending assets are insufficient.
+
+### VariableIrm.sol
+
+- Provides mathematical calculations for determining interest rates based on total lending and borrowing activity.
