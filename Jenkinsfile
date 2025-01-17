@@ -17,7 +17,7 @@ pipeline {
                     steps {
                         sh 'pnpm install --frozen-lockfile --unsafe-perm'
                         sh 'git submodule update --init --recursive'
-                        sh 'cd lib/royco && git submodule deinit lib/solady && git submodule deinit lib/solmate && git submodule deinit lib/openzeppelin-contracts'
+//                        sh 'cd lib/royco && git submodule deinit lib/solady && git submodule deinit lib/solmate && git submodule deinit lib/openzeppelin-contracts'
                     }
                 }
                 stage('Debug') {
