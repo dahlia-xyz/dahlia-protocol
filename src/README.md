@@ -23,7 +23,7 @@
 |-- oracles
 |   |-- contracts
 |   |   |-- ChainlinkWstETHToETH.sol
-|   |   |   - Provides Chainlink compatible WSTETH-to-ETH price feed using Chainlink STETH-to-ETH and Lido WSTETH-STETH
+|   |   |   - Provides Chainlink compatible WSTETH-to-ETH price feed using Lido's WSTETH-STETH conversion rate and Chainlink STETH-to-ETH price feed
 |   |   |-- DahliaChainlinkOracle.sol
 |   |   |   - Dahlia Oracle leveraging Chainlink price feeds
 |   |   |-- DahliaChainlinkOracleFactory.sol
@@ -41,30 +41,30 @@
 |   |   |-- DahliaUniswapV3OracleFactory.sol
 |   |   |   - Factory to create and configure DahliaUniswapV3Oracle contracts
 |   |   `-- Timelock.sol
-|   |       - Timelock mechanism for delayed parameter updates in oracles
-|   `-- (Purpose: Contracts for interacting with external data feeds and oracles)
+|   |       - Timelock mechanism for delay parameter updates in oracles
+|   `-- (Purpose: Contracts for interacting with external data feeds and price oracles)
 |
 `-- royco
     |-- contracts
     |   |-- WrappedVault.sol
-    |   |   - Copied from `@royco/WrappedVault.sol` with Dahlia lending support
+    |   |   - Forked from `@royco/WrappedVault.sol` and modified for Dahlia lending support
     |   `-- WrappedVaultFactory.sol
-    |       - Copied from `@royco/WrappedVaultFactory.sol` with Dahlia lending support
+    |       - Forked from `@royco/WrappedVaultFactory.sol` and modified for Dahlia lending support
     |-- interfaces
     |   `-- IDahliaWrappedVault.sol
-    |       - Extended from `@royco/interfaces/IWrappedVault.sol`
+    |       - Forked from `@royco/interfaces/IWrappedVault.sol` and extended
     |-- periphery
     |   `-- InitializableERC20.sol
-    |       - Copied from `@royco/periphery/InitializableERC20.sol`
-    `-- (Purpose: Royco contracts adapted to include Dahlia lending protocol support)
+    |       - Forked from `@royco/periphery/InitializableERC20.sol`
+    `-- (Purpose: Royco contracts adapted for supporting Dahlia lending protocol)
 ```
 
-## Design points
+## Design Highlights
 
-- WrappedVault.sol
+- **WrappedVault.sol**
   - Preserves 100% ABI compatibility with the original Royco contract.
-  - Retrieves its balanceOf() from the Dahlia protocol rather than storing share balances internally.
+  - Retrieves its `balanceOf()` from the Dahlia protocol rather than storing share balances internally.
   - Uses the original principal assets for reward rate calculations.
-  - Incorporates the Dahlia lending rate in the previewRateAfterDeposit() function.
-- WrappedVaultFactory.sol
-  - The wrapVault() function can be invoked only by Dahlia.sol, breaking compatibility with Royco's original wrapVault().
+  - Incorporates the Dahlia lending rate in the `previewRateAfterDeposit()` function.
+- **WrappedVaultFactory.sol**
+  - The `wrapVault()` function is restricted to be callable only by `Dahlia.sol`, diverging from Royco's original permissionless implementation of the `wrapVault()` function.
