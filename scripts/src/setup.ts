@@ -15,9 +15,9 @@ const checkCommand = async (commandName: string): Promise<void> => {
 
 async function prepareSubmodules() {
   await $`git submodule update --init`;
-  await $({ cwd: "../lib/royco" })`git submodule deinit lib/solmate`;
-  await $({ cwd: "../lib/royco" })`git submodule deinit lib/solady`;
-  await $({ cwd: "../lib/royco" })`git submodule deinit lib/openzeppelin-contracts`;
+  // await $({ cwd: "../lib/royco" })`git submodule deinit lib/solmate`;
+  // await $({ cwd: "../lib/royco" })`git submodule deinit lib/solady`;
+  // await $({ cwd: "../lib/royco" })`git submodule deinit lib/openzeppelin-contracts`;
   await $({ cwd: "../" })`forge clean`;
 }
 const command = process.argv[2] ?? "setup";
