@@ -81,7 +81,14 @@ export async function interceptAllOutput(): Promise<void> {
 const $$ = execa({ extendEnv: true, verbose: "full", stdout: ["pipe", "inherit"], stderr: ["pipe", "inherit"] });
 
 export const recreateDockerOtterscan = async () => {
-  await $$({ env: { NX_VERBOSE_LOGGING: "true", NO_COLORS: "true" } })`pnpm nx run dahlia:otterscan`;
+  for (const network of DEPLOY_NETWORKS) {
+    const cfg: Config = load(network, {});
+    const env = _.merge(
+      _.pickBy(cfg, (value) => typeof value === "string"),
+      { COMPOSE_PROJECT_NAME: `dahlia-${network}`, NX_VERBOSE_LOGGING: "true" },
+    );
+    await $$({ env })`pnpm nx run dahlia:otterscan`;
+  }
 };
 
 const ANVIL_ACCOUNT_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
@@ -138,11 +145,11 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
         throw new Error("Missing RPC_URL or SCANNER_BASE_URL");
       }
     } else {
-      if (!cfg.RPC_PORT || !cfg.OTT_PORT) {
-        throw new Error("Missing RPC_PORT or OTT_PORT");
+      if (!cfg.RPC_PORT || !cfg.OTTERSCAN_PORT) {
+        throw new Error("Missing RPC_PORT or OTTERSCAN_PORT");
       }
       cfg.RPC_URL = `http://localhost:${cfg.RPC_PORT}`;
-      cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTT_PORT}`;
+      cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTTERSCAN_PORT}`;
     }
     await waitForRpc(cfg.RPC_URL);
     const env = _.pickBy(cfg, (value) => typeof value === "string");

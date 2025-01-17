@@ -1,71 +1,28 @@
-x-common-anvil: &common-anvil
-  build:
-    context: anvil
-    dockerfile: Dockerfile
-  platform: linux/amd64
-  environment:
-    - ANVIL_IP_ADDR=0.0.0.0
-  ports: []
-
-x-common-otterscan: &common-otterscan
-  image: otterscan/otterscan:v2.6.1
-  environment: []
-  ports: []
-
+# Please use `pnpm nx run scripts:recreate-docker-otterscan`
+# This should read config/default.yaml and set the environment variables
 services:
-  mainnet_anvil:
-    <<: *common-anvil
+  anvil:
+    build:
+      context: anvil
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    environment:
+      - ANVIL_IP_ADDR=0.0.0.0
     command: >
-      --fork-url ${MAINNET_RPC_URL}
-      --fork-block-number ${MAINNET_BLOCK_NUMBER:-21636077}
+      --fork-url ${RPC_URL}
+      --fork-block-number ${BLOCK_NUMBER}
     ports:
-      - "${MAINNET_RPC_PORT:-8546}:8545"
+      - "${RPC_PORT}:8545"
 
-  mainnet_otterscan:
-    <<: *common-otterscan
+  otterscan:
+    image: otterscan/otterscan:v2.6.1
     depends_on:
-      - mainnet_anvil
+      - anvil
     environment:
       #      - DISABLE_CONFIG_OVERWRITE=1
-      - ERIGON_URL=http://localhost:${MAINNET_RPC_PORT:-8546}
+      - ERIGON_URL=http://localhost:${RPC_PORT}
     ports:
-      - "${MAINNET_OTT_PORT:-28546}:80"
-
-  sepolia_anvil:
-    <<: *common-anvil
-    command: >
-      --fork-url ${SEPOLIA_RPC_URL}
-      --fork-block-number ${SEPOLIA_BLOCK_NUMBER:-7503368}
-    ports:
-      - "${SEPOLIA_RPC_PORT:-8547}:8545"
-
-  sepolia_otterscan:
-    <<: *common-otterscan
-    depends_on:
-      - sepolia_anvil
-    environment:
-      #      - DISABLE_CONFIG_OVERWRITE=1
-      - ERIGON_URL=http://localhost:${SEPOLIA_RPC_PORT:-8547}
-    ports:
-      - "${SEPOLIA_OTT_PORT:-28547}:80"
-
-  cartio_anvil:
-    <<: *common-anvil
-    command: >
-      --fork-url ${CARTIO_RPC_URL}
-      --fork-block-number ${CARTIO_BLOCK_NUMBER:-4446497}
-    ports:
-      - "${CARTIO_RPC_PORT:-8548}:8545"
-
-  cartio_otterscan:
-    <<: *common-otterscan
-    depends_on:
-      - cartio_anvil
-    environment:
-      #      - DISABLE_CONFIG_OVERWRITE=1
-      - ERIGON_URL=http://localhost:${CARTIO_RPC_PORT:-8548}
-    ports:
-      - "${CARTIO_OTT_PORT:-28548}:80"
+      - "${OTTERSCAN_PORT}:80"
 #  sourcify:
 ##    image: ghcr.io/ethereum/sourcify/server:1.7.0
 #    build:
