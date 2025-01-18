@@ -104,6 +104,7 @@ export const recreateDockerOtterscan = async (remote: boolean) => {
     const otterscanConfigString = JSON.stringify(otterscanConfig);
     env["NX_VERBOSE_LOGGING"] = "true";
     env["COMPOSE_PROJECT_NAME"] = `dahlia-${network}`;
+    // see https://docs.otterscan.io/install/dockerhub
     env["OTTERSCAN_CONFIG"] = otterscanConfigString;
     console.log("env=", env);
     await $$({ env })`pnpm nx run dahlia:otterscan`;
