@@ -14,6 +14,10 @@ contract VariableIrm is IIrm {
     using FixedPointMathLib for uint256;
     using SafeCastLib for uint256;
 
+    /// @notice Emitted when the contract is deployed
+    /// @param config Initial config
+    event VariableIrmConfig(Config config);
+
     struct Config {
         /// @notice Min utilization where no rate adjustment happens
         /// @dev Should be less than `targetUtilization`, e.g., 0.75 * Constants.UTILIZATION_100_PERCENT
@@ -67,6 +71,7 @@ contract VariableIrm is IIrm {
         targetUtilization = _config.targetUtilization.toUint24();
         rateHalfLife = _config.rateHalfLife.toUint24();
         name = _config.name;
+        emit VariableIrmConfig(_config);
     }
 
     /// @inheritdoc IIrm

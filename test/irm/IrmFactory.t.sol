@@ -3,6 +3,8 @@ pragma solidity ^0.8.27;
 
 import { Test, Vm } from "@forge-std/Test.sol";
 import { console } from "@forge-std/console.sol";
+import { CREATE3 } from "@solady/utils/CREATE3.sol";
+import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
 import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
 import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
@@ -40,7 +42,17 @@ contract IrmFactoryTest is Test {
     }
 
     function test_irmFactory_variableIrm_success() public {
-        VariableIrm irm = VariableIrm(address(irmFactory.createVariableIrm(defaultConfig)));
+        vm.pauseGasMetering();
+        address expectedIrm = CREATE3.predictDeterministicAddress(keccak256(abi.encode(defaultConfig)), address(irmFactory));
+
+        vm.expectEmit(true, true, true, true, address(expectedIrm));
+        emit VariableIrm.VariableIrmConfig(defaultConfig);
+
+        vm.expectEmit(true, true, true, true, address(irmFactory));
+        emit IrmFactory.VariableIrmCreated(address(this), address(expectedIrm));
+        vm.resumeGasMetering();
+        VariableIrm irm = VariableIrm(irmFactory.createVariableIrm(defaultConfig));
+        vm.pauseGasMetering();
         assertEq(irm.minFullUtilizationRate(), defaultConfig.minFullUtilizationRate);
         assertEq(irm.zeroUtilizationRate(), defaultConfig.zeroUtilizationRate);
         assertEq(irm.maxFullUtilizationRate(), defaultConfig.maxFullUtilizationRate);
@@ -50,23 +62,34 @@ contract IrmFactoryTest is Test {
         assertEq(irm.minTargetUtilization(), defaultConfig.minTargetUtilization);
         assertEq(irm.maxTargetUtilization(), defaultConfig.maxTargetUtilization);
 
-        VariableIrm irm2 = VariableIrm(address(irmFactory.createVariableIrm(defaultConfig)));
+        vm.recordLogs();
+        vm.resumeGasMetering();
+        VariableIrm irm2 = VariableIrm(irmFactory.createVariableIrm(defaultConfig));
+        vm.pauseGasMetering();
         assertEq(address(irm), address(irm2));
         console.log(irm2.name());
         assertEq(NAME, irm2.name());
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        assertEq(logs.length, 0, "Unexpected events were emitted during the creation of irm2");
     }
 
     function test_irmFactory_variableIrm_reverts() public {
+        vm.pauseGasMetering();
         // check minTargetUtilization overflow
         defaultConfig.maxTargetUtilization = IrmConstants.UTILIZATION_100_PERCENT + 1;
         vm.expectRevert(IrmFactory.MaxUtilizationTooHigh.selector);
+        vm.resumeGasMetering();
         irmFactory.createVariableIrm(defaultConfig);
+        vm.pauseGasMetering();
 
         // check minTargetUtilization > maxTargetUtilization
         defaultConfig.minTargetUtilization = 76 * IrmConstants.UTILIZATION_100_PERCENT / 100;
         defaultConfig.maxTargetUtilization = 75 * IrmConstants.UTILIZATION_100_PERCENT / 100;
         vm.expectRevert(IrmFactory.MinUtilizationOutOfRange.selector);
+        vm.resumeGasMetering();
         irmFactory.createVariableIrm(defaultConfig);
+        vm.pauseGasMetering();
 
         // check maxFullUtilizationRate > maxFullUtilizationRate
         defaultConfig.minTargetUtilization = 70 * IrmConstants.UTILIZATION_100_PERCENT / 100;
@@ -74,6 +97,8 @@ contract IrmFactoryTest is Test {
         defaultConfig.minFullUtilizationRate = MAX_FULL_UTIL_RATE;
         defaultConfig.maxFullUtilizationRate = MIN_FULL_UTIL_RATE;
         vm.expectRevert(IrmFactory.FullUtilizationRateRangeInvalid.selector);
+        vm.resumeGasMetering();
         irmFactory.createVariableIrm(defaultConfig);
+        vm.pauseGasMetering();
     }
 }
