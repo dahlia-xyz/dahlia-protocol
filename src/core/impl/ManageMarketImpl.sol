@@ -13,9 +13,7 @@ library ManageMarketImpl {
     using SafeCastLib for uint256;
 
     function setProtocolFeeRate(IDahlia.MarketId id, IDahlia.Market storage market, uint256 newFee) internal {
-        require(newFee != market.protocolFeeRate, Errors.AlreadySet());
         require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
-
         market.protocolFeeRate = uint24(newFee);
         emit IDahlia.SetProtocolFeeRate(id, newFee);
     }
@@ -32,7 +30,8 @@ library ManageMarketImpl {
         mapping(IDahlia.MarketId => IDahlia.MarketData) storage markets,
         IDahlia.MarketId id,
         IDahlia.MarketConfig memory marketConfig,
-        IDahliaWrappedVault vault
+        IDahliaWrappedVault vault,
+        uint256 protocolFeeRate
     ) internal {
         IDahlia.Market storage market = markets[id].market;
         require(market.updatedAt == 0, Errors.MarketAlreadyDeployed());
@@ -49,5 +48,6 @@ library ManageMarketImpl {
         market.liquidationBonusRate = marketConfig.liquidationBonusRate.toUint24();
         market.vault = vault;
         emit IDahlia.DeployMarket(id, vault, marketConfig);
+        setProtocolFeeRate(id, market, protocolFeeRate);
     }
 }

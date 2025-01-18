@@ -40,7 +40,9 @@ contract DahliaRegistryTest is Test {
         vm.assume(key > 1);
         vm.assume(value != 0);
         // this is special key added in constructor
-        vm.assume(key != Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE && key != Constants.VALUE_ID_REPAY_PERIOD);
+        vm.assume(key != Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
+        vm.assume(key != Constants.VALUE_ID_REPAY_PERIOD);
+        vm.assume(key != Constants.VALUE_ID_DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
         assertEq(registry.getValue(key), 0);
 
         vm.prank(owner);

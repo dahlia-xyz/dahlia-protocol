@@ -267,7 +267,7 @@ contract TestContext {
 
     function deployDahliaMarket(Dahlia.MarketConfig memory marketConfig) public returns (IDahlia.MarketId id) {
         Dahlia dahlia = createDahlia();
-        vm.startPrank(wallets["OWNER"]);
+        vm.startPrank(OWNER);
         if (!dahlia.dahliaRegistry().isIrmAllowed(marketConfig.irm)) {
             dahlia.dahliaRegistry().allowIrm(marketConfig.irm);
         }
@@ -275,6 +275,8 @@ contract TestContext {
 
         vm.prank(createWallet("MARKET_DEPLOYER"));
         id = dahlia.deployMarket(marketConfig);
+        vm.prank(OWNER);
+        dahlia.setProtocolFeeRate(id, 0); // reset protocol fee rate for testing
     }
 
     function createRoycoWrappedVaultFactory(Dahlia dahlia, address roycoOwner, address protocolFeeRecipient, uint256 protocolFee, uint256 minimumFrontendFee)

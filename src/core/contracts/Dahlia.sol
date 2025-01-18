@@ -85,6 +85,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketIsActive(market.status);
+        require(newFeeRate != market.protocolFeeRate, Errors.AlreadySet());
+
         _accrueMarketInterest(id, marketData.userPositions, market);
 
         ManageMarketImpl.setProtocolFeeRate(id, market, newFeeRate);
@@ -149,11 +151,12 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         id = MarketId.wrap(marketSequence);
 
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE);
+        uint256 dahliaFee = dahliaRegistry.getValue(Constants.VALUE_ID_DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
         address owner = marketConfig.owner == address(0) ? msg.sender : marketConfig.owner;
         IDahliaWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
             id, marketConfig.loanToken, owner, marketConfig.name, fee
         );
-        ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault);
+        ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault, dahliaFee);
         marketSequence++;
     }
 
