@@ -14,6 +14,9 @@ library Constants {
     /// @dev The maximum fee rate for a market, set at 30% of FEE_PRECISION.
     uint256 internal constant MAX_FEE_RATE = 0.3e5;
 
+    /// @dev The initial Dahlia protol fee, set at 5% of FEE_PRECISION.
+    uint256 internal constant DAHLIA_MARKET_INITIAL_PROTOCOL_FEE = 0.05e5; // 5%
+
     /// @dev The maximum fee rate for flash loans, capped at 3% of FEE_PRECISION.
     uint256 internal constant MAX_FLASH_LOAN_FEE_RATE = 0.03e5;
 
@@ -51,4 +54,7 @@ library Constants {
 
     /// @notice Repay period duration.
     uint256 internal constant VALUE_ID_REPAY_PERIOD = 11;
+
+    /// @notice Initial Dahlia initial protocol fee rate index
+    uint256 internal constant VALUE_ID_DAHLIA_MARKET_INITIAL_PROTOCOL_FEE = 12;
 }
