@@ -15,13 +15,33 @@ export enum Network {
   SEPOLIA = "sepolia",
   CARTIO = "cartio",
 }
-export const DEPLOY_NETWORKS: Network[] = [Network.MAINNET, Network.CARTIO];
+
+export const allowedNetworks = Object.values(Network);
 
 export interface Params {
   script: string;
   remote: boolean;
+  network: string[];
 }
 
+export function addCommonOptions(program: Command) {
+  program.option("-r, --remote", "Deploy on remote", false).option(
+    "-n, --network <values>",
+    `Specify networks (comma-separated). Allowed values: ${allowedNetworks.join(", ")}`,
+    (value) => {
+      // Split the input into an array
+      const networks = value.split(",");
+      // Validate each network
+      for (const network of networks) {
+        if (!allowedNetworks.includes(network as Network)) {
+          throw new Error(`Invalid network: ${network}. Allowed values are: ${allowedNetworks.join(", ")}`);
+        }
+      }
+      return networks;
+    },
+    [Network.MAINNET, Network.CARTIO],
+  );
+}
 const DEFAULT_ANVIL_PRIVATE_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
 
 export async function interceptAllOutput(): Promise<void> {
@@ -44,7 +64,7 @@ export async function interceptAllOutput(): Promise<void> {
     if (args.remote) {
       throw Error("Missing required owner WALLET_ADDRESS environment variable to own all deployed contracts");
     } else {
-      process.env["WALLET_ADDRESS"] = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+      process.env["WALLET_ADDRESS"] = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC";
     }
   }
 
@@ -82,9 +102,15 @@ export async function interceptAllOutput(): Promise<void> {
 
 const $$ = execa({ extendEnv: true, verbose: "full", stdout: ["pipe", "inherit"], stderr: ["pipe", "inherit"] });
 
-export const recreateDockerOtterscan = async (remote: boolean) => {
-  if (remote) return;
-  for (const network of DEPLOY_NETWORKS) {
+export const cleanOtterscanVolume = async () => {
+  await $$`docker volume rm dahlia-anvil-cache`.catch(() => {
+    console.log("Volume dahlia-anvil-cache not found");
+  });
+};
+
+export const dockerOtterscan = async (params: Params) => {
+  if (params.remote) return;
+  for (const network of params.network) {
     const cfg: Config = load(network, {});
     const env = _.pickBy(cfg, (value) => typeof value === "string");
     const otterscanConfig = {
@@ -107,7 +133,14 @@ export const recreateDockerOtterscan = async (remote: boolean) => {
     // see https://docs.otterscan.io/install/dockerhub
     env["OTTERSCAN_CONFIG"] = otterscanConfigString;
     console.log("env=", env);
-    await $$({ env })`pnpm nx run dahlia:otterscan`;
+
+    if (params.script === "up") {
+      await $$({ env, cwd: "./otterscan/" })`docker compose up --build --remove-orphans -d`;
+    } else if (params.script === "down") {
+      await $$({ env, cwd: "./otterscan/" })`docker compose down`;
+    } else {
+      throw new Error(`Unknown script: ${params.script}`);
+    }
     console.log(`Otterscan running under http://localhost:${env.OTTERSCAN_PORT}`);
   }
 
@@ -142,7 +175,7 @@ async function runScript(
   env: Readonly<Partial<Record<string, string>>>,
   script: string,
   cfg: Config,
-  network: Network,
+  network: string,
   deployedContracts: Config,
 ) {
   // console.log("env", env);
@@ -165,9 +198,15 @@ async function runScript(
 }
 
 export const deployContractsOnNetworks = async (params: Params): Promise<void> => {
+  // Validate that --network is required if --remote is true
+  if (params.remote && params.network.length > 0) {
+    console.error("Error: Please specify --network when using --remote.");
+    process.exit(1);
+  }
+
   const deployedName = configDeployedName(params.remote);
   const deployedContracts = loadConfigFile(deployedName);
-  for (const network of DEPLOY_NETWORKS) {
+  for (const network of params.network) {
     const cfg: Config = load(network, deployedContracts[network]);
     if (params.remote) {
       if (!cfg.RPC_URL || !cfg.SCANNER_BASE_URL) {

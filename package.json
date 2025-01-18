@@ -8,7 +8,6 @@
     "recreate-docker-otterscan": "pnpm nx run scripts:recreate-docker-otterscan",
     "size": "forge build --sizes src/core/contracts/ src/irm/contracts src/oracles/contracts",
     "blockscout": "nx run docker-blockscout:setup",
-    "otterscan": "nx run docker-otterscan:setup",
     "test": "forge test",
     "lint": "pre-commit run --all-files",
     "coverage": "forge coverage --no-match-coverage='test/|script/' --ir-minimum",

@@ -1,6 +1,22 @@
+import { Command } from "commander";
+
 import { load } from "./config.ts";
-import { interceptAllOutput, recreateDockerOtterscan } from "./utils.ts";
+import {
+  addCommonOptions,
+  interceptAllOutput,
+  dockerOtterscan,
+  allowedNetworks,
+  cleanOtterscanVolume,
+} from "./utils.ts";
 
 await interceptAllOutput();
 
-await recreateDockerOtterscan(false);
+const program = new Command();
+addCommonOptions(program);
+program.parse(process.argv);
+
+const options = program.opts<{ remote: boolean; network: string[] }>();
+
+await dockerOtterscan({ script: "down", network: allowedNetworks, remote: false });
+await cleanOtterscanVolume();
+await dockerOtterscan({ script: "up", ...options });

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { BaseScript } from "./BaseScript.sol";
+import { console } from "@forge-std/console.sol";
 import { DahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 
 contract DahliaRegistryTransferScript is BaseScript {
@@ -10,7 +11,8 @@ contract DahliaRegistryTransferScript is BaseScript {
         DahliaRegistry registry = DahliaRegistry(_envAddress(DEPLOYED_REGISTRY));
 
         address owner = registry.owner();
-        if (owner == deployer) {
+        console.log("Registry owner:", owner);
+        if (owner == deployer && deployer != dahliaOwner) {
             vm.startBroadcast(deployer);
             // Set properly dahlia owner
             registry.transferOwnership(dahliaOwner);

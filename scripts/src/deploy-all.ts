@@ -1,28 +1,27 @@
 import { Command } from "commander";
-import _ from "lodash";
 
-import { deployContractsOnNetworks, interceptAllOutput, recreateDockerOtterscan } from "./utils.ts";
+import { addCommonOptions, deployContractsOnNetworks, dockerOtterscan, interceptAllOutput, Network } from "./utils.ts";
 
 await interceptAllOutput();
 
 const program = new Command();
+addCommonOptions(program);
+program.parse(process.argv);
 
-program.option("-r, --remote", "Deploy on remote", false).parse(process.argv);
+const options = program.opts<{ remote: boolean; network: Network[] }>();
+const { remote, network } = options;
 
-const options = program.opts<{ remote: boolean }>();
-const remote = options.remote;
-
-await recreateDockerOtterscan(remote);
-if (!remote) await deployContractsOnNetworks({ script: "PointsFactory", remote });
-await deployContractsOnNetworks({ script: "ChainlinkWstETHToETH", remote });
-await deployContractsOnNetworks({ script: "WrappedVaultImplementation", remote });
-await deployContractsOnNetworks({ script: "DahliaRegistry", remote });
-await deployContractsOnNetworks({ script: "IrmFactory", remote });
-await deployContractsOnNetworks({ script: "VariableIrm", remote });
-await deployContractsOnNetworks({ script: "Dahlia", remote });
-await deployContractsOnNetworks({ script: "WrappedVaultFactory", remote });
-await deployContractsOnNetworks({ script: "Timelock", remote });
-await deployContractsOnNetworks({ script: "DahliaPythOracleFactory", remote });
-await deployContractsOnNetworks({ script: "DahliaPythOracle", remote });
-await deployContractsOnNetworks({ script: "WrappedVault", remote });
-await deployContractsOnNetworks({ script: "DahliaRegistryTransfer", remote });
+if (!remote) await dockerOtterscan({ script: "up", ...options });
+if (!remote) await deployContractsOnNetworks({ script: "PointsFactory", ...options });
+await deployContractsOnNetworks({ script: "ChainlinkWstETHToETH", ...options });
+await deployContractsOnNetworks({ script: "WrappedVaultImplementation", ...options });
+await deployContractsOnNetworks({ script: "DahliaRegistry", ...options });
+await deployContractsOnNetworks({ script: "IrmFactory", ...options });
+await deployContractsOnNetworks({ script: "VariableIrm", ...options });
+await deployContractsOnNetworks({ script: "Dahlia", ...options });
+await deployContractsOnNetworks({ script: "WrappedVaultFactory", ...options });
+await deployContractsOnNetworks({ script: "Timelock", ...options });
+await deployContractsOnNetworks({ script: "DahliaPythOracleFactory", ...options });
+await deployContractsOnNetworks({ script: "DahliaPythOracle", ...options });
+await deployContractsOnNetworks({ script: "WrappedVault", ...options });
+await deployContractsOnNetworks({ script: "DahliaRegistryTransfer", ...options });

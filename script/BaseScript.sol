@@ -50,8 +50,8 @@ abstract contract BaseScript is Script {
                 addr := create2(0, add(initCode, 0x20), mload(initCode), salt)
                 if iszero(addr) { revert(0, 0) }
             }
+            _printContract(varName, addr);
         }
-        _printContract(varName, addr);
     }
 
     function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {

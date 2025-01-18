@@ -1,17 +1,27 @@
+volumes:
+  anvil:
+    name: dahlia-anvil-cache
+
 # Please use `pnpm nx run scripts:recreate-docker-otterscan`
 # This should read config/default.yaml and set the environment variables
 services:
   anvil:
     image: ghcr.io/foundry-rs/foundry:v0.3.0
-    platform: linux/amd64
+    #    platform: linux/amd64
     environment:
       - ANVIL_IP_ADDR=0.0.0.0
     entrypoint: anvil
     command: >
       --fork-url ${RPC_URL}
       --fork-block-number ${BLOCK_NUMBER}
+      --cache-path /home/foundry/.cache
+      --state-interval 1
+      --state .cache/${COMPOSE_PROJECT_NAME}.json
     ports:
       - "${RPC_PORT}:8545"
+    volumes:
+      - anvil:/home/foundry/.cache
+    working_dir: /home/foundry
 
   otterscan:
     image: otterscan/otterscan:v2.6.1
