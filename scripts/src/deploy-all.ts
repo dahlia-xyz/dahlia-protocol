@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import _ from "lodash";
 
-import { deployContractsOnNetworks, interceptAllOutput } from "./utils.ts";
+import { deployContractsOnNetworks, interceptAllOutput, recreateDockerOtterscan } from "./utils.ts";
 
 await interceptAllOutput();
 
@@ -12,7 +12,7 @@ program.option("-r, --remote", "Deploy on remote", false).parse(process.argv);
 const options = program.opts<{ remote: boolean }>();
 const remote = options.remote;
 
-if (!remote) await import("./recreate-docker-otterscan.ts");
+await recreateDockerOtterscan(remote);
 if (!remote) await deployContractsOnNetworks({ script: "PointsFactory", remote });
 await deployContractsOnNetworks({ script: "ChainlinkWstETHToETH", remote });
 await deployContractsOnNetworks({ script: "WrappedVaultImplementation", remote });

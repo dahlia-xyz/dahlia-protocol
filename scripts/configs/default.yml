@@ -23,7 +23,7 @@ VariableIrm:
 
 mainnet:
   RPC_URL: ${MAINNET_RPC_URL}
-  BLOCK_NUMBER: "21636077"
+  BLOCK_NUMBER: "21636078"
   SCANNER_BASE_URL: https://etherscan.io
   RPC_PORT: "8546"
   OTTERSCAN_PORT: "28546"
@@ -68,7 +68,7 @@ bartio:
 
 cartio:
   RPC_URL: https://teddilion-eth-cartio.berachain.com
-  BLOCK_NUMBER: "4446497"
+  BLOCK_NUMBER: "4446498"
   SCANNER_BASE_URL: https://80000.testnet.routescan.io
   RPC_PORT: "8548"
   OTTERSCAN_PORT: "28548"

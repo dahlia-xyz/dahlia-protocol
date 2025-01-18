@@ -22,6 +22,8 @@ export interface Params {
   remote: boolean;
 }
 
+const DEFAULT_ANVIL_PRIVATE_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+
 export async function interceptAllOutput(): Promise<void> {
   const program = new Command();
   program
@@ -34,7 +36,7 @@ export async function interceptAllOutput(): Promise<void> {
     if (args.remote) {
       throw Error("Missing required deployer PRIVATE_KEY environment variable");
     } else {
-      process.env["PRIVATE_KEY"] = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
+      process.env["PRIVATE_KEY"] = DEFAULT_ANVIL_PRIVATE_KEY;
     }
   }
 
@@ -80,15 +82,41 @@ export async function interceptAllOutput(): Promise<void> {
 
 const $$ = execa({ extendEnv: true, verbose: "full", stdout: ["pipe", "inherit"], stderr: ["pipe", "inherit"] });
 
-export const recreateDockerOtterscan = async () => {
+export const recreateDockerOtterscan = async (remote: boolean) => {
+  if (remote) return;
   for (const network of DEPLOY_NETWORKS) {
     const cfg: Config = load(network, {});
-    const env = _.merge(
-      _.pickBy(cfg, (value) => typeof value === "string"),
-      { COMPOSE_PROJECT_NAME: `dahlia-${network}`, NX_VERBOSE_LOGGING: "true" },
-    );
+    const env = _.pickBy(cfg, (value) => typeof value === "string");
+    const otterscanConfig = {
+      erigonURL: `http://localhost:${env.RPC_PORT}`,
+      beaconAPI: "",
+      assetsURLPrefix: "",
+      experimental: "",
+      branding: {
+        siteName: `${network} ${env.SCANNER_BASE_URL}`,
+        networkTitle: network,
+      },
+      sourcifySources: {
+        ipfs: "https://ipfs.io/ipns/repo.sourcify.dev",
+        central_server: "http://sourcify:5555/verify",
+      },
+    };
+    const otterscanConfigString = JSON.stringify(otterscanConfig);
+    env["NX_VERBOSE_LOGGING"] = "true";
+    env["COMPOSE_PROJECT_NAME"] = `dahlia-${network}`;
+    env["OTTERSCAN_CONFIG"] = otterscanConfigString;
+    console.log("env=", env);
     await $$({ env })`pnpm nx run dahlia:otterscan`;
+    console.log(`Otterscan running under http://localhost:${env.OTTERSCAN_PORT}`);
   }
+
+  // for (const network of DEPLOY_NETWORKS) {
+  //   const cfg = load(network);
+  //   const rpcUrl = `http://localhost:${cfg.RPC_PORT}`;
+  //   if (cfg.DAHLIA_OWNER !== DEFAULT_ANVIL_PRIVATE_KEY) {
+  //     await sendMoneyToAddressOnAnvil(rpcUrl, cfg.DAHLIA_OWNER, 10000000000000000000);
+  //   }
+  // }
 };
 
 const ANVIL_ACCOUNT_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";

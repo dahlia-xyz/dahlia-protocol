@@ -2,12 +2,11 @@
 # This should read config/default.yaml and set the environment variables
 services:
   anvil:
-    build:
-      context: anvil
-      dockerfile: Dockerfile
+    image: ghcr.io/foundry-rs/foundry:v0.3.0
     platform: linux/amd64
     environment:
       - ANVIL_IP_ADDR=0.0.0.0
+    entrypoint: anvil
     command: >
       --fork-url ${RPC_URL}
       --fork-block-number ${BLOCK_NUMBER}
@@ -19,8 +18,7 @@ services:
     depends_on:
       - anvil
     environment:
-      #      - DISABLE_CONFIG_OVERWRITE=1
-      - ERIGON_URL=http://localhost:${RPC_PORT}
+      - OTTERSCAN_CONFIG=${OTTERSCAN_CONFIG}
     ports:
       - "${OTTERSCAN_PORT}:80"
 #  sourcify:
