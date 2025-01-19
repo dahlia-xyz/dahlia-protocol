@@ -1,12 +1,18 @@
 volumes:
-  anvil:
-    name: dahlia-anvil-cache
+  data:
+    name: dahlia-data
+networks:
+  dahlia:
+    name: dahlia
 
 # Please use `pnpm nx run scripts:recreate-docker-otterscan`
 # This should read config/default.yaml and set the environment variables
 services:
   anvil:
     image: ghcr.io/foundry-rs/foundry:v0.3.0
+    hostname: ${envId}-anvil
+    networks:
+      - dahlia
     #    platform: linux/amd64
     environment:
       - ANVIL_IP_ADDR=0.0.0.0
@@ -14,23 +20,82 @@ services:
     command: >
       --fork-url ${RPC_URL}
       --fork-block-number ${BLOCK_NUMBER}
-      --cache-path /home/foundry/.cache
+      --cache-path /home/foundry/anvil
       --state-interval 1
-      --state .cache/${COMPOSE_PROJECT_NAME}.json
+      --state anvil/${COMPOSE_PROJECT_NAME}.json
     ports:
       - "${RPC_PORT}:8545"
     volumes:
-      - anvil:/home/foundry/.cache
+      - data:/home/foundry/anvil
     working_dir: /home/foundry
 
   otterscan:
     image: otterscan/otterscan:v2.6.1
+    hostname: ${envId}-otterscan
+    networks:
+      - dahlia
     depends_on:
       - anvil
     environment:
       - OTTERSCAN_CONFIG=${OTTERSCAN_CONFIG}
+  #    ports:
+  #      - "${OTTERSCAN_PORT}:80"
+
+  nginx:
+    build: ./nginx
+    hostname: ${envId}-proxy
+    environment:
+      ANVIL_HOST: ${envId}-anvil
+      OTTERSCAN_HOST: ${envId}-otterscan
     ports:
-      - "${OTTERSCAN_PORT}:80"
+      - ${OTTERSCAN_PORT}:80
+    depends_on:
+      - anvil
+      - otterscan
+      - graph-node
+    networks:
+      dahlia:
+
+  graph-node:
+    image: fluencelabs/graph-node:v0.35.1
+    hostname: ${envId}-ingest
+    restart: always
+    depends_on:
+      - anvil
+    networks:
+      - dahlia
+    #    ports:
+    #      - 8000:8000
+    #      - 8001:8001
+    #      - 8020:8020
+    #      - 8030:8030
+    #      - 8040:8040
+    #    depends_on:
+    #      ipfs:
+    #        condition: service_healthy
+    #      postgres:
+    #        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      unset GRAPH_NODE_CONFIG &&
+      wait_for ipfs:5001 &&
+      exec graph-node --node-id index_node_${envId} --postgres-url postgresql://subgraph:subgraph@postgres/subgraph --ipfs ipfs:5001 --ethereum-rpc ${envId}:http://${envId}-anvil:8545
+      "
+    environment:
+      #      node_id: index_node_${envId}
+      #      node_role: index-node
+      #      postgres_host: postgres
+      #      postgres_user: subgraph
+      #      postgres_pass: subgraph
+      #      postgres_db: subgraph
+      #      ipfs: ipfs:5001
+      #      ethereum: "${envId}:http://${envId}-anvil:8545"
+      GRAPH_LOG: info
+      ETHEREUM_BLOCK_BATCH_SIZE: 40
+      GRAPH_START_BLOCK: ${BLOCK_NUMBER}
+      ETHEREUM_REORG_THRESHOLD: 1
+      ETHEREUM_ANCESTOR_COUNT: 1
+      ETHEREUM_POLLING_INTERVAL: 5000
 #  sourcify:
 ##    image: ghcr.io/ethereum/sourcify/server:1.7.0
 #    build:

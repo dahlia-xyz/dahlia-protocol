@@ -1,0 +1,35 @@
+upstream anvil {
+    server ${ANVIL_HOST}:8545;
+}
+
+upstream otterscan {
+    server ${OTTERSCAN_HOST}:80;
+}
+
+server {
+
+    location /api {
+        proxy_pass http://anvil;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    #location ~ ^/(otterscan|otterscan/.*|config\.json|assets/.*)$ {
+    location / {
+        proxy_pass http://otterscan;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    #location / {
+    #    root /usr/share/nginx/html;
+    #    index  index.html index.htm;
+    #}
+
+    listen 80 ;
+    listen [::]:80 ;
+}

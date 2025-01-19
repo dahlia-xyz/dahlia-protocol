@@ -119,7 +119,7 @@ export const dockerOtterscan = async (params: Params) => {
     const cfg: Config = load(network, {});
     const env = _.pickBy(cfg, (value) => typeof value === "string");
     const otterscanConfig = {
-      erigonURL: `http://localhost:${env.RPC_PORT}`,
+      erigonURL: `http://localhost:${env.RPC_PORT}`, // otterscan requires external port, not docker one
       beaconAPI: "",
       assetsURLPrefix: "",
       experimental: "",
