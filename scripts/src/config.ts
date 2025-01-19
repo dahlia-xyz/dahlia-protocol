@@ -5,6 +5,8 @@ import _ from "lodash";
 import moment from "moment";
 import sh from "shelljs";
 
+import { Destination } from "./utils.ts";
+
 // A minimal interface for your top-level config structure.
 // Feel free to refine based on your actual config schema.
 export interface Config {
@@ -26,7 +28,7 @@ let environments: Record<string, any>;
 let config: Config;
 
 export const configName = "configs/default.yml";
-export const configDeployedName = (remote?: boolean) => (remote ? "configs/remote.yml" : "configs/docker.yml");
+export const configDeployedName = (destination: Destination) => `configs/${destination}.yml`;
 
 /**
  * Loads and returns a config object, resolving environment and variable substitutions.

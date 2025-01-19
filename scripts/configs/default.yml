@@ -22,7 +22,7 @@ VariableIrm:
     IRM_NAME: "Variable IRM_20"
 
 mainnet:
-  RPC_URL: ${MAINNET_RPC_URL}
+  RPC_URL: https://ethereum-rpc.publicnode.com
   BLOCK_NUMBER: "21636078"
   SCANNER_BASE_URL: https://etherscan.io
   RPC_PORT: "8546"
@@ -39,7 +39,7 @@ mainnet:
   WrappedVault: # define later
 
 sepolia:
-  RPC_URL: ${SEPOLIA_RPC_URL}
+  RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
   BLOCK_NUMBER: "7503368"
   SCANNER_BASE_URL: https://sepolia.etherscan.io
   RPC_PORT: "8547"

@@ -16,16 +16,22 @@ export enum Network {
   CARTIO = "cartio",
 }
 
+export enum Destination {
+  DOCKER = "docker",
+  DEV = "dev",
+  PROD = "prod",
+}
+
 export const allowedNetworks = Object.values(Network);
 
 export interface Params {
   script: string;
-  remote: boolean;
+  destination: Destination;
   network: string[];
 }
 
 export function addCommonOptions(program: Command) {
-  program.option("-r, --remote", "Deploy on remote", false).option(
+  program.option("-d, --destination <destination>", "Deploy on remote", [Destination.DOCKER]).option(
     "-n, --network <values>",
     `Specify networks (comma-separated). Allowed values: ${allowedNetworks.join(", ")}`,
     (value) => {
@@ -46,14 +52,13 @@ const DEFAULT_ANVIL_PRIVATE_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88
 
 export async function interceptAllOutput(): Promise<void> {
   const program = new Command();
-  program
-    .option("-s, --script <path>", "Path to the .s.sol file", "")
-    .option("-r, --remote", "Deploy on remote", false)
-    .parse(process.argv);
+  program.option("-s, --script <path>", "Path to the .s.sol file", "");
+  addCommonOptions(program);
+  program.parse(process.argv);
   const args = program.opts<Params>();
 
   if (_.isUndefined(process.env["PRIVATE_KEY"])) {
-    if (args.remote) {
+    if (args.destination == Destination.PROD) {
       throw Error("Missing required deployer PRIVATE_KEY environment variable");
     } else {
       process.env["PRIVATE_KEY"] = DEFAULT_ANVIL_PRIVATE_KEY;
@@ -61,7 +66,7 @@ export async function interceptAllOutput(): Promise<void> {
   }
 
   if (_.isUndefined(process.env["WALLET_ADDRESS"])) {
-    if (args.remote) {
+    if (args.destination == Destination.PROD) {
       throw Error("Missing required owner WALLET_ADDRESS environment variable to own all deployed contracts");
     } else {
       process.env["WALLET_ADDRESS"] = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC";
@@ -109,7 +114,7 @@ export const cleanOtterscanVolume = async () => {
 };
 
 export const dockerOtterscan = async (params: Params) => {
-  if (params.remote) return;
+  if (params.destination != Destination.DOCKER) return;
   for (const network of params.network) {
     const cfg: Config = load(network, {});
     const env = _.pickBy(cfg, (value) => typeof value === "string");
@@ -199,19 +204,22 @@ async function runScript(
 
 export const deployContractsOnNetworks = async (params: Params): Promise<void> => {
   // Validate that --network is required if --remote is true
-  if (params.remote && params.network.length > 0) {
-    console.error("Error: Please specify --network when using --remote.");
+  if (params.destination != Destination.DOCKER && params.network.length > 1) {
+    console.error("Error: Please specify --network when using --destination.");
     process.exit(1);
   }
 
-  const deployedName = configDeployedName(params.remote);
+  const deployedName = configDeployedName(params.destination);
   const deployedContracts = loadConfigFile(deployedName);
   for (const network of params.network) {
     const cfg: Config = load(network, deployedContracts[network]);
-    if (params.remote) {
+    if (params.destination == Destination.PROD) {
       if (!cfg.RPC_URL || !cfg.SCANNER_BASE_URL) {
         throw new Error("Missing RPC_URL or SCANNER_BASE_URL");
       }
+    } else if (params.destination == Destination.DEV) {
+      cfg.RPC_URL = `https://${network}-rpc.dahliadev.xyz`;
+      cfg.SCANNER_BASE_URL = `https://${network}-otterscan.dahliadev.xyz`;
     } else {
       if (!cfg.RPC_PORT || !cfg.OTTERSCAN_PORT) {
         throw new Error("Missing RPC_PORT or OTTERSCAN_PORT");

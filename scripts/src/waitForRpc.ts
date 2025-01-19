@@ -13,7 +13,7 @@ export const waitForRpc = async (rpcUrl: string): Promise<GetBlockNumberReturnTy
     if (currentBlockNumber !== undefined) {
       return currentBlockNumber;
     }
-    console.log("RPC is not ready yet, retrying...");
+    console.log(`RPC ${rpcUrl} is not ready yet, retrying...`);
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Sleep for 1 second
   }
 };

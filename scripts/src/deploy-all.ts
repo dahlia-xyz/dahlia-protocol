@@ -1,6 +1,13 @@
 import { Command } from "commander";
 
-import { addCommonOptions, deployContractsOnNetworks, dockerOtterscan, interceptAllOutput, Network } from "./utils.ts";
+import {
+  addCommonOptions,
+  deployContractsOnNetworks,
+  Destination,
+  dockerOtterscan,
+  interceptAllOutput,
+  Network,
+} from "./utils.ts";
 
 await interceptAllOutput();
 
@@ -8,11 +15,11 @@ const program = new Command();
 addCommonOptions(program);
 program.parse(process.argv);
 
-const options = program.opts<{ remote: boolean; network: Network[] }>();
-const { remote, network } = options;
+const options = program.opts<{ destination: Destination; network: Network[] }>();
+const { destination, network } = options;
 
-if (!remote) await dockerOtterscan({ script: "up", ...options });
-if (!remote) await deployContractsOnNetworks({ script: "PointsFactory", ...options });
+await dockerOtterscan({ script: "up", ...options });
+if (destination === Destination.DOCKER) await deployContractsOnNetworks({ script: "PointsFactory", ...options });
 await deployContractsOnNetworks({ script: "ChainlinkWstETHToETH", ...options });
 await deployContractsOnNetworks({ script: "WrappedVaultImplementation", ...options });
 await deployContractsOnNetworks({ script: "DahliaRegistry", ...options });
