@@ -47,7 +47,7 @@ contract WrappedVaultRateTest is Test {
         testFactory = ctx.createRoycoWrappedVaultFactory(dahlia, address(this), DEFAULT_FEE_RECIPIENT, DEFAULT_PROTOCOL_FEE, DEFAULT_FRONTEND_FEE);
 
         vm.startPrank(ctx.createWallet("OWNER"));
-        dahlia.dahliaRegistry().setValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE, DEFAULT_FRONTEND_FEE);
+        dahlia.dahliaRegistry().setValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_INITIAL_FRONTEND_FEE, DEFAULT_FRONTEND_FEE);
         vm.stopPrank();
 
         $ = ctx.bootstrapMarket("USDC", "WETH", vm.randomLltv(), address(this));
