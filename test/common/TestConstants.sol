@@ -22,7 +22,7 @@ library TestConstants {
 
     // ROYCO
     uint256 internal constant ROYCO_ERC4626I_FACTORY_PROTOCOL_FEE = 0.01e18;
-    uint256 internal constant ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE = 0.02e18;
+    uint256 internal constant ROYCO_ERC4626I_FACTORY_MIN_FRONTEND_FEE = 0;
     uint256 internal constant ROYCO_PROTOCOL_FEE = 0.01e18; // 1% protocol fee
     uint256 internal constant ROYCO_MINIMUM_PROTOCOL_FEE = 0.001e18; // 0.1% minimum frontend fee
 
