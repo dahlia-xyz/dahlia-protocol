@@ -14,8 +14,11 @@ library Constants {
     /// @dev The maximum fee rate for a market, set at 30% of FEE_PRECISION.
     uint256 internal constant MAX_FEE_RATE = 0.3e5;
 
-    /// @dev The initial Dahlia protol fee, set at 5% of FEE_PRECISION.
+    /// @dev The initial Dahlia protocol fee, set at 5% of FEE_PRECISION.
     uint256 internal constant DAHLIA_MARKET_INITIAL_PROTOCOL_FEE = 0.05e5; // 5%
+
+    /// @dev The initial Wrapped Vault frontend (referral) fee.
+    uint256 internal constant ROYCO_WRAPPED_VAULT_INITIAL_FRONTEND_FEE = 0; // 0%
 
     /// @dev The maximum fee rate for flash loans, capped at 3% of FEE_PRECISION.
     uint256 internal constant MAX_FLASH_LOAN_FEE_RATE = 0.03e5;
@@ -35,6 +38,9 @@ library Constants {
     /// @dev Maximum liquidation bonus rate, set to 15%.
     uint24 internal constant DEFAULT_MAX_LIQUIDATION_BONUS_RATE = uint24(15 * Constants.LLTV_100_PERCENT / 100);
 
+    /// @dev Duration of the repay period in stall market mode.
+    uint256 internal constant REPAY_PERIOD = 2 weeks;
+
     // Contract address IDs in DahliaRegistry
     /// @notice Address ID for the `Dahlia` contract in the registry.
     uint256 internal constant ADDRESS_ID_DAHLIA = 1;
@@ -50,11 +56,11 @@ library Constants {
 
     // Value IDs in DahliaRegistry
     /// @notice Initial frontend fee value for Royco's wrapped vaults.
-    uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_MIN_INITIAL_FRONTEND_FEE = 10;
+    uint256 internal constant VALUE_ID_ROYCO_WRAPPED_VAULT_INITIAL_FRONTEND_FEE = 10;
 
     /// @notice Repay period duration.
     uint256 internal constant VALUE_ID_REPAY_PERIOD = 11;
 
-    /// @notice Initial Dahlia initial protocol fee rate index
+    /// @notice Initial Dahlia initial protocol fee rate index.
     uint256 internal constant VALUE_ID_DAHLIA_MARKET_INITIAL_PROTOCOL_FEE = 12;
 }
