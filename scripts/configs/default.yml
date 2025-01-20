@@ -21,7 +21,7 @@ VariableIrm:
     TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
     IRM_NAME: "Variable IRM_20"
 
-mainnet:
+ethereum:
   RPC_URL: https://ethereum-rpc.publicnode.com
   BLOCK_NUMBER: "21636078"
   SCANNER_BASE_URL: https://etherscan.io
@@ -34,7 +34,7 @@ mainnet:
     WETH: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
     WSTETH: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0" # https://etherscan.io/token/0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
   ChainlinkWstETHToETH:
-    - WSTETH: ${mainnet.erc20.WSTETH}
+    - WSTETH: ${ethereum.erc20.WSTETH}
       STETH_ETH_FEED: "0x86392dC19c0b719886221c78AB11eb8Cf5c52812" # https://data.chain.link/feeds/ethereum/mainnet/steth-eth
   DahliaPythOracleFactory: # skip deployment
   DahliaPythOracle: # skip deployment

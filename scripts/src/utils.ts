@@ -11,7 +11,7 @@ import { Config, configDeployedName, load, loadConfigFile, saveConfigFile } from
 import { waitForRpc } from "./waitForRpc.ts";
 
 export enum Network {
-  MAINNET = "mainnet",
+  ETHEREUM = "ethereum",
   SEPOLIA = "sepolia",
   CARTIO = "cartio",
 }
@@ -45,7 +45,7 @@ export function addCommonOptions(program: Command) {
       }
       return networks;
     },
-    [Network.MAINNET, Network.CARTIO],
+    [Network.ETHEREUM, Network.CARTIO],
   );
 }
 const DEFAULT_ANVIL_PRIVATE_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
