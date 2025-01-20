@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { create } from "ipfs-http-client";
 
 import {
   addCommonOptions,
@@ -31,4 +32,8 @@ await deployContractsOnNetworks({ script: "Timelock", ...options });
 await deployContractsOnNetworks({ script: "DahliaPythOracleFactory", ...options });
 await deployContractsOnNetworks({ script: "DahliaPythOracle", ...options });
 await deployContractsOnNetworks({ script: "WrappedVault", ...options });
-await deployContractsOnNetworks({ script: "DahliaRegistryTransfer", ...options });
+const config = await deployContractsOnNetworks({ script: "DahliaRegistryTransfer", ...options });
+
+const ipfs = create({ host: "localhost", port: 5001, protocol: "http" });
+const { cid } = await ipfs.add(JSON.stringify(config));
+console.log("Config File CID:", cid.toString());

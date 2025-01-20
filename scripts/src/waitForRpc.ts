@@ -1,17 +1,17 @@
-import type { GetBlockNumberReturnType } from "viem";
+import type { GetChainIdReturnType } from "viem";
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 
-export const waitForRpc = async (rpcUrl: string): Promise<GetBlockNumberReturnType> => {
+export const waitForRpc = async (rpcUrl: string): Promise<GetChainIdReturnType> => {
   const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
 
   while (true) {
-    let currentBlockNumber = undefined;
+    let result = undefined;
     try {
-      currentBlockNumber = await client.getBlockNumber();
+      result = await client.getChainId();
     } catch (err) {}
-    if (currentBlockNumber !== undefined) {
-      return currentBlockNumber;
+    if (result !== undefined) {
+      return result;
     }
     console.log(`RPC ${rpcUrl} is not ready yet, retrying...`);
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Sleep for 1 second

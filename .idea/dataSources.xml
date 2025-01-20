@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="subgraph@postgres.dahlia-monorepo.orb.local" uuid="60a30397-ed68-40c6-910c-ef474eabed83">
+    <data-source source="LOCAL" name="postgres.dahlia.orb.local" uuid="60a30397-ed68-40c6-910c-ef474eabed83">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://postgres.dahlia-monorepo.orb.local:5432/subgraph</jdbc-url>
+      <jdbc-url>jdbc:postgresql://postgres.dahlia.orb.local:5432/subgraph</jdbc-url>
       <jdbc-additional-properties>
         <property name="com.intellij.clouds.kubernetes.db.host.port" />
         <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />

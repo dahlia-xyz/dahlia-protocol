@@ -199,7 +199,7 @@ async function runScript(
   }
 }
 
-export const deployContractsOnNetworks = async (params: Params): Promise<void> => {
+export const deployContractsOnNetworks = async (params: Params): Promise<Config> => {
   // Validate that --network is required if --remote is true
   if (params.destination != Destination.DOCKER && params.network.length > 1) {
     console.error("Error: Please specify --network when using --destination.");
@@ -224,7 +224,8 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
       cfg.RPC_URL = `http://localhost:${cfg.RPC_PORT}`;
       cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTTERSCAN_PORT}`;
     }
-    await waitForRpc(cfg.RPC_URL);
+    deployedContracts[network]["CHAIN_ID"] = await waitForRpc(cfg.RPC_URL);
+    //deployedContracts[network]["RPC_URL"] = cfg.RPC_URL;
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
     // If is an Array iterate each value
@@ -245,4 +246,5 @@ export const deployContractsOnNetworks = async (params: Params): Promise<void> =
     }
   }
   saveConfigFile(deployedName, deployedContracts);
+  return deployedContracts;
 };
