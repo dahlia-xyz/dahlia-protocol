@@ -57,6 +57,8 @@ services:
       dahlia:
 
   graph-node:
+    #    image: graphprotocol/graph-node:v0.35.0
+    # supports arm https://hub.docker.com/r/fluencelabs/graph-node/tags
     image: fluencelabs/graph-node:v0.35.1
     hostname: ${envId}-ingest
     restart: always
