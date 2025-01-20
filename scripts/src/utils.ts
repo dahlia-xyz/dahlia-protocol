@@ -225,6 +225,7 @@ export const deployContractsOnNetworks = async (params: Params): Promise<Config>
       cfg.SCANNER_BASE_URL = `http://localhost:${cfg.OTTERSCAN_PORT}`;
     }
     deployedContracts[network]["CHAIN_ID"] = await waitForRpc(cfg.RPC_URL);
+    deployedContracts[network]["GRAPH_NODE_RPC_PORT"] = cfg.GRAPH_NODE_RPC_PORT;
     //deployedContracts[network]["RPC_URL"] = cfg.RPC_URL;
     const env = _.pickBy(cfg, (value) => typeof value === "string");
 
