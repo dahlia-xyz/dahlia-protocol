@@ -22,7 +22,7 @@ contract MarketStatusIntegrationTest is Test {
 
     function setUp() public {
         ctx = new TestContext(vm);
-        $ = ctx.bootstrapMarket("USDC", "WBTC", BoundUtils.toPercent(80));
+        $ = ctx.bootstrapMarket("USDC", "WBTC", BoundUtils.toPercent(73));
     }
 
     function test_updateMarketBonusRates_by_attacker(address attacker) public {
