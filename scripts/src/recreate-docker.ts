@@ -1,13 +1,6 @@
 import { Command } from "commander";
 
-import {
-  addCommonOptions,
-  interceptAllOutput,
-  dockerOtterscan,
-  allowedNetworks,
-  cleanOtterscanVolume,
-  Destination,
-} from "./utils.ts";
+import { addCommonOptions, interceptAllOutput, dockerOtterscan, allowedNetworks, Destination } from "./utils.ts";
 
 await interceptAllOutput();
 
@@ -17,6 +10,5 @@ program.parse(process.argv);
 
 const options = program.opts<{ destination: Destination; network: string[] }>();
 
-await dockerOtterscan({ script: "down", network: allowedNetworks, destination: Destination.DOCKER });
-await cleanOtterscanVolume();
+await dockerOtterscan({ script: "down-clean", network: allowedNetworks, destination: Destination.DOCKER });
 await dockerOtterscan({ script: "up", ...options });

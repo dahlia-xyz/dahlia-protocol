@@ -1,6 +1,6 @@
 volumes:
   data:
-    name: dahlia-data
+    name: dahlia-anvil-${envId}
 networks:
   dahlia:
     name: dahlia
@@ -64,10 +64,10 @@ services:
       - anvil
     networks:
       - dahlia
-    #    ports:
-    #      - 8000:8000
-    #      - 8001:8001
-    #      - 8020:8020
+    ports:
+      #      - 8000:8000
+      #      - 8001:8001
+      - ${GRAPH_NODE_RPC_PORT}:8020
     #      - 8030:8030
     #      - 8040:8040
     #    depends_on:
@@ -79,7 +79,8 @@ services:
       /bin/sh -c "
       unset GRAPH_NODE_CONFIG &&
       wait_for ipfs:5001 &&
-      exec graph-node --node-id index_node_${envId} --postgres-url postgresql://subgraph:subgraph@postgres/subgraph --ipfs ipfs:5001 --ethereum-rpc ${envId}:http://${envId}-anvil:8545
+      wait_for ${envId}-anvil:8545 &&
+      exec graph-node
       "
     environment:
       #      node_id: index_node_${envId}
@@ -90,6 +91,10 @@ services:
       #      postgres_db: subgraph
       #      ipfs: ipfs:5001
       #      ethereum: "${envId}:http://${envId}-anvil:8545"
+      GRAPH_NODE_ID: index_node_${envId}
+      IPFS: ipfs:5001
+      ETHEREUM_RPC: ${envId}:http://${envId}-anvil:8545
+      POSTGRES_URL: postgresql://subgraph:subgraph@postgres/subgraph
       GRAPH_LOG: info
       ETHEREUM_BLOCK_BATCH_SIZE: 40
       GRAPH_START_BLOCK: ${BLOCK_NUMBER}

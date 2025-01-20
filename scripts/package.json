@@ -7,7 +7,7 @@
   "scripts": {
     "prepare": "pnpm tsx src/setup.ts submodules",
     "setup": "pnpm tsx src/setup.ts",
-    "recreate-docker-otterscan": "pnpm tsx src/recreate-docker-otterscan.ts",
+    "recreate-docker": "pnpm tsx src/recreate-docker.ts",
     "deploy-all": "pnpm tsx src/deploy-all.ts",
     "deploy-all-cartio-dev": "pnpm tsx src/deploy-all.ts --destination dev --network cartio",
     "deploy-points-factory": "pnpm tsx src/deploy.ts --script PointsFactory",

@@ -107,24 +107,34 @@ export async function interceptAllOutput(): Promise<void> {
 
 const $$ = execa({ extendEnv: true, verbose: "full", stdout: ["pipe", "inherit"], stderr: ["pipe", "inherit"] });
 
-export const cleanOtterscanVolume = async () => {
-  await $$`docker volume rm dahlia-anvil-cache`.catch(() => {
-    console.log("Volume dahlia-anvil-cache not found");
-  });
+const runDockerCommand = async (env: Readonly<Partial<Record<string, string>>>, cwd: string, script: string) => {
+  console.log("env=", env);
+  if (script === "up") {
+    await $$({ env, cwd })`docker compose up --build --remove-orphans -d`;
+  } else if (script === "down") {
+    await $$({ env, cwd })`docker compose down --remove-orphans`;
+  } else if (script === "down-clean") {
+    await $$({ env, cwd })`docker compose down --remove-orphans --volumes`;
+  } else {
+    throw new Error(`Unknown script: ${script}`);
+  }
 };
 
 export const dockerOtterscan = async (params: Params) => {
+  const env = { COMPOSE_PROJECT_NAME: "dahlia" };
   if (params.destination != Destination.DOCKER) return;
-  for (const network of params.network) {
+  await runDockerCommand(env, "./docker/dahlia/", params.script);
+  const networkPromises = params.network.map(async (network) => {
     const cfg: Config = load(network, {});
-    const env = _.pickBy(cfg, (value) => typeof value === "string");
+    const networkEnv = _.pickBy(cfg, (value) => typeof value === "string");
+
     const otterscanConfig = {
-      erigonURL: `http://localhost:${env.RPC_PORT}`, // otterscan requires external port, not docker one
+      erigonURL: `http://localhost:${networkEnv.RPC_PORT}`, // Otterscan requires external port, not Docker one
       beaconAPI: "",
       assetsURLPrefix: "",
       experimental: "",
       branding: {
-        siteName: `${network} ${env.SCANNER_BASE_URL}`,
+        siteName: `${network} ${networkEnv.SCANNER_BASE_URL}`,
         networkTitle: network,
       },
       sourcifySources: {
@@ -132,30 +142,17 @@ export const dockerOtterscan = async (params: Params) => {
         central_server: "http://sourcify:5555/verify",
       },
     };
-    const otterscanConfigString = JSON.stringify(otterscanConfig);
-    env["NX_VERBOSE_LOGGING"] = "true";
-    env["COMPOSE_PROJECT_NAME"] = `dahlia-${network}`;
-    // see https://docs.otterscan.io/install/dockerhub
-    env["OTTERSCAN_CONFIG"] = otterscanConfigString;
-    console.log("env=", env);
 
-    if (params.script === "up") {
-      await $$({ env, cwd: "./otterscan/" })`docker compose up --build --remove-orphans -d`;
-    } else if (params.script === "down") {
-      await $$({ env, cwd: "./otterscan/" })`docker compose down`;
-    } else {
-      throw new Error(`Unknown script: ${params.script}`);
-    }
-    console.log(`Otterscan running under http://localhost:${env.OTTERSCAN_PORT}`);
-  }
+    networkEnv["NX_VERBOSE_LOGGING"] = "true";
+    networkEnv["COMPOSE_PROJECT_NAME"] = `dahlia-${network}`;
+    networkEnv["OTTERSCAN_CONFIG"] = JSON.stringify(otterscanConfig);
 
-  // for (const network of DEPLOY_NETWORKS) {
-  //   const cfg = load(network);
-  //   const rpcUrl = `http://localhost:${cfg.RPC_PORT}`;
-  //   if (cfg.DAHLIA_OWNER !== DEFAULT_ANVIL_PRIVATE_KEY) {
-  //     await sendMoneyToAddressOnAnvil(rpcUrl, cfg.DAHLIA_OWNER, 10000000000000000000);
-  //   }
-  // }
+    await runDockerCommand(networkEnv, "./docker/dahlia-network/", params.script);
+    console.log(`Otterscan running under http://localhost:${networkEnv.OTTERSCAN_PORT}`);
+  });
+
+  // Wait for all networks to complete
+  await Promise.all(networkPromises);
 };
 
 const ANVIL_ACCOUNT_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
