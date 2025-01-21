@@ -13,7 +13,7 @@ services:
     hostname: ${envId}-anvil
     networks:
       - dahlia
-    #    platform: linux/amd64
+    platform: linux/amd64
     environment:
       - ANVIL_IP_ADDR=0.0.0.0
     entrypoint: anvil
