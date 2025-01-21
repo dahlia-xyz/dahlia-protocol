@@ -40,7 +40,7 @@ contract WrappedVaultScript is BaseScript {
             IDahlia.MarketId id = dahlia.deployMarket(config);
             IDahlia.Market memory market = dahlia.getMarket(id);
             console.log("MarketId:", IDahlia.MarketId.unwrap(id));
-            _printContract(contractName, address(market.vault));
+            _printContract(contractName, address(market.vault), false);
             vm.stopBroadcast();
         } else {
             console.log(contractName, "already deployed");

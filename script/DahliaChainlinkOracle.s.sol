@@ -55,7 +55,7 @@ contract DahliaPythOracleScript is BaseScript {
             checkPrice(quoteFeedSecondary, quoteMaxDelaySecondary);
             vm.startBroadcast(deployer);
             oracle = oracleFactory.createChainlinkOracle(params, delays);
-            _printContract(contractName, oracle);
+            _printContract(contractName, oracle, false);
             vm.stopBroadcast();
         } else {
             console.log(oracle, "already deployed");

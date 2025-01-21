@@ -10,6 +10,6 @@ contract WrappedVaultImplementationScript is BaseScript {
     function run() public {
         bytes memory initCode = type(WrappedVault).creationCode;
         string memory name = type(WrappedVault).name;
-        _deploy(name, DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION, _SALT, initCode);
+        _deploy(name, DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION, _SALT, initCode, false);
     }
 }

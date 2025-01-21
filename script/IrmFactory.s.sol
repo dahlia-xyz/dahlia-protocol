@@ -10,6 +10,6 @@ contract IrmFactoryScript is BaseScript {
     function run() public {
         bytes memory initCode = type(IrmFactory).creationCode;
         string memory name = type(IrmFactory).name;
-        _deploy(name, DEPLOYED_IRM_FACTORY, _SALT, initCode);
+        _deploy(name, DEPLOYED_IRM_FACTORY, _SALT, initCode, true);
     }
 }

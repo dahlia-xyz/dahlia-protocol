@@ -34,15 +34,17 @@ abstract contract BaseScript is Script {
         console.log("Deployer address:", deployer);
     }
 
-    function _printContract(string memory name, address addr) internal view {
+    function _printContract(string memory name, address addr, bool printBlock) internal view {
         string memory host = string(abi.encodePacked(scannerBaseUrl, "/"));
         string memory addressUrl = string(abi.encodePacked(host, "address/", (addr).toHexString()));
         string memory env = string(abi.encodePacked(name, "=", (addr).toHexString()));
         console.log(env, addressUrl);
-        console.log(string(abi.encodePacked(name, "_BLOCK=", (block.number).toString())));
+        if (printBlock) {
+            console.log(string(abi.encodePacked(name, "_BLOCK=", (block.number).toString())));
+        }
     }
 
-    function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {
+    function _create2(string memory name, string memory varName, bytes32 salt, bytes memory initCode, bool printBlock) private returns (address addr) {
         bytes32 codeHash = keccak256(initCode);
         addr = vm.computeCreate2Address(salt, codeHash);
         if (addr.code.length > 0) {
@@ -52,17 +54,17 @@ abstract contract BaseScript is Script {
                 addr := create2(0, add(initCode, 0x20), mload(initCode), salt)
                 if iszero(addr) { revert(0, 0) }
             }
-            _printContract(varName, addr);
+            _printContract(varName, addr, printBlock);
         }
     }
 
-    function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode) private returns (address addr) {
+    function _create3(string memory name, string memory varName, bytes32 salt, bytes memory initCode, bool printBlock) private returns (address addr) {
         addr = CREATE3.predictDeterministicAddress(salt);
         if (addr.code.length > 0) {
             console.log(name, "already deployed");
         } else {
             addr = CREATE3.deployDeterministic(initCode, salt);
-            _printContract(varName, addr);
+            _printContract(varName, addr, printBlock);
         }
     }
 
@@ -72,8 +74,12 @@ abstract contract BaseScript is Script {
         vm.stopBroadcast();
     }
 
-    function _deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode) internal broadcaster returns (address addr) {
-        return _create2(name, varName, salt, initCode);
+    function _deploy(string memory name, string memory varName, bytes32 salt, bytes memory initCode, bool printBlock)
+        internal
+        broadcaster
+        returns (address addr)
+    {
+        return _create2(name, varName, salt, initCode, printBlock);
     }
 
     function _envString(string memory name) internal view returns (string memory value) {

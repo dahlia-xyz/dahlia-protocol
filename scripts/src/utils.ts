@@ -191,9 +191,6 @@ async function runScript(
     const match = line.match(/^\s*([A-Za-z0-9_]+)=(0x[a-fA-F0-9]+|\d+)\b/);
     if (match) {
       const [, name, address] = match;
-      if (deployedContracts[network] === undefined) {
-        deployedContracts[network] = {};
-      }
       deployedContracts[network][name] = address;
     }
   }
@@ -209,6 +206,9 @@ export const deployContractsOnNetworks = async (params: Params): Promise<Config>
   const deployedName = configDeployedName(params.destination);
   const deployedContracts = loadConfigFile(deployedName);
   for (const network of params.network) {
+    if (deployedContracts[network] === undefined) {
+      deployedContracts[network] = {};
+    }
     const cfg: Config = load(network, deployedContracts[network]);
     if (params.destination == Destination.PROD) {
       if (!cfg.RPC_URL || !cfg.SCANNER_BASE_URL) {

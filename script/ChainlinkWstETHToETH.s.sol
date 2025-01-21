@@ -21,6 +21,6 @@ contract DeployDahlia is BaseScript {
         bytes memory encodedArgs = abi.encode(params);
         bytes memory initCode = abi.encodePacked(type(ChainlinkWstETHToETH).creationCode, encodedArgs);
         string memory name = type(ChainlinkWstETHToETH).name;
-        _deploy(name, DEPLOYED_CHAINLINK_WSTETH_ETH, _SALT, initCode);
+        _deploy(name, DEPLOYED_CHAINLINK_WSTETH_ETH, _SALT, initCode, true);
     }
 }

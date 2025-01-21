@@ -15,7 +15,7 @@ contract PointsFactoryScript is BaseScript {
         if (pointsFactoryFromEnv == address(0)) {
             bytes memory encodedArgs = abi.encode(dahliaOwner);
             bytes memory initCode = abi.encodePacked(type(PointsFactory).creationCode, encodedArgs);
-            _deploy(name, POINTS_FACTORY, _SALT, initCode);
+            _deploy(name, POINTS_FACTORY, _SALT, initCode, true);
         } else {
             console.log(name, "already deployed");
         }

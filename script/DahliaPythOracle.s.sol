@@ -27,7 +27,7 @@ contract DahliaPythOracleScript is BaseScript {
         if (pythOracle.code.length == 0) {
             vm.startBroadcast(deployer);
             pythOracle = oracleFactory.createPythOracle(params, delays);
-            _printContract(contractName, pythOracle);
+            _printContract(contractName, pythOracle, false);
             vm.stopBroadcast();
         } else {
             console.log(pythOracle, "already deployed");

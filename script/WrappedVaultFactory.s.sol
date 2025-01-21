@@ -19,6 +19,6 @@ contract WrappedVaultFactoryScript is BaseScript {
         bytes memory encodedArgs = abi.encode(wrappedVaultImplementation, feesRecipient, protocolFee, minimumFrontendFee, dahliaOwner, pointsFactory, dahlia);
         bytes memory initCode = abi.encodePacked(type(WrappedVaultFactory).creationCode, encodedArgs);
         string memory name = type(WrappedVaultFactory).name;
-        _deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, _SALT, initCode);
+        _deploy(name, DEPLOYED_WRAPPED_VAULT_FACTORY, _SALT, initCode, true);
     }
 }
