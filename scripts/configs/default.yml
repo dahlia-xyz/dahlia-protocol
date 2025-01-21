@@ -9,18 +9,6 @@ WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE: "0"
 # https://sepolia.etherscan.io/address/0x19112adbdafb465ddf0b57ecc07e68110ad09c50#code
 POINTS_FACTORY: "0x19112AdBDAfB465ddF0b57eCC07E68110Ad09c50"
 
-# Deploy on all networks
-VariableIrm:
-  - ZERO_UTIL_RATE: "31649410"
-    MIN_FULL_UTIL_RATE: "15824704600" # 20%
-    MAX_FULL_UTIL_RATE: "158247046000"
-    MIN_TARGET_UTILIZATION: "88000" # 88%
-    MAX_TARGET_UTILIZATION: "92000" # 92%
-    TARGET_UTILIZATION: "90000" # 90%
-    RATE_HALF_LIFE: "604800" # 7 days
-    TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
-    IRM_NAME: "Variable IRM_20"
-
 ethereum:
   RPC_URL: https://ethereum-rpc.publicnode.com
   BLOCK_NUMBER: "21636078"
@@ -198,6 +186,17 @@ sepolia:
   WrappedVaultFactory:
   DahliaRegistry:
   IrmFactory:
+  VariableIrm:
+    # Variable_IRM_50
+    - ZERO_UTIL_RATE: "31649410" # 0.1%
+      MIN_FULL_UTIL_RATE: "15856960000" # 50%
+      MAX_FULL_UTIL_RATE: "158247046000" # 500%
+      MIN_TARGET_UTILIZATION: "88000" # 88%
+      MAX_TARGET_UTILIZATION: "92000" # 92%
+      TARGET_UTILIZATION: "90000" # 90%
+      RATE_HALF_LIFE: "604800" # 7 days
+      TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
+      IRM_NAME: "Variable_IRM_50"
   Dahlia:
   Timelock:
 
@@ -216,6 +215,17 @@ bartio:
   WrappedVaultFactory:
   DahliaRegistry:
   IrmFactory:
+  VariableIrm:
+    # Variable_IRM_50
+    - ZERO_UTIL_RATE: "31649410" # 0.1%
+      MIN_FULL_UTIL_RATE: "15856960000" # 50%
+      MAX_FULL_UTIL_RATE: "158247046000" # 500%
+      MIN_TARGET_UTILIZATION: "88000" # 88%
+      MAX_TARGET_UTILIZATION: "92000" # 92%
+      TARGET_UTILIZATION: "90000" # 90%
+      RATE_HALF_LIFE: "604800" # 7 days
+      TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
+      IRM_NAME: "Variable_IRM_50"
   Dahlia:
   Timelock:
 
@@ -253,6 +263,7 @@ cartio:
       PYTH_ORACLE_QUOTE_FEED: "0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722"
       PYTH_ORACLE_BASE_MAX_DELAY: "86400"
       PYTH_ORACLE_QUOTE_MAX_DELAY: "86400"
+  VariableIrm:
     # Variable_IRM_50
     - ZERO_UTIL_RATE: "31649410" # 0.1%
       MIN_FULL_UTIL_RATE: "15856960000" # 50%
@@ -269,7 +280,7 @@ cartio:
       MARKET_LOAN: ${cartio.erc20.WETH}
       MARKET_ORACLE: ${DEPLOYED_PYTH_ORACLE_0} # see config-deployed.yml
       MARKET_LLTV: "94000" # 94%
-      MARKET_LIQUIDATION_BONUS_RATE: "4600" # 4.6%
+      MARKET_LIQUIDATION_BONUS_RATE: "4000" # 4.6%
       MARKET_IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
     - MARKET_NAME: "WBERA/USDC (68% LLTV)"
       MARKET_COLLATERAL: ${cartio.erc20.WBERA} # WBERA https://80000.testnet.routescan.io/token/0x6969696969696969696969696969696969696969
