@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
-import { IERC20Permit, IERC2612 } from "@openzeppelin/contracts/interfaces/IERC2612.sol";
-import { IERC20Errors } from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
-import { EIP712 } from "@solady/utils/EIP712.sol";
+import { IERC20Permit, IERC2612 } from "../../../lib/openzeppelin-contracts/contracts/interfaces/IERC2612.sol";
+import { IERC20Errors } from "../../../lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol";
+import { Initializable } from "../../../lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
+import { Nonces } from "../../../lib/openzeppelin-contracts/contracts/utils/Nonces.sol";
+import { EIP712 } from "../../../lib/solady/src/utils/EIP712.sol";
 
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
 /// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol), Shivaansh Kapoor, Jack Corddry

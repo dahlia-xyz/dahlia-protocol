@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { MarketMath } from "../helpers/MarketMath.sol";
 import { SharesMathLib } from "../helpers/SharesMathLib.sol";
 import { IDahlia } from "../interfaces/IDahlia.sol";
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 
 /// @title LiquidationImpl library
 /// @notice Implements position liquidation

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { CREATE3 } from "../../../lib/solady/src/utils/CREATE3.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { DahliaDualOracle } from "./DahliaDualOracle.sol";
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
 
 contract DahliaDualOracleFactory {
     /// @notice Emitted when a new DahliaDualOracle is deployed.

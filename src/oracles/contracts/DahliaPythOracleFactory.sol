@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { CREATE3 } from "../../../lib/solady/src/utils/CREATE3.sol";
 import { DahliaOracleFactoryBase } from "../abstracts/DahliaOracleFactoryBase.sol";
 import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { DahliaPythOracle } from "./DahliaPythOracle.sol";
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
 
 contract DahliaPythOracleFactory is DahliaOracleFactoryBase, DahliaOracleStaticAddress {
     /// @notice Emitted when a new Pyth oracle is created.

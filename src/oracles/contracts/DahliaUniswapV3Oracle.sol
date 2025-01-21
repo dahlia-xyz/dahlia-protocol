@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+import { ERC165 } from "../../../lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+import { IStaticOracle } from "../../../lib/uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
 import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
-import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
 
 /// @title DahliaUniswapV3Oracle
 /// @notice A contract for fetching TWAP from Uniswap V3

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { Nonces } from "../../../lib/openzeppelin-contracts/contracts/utils/Nonces.sol";
+import { ECDSA } from "../../../lib/solady/src/utils/ECDSA.sol";
+import { EIP712 } from "../../../lib/solady/src/utils/EIP712.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { IPermitted } from "../interfaces/IPermitted.sol";
-import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
-import { ECDSA } from "@solady/utils/ECDSA.sol";
-import { EIP712 } from "@solady/utils/EIP712.sol";
 
 /// @title Permitted
 /// @notice Handles permission management using signatures and nonces.

@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import { Points } from "../../../lib/royco/src/Points.sol";
+import { PointsFactory } from "../../../lib/royco/src/PointsFactory.sol";
+import { IWrappedVault } from "../../../lib/royco/src/interfaces/IWrappedVault.sol";
+import { Ownable } from "../../../lib/solady/src/auth/Ownable.sol";
+import { FixedPointMathLib as SoladyMath } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
 import { SharesMathLib } from "../../core/helpers/SharesMathLib.sol";
 import { IDahlia } from "../../core/interfaces/IDahlia.sol";
 import { WrappedVaultFactory } from "../contracts/WrappedVaultFactory.sol";
 import { IDahliaWrappedVault } from "../interfaces/IDahliaWrappedVault.sol";
 import { InitializableERC20 } from "../periphery/InitializableERC20.sol";
-import { Points } from "@royco/Points.sol";
-import { PointsFactory } from "@royco/PointsFactory.sol";
-import { IWrappedVault } from "@royco/interfaces/IWrappedVault.sol";
-import { Ownable } from "@solady/auth/Ownable.sol";
-import { FixedPointMathLib as SoladyMath } from "@solady/utils/FixedPointMathLib.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
-import { FixedPointMathLib } from "@solmate/utils/FixedPointMathLib.sol";
 
 /// @title WrappedVault
 /// @author Jack Corddry, CopyPaste, Shivaansh Kapoor

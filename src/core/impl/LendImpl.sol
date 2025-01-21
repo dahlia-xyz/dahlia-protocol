@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { SharesMathLib } from "../helpers/SharesMathLib.sol";
 import { IDahlia } from "../interfaces/IDahlia.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 
 /// @title LendImpl library
 /// @notice Implements protocol lending functions

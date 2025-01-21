@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { AggregatorV3Interface } from "../../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+import { IERC20Metadata } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { AggregatorV3InterfaceLib } from "../abstracts/AggregatorV3InterfaceLib.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
-import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 
 /// @title DahliaChainlinkOracle
 /// @notice A contract for fetching price from Chainlink Oracle

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { Ownable } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import { IIrm } from "../../irm/interfaces/IIrm.sol";
 import { Constants } from "../helpers/Constants.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { IDahliaRegistry } from "../interfaces/IDahliaRegistry.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DahliaRegistry is IDahliaRegistry, Ownable {
     mapping(uint256 => address) internal addresses;

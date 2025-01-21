@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { LibString } from "../../../lib/solady/src/utils/LibString.sol";
 import { IDahliaOracle } from "../../oracles/interfaces/IDahliaOracle.sol";
 import { Constants } from "../helpers/Constants.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { SharesMathLib } from "../helpers/SharesMathLib.sol";
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-import { LibString } from "@solady/utils/LibString.sol";
 
 /// @title MarketMath
 /// @notice Math utilities for the Dahlia protocol, handling collateral, loan calculations, and liquidation logic

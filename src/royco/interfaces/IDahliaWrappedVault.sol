@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IWrappedVault } from "@royco/interfaces/IWrappedVault.sol";
+import { IWrappedVault } from "../../../lib/royco/src/interfaces/IWrappedVault.sol";
 
 interface IDahliaWrappedVault is IWrappedVault {
     /// @return The address of the vault owner
