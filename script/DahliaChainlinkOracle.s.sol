@@ -49,10 +49,10 @@ contract DahliaPythOracleScript is BaseScript {
         address oracle = CREATE3.predictDeterministicAddress(salt, address(oracleFactory));
         string memory contractName = string(abi.encodePacked("DEPLOYED_CHAINLINK_ORACLE_", INDEX));
         if (oracle.code.length == 0) {
-            checkPrice(baseFeedPrimary, baseMaxDelayPrimary);
-            checkPrice(baseFeedSecondary, baseMaxDelaySecondary);
-            checkPrice(quoteFeedPrimary, quoteMaxDelayPrimary);
-            checkPrice(quoteFeedSecondary, quoteMaxDelaySecondary);
+            checkPrice(baseFeedPrimary, delays.baseMaxDelayPrimary);
+            checkPrice(baseFeedSecondary, delays.baseMaxDelaySecondary);
+            checkPrice(quoteFeedPrimary, delays.quoteMaxDelayPrimary);
+            checkPrice(quoteFeedSecondary, delays.quoteMaxDelaySecondary);
             vm.startBroadcast(deployer);
             oracle = oracleFactory.createChainlinkOracle(params, delays);
             _printContract(contractName, oracle, false);
