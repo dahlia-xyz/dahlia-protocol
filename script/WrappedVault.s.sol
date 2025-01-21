@@ -10,6 +10,7 @@ import { IDahlia, IDahliaOracle, IIrm } from "src/core/interfaces/IDahlia.sol";
 
 contract WrappedVaultScript is BaseScript {
     function run() public {
+        string memory INDEX = _envString(INDEX);
         Dahlia dahlia = Dahlia(_envAddress(DEPLOYED_DAHLIA));
         IIrm irm = IIrm(_envAddress("MARKET_IRM"));
         Dahlia.MarketConfig memory config = IDahlia.MarketConfig({
@@ -23,7 +24,6 @@ contract WrappedVaultScript is BaseScript {
             owner: _envAddress(DAHLIA_OWNER)
         });
         DahliaRegistry registry = DahliaRegistry(_envAddress(DEPLOYED_REGISTRY));
-        string memory INDEX = _envString(INDEX);
 
         string memory contractName = string(abi.encodePacked("DEPLOYED_MARKET_", INDEX));
         address marketAddress = _envOr(contractName, address(0));

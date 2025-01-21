@@ -15,6 +15,7 @@ abstract contract BaseScript is Script {
     string internal constant DEPLOYED_REGISTRY = "DEPLOYED_REGISTRY";
     string internal constant DEPLOYED_DAHLIA = "DEPLOYED_DAHLIA";
     string internal constant DEPLOYED_PYTH_ORACLE_FACTORY = "DEPLOYED_PYTH_ORACLE_FACTORY";
+    string internal constant DEPLOYED_CHAINLINK_ORACLE_FACTORY = "DEPLOYED_CHAINLINK_ORACLE_FACTORY";
     string internal constant DEPLOYED_WRAPPED_VAULT_FACTORY = "DEPLOYED_WRAPPED_VAULT_FACTORY";
     string internal constant DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION = "DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION";
     string internal constant DEPLOYED_IRM_FACTORY = "DEPLOYED_IRM_FACTORY";
@@ -23,6 +24,7 @@ abstract contract BaseScript is Script {
 
     string internal constant DAHLIA_OWNER = "DAHLIA_OWNER";
     string internal constant INDEX = "INDEX";
+    string internal constant DESTINATION = "DESTINATION";
     string internal constant POINTS_FACTORY = "POINTS_FACTORY";
     string internal constant TIMELOCK_DELAY = "TIMELOCK_DELAY";
 
@@ -97,5 +99,10 @@ abstract contract BaseScript is Script {
     function _envUint(string memory name) internal view returns (uint256 value) {
         value = vm.envUint(name);
         console.log(string(abi.encodePacked(name, ": ", value.toString())));
+    }
+
+    function _envOr(string memory name, uint256 defaultValue) internal view returns (uint256 value) {
+        value = vm.envOr(name, defaultValue);
+        console.log(string(abi.encodePacked(name, ": '", value.toString(), "'")));
     }
 }

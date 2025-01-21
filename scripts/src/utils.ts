@@ -180,7 +180,7 @@ async function runScript(
   network: string,
   deployedContracts: Config,
 ) {
-  // console.log("env", env);
+  // console.log("env=", env);
   console.log(`network=${network}: Deploying contracts rpcUrl=${cfg.RPC_URL}`);
   const { stdout } = await $$({
     env,
@@ -227,20 +227,24 @@ export const deployContractsOnNetworks = async (params: Params): Promise<Config>
     deployedContracts[network]["CHAIN_ID"] = await waitForRpc(cfg.RPC_URL);
     deployedContracts[network]["GRAPH_NODE_RPC_PORT"] = cfg.GRAPH_NODE_RPC_PORT;
     //deployedContracts[network]["RPC_URL"] = cfg.RPC_URL;
-    const env = _.pickBy(cfg, (value) => typeof value === "string");
-
+    const scriptParam = cfg[params.script];
     // If is an Array iterate each value
-    if (_.isArray(cfg[params.script])) {
+    if (_.isArray(scriptParam)) {
       for (const [index, value] of cfg[params.script].entries()) {
         const env = {
           ..._.pickBy(cfg, (value) => typeof value === "string"),
           ...value,
+          DESTINATION: params.destination.toString(),
           INDEX: index,
         };
         await runScript(env, params.script, cfg, network, deployedContracts);
       }
-    } else if (_.isUndefined(cfg[params.script])) {
-      // If no value, run always script
+    } else if (_.isNull(scriptParam)) {
+      // empty value
+      const env = {
+        ..._.pickBy(cfg, (value) => typeof value === "string"),
+        DESTINATION: params.destination.toString(),
+      };
       await runScript(env, params.script, cfg, network, deployedContracts);
     } else {
       console.log(`network=${network}: Skipped deployment of ${params.script}`);
