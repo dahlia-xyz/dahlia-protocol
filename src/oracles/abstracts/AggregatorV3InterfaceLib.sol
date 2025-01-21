@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { AggregatorV3Interface } from "@chainlink/contracts/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-import { Errors } from "src/oracles/helpers/Errors.sol";
+import { AggregatorV3Interface } from "../../../lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import { Errors } from "../helpers/Errors.sol";
 
 library AggregatorV3InterfaceLib {
     /// @notice Get the latest price from the feed and check if the data is stale or negative

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { CREATE3 } from "../../../lib/solady/src/utils/CREATE3.sol";
+import { DahliaOracleFactoryBase } from "../abstracts/DahliaOracleFactoryBase.sol";
+import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { DahliaUniswapV3Oracle } from "./DahliaUniswapV3Oracle.sol";
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
-import { DahliaOracleFactoryBase } from "src/oracles/abstracts/DahliaOracleFactoryBase.sol";
-import { DahliaOracleStaticAddress } from "src/oracles/abstracts/DahliaOracleStaticAddress.sol";
 
 contract DahliaUniswapV3OracleFactory is DahliaOracleFactoryBase, DahliaOracleStaticAddress {
     /// @notice Emitted when a new Uniswap V3 oracle is created.

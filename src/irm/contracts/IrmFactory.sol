@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: ISC
 pragma solidity ^0.8.27;
 
-import { CREATE3 } from "@solady/utils/CREATE3.sol";
-import { VariableIrm } from "src/irm/contracts/VariableIrm.sol";
-import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
+import { CREATE3 } from "../../../lib/solady/src/utils/CREATE3.sol";
+import { VariableIrm } from "../contracts/VariableIrm.sol";
+import { IrmConstants } from "../helpers/IrmConstants.sol";
 
 contract IrmFactory {
     event VariableIrmCreated(address indexed caller, address indexed irmAddress);

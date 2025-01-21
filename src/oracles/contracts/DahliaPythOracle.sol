@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-
-import { DahliaOracleStaticAddress } from "src/oracles/abstracts/DahliaOracleStaticAddress.sol";
-import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+import { IERC20Metadata } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { IPyth } from "../../../lib/pyth-sdk-solidity/IPyth.sol";
+import { PythStructs } from "../../../lib/pyth-sdk-solidity/PythStructs.sol";
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
+import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
+import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
 
 /// @title DahliaPythOracle
 /// @notice A contract for fetching price from Pyth Oracle

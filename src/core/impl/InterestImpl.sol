@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { Constants } from "src/core/helpers/Constants.sol";
-import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
+import { IIrm } from "../../irm/interfaces/IIrm.sol";
+import { Constants } from "../helpers/Constants.sol";
+import { SharesMathLib } from "../helpers/SharesMathLib.sol";
+import { IDahlia } from "../interfaces/IDahlia.sol";
 
 /// @title InterestImpl library
 /// @notice Implements protocol interest and fee accrual

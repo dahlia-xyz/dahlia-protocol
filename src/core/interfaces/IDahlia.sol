@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
-import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
-import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
+import { IIrm } from "../../irm/interfaces/IIrm.sol";
+import { IDahliaOracle } from "../../oracles/interfaces/IDahliaOracle.sol";
+import { IDahliaWrappedVault } from "../../royco/interfaces/IDahliaWrappedVault.sol";
 
 /// @title IDahlia
 /// @notice Interface for main Dahlia protocol functions

@@ -1,29 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.27;
 
-import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
-import { Permitted } from "src/core/abstracts/Permitted.sol";
-import { Constants } from "src/core/helpers/Constants.sol";
-import { Errors } from "src/core/helpers/Errors.sol";
-import { MarketMath } from "src/core/helpers/MarketMath.sol";
-import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
-import { BorrowImpl } from "src/core/impl/BorrowImpl.sol";
-import { InterestImpl } from "src/core/impl/InterestImpl.sol";
-import { LendImpl } from "src/core/impl/LendImpl.sol";
-import { LiquidationImpl } from "src/core/impl/LiquidationImpl.sol";
-import { ManageMarketImpl } from "src/core/impl/ManageMarketImpl.sol";
-import { IDahlia } from "src/core/interfaces/IDahlia.sol";
-import {
-    IDahliaFlashLoanCallback, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback
-} from "src/core/interfaces/IDahliaCallbacks.sol";
-import { IDahliaRegistry } from "src/core/interfaces/IDahliaRegistry.sol";
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
-import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
-import { IDahliaWrappedVault } from "src/royco/interfaces/IDahliaWrappedVault.sol";
+import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+import { ReentrancyGuard } from "../../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
+import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
+import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
+import { IIrm } from "../../irm/interfaces/IIrm.sol";
+import { WrappedVaultFactory } from "../../royco/contracts/WrappedVaultFactory.sol";
+import { IDahliaWrappedVault } from "../../royco/interfaces/IDahliaWrappedVault.sol";
+import { Permitted } from "../abstracts/Permitted.sol";
+import { Constants } from "../helpers/Constants.sol";
+import { Errors } from "../helpers/Errors.sol";
+import { MarketMath } from "../helpers/MarketMath.sol";
+import { SharesMathLib } from "../helpers/SharesMathLib.sol";
+import { BorrowImpl } from "../impl/BorrowImpl.sol";
+import { InterestImpl } from "../impl/InterestImpl.sol";
+import { LendImpl } from "../impl/LendImpl.sol";
+import { LiquidationImpl } from "../impl/LiquidationImpl.sol";
+import { ManageMarketImpl } from "../impl/ManageMarketImpl.sol";
+import { IDahlia } from "../interfaces/IDahlia.sol";
+import { IDahliaFlashLoanCallback, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback } from "../interfaces/IDahliaCallbacks.sol";
+import { IDahliaRegistry } from "../interfaces/IDahliaRegistry.sol";
 
 /// @title Dahlia
 /// @notice The Dahlia contract.

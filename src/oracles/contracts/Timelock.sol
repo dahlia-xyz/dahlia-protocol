@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Ownable, Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 
 // Inspired by OpenZeppelin's Timelock.sol
 // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/mocks/compound/CompTimelock.sol

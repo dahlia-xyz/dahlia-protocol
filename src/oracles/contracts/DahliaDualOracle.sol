@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
+import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
 
 /// @title DualOracle
 /// @notice Dual oracle where the secondary oracle is used if the primary oracle fails
