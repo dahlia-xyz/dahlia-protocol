@@ -27,7 +27,7 @@ contract WrappedVaultScript is BaseScript {
 
         string memory contractName = string(abi.encodePacked("DEPLOYED_MARKET_", INDEX));
         address marketAddress = _envOr(contractName, address(0));
-        if (marketAddress.code.length == 0 && marketAddress == address(0)) {
+        if (marketAddress.code.length == 0 || marketAddress == address(0)) {
             vm.startBroadcast(deployer);
             if (registry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY) == address(0)) {
                 address factory = _envAddress(DEPLOYED_WRAPPED_VAULT_FACTORY);
