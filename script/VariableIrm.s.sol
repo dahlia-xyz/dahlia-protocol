@@ -30,7 +30,7 @@ contract VariableIrmScript is BaseScript {
         if (irm.code.length == 0) {
             vm.startBroadcast(deployer);
             irm = irmFactory.createVariableIrm(config);
-            _printContract(contractName, irm);
+            _printContract(contractName, irm, false);
             vm.stopBroadcast();
         } else {
             console.log(contractName, "already deployed");

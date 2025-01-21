@@ -13,6 +13,6 @@ contract DeployDahlia is BaseScript {
         bytes memory encodedArgs = abi.encode(dahliaOwner, registry);
         bytes memory initCode = abi.encodePacked(type(Dahlia).creationCode, encodedArgs);
         string memory name = type(Dahlia).name;
-        _deploy(name, DEPLOYED_DAHLIA, _SALT, initCode);
+        _deploy(name, DEPLOYED_DAHLIA, _SALT, initCode, true);
     }
 }

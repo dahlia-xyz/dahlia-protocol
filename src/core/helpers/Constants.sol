@@ -35,8 +35,8 @@ library Constants {
     /// @dev Minimum liquidation bonus rate, set to 0.001% as the default.
     uint24 internal constant DEFAULT_MIN_LIQUIDATION_BONUS_RATE = uint24(1);
 
-    /// @dev Maximum liquidation bonus rate, set to 15%.
-    uint24 internal constant DEFAULT_MAX_LIQUIDATION_BONUS_RATE = uint24(15 * Constants.LLTV_100_PERCENT / 100);
+    /// @dev Maximum liquidation bonus rate, set to 20%.
+    uint24 internal constant DEFAULT_MAX_LIQUIDATION_BONUS_RATE = uint24(20 * Constants.LLTV_100_PERCENT / 100);
 
     /// @dev Duration of the repay period in stall market mode.
     uint256 internal constant REPAY_PERIOD = 2 weeks;

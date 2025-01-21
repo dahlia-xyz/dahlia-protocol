@@ -83,14 +83,14 @@ repos:
         name: solhint https://github.com/protofire/solhint/blob/develop/docs/rules.md .
         entry: solhint
         language: node
-        additional_dependencies: [solhint@5.0.4]
+        additional_dependencies: [solhint@5.0.5]
         files: \.sol$
         args: ["--formatter", "unix", "--max-warnings", "0"]
       - id: solhint-src
         name: solhint src/ https://github.com/protofire/solhint/blob/develop/docs/rules.md .
         entry: solhint
         language: node
-        additional_dependencies: [solhint@5.0.4]
+        additional_dependencies: [solhint@5.0.5]
         files: \.sol$
         exclude: ^(test/.*|script/.*)$
         args: ["--formatter", "unix", "--config", "src/.solhint.json", "--max-warnings", "0"]

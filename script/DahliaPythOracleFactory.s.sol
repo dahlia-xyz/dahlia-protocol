@@ -13,6 +13,6 @@ contract DahliaPythOracleFactoryScript is BaseScript {
         bytes memory encodedArgs = abi.encode(timelock, pythStaticOracleAddress);
         bytes memory initCode = abi.encodePacked(type(DahliaPythOracleFactory).creationCode, encodedArgs);
         string memory name = type(DahliaPythOracleFactory).name;
-        _deploy(name, DEPLOYED_PYTH_ORACLE_FACTORY, _SALT, initCode);
+        _deploy(name, DEPLOYED_PYTH_ORACLE_FACTORY, _SALT, initCode, true);
     }
 }

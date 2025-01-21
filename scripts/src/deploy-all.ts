@@ -29,6 +29,8 @@ await deployContractsOnNetworks({ script: "VariableIrm", ...options });
 await deployContractsOnNetworks({ script: "Dahlia", ...options });
 await deployContractsOnNetworks({ script: "WrappedVaultFactory", ...options });
 await deployContractsOnNetworks({ script: "Timelock", ...options });
+await deployContractsOnNetworks({ script: "DahliaChainlinkOracleFactory", ...options });
+await deployContractsOnNetworks({ script: "DahliaChainlinkOracle", ...options });
 await deployContractsOnNetworks({ script: "DahliaPythOracleFactory", ...options });
 await deployContractsOnNetworks({ script: "DahliaPythOracle", ...options });
 await deployContractsOnNetworks({ script: "WrappedVault", ...options });

@@ -4,7 +4,7 @@ FEES_RECIPIENT: ${WALLET_ADDRESS}
 DEPLOYER_PRIVATE_KEY: ${PRIVATE_KEY}
 WRAPPED_VAULT_FACTORY_PROTOCOL_FEE: "40000000000000000" # 4% - 0.04e18
 WRAPPED_VAULT_FACTORY_MIN_FRONTEND_FEE: "0"
-# Royco Points Factory looks like identical on all networks
+# Royco Points Factory contract is the same on most networks
 # https://etherscan.io/address/0x75E502644284eDf34421f9c355D75DB79e343Bca#readContract
 # https://sepolia.etherscan.io/address/0x19112adbdafb465ddf0b57ecc07e68110ad09c50#code
 POINTS_FACTORY: "0x19112AdBDAfB465ddF0b57eCC07E68110Ad09c50"
@@ -30,15 +30,158 @@ ethereum:
   GRAPH_NODE_RPC_PORT: "8120"
   GRAPH_NODE_HTTP_PORT: "8100"
   erc20:
-    USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-    WETH: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
     WSTETH: "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0" # https://etherscan.io/token/0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0
+    WETH: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    USDC: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+    WBTC: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
   ChainlinkWstETHToETH:
     - WSTETH: ${ethereum.erc20.WSTETH}
-      STETH_ETH_FEED: "0x86392dC19c0b719886221c78AB11eb8Cf5c52812" # https://data.chain.link/feeds/ethereum/mainnet/steth-eth
-  DahliaPythOracleFactory: # skip deployment
-  DahliaPythOracle: # skip deployment
-  WrappedVault: # define later
+      STETH_ETH_FEED: "0x86392dC19c0b719886221c78AB11eb8Cf5c52812" # stETH-ETH: https://data.chain.link/feeds/ethereum/mainnet/steth-eth
+  WrappedVaultImplementation:
+  WrappedVaultFactory:
+  DahliaRegistry:
+  IrmFactory:
+  Dahlia:
+  Timelock:
+  DahliaChainlinkOracleFactory:
+  DahliaChainlinkOracle:
+    # WETH/USDC (88% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WETH}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419" # ETH-USD: https://data.chain.link/feeds/ethereum/mainnet/eth-usd
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400" # Question: do we want to use same value as heartbeat?
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.USDC}
+      CHAINLINK_ORACLE_QUOTE_FEED_PRIMARY: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6" # USDC-USD: https://data.chain.link/feeds/ethereum/mainnet/usdc-usd
+      CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY: "86400"
+    # wstETH/WETH (94% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WSTETH}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: ${DEPLOYED_CHAINLINK_WSTETH_ETH}
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.WETH}
+    # wstETH/WBTC (94% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WSTETH}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: ${DEPLOYED_CHAINLINK_WSTETH_ETH}
+      CHAINLINK_ORACLE_BASE_FEED_SECONDARY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419" # ETH-USD: https://data.chain.link/feeds/ethereum/mainnet/eth-usd
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_BASE_SECONDARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.WBTC}
+      CHAINLINK_ORACLE_QUOTE_FEED_PRIMARY: "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23" # WBTC-BTC: https://data.chain.link/feeds/ethereum/mainnet/wbtc-btc
+      CHAINLINK_ORACLE_QUOTE_FEED_SECONDARY: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c" # BTC-USD: https://data.chain.link/feeds/ethereum/mainnet/btc-usd
+      CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_SECONDARY_MAX_DELAY: "86400"
+    # wstETH/USDC (94% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WSTETH}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: ${DEPLOYED_CHAINLINK_WSTETH_ETH}
+      CHAINLINK_ORACLE_BASE_FEED_SECONDARY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419" # ETH-USD: https://data.chain.link/feeds/ethereum/mainnet/eth-usd
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_BASE_SECONDARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.USDC}
+      CHAINLINK_ORACLE_QUOTE_FEED_PRIMARY: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6" # USDC-USD: https://data.chain.link/feeds/ethereum/mainnet/usdc-usd
+      CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY: "86400"
+    # WETH/WBTC (87% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WETH}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419" # ETH-USD: https://data.chain.link/feeds/ethereum/mainnet/eth-usd
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.WBTC}
+      CHAINLINK_ORACLE_QUOTE_FEED_PRIMARY: "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23" # WBTC-BTC: https://data.chain.link/feeds/ethereum/mainnet/wbtc-btc
+      CHAINLINK_ORACLE_QUOTE_FEED_SECONDARY: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c" # BTC-USD: https://data.chain.link/feeds/ethereum/mainnet/btc-usd
+      CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_SECONDARY_MAX_DELAY: "86400"
+    # WBTC/WETH (87% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WBTC}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23" # WBTC-BTC: https://data.chain.link/feeds/ethereum/mainnet/wbtc-btc
+      CHAINLINK_ORACLE_BASE_FEED_SECONDARY: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c" # BTC-USD: https://data.chain.link/feeds/ethereum/mainnet/btc-usd
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_BASE_SECONDARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.WETH}
+      CHAINLINK_ORACLE_QUOTE_FEED_PRIMARY: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419" # ETH-USD: https://data.chain.link/feeds/ethereum/mainnet/eth-usd
+      CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY: "86400"
+    # WBTC/USDC (87% LLTV)
+    - CHAINLINK_ORACLE_BASE_TOKEN: ${ethereum.erc20.WBTC}
+      CHAINLINK_ORACLE_BASE_FEED_PRIMARY: "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23" # WBTC-BTC: https://data.chain.link/feeds/ethereum/mainnet/wbtc-btc
+      CHAINLINK_ORACLE_BASE_FEED_SECONDARY: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c" # BTC-USD: https://data.chain.link/feeds/ethereum/mainnet/btc-usd
+      CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_BASE_SECONDARY_MAX_DELAY: "86400"
+      CHAINLINK_ORACLE_QUOTE_TOKEN: ${ethereum.erc20.USDC}
+      CHAINLINK_ORACLE_QUOTE_FEED_PRIMARY: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6" # USDC-USD: https://data.chain.link/feeds/ethereum/mainnet/usdc-usd
+      CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY: "86400"
+  VariableIrm:
+    # Variable_IRM_25
+    - ZERO_UTIL_RATE: "31649410" # 0.1%
+      MIN_FULL_UTIL_RATE: "7928480000" # 25%
+      MAX_FULL_UTIL_RATE: "158247046000" # 500%
+      MIN_TARGET_UTILIZATION: "88000" # 88%
+      MAX_TARGET_UTILIZATION: "92000" # 92%
+      TARGET_UTILIZATION: "90000" # 90%
+      RATE_HALF_LIFE: "604800" # 7 days
+      TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
+      IRM_NAME: "Variable_IRM_25"
+    # Variable_IRM_50
+    - ZERO_UTIL_RATE: "31649410" # 0.1%
+      MIN_FULL_UTIL_RATE: "15856960000" # 50%
+      MAX_FULL_UTIL_RATE: "158247046000" # 500%
+      MIN_TARGET_UTILIZATION: "88000" # 88%
+      MAX_TARGET_UTILIZATION: "92000" # 92%
+      TARGET_UTILIZATION: "90000" # 90%
+      RATE_HALF_LIFE: "604800" # 7 days
+      TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
+      IRM_NAME: "Variable_IRM_50"
+  WrappedVault:
+    # WETH/USDC (88% LLTV)
+    - MARKET_NAME: "Lend USDC on Dahlia WETH/USDC (88% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WETH}
+      MARKET_LOAN: ${ethereum.erc20.USDC}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_0}
+      MARKET_LLTV: "88000" # 88%
+      MARKET_LIQUIDATION_BONUS_RATE: "2100" # 2.1%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
+    # wstETH/WETH (94% LLTV)
+    - MARKET_NAME: "Lend WETH on Dahlia wstETH/WETH (94% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WSTETH}
+      MARKET_LOAN: ${ethereum.erc20.WETH}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_1}
+      MARKET_LLTV: "94000" # 94%
+      MARKET_LIQUIDATION_BONUS_RATE: "4500" # 4.5%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
+    # wstETH/WBTC (94% LLTV)
+    - MARKET_NAME: "Lend WBTC on Dahlia wstETH/WBTC (94% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WSTETH}
+      MARKET_LOAN: ${ethereum.erc20.WBTC}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_2}
+      MARKET_LLTV: "94000" # 94%
+      MARKET_LIQUIDATION_BONUS_RATE: "4500" # 4.5%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
+    # wstETH/USDC (94% LLTV)
+    - MARKET_NAME: "Lend USDC on Dahlia wstETH/USDC (94% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WSTETH}
+      MARKET_LOAN: ${ethereum.erc20.USDC}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_3}
+      MARKET_LLTV: "94000" # 94%
+      MARKET_LIQUIDATION_BONUS_RATE: "4500" # 4.5%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
+    # WETH/WBTC (87% LLTV)
+    - MARKET_NAME: "Lend WBTC on Dahlia WETH/WBTC (87% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WETH}
+      MARKET_LOAN: ${ethereum.erc20.WBTC}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_4}
+      MARKET_LLTV: "87000" # 87%
+      MARKET_LIQUIDATION_BONUS_RATE: "3300" # 3.3%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
+    # WBTC/WETH (87% LLTV)
+    - MARKET_NAME: "Lend WETH on Dahlia WBTC/WETH (87% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WBTC}
+      MARKET_LOAN: ${ethereum.erc20.WETH}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_5}
+      MARKET_LLTV: "87000" # 87%
+      MARKET_LIQUIDATION_BONUS_RATE: "3300" # 3.3%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
+    # WBTC/USDC (87% LLTV)
+    - MARKET_NAME: "Lend USDC on Dahlia WBTC/USDC (87% LLTV)"
+      MARKET_COLLATERAL: ${ethereum.erc20.WBTC}
+      MARKET_LOAN: ${ethereum.erc20.USDC}
+      MARKET_ORACLE: ${DEPLOYED_CHAINLINK_ORACLE_6}
+      MARKET_LLTV: "87000" # 87%
+      MARKET_LIQUIDATION_BONUS_RATE: "3300" # 3.3%
+      MARKET_IRM: ${DEPLOYED_IRM_0}
 
 sepolia:
   RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
@@ -51,10 +194,12 @@ sepolia:
   erc20:
     USDC: "0xca6c31cc71fb8f00dc2c465299f605039e0e1f4b"
     WETH: "0x7b79995e5f793a07bc00c21412e50ecae098e7f9"
-  ChainlinkWstETHToETH: # skip deployment
-  DahliaPythOracleFactory: # skip deployment
-  DahliaPythOracle: # skip deployment
-  WrappedVault: # define later
+  WrappedVaultImplementation:
+  WrappedVaultFactory:
+  DahliaRegistry:
+  IrmFactory:
+  Dahlia:
+  Timelock:
 
 bartio:
   RPC_URL: https://bartio.rpc.berachain.com
@@ -67,10 +212,12 @@ bartio:
   erc20:
     USDC: "0xd6D83aF58a19Cd14eF3CF6fe848C9A4d21e5727c"
     WETH: "0xE28AfD8c634946833e89ee3F122C06d7C537E8A8"
-  ChainlinkWstETHToETH: # skip deployment
-  DahliaPythOracleFactory: # skip deployment
-  DahliaPythOracle: # skip deployment
-  WrappedVault: # define later
+  WrappedVaultImplementation:
+  WrappedVaultFactory:
+  DahliaRegistry:
+  IrmFactory:
+  Dahlia:
+  Timelock:
 
 cartio:
   RPC_URL: https://teddilion-eth-cartio.berachain.com
@@ -85,7 +232,12 @@ cartio:
     STONE: "0x1da4dF975FE40dde074cBF19783928Da7246c515"
     USDC: "0x015fd589F4f1A33ce4487E12714e1B15129c9329"
     WETH: "0x2d93FbcE4CffC15DD385A80B3f4CC1D4E76C38b3" # WETH https://80000.testnet.routescan.io/token/0x2d93FbcE4CffC15DD385A80B3f4CC1D4E76C38b3
-  ChainlinkWstETHToETH: # skip deployment
+  WrappedVaultImplementation:
+  WrappedVaultFactory:
+  DahliaRegistry:
+  IrmFactory:
+  Dahlia:
+  Timelock:
   DahliaPythOracleFactory:
     - PYTH_STATIC_ORACLE_ADDRESS: "0xDd24F84d36BF92C65F92307595335bdFab5Bbd21"
   DahliaPythOracle:
@@ -101,18 +253,28 @@ cartio:
       PYTH_ORACLE_QUOTE_FEED: "0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722"
       PYTH_ORACLE_BASE_MAX_DELAY: "86400"
       PYTH_ORACLE_QUOTE_MAX_DELAY: "86400"
+    # Variable_IRM_50
+    - ZERO_UTIL_RATE: "31649410" # 0.1%
+      MIN_FULL_UTIL_RATE: "15856960000" # 50%
+      MAX_FULL_UTIL_RATE: "158247046000" # 500%
+      MIN_TARGET_UTILIZATION: "88000" # 88%
+      MAX_TARGET_UTILIZATION: "92000" # 92%
+      TARGET_UTILIZATION: "90000" # 90%
+      RATE_HALF_LIFE: "604800" # 7 days
+      TARGET_RATE_PERCENT: "200000000000000000" # 20% 0.2e18
+      IRM_NAME: "Variable_IRM_50"
   WrappedVault:
-    - MARKET_NAME: "STONE/WETH (92% LLTV)"
+    - MARKET_NAME: "STONE/WETH (94% LLTV)"
       MARKET_COLLATERAL: ${cartio.erc20.STONE} # STONE https://80000.testnet.routescan.io/address/0x1da4dF975FE40dde074cBF19783928Da7246c515
       MARKET_LOAN: ${cartio.erc20.WETH}
       MARKET_ORACLE: ${DEPLOYED_PYTH_ORACLE_0} # see config-deployed.yml
-      MARKET_LLTV: "92000" # 92%
-      MARKET_LIQUIDATION_BONUS_RATE: "6000" # 6%
+      MARKET_LLTV: "94000" # 94%
+      MARKET_LIQUIDATION_BONUS_RATE: "4600" # 4.6%
       MARKET_IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
-    - MARKET_NAME: "WBERA/USDC (80% LLTV)"
+    - MARKET_NAME: "WBERA/USDC (68% LLTV)"
       MARKET_COLLATERAL: ${cartio.erc20.WBERA} # WBERA https://80000.testnet.routescan.io/token/0x6969696969696969696969696969696969696969
       MARKET_LOAN: ${cartio.erc20.USDC} # USDC https://80000.testnet.routescan.io/token/0x015fd589F4f1A33ce4487E12714e1B15129c9329
       MARKET_ORACLE: ${DEPLOYED_PYTH_ORACLE_1} # see config-deployed.yml
-      MARKET_LLTV: "80000" # 80%
-      MARKET_LIQUIDATION_BONUS_RATE: "15000" # 15%
+      MARKET_LLTV: "68000" # 68%
+      MARKET_LIQUIDATION_BONUS_RATE: "6900" # 6.9%
       MARKET_IRM: ${DEPLOYED_IRM_0} # see config-deployed.yml
