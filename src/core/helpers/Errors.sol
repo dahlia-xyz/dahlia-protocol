@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IDahlia } from "src/core/interfaces/IDahlia.sol";
+import { IDahlia } from "../interfaces/IDahlia.sol";
 
 /// @title Errors library
 /// @notice Contains error messages for the protocol.

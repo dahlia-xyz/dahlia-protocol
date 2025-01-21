@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
+import { IIrm } from "../../irm/interfaces/IIrm.sol";
 
 /// @title IDahliaRegistry
 /// @notice Interface for managing addresses and values associated with specific IDs.

@@ -3,10 +3,10 @@ pragma solidity ^0.8.27;
 
 // Adapted from https://github.com/FraxFinance/fraxlend/
 
+import { IrmConstants } from "../helpers/IrmConstants.sol";
+import { IIrm } from "../interfaces/IIrm.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
-import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
-import { IIrm } from "src/irm/interfaces/IIrm.sol";
 
 /// @title Variable Interest Rate Model
 /// @notice Calculates interest rates based on utilization and time

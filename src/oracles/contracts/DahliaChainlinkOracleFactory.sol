@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { DahliaOracleFactoryBase } from "../abstracts/DahliaOracleFactoryBase.sol";
 import { DahliaChainlinkOracle } from "./DahliaChainlinkOracle.sol";
 import { CREATE3 } from "@solady/utils/CREATE3.sol";
-import { DahliaOracleFactoryBase } from "src/oracles/abstracts/DahliaOracleFactoryBase.sol";
 
 /// @title DahliaChainlinkOracleFactory factory to create chainlink oracle
 contract DahliaChainlinkOracleFactory is DahliaOracleFactoryBase {
