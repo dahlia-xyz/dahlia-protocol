@@ -13,7 +13,7 @@ set -x
 
 # WrappedVault
 #forge verify-contract \
-#  0xdf1f36377f2cc51993879713f405bd34e3abd35f \
+#  0x0bce8d96ceca035c421872e8d4d5d0f227070657 \
 #  ./src/royco/contracts/WrappedVault.sol:WrappedVault \
 #  --verifier-url "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" \
 #  --etherscan-api-key "verifyContract" \
@@ -37,18 +37,17 @@ set -x
 # Dahlia
 ENCODED_ARGS=$(cast abi-encode \
   "constructor(address, address)" \
-  0x56929D12646A2045de60e16AA28b8b4c9Dfb0441 \
-  0x7C12A2c6fb7a4a5Fa6c482CA403D7701289471f2)
+  0xd940909ae50e084706e479604bae660b5f932e18 \
+  0x01f4746b326cf64803816375c6589f75e4221cc5)
 
 forge verify-contract \
-  0x0a7e67a977cf9ab1de3781ec58625010050e446e \
+  0x44fb1cf712881a9661475bceaa1c44d88ec4b85e \
   ./src/core/contracts/Dahlia.sol:Dahlia \
   --verifier-url "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" \
   --num-of-optimizations 200 \
   --via-ir \
   --watch \
   --compiler-version "v0.8.27" \
-  --libraries "src/core/helpers/MarketMath.sol:MarketMath:0x4eB1349a08F1148945D6344d0a7e99B2BFe1B0f3" \
   --constructor-args "$ENCODED_ARGS"\
   --chain 80000
 
