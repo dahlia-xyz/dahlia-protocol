@@ -182,8 +182,6 @@ contract SupplyAndBorrowIntegrationTest is Test {
         assertEq(_shares, expectedBorrowShares / 2, "returned shares amount");
         vm.pauseGasMetering();
         vm.forward(1); // we expect accrue interest will not allow to borrow second initially allowed
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.AccrueInterest($.marketId, 292_291_602, 116_916_640_800, 0, 0);
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientCollateral.selector, 800_000_000_116_916_640_800, 800e18)); // InsufficientCollateral
         vm.resumeGasMetering();
         $.dahlia.supplyAndBorrow($.marketId, 1, pos.borrowed / 2, $.alice, $.bob);

@@ -121,13 +121,13 @@ contract AccrueInterestIntegrationTest is Test {
         IDahlia.Market memory state = $.dahlia.getMarket($.marketId);
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
 
-        (uint256 interestEarnedAssets, uint256 newRatePerSec,) =
+        (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 utilizationRate) =
             $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
 
         vm.forward(blocks);
         if (interestEarnedAssets > 0) {
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit IDahlia.AccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, 0, 0);
+            emit IDahlia.AccrueInterest($.marketId, newRatePerSec, utilizationRate, interestEarnedAssets, 0, 0);
         }
 
         vm.resumeGasMetering();
@@ -168,7 +168,7 @@ contract AccrueInterestIntegrationTest is Test {
         uint256 totalLendSharesBeforeAccrued = state.totalLendShares;
 
         uint256 deltaTime = blocks * TestConstants.BLOCK_TIME;
-        (uint256 interestEarnedAssets, uint256 newRatePerSec,) =
+        (uint256 interestEarnedAssets, uint256 newRatePerSec, uint256 utilizationRate) =
             $.marketConfig.irm.calculateInterest(deltaTime, state.totalLendAssets, state.totalBorrowAssets, state.fullUtilizationRate);
 
         uint256 protocolFeeAssets = interestEarnedAssets * protocolFee / Constants.FEE_PRECISION;
@@ -190,7 +190,7 @@ contract AccrueInterestIntegrationTest is Test {
                 emit InitializableERC20.Transfer(address(0), $.reserveFeeRecipient, reserveFeeShares);
             }
             vm.expectEmit(true, true, true, true, address($.dahlia));
-            emit IDahlia.AccrueInterest($.marketId, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+            emit IDahlia.AccrueInterest($.marketId, newRatePerSec, utilizationRate, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
         }
         vm.resumeGasMetering();
         $.dahlia.accrueMarketInterest($.marketId);

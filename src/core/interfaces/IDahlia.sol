@@ -209,10 +209,13 @@ interface IDahlia {
     /// @dev Emitted when interest is accrued.
     /// @param id Market id.
     /// @param newRatePerSec New rate per second.
+    /// @param utilizationRate New utilization rate.
     /// @param interest Amount of interest accrued.
     /// @param protocolFeeShares Shares minted as protocol fee.
     /// @param reserveFeeShares Shares minted as reserve fee.
-    event AccrueInterest(IDahlia.MarketId indexed id, uint256 newRatePerSec, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares);
+    event AccrueInterest(
+        IDahlia.MarketId indexed id, uint256 newRatePerSec, uint256 utilizationRate, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares
+    );
 
     /// @dev Emitted when a flash loan is executed.
     /// @param caller Address of the caller.

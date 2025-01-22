@@ -64,7 +64,7 @@ library InterestImpl {
         market.totalBorrowAssets = totalBorrowAssets + interestEarnedAssets;
         market.updatedAt = uint48(block.timestamp);
 
-        emit IDahlia.AccrueInterest(id, newRatePerSec, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+        emit IDahlia.AccrueInterest(id, newRatePerSec, newFullUtilizationRate, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
     }
 
     /// @notice Gets the expected market balances after interest accrual.
