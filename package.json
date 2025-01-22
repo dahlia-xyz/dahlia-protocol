@@ -5,7 +5,6 @@
   "version": "1.0.0",
   "scripts": {
     "setup": "pnpm i && pnpm nx run scripts:setup",
-    "recreate-docker-otterscan": "pnpm nx run scripts:recreate-docker-otterscan",
     "size": "forge build --sizes src/core/contracts/ src/irm/contracts src/oracles/contracts",
     "blockscout": "nx run docker-blockscout:setup",
     "test": "forge test",
