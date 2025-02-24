@@ -21,8 +21,17 @@ library MarketMath {
         return collateral.mulDivUp(collateralPrice, Constants.ORACLE_PRICE_SCALE);
     }
 
+    /// @dev Converts collateral to loan assets, rounding down
+    function collateralToLendDown(uint256 collateral, uint256 collateralPrice) internal pure returns (uint256) {
+        return collateral.mulDiv(collateralPrice, Constants.ORACLE_PRICE_SCALE);
+    }
+
     function lendToCollateralUp(uint256 assets, uint256 collateralPrice) internal pure returns (uint256) {
         return assets.mulDivUp(Constants.ORACLE_PRICE_SCALE, collateralPrice);
+    }
+
+    function lendToCollateralDown(uint256 assets, uint256 collateralPrice) internal pure returns (uint256) {
+        return assets.mulDiv(Constants.ORACLE_PRICE_SCALE, collateralPrice);
     }
 
     /// @dev Get percentage up (x * %) / 100
@@ -30,9 +39,19 @@ library MarketMath {
         return value.mulDivUp(percent, Constants.LLTV_100_PERCENT);
     }
 
-    /// @dev Get percentage down (x * 100) / %
+    /// @dev Get percentage down (x * %) / 100
+    function mulPercentDown(uint256 value, uint256 percent) internal pure returns (uint256) {
+        return value.mulDiv(percent, Constants.LLTV_100_PERCENT);
+    }
+
+    /// @dev Get percentage up (x * 100) / %
     function divPercentUp(uint256 value, uint256 percent) internal pure returns (uint256) {
         return value.mulDivUp(Constants.LLTV_100_PERCENT, percent);
+    }
+
+    /// @dev Get percentage down (x * 100) / %
+    function divPercentDown(uint256 value, uint256 percent) internal pure returns (uint256) {
+        return value.mulDiv(Constants.LLTV_100_PERCENT, percent);
     }
 
     /// @dev Calculates liquidation details, including borrowed assets, collateral seized, bonuses, and any bad debt
@@ -47,11 +66,11 @@ library MarketMath {
         // Convert borrow shares to assets
         borrowedAssets = borrowShares.toAssetsDown(totalBorrowAssets, totalBorrowShares);
         // Convert borrowed assets to collateral
-        uint256 borrowedInCollateral = lendToCollateralUp(borrowedAssets, collateralPrice);
+        uint256 borrowedInCollateral = lendToCollateralDown(borrowedAssets, collateralPrice);
         // Limit collateral for bonus calculation
         uint256 limitedCollateralForCalcBonus = FixedPointMathLib.min(borrowedInCollateral, collateral);
         // Calculate liquidator bonus
-        bonusCollateral = mulPercentUp(limitedCollateralForCalcBonus, liquidationBonusRate);
+        bonusCollateral = mulPercentDown(limitedCollateralForCalcBonus, liquidationBonusRate);
         // Total collateral to seize
         seizedCollateral = borrowedInCollateral + bonusCollateral;
 
@@ -66,17 +85,6 @@ library MarketMath {
             // Adjust seized collateral
             seizedCollateral = collateral;
         }
-    }
-
-    /// @dev Calculates the assets to rescue from reserves, given bad debt and available reserve shares
-    function calcRescueAssets(uint256 totalLendAssets, uint256 totalLendShares, uint256 badDebtAssets, uint256 reserveShares)
-        internal
-        pure
-        returns (uint256 rescueAssets, uint256 rescueShares)
-    {
-        uint256 reserveAssets = reserveShares.toAssetsUp(totalLendAssets, totalLendShares);
-        rescueAssets = FixedPointMathLib.min(badDebtAssets, reserveAssets);
-        rescueShares = rescueAssets.toSharesDown(totalLendAssets, totalLendShares);
     }
 
     /// @dev Calculates the maximum liquidation bonus rate based on the given LLTV
@@ -95,8 +103,8 @@ library MarketMath {
 
     /// @dev Calculates the maximum amount of assets that can be borrowed based on collateral and LLTV
     function calcMaxBorrowAssets(uint256 collateralPrice, uint256 collateral, uint256 lltv) internal pure returns (uint256) {
-        uint256 totalCollateralCapacity = collateralToLendUp(collateral, collateralPrice);
-        return mulPercentUp(totalCollateralCapacity, lltv);
+        uint256 totalCollateralCapacity = collateralToLendDown(collateral, collateralPrice);
+        return mulPercentDown(totalCollateralCapacity, lltv);
     }
 
     /// @dev Calculates the LTV based on borrowed assets and collateral value

@@ -17,7 +17,6 @@ import { SharesMathLib } from "../helpers/SharesMathLib.sol";
 import { BorrowImpl } from "../impl/BorrowImpl.sol";
 import { InterestImpl } from "../impl/InterestImpl.sol";
 import { LendImpl } from "../impl/LendImpl.sol";
-import { LiquidationImpl } from "../impl/LiquidationImpl.sol";
 import { ManageMarketImpl } from "../impl/ManageMarketImpl.sol";
 import { IDahlia } from "../interfaces/IDahlia.sol";
 import { IDahliaFlashLoanCallback, IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback } from "../interfaces/IDahliaCallbacks.sol";
@@ -37,7 +36,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     RateRange public liquidationBonusRateRange; // 6 bytes
 
     address public protocolFeeRecipient; // 20 bytes
-    address public reserveFeeRecipient; // 20 bytes
     uint24 public flashLoanFeeRate; // 3 bytes
     mapping(MarketId => MarketData) internal markets;
 
@@ -90,17 +88,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         ManageMarketImpl.setProtocolFeeRate(id, market, newFeeRate);
     }
 
-    /// @inheritdoc IDahlia
-    function setReserveFeeRate(MarketId id, uint32 newFeeRate) external onlyOwner {
-        require(reserveFeeRecipient != address(0), Errors.ZeroAddress());
-        MarketData storage marketData = markets[id];
-        Market storage market = marketData.market;
-        _validateMarketIsActive(market.status);
-        _accrueMarketInterest(id, marketData.userPositions, market);
-
-        ManageMarketImpl.setReserveFeeRate(id, market, newFeeRate);
-    }
-
     function _setProtocolFeeRecipient(address newProtocolFeeRecipient) internal {
         protocolFeeRecipient = newProtocolFeeRecipient;
         emit SetProtocolFeeRecipient(newProtocolFeeRecipient);
@@ -111,14 +98,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         require(newProtocolFeeRecipient != address(0), Errors.ZeroAddress());
         require(newProtocolFeeRecipient != protocolFeeRecipient, Errors.AlreadySet());
         _setProtocolFeeRecipient(newProtocolFeeRecipient);
-    }
-
-    /// @inheritdoc IDahlia
-    function setReserveFeeRecipient(address newReserveFeeRecipient) external onlyOwner {
-        require(newReserveFeeRecipient != address(0), Errors.ZeroAddress());
-        require(newReserveFeeRecipient != reserveFeeRecipient, Errors.AlreadySet());
-        reserveFeeRecipient = newReserveFeeRecipient;
-        emit SetReserveFeeRecipient(newReserveFeeRecipient);
     }
 
     /// @inheritdoc IDahlia
@@ -143,7 +122,6 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     function deployMarket(MarketConfig memory marketConfig) external returns (MarketId id) {
         require(dahliaRegistry.isIrmAllowed(marketConfig.irm), Errors.IrmNotAllowed());
         require(marketConfig.lltv >= lltvRange.min && marketConfig.lltv <= lltvRange.max, Errors.LltvNotAllowed());
-        MarketMath.getCollateralPrice(marketConfig.oracle); // validate oracle
         _validateLiquidationBonusRate(marketConfig.liquidationBonusRate, marketConfig.lltv);
 
         id = MarketId.wrap(marketSequence);
@@ -214,8 +192,9 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         uint256 ownerLendPrincipalAssets = ownerPosition.lendPrincipalAssets;
         if (newOwnerLendShares == 0) {
-            receiverPosition.lendPrincipalAssets += ownerLendPrincipalAssets.toUint128(); // Transfer all if no shares left
+            // The order is important to protect in case of self transfer
             ownerPosition.lendPrincipalAssets = 0;
+            receiverPosition.lendPrincipalAssets += ownerLendPrincipalAssets.toUint128(); // Transfer all if no shares left
         } else {
             uint256 ownerLendPrincipalAssetsDown = FixedPointMathLib.min(assets, ownerLendPrincipalAssets);
             ownerPosition.lendPrincipalAssets = (ownerLendPrincipalAssets - ownerLendPrincipalAssetsDown).toUint128();
@@ -317,22 +296,80 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
     }
 
     /// @inheritdoc IDahlia
-    function liquidate(MarketId id, address borrower, bytes calldata callbackData)
+    function liquidate(MarketId id, address borrower, uint256 repayShares, uint256 seizeCollateral, bytes calldata callbackData)
         external
-        returns (uint256 repaidAssets, uint256 repaidShares, uint256 seizedCollateral)
+        returns (uint256, uint256)
     {
-        require(borrower != address(0), Errors.ZeroAddress());
+        MarketMath.validateExactlyOneZero(repayShares, seizeCollateral);
         MarketData storage marketData = markets[id];
         Market storage market = marketData.market;
         _validateMarketIsActiveOrPausedOrDeprecated(market.status);
+
         mapping(address => UserPosition) storage positions = marketData.userPositions;
         _accrueMarketInterest(id, positions, market);
 
-        (repaidAssets, repaidShares, seizedCollateral) =
-            LiquidationImpl.internalLiquidate(id, market, positions[borrower], positions[reserveFeeRecipient], borrower);
+        UserPosition storage borrowerPosition = positions[borrower];
+        uint256 totalBorrowAssets = market.totalBorrowAssets;
+        uint256 totalBorrowShares = market.totalBorrowShares;
+        uint256 borrowShares = borrowerPosition.borrowShares;
+        uint256 collateral = borrowerPosition.collateral;
+
+        // Calculate the current loan-to-value (LTV) ratio of the borrower's position
+        uint256 borrowedAssets = borrowShares.toAssetsUp(totalBorrowAssets, totalBorrowShares);
+        // Retrieve collateral price from oracle
+        uint256 collateralPrice = MarketMath.getCollateralPrice(market.oracle);
+        uint256 maxBorrowable = MarketMath.calcMaxBorrowAssets(collateralPrice, collateral, market.lltv);
+
+        // Verify if the borrower's position is not healthy, if totalCollateralCapacity
+        if (maxBorrowable >= borrowedAssets) {
+            revert Errors.HealthyPositionLiquidation(borrowedAssets, maxBorrowable);
+        }
+
+        uint256 bonusCollateral;
+        if (repayShares > 0) {
+            uint256 repayAssetsForSeizedCollateral = repayShares.toAssetsDown(totalBorrowAssets, totalBorrowShares);
+            uint256 seizedCollateralWithoutFee = MarketMath.lendToCollateralDown(repayAssetsForSeizedCollateral, collateralPrice);
+            seizeCollateral = MarketMath.mulPercentDown(seizedCollateralWithoutFee, Constants.LLTV_100_PERCENT + market.liquidationBonusRate);
+            bonusCollateral = seizeCollateral - seizedCollateralWithoutFee;
+        } else {
+            uint256 seizedCollateralWithoutFee = MarketMath.divPercentUp(seizeCollateral, Constants.LLTV_100_PERCENT + market.liquidationBonusRate);
+            uint256 repayAssetsForSeizedCollateral = MarketMath.collateralToLendUp(seizedCollateralWithoutFee, collateralPrice);
+            repayShares = repayAssetsForSeizedCollateral.toSharesUp(market.totalBorrowAssets, market.totalBorrowShares);
+            bonusCollateral = seizeCollateral - seizedCollateralWithoutFee;
+        }
+
+        uint256 repaidAssets = repayShares.toAssetsUp(totalBorrowAssets, totalBorrowShares);
+
+        uint256 finalBorrowerCollateral = collateral - seizeCollateral;
+        uint256 finalBorrowerShares = borrowShares - repayShares; // Ideally this should be 0
+        uint256 finalTotalBorrowShares = totalBorrowShares - repayShares;
+        uint256 finalTotalBorrowAssets = totalBorrowAssets.zeroFloorSub(repaidAssets); // zero out for edge case
+
+        uint256 badDebtShares;
+        uint256 badDebtAssets;
+        if (finalBorrowerCollateral == 0) {
+            // borrowerFinalShares are bad shares if no borrower collateral left
+            badDebtShares = finalBorrowerShares;
+            badDebtAssets = finalTotalBorrowAssets.min(badDebtShares.toAssetsUp(finalTotalBorrowAssets, finalTotalBorrowShares));
+
+            finalTotalBorrowAssets -= badDebtAssets;
+            market.totalLendAssets -= badDebtAssets.toUint128();
+            finalTotalBorrowShares -= badDebtShares;
+            finalBorrowerShares = 0; // write off bad borrow shares
+        }
+
+        borrowerPosition.borrowShares = finalBorrowerShares.toUint128();
+        market.totalBorrowShares = finalTotalBorrowShares;
+        market.totalBorrowAssets = finalTotalBorrowAssets;
+        borrowerPosition.collateral = finalBorrowerCollateral.toUint128();
+        market.totalCollateralAssets -= seizeCollateral;
+
+        emit IDahlia.Liquidate(
+            id, msg.sender, borrower, repaidAssets, repayShares, seizeCollateral, bonusCollateral, badDebtAssets, badDebtShares, collateralPrice
+        );
 
         // Transfer seized collateral from Dahlia to the liquidator's wallet.
-        market.collateralToken.safeTransfer(msg.sender, seizedCollateral);
+        market.collateralToken.safeTransfer(msg.sender, seizeCollateral);
 
         // This callback allows a smart contract to receive the repaid amount before approving in collateral token.
         if (callbackData.length > 0 && address(msg.sender).code.length > 0) {
@@ -341,6 +378,7 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
 
         // Transfer repaid assets from the liquidator's wallet to Dahlia.
         market.loanToken.safeTransferFrom(msg.sender, address(market.vault), repaidAssets);
+        return (repaidAssets, seizeCollateral);
     }
 
     /// @inheritdoc IDahlia
@@ -431,16 +469,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         _flashLoan(address(this), token, assets, callbackData);
     }
 
-    /// @inheritdoc IDahlia
-    function accrueMarketInterest(MarketId id) external {
-        MarketData storage marketData = markets[id];
-        Market storage market = marketData.market;
-        _validateMarketIsActive(market.status);
-        _accrueMarketInterest(id, marketData.userPositions, market);
-    }
-
     function _accrueMarketInterest(MarketId id, mapping(address => UserPosition) storage positions, Market storage market) private {
-        InterestImpl.executeMarketAccrueInterest(id, market, positions, protocolFeeRecipient, reserveFeeRecipient);
+        InterestImpl.executeMarketAccrueInterest(id, market, positions, protocolFeeRecipient);
     }
 
     /// @notice Checks if the sender is the market or the wrapped vault owner.

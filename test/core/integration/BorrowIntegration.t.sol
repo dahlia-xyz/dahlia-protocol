@@ -106,7 +106,7 @@ contract BorrowIntegrationTest is Test {
     function test_int_getMaxBorrowableAmountRegular(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV - 1, $.marketConfig.lltv - 1);
         $.oracle.setPrice(pos.price);
 
         assertEq($.dahlia.getPositionLTV($.marketId, $.alice), 0, "0 ltv");
@@ -158,7 +158,7 @@ contract BorrowIntegrationTest is Test {
     function test_int_getMaxBorrowableAmountWithAdditionalCollateral(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV - 1, $.marketConfig.lltv - 1);
         $.oracle.setPrice(pos.price);
 
         (uint256 borrowedAssets11, uint256 borrowableAssets11,) = $.dahlia.getMaxBorrowableAmount($.marketId, $.alice, pos.collateral);
@@ -196,7 +196,7 @@ contract BorrowIntegrationTest is Test {
     function test_int_borrow_byAssets(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV - 1, $.marketConfig.lltv - 1);
         vm.dahliaLendBy($.carol, pos.lent, $);
         $.oracle.setPrice(pos.price);
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);

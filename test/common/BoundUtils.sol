@@ -13,7 +13,7 @@ import { TestTypes } from "test/common/TestTypes.sol";
 library BoundUtils {
     using MarketMath for uint256;
     using FixedPointMathLib for uint256;
-    using LibString for uint256;
+    using LibString for *;
 
     uint256 private constant UINT256_MAX = 115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_457_584_007_913_129_639_935;
 
@@ -117,7 +117,8 @@ library BoundUtils {
         pure
         returns (TestTypes.MarketPosition memory)
     {
-        pos.ltv = uint24(roundLltv(bound(pos.ltv, minLtv, maxLtv)));
+        pos.ltv = uint24(bound(pos.ltv, minLtv, maxLtv));
+        console.log("pos.ltv", pos.ltv);
         pos.price = bound(pos.price, TestConstants.MIN_COLLATERAL_PRICE, TestConstants.MAX_COLLATERAL_PRICE);
         pos.borrowed = bound(pos.borrowed, TestConstants.MIN_TEST_AMOUNT, TestConstants.MAX_TEST_AMOUNT);
         pos.collateral = pos.borrowed.divPercentUp(pos.ltv).lendToCollateralUp(pos.price);
@@ -130,7 +131,7 @@ library BoundUtils {
         pos.lent = bound(pos.lent, pos.borrowed + 1, pos.borrowed + TestConstants.MAX_TEST_AMOUNT);
 
         vm.assume(pos.collateral < type(uint256).max / pos.price);
-        logPosition(pos);
+        logPosition(pos, minLtv, maxLtv);
         vm.assume(pos.ltv == MarketMath.getLTV(pos.borrowed, pos.collateral, pos.price));
         return pos;
     }
@@ -140,12 +141,12 @@ library BoundUtils {
         vm.warp(block.timestamp + blocks * TestConstants.BLOCK_TIME); // Block speed should depend on test network.
     }
 
-    function logPosition(TestTypes.MarketPosition memory pos) internal pure {
+    function logPosition(TestTypes.MarketPosition memory pos, uint256 minLtv, uint256 maxLtv) internal pure {
         console.log("COLLATERAL: ", pos.collateral);
         console.log("COLLATERAL_CAPACITY", pos.borrowed.divPercentUp(pos.ltv));
         console.log("LENT: ", pos.lent);
         console.log("BORROWED: ", pos.borrowed);
         console.log("PRICE: ", pos.price);
-        console.log("LTV: ", pos.ltv);
+        console.log(string(abi.encodePacked("LTV: ", uint256(pos.ltv).toString(), " between [", minLtv.toString(), ",", maxLtv.toString(), "]")));
     }
 }

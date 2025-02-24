@@ -2,6 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
+import { Constants } from "../helpers/Constants.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { SharesMathLib } from "../helpers/SharesMathLib.sol";
 import { IDahlia } from "../interfaces/IDahlia.sol";
@@ -83,9 +84,9 @@ library LendImpl {
         // calculate owner assets based on liquidity in the market
         lendAssets = shares.toAssetsDown(totalLendAssets - market.totalBorrowAssets, totalLendShares);
         // Calculate owed collateral based on lendPrincipalAssets
-        collateralAssets = (ownerPosition.lendPrincipalAssets * totalCollateralAssets) / market.totalLendPrincipalAssets;
+        collateralAssets = (ownerPosition.lendPrincipalAssets * totalCollateralAssets) / (market.totalLendPrincipalAssets - Constants.BURN_ASSET);
 
-        market.vault.burnShares(owner, ownerPosition.lendPrincipalAssets);
+        market.vault.burnShares(owner, shares);
         ownerPosition.lendShares = 0;
         ownerPosition.lendPrincipalAssets = 0;
         market.totalLendShares = totalLendShares - shares;

@@ -12,6 +12,7 @@ import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { WrappedVault } from "src/royco/contracts/WrappedVault.sol";
 import { WrappedVaultFactory } from "src/royco/contracts/WrappedVaultFactory.sol";
+import { InitializableERC20 } from "src/royco/periphery/InitializableERC20.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { ERC20Mock as MockERC20 } from "test/common/mocks/ERC20Mock.sol";
@@ -676,5 +677,92 @@ contract WrappedVaultTest is Test {
         vm.stopPrank();
 
         assertLt(testIncentivizedVault.currentUserRewards(address(rewardToken1), REGULAR_USER), rewardToken1.balanceOf(address(testIncentivizedVault)));
+    }
+
+    /// See https://cantina.xyz/code/691ce303-f137-437a-bf34-aef87dfe983b/findings?finding=19
+    function testSelfTransfer(uint256 depositAmount) public {
+        emit log_named_uint("Max totalPrincipal", $.vault.maxDeposit(REGULAR_USER));
+        vm.assume(depositAmount <= $.vault.maxDeposit(REGULAR_USER));
+        assertEq(testIncentivizedVault.totalPrincipal(), Constants.BURN_ASSET, "initial total principal should be 1");
+        MockERC20(address(token)).mint(REGULAR_USER, depositAmount);
+
+        vm.startPrank(REGULAR_USER);
+        token.approve(address(testIncentivizedVault), depositAmount);
+        uint256 depositedShares = testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        vm.stopPrank();
+
+        assertEq(testIncentivizedVault.totalPrincipal(), depositAmount + Constants.BURN_ASSET, "after deposit");
+        assertEq(testIncentivizedVault.principal(REGULAR_USER), depositAmount);
+
+        uint256 shares = testIncentivizedVault.balanceOf(REGULAR_USER);
+
+        vm.expectEmit(true, true, true, true, address($.vault));
+        emit InitializableERC20.Transfer(REGULAR_USER, REGULAR_USER, shares);
+
+        //@audit self transfer
+        vm.startPrank(REGULAR_USER);
+        testIncentivizedVault.transfer(REGULAR_USER, shares);
+        vm.stopPrank();
+
+        emit log_named_uint("Actual totalPrincipal", testIncentivizedVault.totalPrincipal());
+        emit log_named_uint("Actual principal", testIncentivizedVault.principal(REGULAR_USER));
+
+        assertEq(testIncentivizedVault.totalPrincipal() - Constants.BURN_ASSET, depositAmount, "total principal should not change");
+        assertEq(testIncentivizedVault.principal(REGULAR_USER), depositAmount, "principal of user should be the same");
+        assertEq(testIncentivizedVault.balanceOf(REGULAR_USER), depositedShares, "deposited shares should be the same");
+    }
+
+    function testRewardRateForDepositAsset() public {
+        uint256 depositAmount = 10 * 1e18;
+        uint256 rewardAmount = 1000 * WAD;
+
+        vm.warp(100_000_000);
+
+        uint32 start = uint32(block.timestamp);
+        uint256 activeRewardPeriod = 9 weeks;
+        uint256 duration = activeRewardPeriod + testIncentivizedVault.MIN_CAMPAIGN_DURATION();
+
+        uint256 targetRate = rewardAmount / 1000 / (duration);
+
+        testIncentivizedVault.addRewardsToken(address(token));
+        token.mint(address(this), rewardAmount);
+        token.approve(address(testIncentivizedVault), rewardAmount);
+        testIncentivizedVault.setRewardsInterval(address(token), start, start + duration, rewardAmount, DEFAULT_FEE_RECIPIENT);
+
+        vm.startPrank(REGULAR_USER);
+        token.mint(address(REGULAR_USER), depositAmount);
+        token.approve(address(testIncentivizedVault), depositAmount);
+        testIncentivizedVault.deposit(depositAmount, REGULAR_USER);
+        vm.stopPrank();
+
+        //@audit Borrow assets to trigger the condition that adjusts the `end` time to `MIN_CAMPAIGN_DURATION`
+        vm.startPrank(REGULAR_USER);
+        $.collateralToken.mint(address(REGULAR_USER), depositAmount);
+        $.collateralToken.approve(address(testIncentivizedVault.dahlia()), depositAmount);
+        testIncentivizedVault.dahlia().supplyAndBorrow($.marketId, depositAmount, 1, REGULAR_USER, REGULAR_USER);
+        vm.stopPrank();
+
+        //@audit Move to the last day of the reward distribution to simulate edge case
+        skip(activeRewardPeriod);
+        (uint32 actualStart, uint32 actualEnd, uint96 actualRate) = testIncentivizedVault.rewardToInterval(address(token));
+
+        assertEq(actualStart, start);
+        //@audit since there is borrowed assets end is increased to min duration
+        assertEq(actualEnd, block.timestamp + testIncentivizedVault.MIN_CAMPAIGN_DURATION());
+        assertGt(actualRate, targetRate);
+
+        uint256 lendRate = testIncentivizedVault.dahlia().previewLendRateAfterDeposit($.marketId, 1e18);
+        assertEq(lendRate, 0);
+
+        //@audit Despite the lend rate being 0, the combined reward rate passes validation due to the artificially extended end time
+        uint256 afterRate = testIncentivizedVault.previewRateAfterDeposit(address(token), 1e18);
+        assertLt(afterRate, targetRate, "It should be smaller than the target rate as we approach the end of the period");
+
+        //@audit :
+        // - If the reward asset is the DEPOSIT_ASSET, the special condition in `rewardToInterval` for borrowed assets
+        //   forces the `end` time to extend to `MIN_CAMPAIGN_DURATION`, even if there is very little time left for rewards.
+        // - This allows the system to compute a combined reward rate (`previewRateAfterDeposit`) that exceeds the `targetRate`,
+        //   even though the lending rate is effectively 0 and the remaining duration is insufficient for meaningful rewards.
+        // - User funds are improperly allocated to this vault, as the reward rate condition passes even though it is artificially inflated.
     }
 }

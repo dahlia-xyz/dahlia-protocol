@@ -144,7 +144,7 @@ contract RepayAndWithdrawIntegrationTest is Test {
 
     function test_int_repayAndWithdraw_byShares(TestTypes.MarketPosition memory pos, uint256 sharesRepaid) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV - 1, $.marketConfig.lltv - 1);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
         uint256 expectedBorrowShares = pos.borrowed.toSharesUp(0, 0);

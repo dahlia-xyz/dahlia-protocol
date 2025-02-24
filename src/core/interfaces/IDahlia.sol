@@ -32,7 +32,6 @@ interface IDahlia {
         address collateralToken; // 20 bytes
         uint48 updatedAt; // 6 bytes
         uint24 protocolFeeRate; // 3 bytes // taken from interest
-        uint24 reserveFeeRate; // 3 bytes // taken from interest
         // --- 31 bytes
         IDahliaOracle oracle; // 20 bytes
         uint24 liquidationBonusRate; // 3 bytes
@@ -73,18 +72,9 @@ interface IDahlia {
     /// @param newFee The updated fee rate.
     event SetProtocolFeeRate(IDahlia.MarketId indexed id, uint256 newFee);
 
-    /// @dev Emitted when the reserve fee rate is updated.
-    /// @param id Market id.
-    /// @param newFee The updated fee rate.
-    event SetReserveFeeRate(IDahlia.MarketId indexed id, uint256 newFee);
-
     /// @dev Emitted when the protocol fee recipient is changed.
     /// @param newProtocolFeeRecipient Address of the new fee recipient.
     event SetProtocolFeeRecipient(address indexed newProtocolFeeRecipient);
-
-    /// @dev Emitted when the reserve fee recipient is changed.
-    /// @param newReserveFeeRecipient Address of the new reserve fee recipient.
-    event SetReserveFeeRecipient(address indexed newReserveFeeRecipient);
 
     /// @dev Emitted when the flash loan fee rate is updated.
     /// @param newFee The updated flash loan fee rate.
@@ -185,11 +175,9 @@ interface IDahlia {
     /// @param repaidAssets Amount of assets repaid.
     /// @param repaidShares Amount of shares burned.
     /// @param seizedCollateral Amount of collateral seized.
-    /// @param bonusCollateral Amount of bonus collateral.
+    /// @param bonusCollateral Amount of liquidator bonus collateral.
     /// @param badDebtAssets Amount of bad debt assets realized.
     /// @param badDebtShares Amount of bad debt shares realized.
-    /// @param rescuedAssets Amount of assets rescued from reserve.
-    /// @param rescuedShares Amount of shares rescued from reserve.
     /// @param collateralPrice Collateral price.
     event Liquidate(
         IDahlia.MarketId indexed id,
@@ -201,8 +189,6 @@ interface IDahlia {
         uint256 bonusCollateral,
         uint256 badDebtAssets,
         uint256 badDebtShares,
-        uint256 rescuedAssets,
-        uint256 rescuedShares,
         uint256 collateralPrice
     );
 
@@ -212,10 +198,7 @@ interface IDahlia {
     /// @param utilizationRate New utilization rate.
     /// @param interest Amount of interest accrued.
     /// @param protocolFeeShares Shares minted as protocol fee.
-    /// @param reserveFeeShares Shares minted as reserve fee.
-    event AccrueInterest(
-        IDahlia.MarketId indexed id, uint256 newRatePerSec, uint256 utilizationRate, uint256 interest, uint256 protocolFeeShares, uint256 reserveFeeShares
-    );
+    event AccrueInterest(IDahlia.MarketId indexed id, uint256 newRatePerSec, uint256 utilizationRate, uint256 interest, uint256 protocolFeeShares);
 
     /// @dev Emitted when a flash loan is executed.
     /// @param caller Address of the caller.
@@ -293,10 +276,6 @@ interface IDahlia {
     /// @param newProtocolFeeRecipient New protocol fee recipient address.
     function setProtocolFeeRecipient(address newProtocolFeeRecipient) external;
 
-    /// @notice Set reserve fee recipient for all markets.
-    /// @param newReserveFeeRecipient New reserve fee recipient address.
-    function setReserveFeeRecipient(address newReserveFeeRecipient) external;
-
     /// @notice Sets flash loan fee.
     /// @param newFee New flash loan fee.
     function setFlashLoanFeeRate(uint24 newFee) external;
@@ -329,11 +308,6 @@ interface IDahlia {
     /// @param id Market id.
     /// @param newFee New fee, precision: Constants.FEE_PRECISION.
     function setProtocolFeeRate(MarketId id, uint32 newFee) external;
-
-    /// @notice Set new reserve fee for a market.
-    /// @param id Market id.
-    /// @param newFee New fee, precision: Constants.FEE_PRECISION.
-    function setReserveFeeRate(MarketId id, uint32 newFee) external;
 
     /// @notice Lend `assets` on behalf of a user, with optional callback.
     /// @dev Should be called via wrapped vault.
@@ -423,15 +397,17 @@ interface IDahlia {
         returns (uint256 assetsRepaid, uint256 sharesRepaid);
 
     /// @notice Liquidate a debt position by repaying shares or seizing collateral, with optional callback.
+    /// @dev Either `repayShares` or `seizeCollateral` must be zero.
     /// @param id Market id.
     /// @param borrower Borrower's address.
+    /// @param repayShares Borrower's shares to repay.
+    /// @param seizeCollateral Amount of collateral to seize.
     /// @param callbackData Data for `onDahliaLiquidate` callback. Empty if not needed.
-    /// @return collateralSeized Amount of collateral seized.
-    /// @return assetsRepaid Amount of assets repaid.
-    /// @return sharesRepaid Amount of shares repaid.
-    function liquidate(MarketId id, address borrower, bytes calldata callbackData)
+    /// @return repaidAssets Amount of assets repaid.
+    /// @return seizedCollateral Amount of collateral seized.
+    function liquidate(MarketId id, address borrower, uint256 repayShares, uint256 seizeCollateral, bytes calldata callbackData)
         external
-        returns (uint256 collateralSeized, uint256 assetsRepaid, uint256 sharesRepaid);
+        returns (uint256 repaidAssets, uint256 seizedCollateral);
 
     /// @notice Supplies collateral on behalf of a user, with an optional callback.
     /// @param id Market id.
@@ -468,8 +444,4 @@ interface IDahlia {
     /// @param data Arbitrary data passed to the `onDahliaFlashLoan` callback.
     /// @dev The market id specifies the token to be borrowed.
     function flashLoan(MarketId id, uint256 assets, bytes calldata data) external;
-
-    /// @notice Accrue interest for market parameters.
-    /// @param id Market id.
-    function accrueMarketInterest(MarketId id) external;
 }

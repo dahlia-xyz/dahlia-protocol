@@ -13,7 +13,7 @@ library Errors {
     error InsufficientCollateral(uint256 borrowedAssets, uint256 maxBorrowAssets);
 
     /// @notice Cannot liquidate a healthy position.
-    error HealthyPositionLiquidation(uint256 ltv, uint256 lltv);
+    error HealthyPositionLiquidation(uint256 borrowedAssets, uint256 maxBorrowable);
 
     /// @notice Address not permitted to call function on behalf of another.
     error NotPermitted(address sender);

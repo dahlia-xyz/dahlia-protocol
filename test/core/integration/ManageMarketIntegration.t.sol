@@ -126,24 +126,6 @@ contract ManageMarketIntegrationTest is Test {
         assertEq($.dahlia.getMarket($.marketId).protocolFeeRate, feeFuzz);
     }
 
-    function test_int_manage_setReserveFeeRateWhenMarketNotDeployed(IDahlia.MarketId marketIdFuzz, uint32 feeFuzz) public {
-        address reserveAddress = ctx.createWallet("RESERVE_FEE_RECIPIENT");
-        vm.prank($.owner);
-        $.dahlia.setReserveFeeRecipient(reserveAddress);
-
-        vm.assume(!vm.marketsEq($.marketId, marketIdFuzz));
-        vm.prank($.owner);
-        vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Uninitialized));
-        $.dahlia.setReserveFeeRate(marketIdFuzz, feeFuzz);
-    }
-
-    function test_int_manage_setReserveFeeRateZeroRecipientAddress(uint32 feeFuzz) public {
-        feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE_RATE));
-        vm.prank($.owner);
-        vm.expectRevert(Errors.ZeroAddress.selector);
-        $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
-    }
-
     function test_int_manage_setProtocolFeeRecipient(address protocolFuzz) public {
         vm.assume(protocolFuzz != address(0) && protocolFuzz != $.dahlia.protocolFeeRecipient());
         // revert when not owner
@@ -164,55 +146,6 @@ contract ManageMarketIntegrationTest is Test {
         // revert when already set
         vm.expectRevert(abi.encodeWithSelector(Errors.AlreadySet.selector));
         $.dahlia.setProtocolFeeRecipient(protocolFuzz);
-    }
-
-    function test_int_manage_setReserveFeeRecipient(address recipientFuzz) public {
-        vm.assume(recipientFuzz != address(0) && recipientFuzz != $.dahlia.reserveFeeRecipient());
-        // revert when not owner
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        $.dahlia.setReserveFeeRecipient(recipientFuzz);
-
-        vm.startPrank($.owner);
-        // revert when zero adress
-        vm.expectRevert(abi.encodeWithSelector(Errors.ZeroAddress.selector));
-        $.dahlia.setReserveFeeRecipient(address(0));
-
-        // success
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.SetReserveFeeRecipient(recipientFuzz);
-        $.dahlia.setReserveFeeRecipient(recipientFuzz);
-        assertEq($.dahlia.reserveFeeRecipient(), recipientFuzz);
-
-        // revert when already set
-        vm.expectRevert(abi.encodeWithSelector(Errors.AlreadySet.selector));
-        $.dahlia.setReserveFeeRecipient(recipientFuzz);
-    }
-
-    function test_int_manage_setReserveFeeRate(uint32 feeFuzz) public {
-        address reserveAddress = ctx.createWallet("RESERVE_FEE_RECIPIENT");
-        vm.prank($.owner);
-        $.dahlia.setReserveFeeRecipient(reserveAddress);
-
-        // revert when not owner
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(this)));
-        $.dahlia.setProtocolFeeRate($.marketId, feeFuzz);
-
-        // revert when too hight
-        feeFuzz = uint32(bound(uint256(feeFuzz), Constants.MAX_FEE_RATE + 1, type(uint32).max));
-
-        vm.prank($.owner);
-        vm.expectRevert(Errors.MaxFeeExceeded.selector);
-        $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
-
-        feeFuzz = uint32(bound(uint256(feeFuzz), 1, Constants.MAX_FEE_RATE));
-
-        // success
-        vm.prank($.owner);
-        vm.expectEmit(true, true, true, true, address($.dahlia));
-        emit IDahlia.SetReserveFeeRate($.marketId, feeFuzz);
-        $.dahlia.setReserveFeeRate($.marketId, feeFuzz);
-
-        assertEq($.dahlia.getMarket($.marketId).reserveFeeRate, feeFuzz);
     }
 
     function test_int_manage_setFlashLoanFeeRate(uint24 feeFuzz) public {

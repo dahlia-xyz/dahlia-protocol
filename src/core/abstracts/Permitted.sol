@@ -15,7 +15,7 @@ abstract contract Permitted is IPermitted, EIP712, Nonces {
     bytes32 private constant HASH = keccak256("Permit(address signer,address permitted,bool isPermitted,uint256 nonce,uint256 deadline)");
 
     function hashTypedData(Data memory data) public view returns (bytes32) {
-        return _hashTypedData(keccak256(abi.encode(HASH, data)));
+        return _hashTypedData(keccak256(abi.encode(HASH, data.signer, data.permitted, data.isPermitted, data.nonce, data.deadline)));
     }
 
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {

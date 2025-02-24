@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Test, Vm } from "@forge-std/Test.sol";
+import { Test, Vm, console } from "@forge-std/Test.sol";
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
+import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahliaLiquidateCallback, IDahliaRepayCallback, IDahliaSupplyCollateralCallback } from "src/core/interfaces/IDahliaCallbacks.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
@@ -82,7 +85,11 @@ contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepa
 
     function test_int_callback_liquidate(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, TestConstants.MAX_TEST_LLTV);
+        uint256 minLtv = $.marketConfig.lltv + 1;
+        uint256 maxLtv = minLtv + MarketMath.mulPercentUp(Constants.LLTV_100_PERCENT - minLtv, $.dahlia.getMarket($.marketId).liquidationBonusRate);
+        console.log("Market LLTV", $.marketConfig.lltv);
+        console.log("liquidationBonusRate", $.dahlia.getMarket($.marketId).liquidationBonusRate);
+        pos = vm.generatePositionInLtvRange(pos, $.marketConfig.lltv + 1, maxLtv);
         vm.dahliaSubmitPosition(pos, $.carol, address(this), $);
 
         $.loanToken.setBalance(address(this), pos.lent);
@@ -90,10 +97,11 @@ contract CallbacksIntegrationTest is Test, IDahliaLiquidateCallback, IDahliaRepa
         // Check revert if approvement is 0
         $.loanToken.approve(address($.dahlia), 0);
 
+        uint256 userBorrowShares = $.dahlia.getPosition($.marketId, address(this)).borrowShares;
         vm.resumeGasMetering();
-        vm.expectRevert();
-        $.dahlia.liquidate($.marketId, address(this), TestConstants.EMPTY_CALLBACK);
+        vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
+        $.dahlia.liquidate($.marketId, address(this), userBorrowShares, 0, TestConstants.EMPTY_CALLBACK);
         // Check success by callback approvement
-        $.dahlia.liquidate($.marketId, address(this), abi.encode(this.test_int_callback_liquidate.selector));
+        $.dahlia.liquidate($.marketId, address(this), userBorrowShares, 0, abi.encode(this.test_int_callback_liquidate.selector));
     }
 }

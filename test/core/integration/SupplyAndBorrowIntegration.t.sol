@@ -72,7 +72,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);
 
-        uint256 maxBorrowAssets = pos.collateral.collateralToLendUp(pos.price).mulPercentUp($.marketConfig.lltv);
+        uint256 maxBorrowAssets = pos.collateral.collateralToLendDown(pos.price).mulPercentDown($.marketConfig.lltv);
 
         vm.prank($.alice);
         vm.expectRevert(abi.encodeWithSelector(Errors.InsufficientCollateral.selector, pos.borrowed, maxBorrowAssets));
@@ -102,7 +102,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
     function test_int_supplyAndBorrow_byAssets(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv - 1);
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);
@@ -124,7 +124,7 @@ contract SupplyAndBorrowIntegrationTest is Test {
     function test_int_supplyAndBorrow_onBehalfOfOwner(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv - 1);
         $.oracle.setPrice(pos.price);
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaPrepareCollateralBalanceFor($.alice, pos.collateral, $);

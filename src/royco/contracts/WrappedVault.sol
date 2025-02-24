@@ -384,9 +384,6 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
         if (elapsed == 0) return rewardsPerTokenOut;
 
         // No changes if there are no stakers
-        uint256 _totalPrincipal = totalPrincipal();
-        if (_totalPrincipal == 0) return rewardsPerTokenOut;
-
         rewardsPerTokenOut.lastUpdated = updateTime.toUint32();
 
         // If there are no stakers we just change the last update time, the rewards for intervals without stakers are not accumulated
@@ -394,7 +391,7 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
         // The rewards per token are scaled up for precision
         uint256 elapsedScaled = elapsed * RPT_PRECISION;
         // Calculate and update the new value of the accumulator.
-        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (SoladyMath.fullMulDiv(elapsedScaled, rewardsInterval_.rate, _totalPrincipal)));
+        rewardsPerTokenOut.accumulated = (rewardsPerTokenIn.accumulated + (SoladyMath.fullMulDiv(elapsedScaled, rewardsInterval_.rate, totalPrincipal())));
 
         return rewardsPerTokenOut;
     }
@@ -468,7 +465,10 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
     function _transfer(address from, address to, uint256 amount) internal returns (bool) {
         _updateUserRewards(from);
         _updateUserRewards(to);
-        dahlia.transferLendShares(marketId, from, to, amount);
+        // Do nothing in case of self transfer
+        if (from != to) {
+            dahlia.transferLendShares(marketId, from, to, amount);
+        }
         emit Transfer(from, to, amount);
         return true;
     }
@@ -510,13 +510,13 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
     }
 
     /// @notice Calculates the rate a user would receive in rewards after depositing assets
-    /// @return The rate of rewards, measured in wei of rewards token per wei of assets per second, scaled up by 1e18 to avoid precision loss
-    function previewRateAfterDeposit(address reward, uint256 assets) public view returns (uint256) {
+    /// @return rewardsRate The rate of rewards, measured in wei of rewards token per wei of assets per second, scaled up by 1e18 to avoid precision loss
+    function previewRateAfterDeposit(address reward, uint256 assets) public view returns (uint256 rewardsRate) {
         // Check if Dahlia market deposits are enabled
         IDahlia.MarketId id = marketId;
-        if (dahlia.getMarket(id).status != IDahlia.MarketStatus.Active) return 0;
+        IDahlia.Market memory market = dahlia.getMarket(id);
+        if (market.status != IDahlia.MarketStatus.Active) return 0;
 
-        uint256 rewardsRate = 0;
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
             // 18 decimals
@@ -524,9 +524,14 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
         }
 
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
-        if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return rewardsRate;
+        // if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return rewardsRate;
+        // Due to the fact we extending the rewards period in rewardToInterval() for loan token
+        // we should decrease end period to stop include of reward rate
+        if (rewardsInterval.start > block.timestamp) return rewardsRate;
+        if (block.timestamp + MIN_CAMPAIGN_DURATION >= rewardsInterval.end) return rewardsRate;
 
-        return rewardsRate + SoladyMath.divWad(rewardsInterval.rate, totalPrincipal() + assets);
+        // totalPrincipal() should be always above 0 due to 1 burn asset
+        rewardsRate += SoladyMath.divWad(rewardsInterval.rate, market.totalLendPrincipalAssets + assets);
     }
 
     /*//////////////////////////////////////////////////////////////

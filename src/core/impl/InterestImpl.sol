@@ -20,8 +20,7 @@ library InterestImpl {
         IDahlia.MarketId id,
         IDahlia.Market storage market,
         mapping(address => IDahlia.UserPosition) storage positions,
-        address protocolFeeRecipient,
-        address reserveFeeRecipient
+        address protocolFeeRecipient
     ) internal {
         uint256 deltaTime = block.timestamp - market.updatedAt;
 
@@ -40,23 +39,17 @@ library InterestImpl {
         totalLendAssets += interestEarnedAssets;
 
         uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
-        uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
         uint256 totalLendShares = market.totalLendShares;
-        uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
+        uint256 sumOfFeeAssets = protocolFeeAssets;
         uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(totalLendAssets - sumOfFeeAssets, totalLendShares);
 
         totalLendShares += sumOfFeeShares;
 
         uint256 protocolFeeShares = protocolFeeAssets.toSharesDown(totalLendAssets, totalLendShares);
-        uint256 reserveFeeShares = sumOfFeeShares - protocolFeeShares;
 
         if (protocolFeeShares > 0) {
             positions[protocolFeeRecipient].lendShares += protocolFeeShares.toUint128();
             market.vault.mintFees(protocolFeeShares, protocolFeeRecipient);
-        }
-        if (reserveFeeShares > 0) {
-            positions[reserveFeeRecipient].lendShares += reserveFeeShares.toUint128();
-            market.vault.mintFees(reserveFeeShares, reserveFeeRecipient);
         }
 
         market.totalLendShares = totalLendShares;
@@ -64,7 +57,7 @@ library InterestImpl {
         market.totalBorrowAssets = totalBorrowAssets + interestEarnedAssets;
         market.updatedAt = uint48(block.timestamp);
 
-        emit IDahlia.AccrueInterest(id, newRatePerSec, newFullUtilizationRate, interestEarnedAssets, protocolFeeShares, reserveFeeShares);
+        emit IDahlia.AccrueInterest(id, newRatePerSec, newFullUtilizationRate, interestEarnedAssets, protocolFeeShares);
     }
 
     /// @notice Gets the expected market balances after interest accrual.
@@ -87,8 +80,7 @@ library InterestImpl {
         totalLendAssets += interestEarnedAssets;
 
         uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
-        uint256 reserveFeeAssets = interestEarnedAssets * market.reserveFeeRate / Constants.FEE_PRECISION;
-        uint256 sumOfFeeAssets = protocolFeeAssets + reserveFeeAssets;
+        uint256 sumOfFeeAssets = protocolFeeAssets;
         uint256 sumOfFeeShares = sumOfFeeAssets.toSharesDown(totalLendAssets - sumOfFeeAssets, market.totalLendShares);
 
         market.totalLendShares += sumOfFeeShares;

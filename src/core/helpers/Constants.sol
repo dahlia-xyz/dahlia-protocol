@@ -4,6 +4,10 @@ pragma solidity ^0.8.27;
 /// @title Constants Library
 /// @dev Contains various constant values used across the Dahlia protocol
 library Constants {
+    /// @dev Burnable principal asset to account for WrappedVault burn shares in constructor
+    /// _mint(address(0), 10_000 * SharesMathLib.SHARES_OFFSET)
+    uint128 internal constant BURN_ASSET = 1;
+
     /// @dev Represents 100% for LLTV values, using 5 decimal precision.
     /// Examples: 100% = 100_000, 10% = 10_000, etc.
     uint256 internal constant LLTV_100_PERCENT = 1e5;

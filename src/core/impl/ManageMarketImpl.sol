@@ -18,14 +18,6 @@ library ManageMarketImpl {
         emit IDahlia.SetProtocolFeeRate(id, newFee);
     }
 
-    function setReserveFeeRate(IDahlia.MarketId id, IDahlia.Market storage market, uint256 newFee) internal {
-        require(newFee != market.reserveFeeRate, Errors.AlreadySet());
-        require(newFee <= Constants.MAX_FEE_RATE, Errors.MaxFeeExceeded());
-
-        market.reserveFeeRate = newFee.toUint24();
-        emit IDahlia.SetReserveFeeRate(id, newFee);
-    }
-
     function deployMarket(
         mapping(IDahlia.MarketId => IDahlia.MarketData) storage markets,
         IDahlia.MarketId id,
@@ -47,6 +39,9 @@ library ManageMarketImpl {
         market.status = IDahlia.MarketStatus.Active;
         market.liquidationBonusRate = marketConfig.liquidationBonusRate.toUint24();
         market.vault = vault;
+        market.totalLendPrincipalAssets = Constants.BURN_ASSET; // burn 1 asset to avoid front running attack
+        markets[id].userPositions[address(0)] =
+            IDahlia.UserPosition({ lendShares: 0, lendPrincipalAssets: Constants.BURN_ASSET, borrowShares: 0, collateral: 0 });
         emit IDahlia.DeployMarket(id, vault, marketConfig);
         setProtocolFeeRate(id, market, protocolFeeRate);
     }

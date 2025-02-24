@@ -24,7 +24,6 @@ contract StaleMarketIntegrationTest is DahliaTest {
     TestContext.MarketContext $;
 
     function setUp() public {
-        vm.createSelectFork("mainnet", 20_921_816);
         ctx = new TestContext(vm);
         $ = ctx.bootstrapMarket("USDC", "WBTC", vm.randomLltv());
     }
@@ -236,7 +235,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
 
         vm.expectRevert(abi.encodeWithSelector(Errors.WrongStatus.selector, IDahlia.MarketStatus.Stalled));
         vm.resumeGasMetering();
-        $.dahlia.liquidate($.marketId, $.alice, TestConstants.EMPTY_CALLBACK);
+        $.dahlia.liquidate($.marketId, $.alice, 0, 10, TestConstants.EMPTY_CALLBACK);
     }
 
     function test_int_staleMarket_repayPlusWithdraw(TestTypes.MarketPosition memory pos) public {
@@ -340,7 +339,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         // calculate owner assets based on liquidity in the market
         lendAssets = shares.toAssetsDown(market.totalLendAssets - market.totalBorrowAssets, market.totalLendShares);
         // calculate owed collateral based on lend shares
-        collateralAssets = (lenderPosition.lendPrincipalAssets * market.totalCollateralAssets) / market.totalLendPrincipalAssets;
+        collateralAssets = (lenderPosition.lendPrincipalAssets * market.totalCollateralAssets) / (market.totalLendPrincipalAssets - Constants.BURN_ASSET);
     }
 
     function test_int_staleMarket_withdrawRepayPeriodEnded(TestTypes.MarketPosition memory pos) public {
@@ -391,7 +390,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         IDahlia.Market memory marketBefore = $.dahlia.getMarket($.marketId);
         vm.startPrank($.carol);
         vm.expectEmit(true, true, true, true, address($.vault));
-        emit InitializableERC20.Transfer($.carol, address(0), $.dahlia.getPosition($.marketId, $.carol).lendPrincipalAssets);
+        emit InitializableERC20.Transfer($.carol, address(0), $.dahlia.getPosition($.marketId, $.carol).lendShares);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.carol, $.bob, $.carol, lendAssetsCarol, collateralAssetsCarol, sharesCarol);
         vm.expectEmit(true, true, true, true, address($.loanToken));
@@ -414,7 +413,7 @@ contract StaleMarketIntegrationTest is DahliaTest {
         (uint256 lendAssetsMaria, uint256 collateralAssetsMaria, uint256 sharesMaria) = calcMarketClaims($.marketId, $.maria);
 
         vm.expectEmit(true, true, true, true, address($.vault));
-        emit InitializableERC20.Transfer($.maria, address(0), $.dahlia.getPosition($.marketId, $.maria).lendPrincipalAssets);
+        emit InitializableERC20.Transfer($.maria, address(0), $.dahlia.getPosition($.marketId, $.maria).lendShares);
         vm.expectEmit(true, true, true, true, address($.dahlia));
         emit IDahlia.WithdrawDepositAndClaimCollateral($.marketId, $.maria, $.maria, $.maria, lendAssetsMaria, collateralAssetsMaria, sharesMaria);
         vm.expectEmit(true, true, true, true, address($.loanToken));

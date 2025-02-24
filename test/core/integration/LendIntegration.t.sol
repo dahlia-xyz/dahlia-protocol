@@ -2,9 +2,9 @@
 pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
-
 import { Test, Vm } from "forge-std/Test.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { Constants } from "src/core/helpers/Constants.sol";
 import { Errors } from "src/core/helpers/Errors.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -74,7 +74,7 @@ contract LendIntegrationTest is Test {
         assertEq(userPos.lendShares, expectedLendShares, "supply shares");
         assertEq($.dahlia.getMarket($.marketId).totalLendAssets, amount, "total supply");
         assertEq($.dahlia.getMarket($.marketId).totalLendShares, expectedLendShares, "total supply shares");
-        assertEq($.dahlia.getMarket($.marketId).totalLendPrincipalAssets, amount, "total principal assets");
+        assertEq($.dahlia.getMarket($.marketId).totalLendPrincipalAssets, amount + Constants.BURN_ASSET, "total principal assets");
         assertEq($.dahlia.getPosition($.marketId, $.bob).lendPrincipalAssets, amount, "user principal assets");
         assertEq($.loanToken.balanceOf($.alice), 0, "Alice balance");
         assertEq($.loanToken.balanceOf(address($.vault)), amount, "Dahlia balance");

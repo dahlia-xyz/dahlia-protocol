@@ -269,7 +269,7 @@ contract WrappedVaultIntegration is Test {
 
     function test_int_proxy_withdrawWithTimelapByAssets(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV - 1, $.marketConfig.lltv - 1);
 
         $.oracle.setPrice(pos.price);
         $.loanToken.setBalance($.alice, pos.lent);
@@ -353,9 +353,8 @@ contract WrappedVaultIntegration is Test {
     function test_int_proxy_transferAndWithdraw(uint256 assets) public {
         vm.pauseGasMetering();
         assets = vm.boundAmount(assets);
-
         assertEq($.dahlia.getActualMarketState($.marketId).totalLendShares, 0, "totalLendShares initially 0");
-        assertEq($.dahlia.getActualMarketState($.marketId).totalLendPrincipalAssets, 0, "totalLendPrincipalAssets initially 0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendPrincipalAssets, Constants.BURN_ASSET, "totalLendPrincipalAssets initially 0");
         assertEq($.dahlia.getActualMarketState($.marketId).totalLendAssets, 0, "totalLendAssets initially 0");
 
         $.loanToken.setBalance($.alice, assets);
@@ -386,7 +385,7 @@ contract WrappedVaultIntegration is Test {
         assertEq(marketBeforeTransfer.totalLendPrincipalAssets, marketAfterTransfer.totalLendPrincipalAssets);
         assertEq(marketBeforeTransfer.totalLendAssets, marketAfterTransfer.totalLendAssets);
         assertEq(assets, marketAfterTransfer.totalLendAssets);
-        assertEq(assets, marketAfterTransfer.totalLendPrincipalAssets);
+        assertEq(assets, marketAfterTransfer.totalLendPrincipalAssets - Constants.BURN_ASSET, "totalLendPrincipalAssets");
 
         IDahlia.UserPosition memory carolPos = $.dahlia.getPosition($.marketId, $.carol);
         assertEq(shares, carolPos.lendShares, "carol lendShares=shares");
@@ -435,7 +434,7 @@ contract WrappedVaultIntegration is Test {
         assertEq($.loanToken.balanceOf($.alice), assets * 2, "alice balance=assets*2");
         assertEq($.loanToken.balanceOf(address($.dahlia)), 0, "dahlia balance=0");
         assertEq($.dahlia.getActualMarketState($.marketId).totalLendShares, 0, "totalLendShares become 0");
-        assertEq($.dahlia.getActualMarketState($.marketId).totalLendPrincipalAssets, 0, "totalLendPrincipalAssets become 0");
+        assertEq($.dahlia.getActualMarketState($.marketId).totalLendPrincipalAssets, Constants.BURN_ASSET, "totalLendPrincipalAssets become 0");
         assertEq($.dahlia.getActualMarketState($.marketId).totalLendAssets, 0, "totalLendAssets become 0");
     }
 
@@ -534,7 +533,7 @@ contract WrappedVaultIntegration is Test {
     function test_int_proxy_maxWithdraw_AND_maxRedeem(TestTypes.MarketPosition memory pos) public {
         vm.pauseGasMetering();
 
-        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
+        pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV - 1, $.marketConfig.lltv - 1);
         $.oracle.setPrice(pos.price);
 
         $.loanToken.setBalance($.alice, pos.lent);

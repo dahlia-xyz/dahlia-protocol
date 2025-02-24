@@ -51,7 +51,6 @@ contract TestContext {
         address carol;
         address maria;
         address protocolFeeRecipient;
-        address reserveFeeRecipient;
         address marketAdmin;
         address royco;
         address owner;
@@ -67,7 +66,7 @@ contract TestContext {
 
     mapping(string => address) public wallets;
     mapping(string => address) public contracts;
-    mapping(string => uint8) public defaultTokenDecimals;
+    mapping(string => uint8) private defaultTokenDecimals;
     address public immutable OWNER;
     address public immutable ALICE;
 
@@ -104,7 +103,6 @@ contract TestContext {
         v.marketAdmin = createWallet("MARKET_ADMIN");
         v.royco = createWallet("ROYCO");
         v.protocolFeeRecipient = createWallet("PROTOCOL_FEE_RECIPIENT");
-        v.reserveFeeRecipient = createWallet("RESERVE_FEE_RECIPIENT");
         v.permitted = new address[](2);
         v.permitted[0] = v.owner;
         v.permitted[1] = v.marketAdmin;
