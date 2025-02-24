@@ -4,6 +4,10 @@ pipeline {
     }
     environment {
         GIT_SHA = "${sh(returnStdout: true, script: 'echo ${GIT_COMMIT} | cut -c1-12').trim()}"
+        BERACHAIN_RPC_URL = 'https://rpc.berachain.com/'
+        CARTIO_RPC_URL = 'https://teddilion-eth-cartio.berachain.com'
+        MAINNET_RPC_URL = 'https://ethereum-rpc.publicnode.com'
+        SEPOLIA_RPC_URL = 'https://ethereum-sepolia-rpc.publicnode.com'
     }
     agent {
         node {
@@ -40,54 +44,39 @@ pipeline {
             parallel {
                 stage('Lint') {
                     steps {
-                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
-                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
-                            script {
-                                sh 'pnpm run lint'
-                                sh 'pnpm run size'
-                            }
+                        script {
+                            sh 'pnpm run lint'
+                            sh 'pnpm run size'
                         }
                     }
                 }
 //                stage('Coverage') {
 //                    steps {
-//                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
-//                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
 //                            script {
 //                                sh 'pnpm run coverage'
 //                            }
-//                        }
 //                    }
 //                }
                 stage('Diff') {
                     steps {
-                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
-                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
-                            script {
-                                sh 'pnpm run diff'
-                            }
+                        script {
+                            sh 'pnpm run diff'
                         }
                     }
                 }
                 stage('Debug') {
                     steps {
-                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
-                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
-                            script {
-                                sh 'forge test -vvvv'
-                            }
+                        script {
+                            sh 'forge test -vvvv'
                         }
                     }
                 }
 //                stage('Coverage') {
 //                    steps {
-//                        withCredentials([string(credentialsId: 'MAINNET_RPC_URL', variable: 'MAINNET_RPC_URL'),
-//                                         string(credentialsId: 'SEPOLIA_RPC_URL', variable: 'SEPOLIA_RPC_URL')]) {
 //                            script {
 //                                sh 'forge coverage --no-match-coverage=.s.sol --ir-minimum --report lcov'
 //                                cobertura(autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'lcov.info')
 //                            }
-//                        }
 //                    }
 //                }
             }
