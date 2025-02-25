@@ -1,0 +1,328 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_config",
+        "type": "tuple",
+        "internalType": "struct VariableIrm.Config",
+        "components": [
+          {
+            "name": "minTargetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxTargetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "targetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "rateHalfLife",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minFullUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxFullUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "zeroUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "targetRatePercent",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "calculateInterest",
+    "inputs": [
+      {
+        "name": "deltaTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "totalLendAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "totalBorrowAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "fullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "_interestEarnedAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_newRatePerSec",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_newFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getNewRate",
+    "inputs": [
+      {
+        "name": "deltaTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "utilization",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "oldFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "newRatePerSec",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "newFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "maxFullUtilizationRate",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "maxTargetUtilization",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "minFullUtilizationRate",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "minTargetUtilization",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "name",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "rateHalfLife",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "targetRatePercent",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "targetUtilization",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint24",
+        "internalType": "uint24"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "version",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "zeroUtilizationRate",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "VariableIrmConfig",
+    "inputs": [
+      {
+        "name": "config",
+        "type": "tuple",
+        "indexed": false,
+        "internalType": "struct VariableIrm.Config",
+        "components": [
+          {
+            "name": "minTargetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxTargetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "targetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "rateHalfLife",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minFullUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxFullUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "zeroUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "targetRatePercent",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "anonymous": false
+  }
+]

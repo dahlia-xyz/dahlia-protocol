@@ -68,7 +68,9 @@ program.command("generate-abi").action(async () => {
     "Timelock",
     "IDahliaOracle",
     "IDahliaWrappedVault",
+    "WrappedVault",
     "WrappedVaultFactory",
+    "VariableIrm",
   ];
   await Promise.all(
     contracts.map(async (contract) => {
