@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { FixedPointMathLib } from "@solady/utils/FixedPointMathLib.sol";
 import { LibString } from "@solady/utils/LibString.sol";
-import { Test, Vm } from "forge-std/Test.sol";
+import { Test, Vm, console } from "forge-std/Test.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { SharesMathLib } from "src/core/helpers/SharesMathLib.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
@@ -43,6 +43,7 @@ contract AccrueInterestIntegrationTest is Test {
     }
 
     function test_int_accrueInterest_noTimeElapsed(TestTypes.MarketPosition memory pos) public {
+        vm.forward(1_000_000);
         vm.pauseGasMetering();
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
@@ -50,6 +51,7 @@ contract AccrueInterestIntegrationTest is Test {
     }
 
     function test_int_accrueInterest_noBorrow(uint256 amountLent, uint256 blocks) public {
+        vm.forward(1_000_000);
         vm.pauseGasMetering();
         amountLent = bound(amountLent, 2, TestConstants.MAX_TEST_AMOUNT);
         blocks = vm.boundBlocks(blocks);
@@ -61,6 +63,8 @@ contract AccrueInterestIntegrationTest is Test {
 
     function test_int_accrueInterest_getLatestMarketStateWithFees(TestTypes.MarketPosition memory pos, uint256 blocks, uint32 fee) public {
         vm.pauseGasMetering();
+
+        vm.forward(1_000_000);
         pos = vm.generatePositionInLtvRange(pos, TestConstants.MIN_TEST_LLTV, $.marketConfig.lltv);
         vm.dahliaSubmitPosition(pos, $.carol, $.alice, $);
 
@@ -105,5 +109,39 @@ contract AccrueInterestIntegrationTest is Test {
     function test_previewLendRateAfterDeposit_no_borrow_position() public view {
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 0);
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 100_000), 0);
+    }
+
+    function test_dhank_firstborrower() public {
+        vm.pauseGasMetering();
+        uint256 lltv = BoundUtils.toPercent(99);
+        TestContext.MarketContext memory $m1 = ctx.bootstrapMarket("USDC", "WBTC", lltv);
+        TestContext.MarketContext memory $m2 = ctx.bootstrapMarket("USDC", "WBTC", lltv);
+        uint256 loanAmount = 100 ether;
+        uint256 amountCollateral = loanAmount * 10 / 8;
+
+        vm.dahliaLendBy($m1.carol, loanAmount, $m1);
+        vm.dahliaLendBy($m2.carol, loanAmount, $m2);
+
+        vm.dahliaSupplyCollateralBy($m2.alice, amountCollateral, $m2);
+        vm.startPrank($m2.alice);
+        $m2.dahlia.borrow($m2.marketId, loanAmount, $m2.alice, $m2.alice);
+        vm.stopPrank();
+
+        uint256 blocks = 100_000;
+        vm.forward(blocks); // borrowing after approx 2 weeks days after market deployed
+
+        // User m1 adds the first borrow after big number of blocks
+        vm.dahliaSupplyCollateralBy($m1.alice, amountCollateral, $m1);
+        vm.startPrank($m1.alice);
+        $m1.dahlia.borrow($m1.marketId, loanAmount, $m1.alice, $m1.alice);
+        vm.stopPrank();
+        uint256 m2InterestAfter1Month = $m2.dahlia.getMarket($m2.marketId).totalBorrowAssets; // interest user 2 after 1 month
+
+        vm.forward(blocks); // 100_000
+
+        uint256 m1InteresetAfter1Month = $m1.dahlia.getMarket($m1.marketId).totalBorrowAssets;
+        console.log("Assets to repay after 2 weeks - ", $m1.dahlia.getMarket($m1.marketId).totalBorrowAssets); // accumulated borrowed assets  after 2 weeks
+            // from the borrowed date.
+        assertEq(m1InteresetAfter1Month, m2InterestAfter1Month, "interest should be identical");
     }
 }
