@@ -34,8 +34,6 @@ library InterestImpl {
         market.fullUtilizationRate = uint64(newFullUtilizationRate);
         market.ratePerSec = uint64(newRatePerSec);
 
-        if (interestEarnedAssets == 0) return;
-
         totalLendAssets += interestEarnedAssets;
 
         uint256 protocolFeeAssets = interestEarnedAssets * market.protocolFeeRate / Constants.FEE_PRECISION;
@@ -74,8 +72,6 @@ library InterestImpl {
 
         market.fullUtilizationRate = uint64(newFullUtilizationRate);
         market.ratePerSec = uint64(newRatePerSec);
-
-        if (interestEarnedAssets == 0) return market;
 
         totalLendAssets += interestEarnedAssets;
 
