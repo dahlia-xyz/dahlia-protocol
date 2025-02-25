@@ -94,16 +94,16 @@ repos:
         files: \.sol$
         exclude: ^(test/.*|script/.*)$
         args: ["--formatter", "unix", "--config", "src/.solhint.json", "--max-warnings", "0"]
-      - id: forge-test
-        name: forge tests https://book.getfoundry.sh/forge/tests .
-        description: Forge tests.
-        entry: forge test
-        language: system
-        pass_filenames: false
       - id: generate-abis
         name: generate abi for contracts
         description: Generate abi files.
         entry: pnpm run generate-abi
+        language: system
+        pass_filenames: false
+      - id: forge-test
+        name: forge tests https://book.getfoundry.sh/forge/tests .
+        description: Forge tests.
+        entry: forge test
         language: system
         pass_filenames: false
 #      - id: forge-snapshot

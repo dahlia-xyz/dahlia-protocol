@@ -50,6 +50,7 @@ program.command("generate-abi").action(async () => {
     "IDahliaRepayCallback",
     "IDahliaSupplyCollateralCallback",
     "IDahliaRegistry",
+    "DahliaRegistry",
     "IPermitted",
     "IrmFactory",
     "IIrm",
