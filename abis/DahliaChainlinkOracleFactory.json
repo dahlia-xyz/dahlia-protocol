@@ -1,0 +1,141 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "timelock",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createChainlinkOracle",
+    "inputs": [
+      {
+        "name": "params",
+        "type": "tuple",
+        "internalType": "struct DahliaChainlinkOracle.Params",
+        "components": [
+          {
+            "name": "baseToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "baseFeedPrimary",
+            "type": "address",
+            "internalType": "contract AggregatorV3Interface"
+          },
+          {
+            "name": "baseFeedSecondary",
+            "type": "address",
+            "internalType": "contract AggregatorV3Interface"
+          },
+          {
+            "name": "quoteToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "quoteFeedPrimary",
+            "type": "address",
+            "internalType": "contract AggregatorV3Interface"
+          },
+          {
+            "name": "quoteFeedSecondary",
+            "type": "address",
+            "internalType": "contract AggregatorV3Interface"
+          }
+        ]
+      },
+      {
+        "name": "maxDelays",
+        "type": "tuple",
+        "internalType": "struct DahliaChainlinkOracle.Delays",
+        "components": [
+          {
+            "name": "baseMaxDelayPrimary",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "baseMaxDelaySecondary",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "quoteMaxDelayPrimary",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "quoteMaxDelaySecondary",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "oracle",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "timelockAddress",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "DahliaChainlinkOracleCreated",
+    "inputs": [
+      {
+        "name": "caller",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "oracle",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TimelockAddressUpdated",
+    "inputs": [
+      {
+        "name": "timelock",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "ZeroTimelockAddress",
+    "inputs": []
+  }
+]

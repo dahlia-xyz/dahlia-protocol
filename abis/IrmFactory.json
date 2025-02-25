@@ -1,0 +1,107 @@
+[
+  {
+    "type": "function",
+    "name": "createVariableIrm",
+    "inputs": [
+      {
+        "name": "config",
+        "type": "tuple",
+        "internalType": "struct VariableIrm.Config",
+        "components": [
+          {
+            "name": "minTargetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxTargetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "targetUtilization",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "rateHalfLife",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "minFullUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "maxFullUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "zeroUtilizationRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "targetRatePercent",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "irm",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "VariableIrmCreated",
+    "inputs": [
+      {
+        "name": "caller",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "irmAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "FullUtilizationRateRangeInvalid",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "IrmNameIsNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MaxUtilizationTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MinUtilizationOutOfRange",
+    "inputs": []
+  }
+]

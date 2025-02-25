@@ -1,0 +1,20 @@
+[
+  {
+    "type": "function",
+    "name": "onDahliaLiquidate",
+    "inputs": [
+      {
+        "name": "repaidAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "data",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
+]

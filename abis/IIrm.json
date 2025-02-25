@@ -1,0 +1,132 @@
+[
+  {
+    "type": "function",
+    "name": "calculateInterest",
+    "inputs": [
+      {
+        "name": "deltaTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "totalLendAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "totalBorrowAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "oldFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "interestEarnedAssets",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "newRatePerSec",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "newFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getNewRate",
+    "inputs": [
+      {
+        "name": "deltaTime",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "utilization",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "oldFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "newRatePerSec",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "newFullUtilizationRate",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "minFullUtilizationRate",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "name",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "version",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "zeroUtilizationRate",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  }
+]
