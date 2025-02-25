@@ -517,7 +517,7 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
         // Check if Dahlia market deposits are enabled
         IDahlia.MarketId id = marketId;
         IDahlia.Market memory market = dahlia.getMarket(id);
-        if (market.status != IDahlia.MarketStatus.Active || assets == 0) return 0;
+        if (market.status != IDahlia.MarketStatus.Active) return 0;
 
         // Account for interest rate accrued in Dahlia market
         uint256 dahliaInterestPerSec;
