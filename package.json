@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "setup": "pnpm i && pnpm tsx setup.ts init",
+    "generate-abi": "pnpm i && pnpm tsx setup.ts generate-abi",
     "size": "forge build --sizes src/core/contracts/ src/irm/contracts src/oracles/contracts",
     "blockscout": "nx run docker-blockscout:setup",
     "test": "forge test",

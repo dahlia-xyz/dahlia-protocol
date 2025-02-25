@@ -74,6 +74,7 @@ program.command("generate-abi").action(async () => {
       await fs.writeFile(`./abis/${contract}.json`, stdout);
     }),
   );
+  await $`prettier --write ./abis/*.json`;
 });
 
 await program.parseAsync(process.argv);
