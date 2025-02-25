@@ -9,8 +9,10 @@ import { FixedPointMathLib as SoladyMath } from "../../../lib/solady/src/utils/F
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { Constants } from "../../core/helpers/Constants.sol";
 import { SharesMathLib } from "../../core/helpers/SharesMathLib.sol";
 import { IDahlia } from "../../core/interfaces/IDahlia.sol";
+import { IIrm } from "../../irm/interfaces/IIrm.sol";
 import { WrappedVaultFactory } from "../contracts/WrappedVaultFactory.sol";
 import { IDahliaWrappedVault } from "../interfaces/IDahliaWrappedVault.sol";
 import { InitializableERC20 } from "../periphery/InitializableERC20.sol";
@@ -515,23 +517,30 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
         // Check if Dahlia market deposits are enabled
         IDahlia.MarketId id = marketId;
         IDahlia.Market memory market = dahlia.getMarket(id);
-        if (market.status != IDahlia.MarketStatus.Active) return 0;
+        if (market.status != IDahlia.MarketStatus.Active || assets == 0) return 0;
 
         // Account for interest rate accrued in Dahlia market
+        uint256 dahliaInterestPerSec;
         if (reward == address(DEPOSIT_ASSET)) {
-            // 18 decimals
-            rewardsRate = dahlia.previewLendRateAfterDeposit(id, assets);
+            // get interest in 1 sec
+            (uint256 interestTokensPerSecond,,) =
+                IIrm(market.irm).calculateInterest(1, market.totalLendAssets + assets, market.totalBorrowAssets, market.fullUtilizationRate);
+
+            // calc protocol fee
+            uint256 protocolFeeAssets = interestTokensPerSecond * market.protocolFeeRate / Constants.FEE_PRECISION;
+            dahliaInterestPerSec = interestTokensPerSecond - protocolFeeAssets;
         }
 
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
+
         // if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return rewardsRate;
         // Due to the fact we extending the rewards period in rewardToInterval() for loan token
         // we should decrease end period to stop include of reward rate
-        if (rewardsInterval.start > block.timestamp) return rewardsRate;
-        if (block.timestamp + MIN_CAMPAIGN_DURATION >= rewardsInterval.end) return rewardsRate;
-
+        if (rewardsInterval.start > block.timestamp || block.timestamp + MIN_CAMPAIGN_DURATION >= rewardsInterval.end) {
+            return SoladyMath.divWad(dahliaInterestPerSec, market.totalLendPrincipalAssets + assets);
+        }
         // totalPrincipal() should be always above 0 due to 1 burn asset
-        rewardsRate += SoladyMath.divWad(rewardsInterval.rate, market.totalLendPrincipalAssets + assets);
+        rewardsRate = SoladyMath.divWad(rewardsInterval.rate + dahliaInterestPerSec, market.totalLendPrincipalAssets + assets);
     }
 
     /*//////////////////////////////////////////////////////////////
