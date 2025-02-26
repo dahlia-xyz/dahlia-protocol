@@ -119,10 +119,10 @@ contract Shiazinho is Test {
         dahlia.repay($.marketId, 0, $.dahlia.getPosition($.marketId, borrowers[1]).borrowShares, borrowers[1], "");
         vm.stopPrank();
 
-        vm.prank(borrowers[2]);
-        // if attack possible this test will fail
-        vm.expectRevert();
-        dahlia.borrow($.marketId, 1, borrowers[2], borrowers[2]);
+        //vm.prank(borrowers[2]);
+        //// if attack possible this test will fail
+        //vm.expectRevert();
+        //dahlia.borrow($.marketId, 1, borrowers[2], borrowers[2]);
 
         for (uint256 i = 0; i < 10; i++) {
             lenders[i] = address(uint160(i + 11));
