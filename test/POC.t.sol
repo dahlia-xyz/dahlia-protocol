@@ -113,11 +113,19 @@ contract POSTest is Test {
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 0, "start lend rate");
         $.oracle.setPrice(pos.price);
 
+        IDahlia.Market memory market1 = $.dahlia.getMarket($.marketId);
+        vm.forward(100_000);
+        IDahlia.Market memory market2 = $.dahlia.getMarket($.marketId);
+        assertEq(market2.updatedAt - market1.updatedAt, 100_000, "updatedAt changed by 100000 blocks");
+
         // Simulate market activities: lending, collateral supply, borrowing
         vm.dahliaLendBy($.carol, pos.lent, $);
         vm.dahliaLendBy($.bob, pos.lent, $);
         vm.dahliaSupplyCollateralBy($.alice, pos.collateral, $);
         vm.dahliaBorrowBy($.alice, pos.borrowed, $);
+
+        (, uint256 aliceShares) = $.dahlia.getPositionInterest($.marketId, $.alice);
+        assertEq(aliceShares, 0, "no interest");
 
         // Ensure fees and rates are set correctly
         uint256 ltv = $.dahlia.getPositionLTV($.marketId, $.alice);
@@ -140,6 +148,8 @@ contract POSTest is Test {
         validateUserPos("0", 0, 0, 0, 0);
 
         vm.forward(1);
+        (, uint256 aliceShares2) = $.dahlia.getPositionInterest($.marketId, $.alice);
+        assertEq(aliceShares2, 0, "no interest");
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_130, "rate after 1 block");
 
         uint256 blocks = 10_000;
