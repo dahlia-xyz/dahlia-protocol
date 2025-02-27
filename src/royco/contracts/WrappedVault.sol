@@ -520,27 +520,25 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
         if (market.status != IDahlia.MarketStatus.Active) return 0;
 
         // Account for interest rate accrued in Dahlia market
-        uint256 dahliaInterestPerSec;
         if (reward == address(DEPOSIT_ASSET)) {
             // get interest in 1 sec
-            (uint256 interestTokensPerSecond,,) =
+            (, uint256 _newRatePerSec,) =
                 IIrm(market.irm).calculateInterest(1, market.totalLendAssets + assets, market.totalBorrowAssets, market.fullUtilizationRate);
-
-            // calc protocol fee
-            uint256 protocolFeeAssets = interestTokensPerSecond * market.protocolFeeRate / Constants.FEE_PRECISION;
-            dahliaInterestPerSec = interestTokensPerSecond - protocolFeeAssets;
+            // we do not want to not want to divide by WAD as we need to multiple by WAD to compute the rewardsRate
+            uint256 dahliaWadInterestPerSec =
+                (market.totalBorrowAssets * _newRatePerSec) * (Constants.FEE_PRECISION - market.protocolFeeRate) / Constants.FEE_PRECISION;
+            rewardsRate = dahliaWadInterestPerSec / (market.totalLendPrincipalAssets + assets);
         }
 
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
-
         // if (rewardsInterval.start > block.timestamp || block.timestamp >= rewardsInterval.end) return rewardsRate;
         // Due to the fact we extending the rewards period in rewardToInterval() for loan token
         // we should decrease end period to stop include of reward rate
-        if (rewardsInterval.start > block.timestamp || block.timestamp + MIN_CAMPAIGN_DURATION >= rewardsInterval.end) {
-            return SoladyMath.divWad(dahliaInterestPerSec, market.totalLendPrincipalAssets + assets);
-        }
+        if (rewardsInterval.start > block.timestamp) return rewardsRate;
+        if (block.timestamp + MIN_CAMPAIGN_DURATION >= rewardsInterval.end) return rewardsRate;
+
         // totalPrincipal() should be always above 0 due to 1 burn asset
-        rewardsRate = SoladyMath.divWad(rewardsInterval.rate + dahliaInterestPerSec, market.totalLendPrincipalAssets + assets);
+        rewardsRate += SoladyMath.divWad(rewardsInterval.rate, market.totalLendPrincipalAssets + assets);
     }
 
     /*//////////////////////////////////////////////////////////////

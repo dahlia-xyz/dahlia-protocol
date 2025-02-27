@@ -65,13 +65,13 @@ contract WrappedVaultRateAfterDepositTest is Test {
 
         vm.forward(1);
         uint256 dahliaRatePerSec = $.dahlia.previewLendRateAfterDeposit($.marketId, potentialDepositAssets);
-        assertEq(dahliaRatePerSec, 1_403_640_141);
-        assertEq(dahliaRatePerSec * SECONDS_IN_YEAR, 44_265_195_486_576_000); // 4.42% yearly
+        assertEq(dahliaRatePerSec, 1_403_640_141, "rate per sec");
+        assertEq(dahliaRatePerSec * SECONDS_IN_YEAR, 44_265_195_486_576_000, "rate per year"); // 4.42% yearly
 
         uint256 ratePerSec = $.vault.previewRateAfterDeposit(address($.loanToken), potentialDepositAssets);
         uint256 profitYearly = ratePerSec * SECONDS_IN_YEAR * potentialDepositAssets / 1e18;
 
-        assertEq(ratePerSec, 1_396_039_603);
-        assertEq(profitYearly, 44_025_504); // 44.02 tokens from 1000
+        assertEq(ratePerSec, 1_403_640_143, "rate per second after deposit");
+        assertEq(profitYearly, 44_265_195, "profit yearly"); // 44.02 tokens from 1000
     }
 }

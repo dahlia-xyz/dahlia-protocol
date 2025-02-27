@@ -81,6 +81,15 @@ abstract contract DahliaTest is Test {
             : string(abi.encodePacked(integerString, ".", fractionalPart.toString(), " ", symbol));
     }
 
+    function percentPerSecToAPY(uint256 percentPerSec) public pure returns (string memory) {
+        return toFloatString(percentPerSec * 365.24 days * 100, 18, "%");
+    }
+
+    // This is token per second for single token
+    function vaultRatePerSecToAPY(uint256 ratePerSec) public pure returns (string memory) {
+        return toFloatString(ratePerSec * 365.24 days * 100, 18, "%");
+    }
+
     function toPercentString(uint256 value) public pure returns (string memory) {
         return toFloatString(value, 3, "%");
     }
