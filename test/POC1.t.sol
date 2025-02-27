@@ -86,7 +86,7 @@ contract POS1Test is POSTest {
         vm.forward(blocks - 1);
         validateUserPos("1 ", 866_499_926, 866_499_926, 866, 866);
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, 0), 8_750_145, "lend rate after 10000 blocks");
-        assertEq($.vault.previewRateAfterDeposit(address($.loanToken), 0), 8_662_644, "lend rate after 10000 blocks using vault");
+        assertEq($.vault.previewRateAfterDeposit(address($.loanToken), 0), 8_662_643, "lend rate after 10000 blocks using vault");
         assertEq($.dahlia.previewLendRateAfterDeposit($.marketId, pos.lent), 5_647_219, "lend rate if deposit more assets");
         assertEq($.vault.previewRateAfterDeposit(address($.loanToken), pos.lent), 5_590_747, "lend rate if deposit more assets using vault");
         vm.dahliaClaimInterestBy($.carol, $);

@@ -71,7 +71,7 @@ contract WrappedVaultRateAfterDepositTest is Test {
         uint256 ratePerSec = $.vault.previewRateAfterDeposit(address($.loanToken), potentialDepositAssets);
         uint256 profitYearly = ratePerSec * SECONDS_IN_YEAR * potentialDepositAssets / 1e18;
 
-        assertEq(ratePerSec, 1_403_640_143, "rate per second after deposit");
+        assertEq(ratePerSec, 1_403_640_141, "rate per second after deposit");
         assertEq(profitYearly, 44_265_195, "profit yearly"); // 44.02 tokens from 1000
     }
 }

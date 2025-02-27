@@ -49,8 +49,7 @@ abstract contract POSTest is DahliaTest {
         console.log(suffix, "market.utilization", state.totalBorrowAssets * 100_000 / state.totalLendAssets);
         console.log(suffix, "market.ratePerSec", state.ratePerSec);
         console.log(suffix, "market.borrowAPY", percentPerSecToAPY(state.ratePerSec));
-        WrappedVault vault = WrappedVault(address(state.vault));
-        (,, uint96 rate) = vault.rewardToInterval(state.loanToken);
+        uint256 rate = $.vault.previewRateAfterDeposit(address($.loanToken), 0);
         console.log(suffix, "market.rewardAPY", percentPerSecToAPY(rate));
         // 100%
         //console.log(suffix, "market.lendAPY", (state.totalBorrowAssets * state.ratePerSec * 365.24 days * 1000 / 1e18) / state.totalLendAssets);

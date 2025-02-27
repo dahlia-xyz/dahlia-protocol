@@ -527,7 +527,7 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
             // we do not want to not want to divide by WAD as we need to multiple by WAD to compute the rewardsRate
             uint256 dahliaWadInterestPerSec =
                 (market.totalBorrowAssets * _newRatePerSec) * (Constants.FEE_PRECISION - market.protocolFeeRate) / Constants.FEE_PRECISION;
-            rewardsRate = dahliaWadInterestPerSec / (market.totalLendPrincipalAssets + assets);
+            rewardsRate = dahliaWadInterestPerSec / (market.totalLendAssets + assets);
         }
 
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];

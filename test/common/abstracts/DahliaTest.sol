@@ -72,13 +72,28 @@ abstract contract DahliaTest is Test {
     function toFloatString(uint256 value, uint256 decimals, string memory symbol) public pure returns (string memory) {
         uint256 ten = 10 ** decimals;
         uint256 integerPart = value / ten; // Whole number part
-        uint256 fractionalValue = value % ten;
-        uint256 divider = ten / 10;
-        uint256 fractionalPart = fractionalValue / divider; // Fractional part (1 decimal place)
+        // Extract 4-digit fractional part by scaling the remainder.
+        uint256 fractionalPart = (value % ten) * 10_000 / ten;
         string memory integerString = integerPart.toString();
-        return fractionalPart == 0
-            ? string.concat(integerString, " ", symbol)
-            : string(abi.encodePacked(integerString, ".", fractionalPart.toString(), " ", symbol));
+
+        // If there is no fractional part, simply return the integer and symbol.
+        if (fractionalPart == 0) {
+            return string.concat(integerString, " ", symbol);
+        }
+
+        // Convert fractionalPart to string and pad with zeros if necessary.
+        string memory fractionalString = _padLeftZeros(fractionalPart, 4);
+        return string(abi.encodePacked(integerString, ".", fractionalString, " ", symbol));
+    }
+
+    function _padLeftZeros(uint256 number, uint256 length) internal pure returns (string memory) {
+        string memory numberString = number.toString();
+        uint256 numZeros = length - bytes(numberString).length;
+        bytes memory zeros = new bytes(numZeros);
+        for (uint256 i = 0; i < numZeros; i++) {
+            zeros[i] = bytes("0")[0];
+        }
+        return string(abi.encodePacked(zeros, numberString));
     }
 
     function percentPerSecToAPY(uint256 percentPerSec) public pure returns (string memory) {
