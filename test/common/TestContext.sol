@@ -8,6 +8,7 @@ import { PointsFactory } from "@royco/PointsFactory.sol";
 import { Dahlia } from "src/core/contracts/Dahlia.sol";
 import { DahliaRegistry, IDahliaRegistry } from "src/core/contracts/DahliaRegistry.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
+
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IDahlia } from "src/core/interfaces/IDahlia.sol";
 import { IrmFactory } from "src/irm/contracts/IrmFactory.sol";
@@ -16,6 +17,7 @@ import { IrmConstants } from "src/irm/helpers/IrmConstants.sol";
 import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { DahliaChainlinkOracleFactory } from "src/oracles/contracts/DahliaChainlinkOracleFactory.sol";
 import { DahliaDualOracleFactory } from "src/oracles/contracts/DahliaDualOracleFactory.sol";
+import { DahliaKodiakIslandPythOracleFactory } from "src/oracles/contracts/DahliaKodiakIslandPythOracleFactory.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
 import { DahliaUniswapV3OracleFactory } from "src/oracles/contracts/DahliaUniswapV3OracleFactory.sol";
 import { Timelock } from "src/oracles/contracts/Timelock.sol";
@@ -26,7 +28,7 @@ import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestConstants } from "test/common/TestConstants.sol";
 import { ERC20Mock, IERC20 } from "test/common/mocks/ERC20Mock.sol";
 import { OracleMock } from "test/common/mocks/OracleMock.sol";
-import { Mainnet } from "test/oracles/Constants.sol";
+import { Berachain, Mainnet } from "test/oracles/Constants.sol";
 
 interface IERC20Mint is IERC20 {
     function mint(address account, uint256 value) external returns (bool);
@@ -338,6 +340,16 @@ contract TestContext {
         }
         address timelock = createTimelock();
         factory = new DahliaPythOracleFactory(timelock, Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
+        contracts[index] = address(factory);
+    }
+
+    function createKodiakIslandPythOracleFactory() public returns (DahliaKodiakIslandPythOracleFactory factory) {
+        string memory index = "DahliaKodiakIslandPythOracleFactory";
+        if (contracts[index] != address(0)) {
+            return DahliaKodiakIslandPythOracleFactory(contracts[index]);
+        }
+        address timelock = createTimelock();
+        factory = new DahliaKodiakIslandPythOracleFactory(timelock, Berachain.PYTH_STATIC_ORACLE_ADDRESS);
         contracts[index] = address(factory);
     }
 

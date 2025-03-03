@@ -90,3 +90,11 @@ library Mainnet {
     address internal constant USDC_USD_CHAINLINK_ORACLE = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
     address internal constant UNI_WETH_CHAINLINK_ORACLE = 0xD6aA3D25116d8dA79Ea0246c4826EB951872e02e;
 }
+
+library Berachain {
+    address internal constant PYTH_STATIC_ORACLE_ADDRESS = 0x2880aB155794e7179c9eE2e38200202908C17B43;
+    address internal constant WBERA_ERC20 = 0x6969696969696969696969696969696969696969;
+    address internal constant HONEY_ERC20 = 0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce;
+    address internal constant WETH_ERC20 = 0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590;
+    address internal constant WBERA_HONEY_KODIAK_ISLAND = 0x4a254B11810B8EBb63C5468E438FC561Cb1bB1da;
+}
