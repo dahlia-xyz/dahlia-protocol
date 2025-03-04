@@ -19,11 +19,13 @@ contract DahliaKodiakIslandPythOracleFactory is DahliaOracleFactoryBase, DahliaO
     /// @param params DahliaKodiakIslandPythOracle.Params struct.
     /// @param delays DahliaKodiakIslandPythOracle.Delays struct.
     /// @return oracle The deployed (or existing) DahliaKodiakIslandPythOracle contract.
-    function createKodiakIslandPythOracle(DahliaKodiakIslandPythOracle.Params memory params, DahliaKodiakIslandPythOracle.Delays memory delays)
-        external
-        returns (address oracle)
-    {
-        bytes memory encodedArgs = abi.encode(_TIMELOCK, params, delays, _STATIC_ORACLE_ADDRESS);
+    function createKodiakIslandPythOracle(
+        DahliaKodiakIslandPythOracle.Params memory params,
+        DahliaKodiakIslandPythOracle.Delays memory delays,
+        uint32 twapDuration,
+        uint32 thresholdPercentage
+    ) external returns (address oracle) {
+        bytes memory encodedArgs = abi.encode(_TIMELOCK, params, delays, _STATIC_ORACLE_ADDRESS, twapDuration, thresholdPercentage);
         bytes32 salt = keccak256(encodedArgs);
         oracle = CREATE3.predictDeterministicAddress(salt);
 

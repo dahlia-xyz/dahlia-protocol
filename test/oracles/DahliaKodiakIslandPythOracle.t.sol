@@ -51,7 +51,9 @@ contract DahliaKodiakIslandPythOracleTest is Test {
                     quoteToken: Berachain.WETH_ERC20,
                     quoteFeed: 0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace // ETH
                  }),
-                delays
+                delays,
+                300,
+                5
             )
         );
     }
@@ -92,7 +94,8 @@ contract DahliaKodiakIslandPythOracleTest is Test {
     }
 
     function test_uniswap_v3_swap_attack() public {
-        (uint256 beforePrice,) = oracle.getPrice();
+        (uint256 beforePrice, bool beforeIsBadData) = oracle.getPrice();
+        assertEq(beforeIsBadData, false);
         IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
         (uint256 underlying0, uint256 underlying1) = kodiakIsland.getUnderlyingBalances();
 
@@ -124,10 +127,11 @@ contract DahliaKodiakIslandPythOracleTest is Test {
 
         IERC20(token0).approve(address(pool), type(uint256).max);
 
-        (uint256 afterPrice,) = oracle.getPrice();
+        (uint256 afterPrice, bool afterIsBadData) = oracle.getPrice();
 
         //        assertEq(beforePrice, afterPrice);
-        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
+        //        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
+        assertEq(afterIsBadData, true);
     }
 
     function uniswapV3MintCallback(uint256 amount0Owed, uint256 amount1Owed, bytes calldata _data) external {

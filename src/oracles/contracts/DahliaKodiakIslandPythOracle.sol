@@ -9,6 +9,8 @@ import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathL
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
+import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import { console } from "@forge-std/console.sol";
 
 /// @notice Minimal interface for the KodiakIsland.
 interface IKodiakIsland {
@@ -19,6 +21,7 @@ interface IKodiakIsland {
     function pool() external view returns (address);
     function mint(uint256 mintAmount, address receiver) external returns (uint256 amount0, uint256 amount1, uint128 liquidityMinted);
     function burn(uint256 burnAmount, address receiver) external returns (uint256 amount0, uint256 amount1, uint128 liquidityBurned);
+    function getAvgPrice(uint32 interval) external view returns (uint160 avgSqrtPriceX96);
 }
 
 /// @title KodiakIslandPythOracle
@@ -38,6 +41,19 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     /// @param newMaxDelays The new max oracle delay settings
     event MaximumOracleDelaysUpdated(Delays oldMaxDelays, Delays newMaxDelays);
 
+    /// @dev Emitted when the TWAP duration is updated
+    event TwapDurationUpdated(uint256 oldTwapDuration, uint256 newTwapDuration);
+    /// @dev Emitted when the threshold percentage is updated
+    event ThresholdPercentageUpdated(uint256 oldThresholdPercentage, uint256 newThresholdPercentage);
+
+    error TwapDurationIsTooShort();
+    error TresholdPercentageIsTooHigh();
+
+    uint32 public constant MIN_TWAP_DURATION = 300;
+
+    // Maximum threshold constant set to 10% (i.e., 10).
+    uint256 public constant MAX_THRESHOLD_PERCENTAGE = 10;
+
     // These conversion factors convert each underlying token's price (from its Pyth feed)
     // into QUOTE_TOKEN terms.
     uint256 public immutable ORACLE_PRECISION_TOKEN0;
@@ -56,6 +72,11 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     uint256 public baseToken0MaxDelay; // 32 bytes
     uint256 public baseToken1MaxDelay; // 32 bytes
     uint256 public quoteMaxDelay; // 32 bytes
+
+    // TWAP duration
+    uint32 public twapDuration;
+    // Deviation in percents between the TWAP price and current price
+    uint32 public thresholdPercentage;
 
     /// @notice Oracle configuration parameters.
     struct Params {
@@ -78,7 +99,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     /// @param params The pyth oracle parameters
     /// @param delays Maximum allowed delays for base, and quote feed data
     /// @param staticOracleAddress The address of the Pyth static oracle
-    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress)
+    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress, uint32 duration, uint32 thresholdPercentage)
         Ownable(owner)
         DahliaOracleStaticAddress(staticOracleAddress)
     {
@@ -87,6 +108,9 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         BASE_TOKEN0_FEED = params.baseToken0Feed;
         BASE_TOKEN1_FEED = params.baseToken1Feed;
         QUOTE_FEED = params.quoteFeed;
+
+        _setTwapDuration(duration);
+        _setThresholdPercentage(thresholdPercentage);
 
         emit ParamsUpdated(params);
         _setMaximumOracleDelays(delays);
@@ -123,6 +147,29 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         return IPyth(_STATIC_ORACLE_ADDRESS).getPriceUnsafe(feedId).expo;
     }
 
+    /// @dev Internal function to update the TWAP duration
+    /// @param newTwapDuration The new TWAP duration
+    function _setTwapDuration(uint32 newTwapDuration) internal {
+        require(newTwapDuration >= MIN_TWAP_DURATION, TwapDurationIsTooShort());
+        emit TwapDurationUpdated({ oldTwapDuration: twapDuration, newTwapDuration: newTwapDuration });
+        twapDuration = newTwapDuration;
+    }
+
+    /// @notice Set a new TWAP duration for the Uniswap V3 TWAP oracle
+    /// @dev Only callable by the timelock address
+    /// @param newTwapDuration The new TWAP duration in seconds
+    function setTwapDuration(uint32 newTwapDuration) external onlyOwner {
+        _setTwapDuration(newTwapDuration);
+    }
+
+    /// @dev Internal function to update the treshold percentage
+    /// @param newThresholdPercentage The new threshold percentage
+    function _setThresholdPercentage(uint32 newThresholdPercentage) internal {
+        require(newThresholdPercentage <= MAX_THRESHOLD_PERCENTAGE, TresholdPercentageIsTooHigh());
+        emit ThresholdPercentageUpdated({ oldThresholdPercentage: thresholdPercentage, newThresholdPercentage: newThresholdPercentage });
+        thresholdPercentage = newThresholdPercentage;
+    }
+
     /// @inheritdoc IDahliaOracle
     /// @notice Returns the price of one vault token (share) in terms of QUOTE_TOKEN.
     /// The computation is:
@@ -138,9 +185,11 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         uint256 priceToken0InQuote = ORACLE_PRECISION_TOKEN0.mulDiv(token0Price.price.toUint256(), quotePrice.price.toUint256());
         uint256 priceToken1InQuote = ORACLE_PRECISION_TOKEN1.mulDiv(token1Price.price.toUint256(), quotePrice.price.toUint256());
 
+        IKodiakIsland kodiakIsland = IKodiakIsland(KODIAK_ISLAND);
+
         // Get the vault's current underlying balances and total supply.
-        (uint256 underlying0, uint256 underlying1) = IKodiakIsland(KODIAK_ISLAND).getUnderlyingBalances();
-        uint256 totalVaultSupply = IKodiakIsland(KODIAK_ISLAND).totalSupply();
+        (uint256 underlying0, uint256 underlying1) = kodiakIsland.getUnderlyingBalances();
+        uint256 totalVaultSupply = kodiakIsland.totalSupply();
         require(totalVaultSupply > 0, "Vault supply is zero");
 
         // Compute total underlying value in QUOTE_TOKEN terms.
@@ -148,7 +197,32 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
         // Price per vault token (share).
         price = totalValueInQuote / totalVaultSupply;
-        isBadData = (price == 0);
+
+        uint160 avgSqrtPriceX96 = kodiakIsland.getAvgPrice(twapDuration);
+        console.log("avgSqrtPriceX96");
+        IUniswapV3Pool pool = IUniswapV3Pool(kodiakIsland.pool());
+        console.log("afterPool");
+        (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
+
+        console.log("sqrtPriceX96");
+        // 221867495453152828587097359530
+        // 221502514429715227405188012841
+
+        // Calculate the absolute difference between current and average prices
+        console.log("before");
+        uint256 diff;
+        if (sqrtPriceX96 > avgSqrtPriceX96) {
+            diff = uint256(sqrtPriceX96) - uint256(avgSqrtPriceX96);
+        } else {
+            diff = uint256(avgSqrtPriceX96) - uint256(sqrtPriceX96);
+        }
+        console.log("after");
+
+        // Compute the deviation percentage.
+        // Note: Multiplying diff by 100 to express as a percentage.
+        uint256 deviationPercentage = (diff * 100) / uint256(avgSqrtPriceX96);
+
+        isBadData = (deviationPercentage > thresholdPercentage) || (price == 0);
     }
 
     /// @dev Internal function to update maximum oracle delays.

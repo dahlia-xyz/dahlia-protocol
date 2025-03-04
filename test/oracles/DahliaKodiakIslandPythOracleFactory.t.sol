@@ -79,7 +79,7 @@ contract DahliaKodiakIslandPythOracleFactoryTest is Test {
         emit DahliaKodiakIslandPythOracleFactory.DahliaKodiakIslandPythOracleCreated(address(this), oracleAddress);
 
         vm.resumeGasMetering();
-        DahliaKodiakIslandPythOracle oracle = DahliaKodiakIslandPythOracle(oracleFactory.createKodiakIslandPythOracle(params, delays));
+        DahliaKodiakIslandPythOracle oracle = DahliaKodiakIslandPythOracle(oracleFactory.createKodiakIslandPythOracle(params, delays, 300, 5));
         (uint256 price, bool isBadData) = oracle.getPrice();
         vm.pauseGasMetering();
         assertEq(oracle.ORACLE_PRECISION_TOKEN0(), 10 ** 36);
@@ -99,7 +99,7 @@ contract DahliaKodiakIslandPythOracleFactoryTest is Test {
         //        assertEq(((price * 1e18) / 1e18) / 1e36, 349); // 349 UNI per 1 WETH
         assertEq(isBadData, false);
 
-        address oracle2 = oracleFactory.createKodiakIslandPythOracle(params, delays);
+        address oracle2 = oracleFactory.createKodiakIslandPythOracle(params, delays, 300, 5);
         assertEq(address(oracle), address(oracle2), "should be the same address");
     }
 }
