@@ -9,8 +9,8 @@ import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathL
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
-import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import { console } from "@forge-std/console.sol";
+import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 /// @notice Minimal interface for the KodiakIsland.
 interface IKodiakIsland {
@@ -22,6 +22,21 @@ interface IKodiakIsland {
     function mint(uint256 mintAmount, address receiver) external returns (uint256 amount0, uint256 amount1, uint128 liquidityMinted);
     function burn(uint256 burnAmount, address receiver) external returns (uint256 amount0, uint256 amount1, uint128 liquidityBurned);
     function getAvgPrice(uint32 interval) external view returns (uint160 avgSqrtPriceX96);
+}
+
+interface IKodiakUniswapV3PoolState {
+    function slot0()
+        external
+        view
+        returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint16 observationIndex,
+            uint16 observationCardinality,
+            uint16 observationCardinalityNext,
+            uint32 feeProtocol,
+            bool unlocked
+        );
 }
 
 /// @title KodiakIslandPythOracle
@@ -200,7 +215,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
         uint160 avgSqrtPriceX96 = kodiakIsland.getAvgPrice(twapDuration);
         console.log("avgSqrtPriceX96");
-        IUniswapV3Pool pool = IUniswapV3Pool(kodiakIsland.pool());
+        IKodiakUniswapV3PoolState pool = IKodiakUniswapV3PoolState(kodiakIsland.pool());
         console.log("afterPool");
         (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
 
