@@ -9,8 +9,6 @@ import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathL
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";
-import { console } from "@forge-std/console.sol";
-import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 /// @notice Minimal interface for the KodiakIsland.
 interface IKodiakIsland {
@@ -58,16 +56,16 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
     /// @dev Emitted when the TWAP duration is updated
     event TwapDurationUpdated(uint256 oldTwapDuration, uint256 newTwapDuration);
-    /// @dev Emitted when the threshold percentage is updated
-    event ThresholdPercentageUpdated(uint256 oldThresholdPercentage, uint256 newThresholdPercentage);
+    /// @dev Emitted when the slippage percentage is updated
+    event SlippagePercentageUpdated(uint256 oldSlippagePercentage, uint256 newSlippagePercentage);
 
     error TwapDurationIsTooShort();
-    error TresholdPercentageIsTooHigh();
+    error SlippagePercentageIsTooHigh();
 
-    uint32 public constant MIN_TWAP_DURATION = 300;
+    uint32 public constant MIN_TWAP_DURATION = 10;
 
-    // Maximum threshold constant set to 10% (i.e., 10).
-    uint256 public constant MAX_THRESHOLD_PERCENTAGE = 10;
+    // Maximum threshold constant set to 10% (100% - 1e5).
+    uint32 public constant MAX_SLIPPAGE_PERCENT = 1e4;
 
     // These conversion factors convert each underlying token's price (from its Pyth feed)
     // into QUOTE_TOKEN terms.
@@ -91,7 +89,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     // TWAP duration
     uint32 public twapDuration;
     // Deviation in percents between the TWAP price and current price
-    uint32 public thresholdPercentage;
+    uint32 public slippagePercentage;
 
     /// @notice Oracle configuration parameters.
     struct Params {
@@ -114,7 +112,9 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     /// @param params The pyth oracle parameters
     /// @param delays Maximum allowed delays for base, and quote feed data
     /// @param staticOracleAddress The address of the Pyth static oracle
-    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress, uint32 duration, uint32 thresholdPercentage)
+    /// @param duration TWAP duration in seconds
+    /// @param slippagePercentage TWAP slippage percentage
+    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress, uint32 duration, uint32 slippagePercentage)
         Ownable(owner)
         DahliaOracleStaticAddress(staticOracleAddress)
     {
@@ -125,7 +125,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         QUOTE_FEED = params.quoteFeed;
 
         _setTwapDuration(duration);
-        _setThresholdPercentage(thresholdPercentage);
+        _setSlippagePercentage(slippagePercentage);
 
         emit ParamsUpdated(params);
         _setMaximumOracleDelays(delays);
@@ -177,12 +177,16 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         _setTwapDuration(newTwapDuration);
     }
 
-    /// @dev Internal function to update the treshold percentage
-    /// @param newThresholdPercentage The new threshold percentage
-    function _setThresholdPercentage(uint32 newThresholdPercentage) internal {
-        require(newThresholdPercentage <= MAX_THRESHOLD_PERCENTAGE, TresholdPercentageIsTooHigh());
-        emit ThresholdPercentageUpdated({ oldThresholdPercentage: thresholdPercentage, newThresholdPercentage: newThresholdPercentage });
-        thresholdPercentage = newThresholdPercentage;
+    /// @dev Internal function to update the slippage percentage
+    /// @param newSlippagePercentage The new slippage percentage
+    function _setSlippagePercentage(uint32 newSlippagePercentage) internal {
+        require(newSlippagePercentage <= MAX_SLIPPAGE_PERCENT, SlippagePercentageIsTooHigh());
+        emit SlippagePercentageUpdated({ oldSlippagePercentage: slippagePercentage, newSlippagePercentage: newSlippagePercentage });
+        slippagePercentage = newSlippagePercentage;
+    }
+
+    function setSlippagePercentage(uint32 newSlippagePercentage) external onlyOwner {
+        _setSlippagePercentage(newSlippagePercentage);
     }
 
     /// @inheritdoc IDahliaOracle
@@ -214,30 +218,22 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         price = totalValueInQuote / totalVaultSupply;
 
         uint160 avgSqrtPriceX96 = kodiakIsland.getAvgPrice(twapDuration);
-        console.log("avgSqrtPriceX96");
         IKodiakUniswapV3PoolState pool = IKodiakUniswapV3PoolState(kodiakIsland.pool());
-        console.log("afterPool");
         (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
 
-        console.log("sqrtPriceX96");
-        // 221867495453152828587097359530
-        // 221502514429715227405188012841
-
         // Calculate the absolute difference between current and average prices
-        console.log("before");
         uint256 diff;
         if (sqrtPriceX96 > avgSqrtPriceX96) {
             diff = uint256(sqrtPriceX96) - uint256(avgSqrtPriceX96);
         } else {
             diff = uint256(avgSqrtPriceX96) - uint256(sqrtPriceX96);
         }
-        console.log("after");
 
         // Compute the deviation percentage.
-        // Note: Multiplying diff by 100 to express as a percentage.
-        uint256 deviationPercentage = (diff * 100) / uint256(avgSqrtPriceX96);
+        // Note: Multiplying diff by 10000 to express as a percentage.
+        uint256 deviationPercentage = (diff * 1e5) / uint256(avgSqrtPriceX96);
 
-        isBadData = (deviationPercentage > thresholdPercentage) || (price == 0);
+        isBadData = (deviationPercentage > slippagePercentage) || (price == 0);
     }
 
     /// @dev Internal function to update maximum oracle delays.

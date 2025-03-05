@@ -94,7 +94,7 @@ contract DahliaKodiakIslandPythOracleTest is Test {
     }
 
     function test_uniswap_v3_swap_attack() public {
-        (uint256 beforePrice, bool beforeIsBadData) = oracle.getPrice();
+        (, bool beforeIsBadData) = oracle.getPrice();
         assertEq(beforeIsBadData, false);
         IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
         (uint256 underlying0, uint256 underlying1) = kodiakIsland.getUnderlyingBalances();
@@ -127,7 +127,7 @@ contract DahliaKodiakIslandPythOracleTest is Test {
 
         IERC20(token0).approve(address(pool), type(uint256).max);
 
-        (uint256 afterPrice, bool afterIsBadData) = oracle.getPrice();
+        (, bool afterIsBadData) = oracle.getPrice();
 
         //        assertEq(beforePrice, afterPrice);
         //        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
@@ -148,7 +148,8 @@ contract DahliaKodiakIslandPythOracleTest is Test {
 
         assertApproxEqRel(a, b, maxPercentDelta);
 
-        (uint256 beforePrice,) = oracle.getPrice();
+        (uint256 beforePrice, bool beforeIsBadData) = oracle.getPrice();
+        assertEq(beforeIsBadData, false);
         IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
 
         IUniswapV3Pool pool = IUniswapV3Pool(kodiakIsland.pool());
@@ -179,7 +180,9 @@ contract DahliaKodiakIslandPythOracleTest is Test {
         assertLt(token0BalanceAfter, token0BalanceBefore);
         assertLt(token1BalanceAfter, token0BalanceBefore);
 
-        (uint256 afterPrice,) = oracle.getPrice();
+        (uint256 afterPrice, bool afterIsBadData) = oracle.getPrice();
+
+        assertEq(afterIsBadData, false);
 
         //        assertEq(beforePrice, afterPrice);
         //        assertGe(beforePrice + (beforePrice * 1) / 100, afterPrice);
@@ -195,7 +198,9 @@ contract DahliaKodiakIslandPythOracleTest is Test {
         assertApproxEqAbs(token0BalanceFinal, token0BalanceBefore, 10);
         assertApproxEqAbs(token1BalanceFinal, token1BalanceBefore, 10);
 
-        (uint256 finalPrice,) = oracle.getPrice();
+        (uint256 finalPrice, bool finalIsBadData) = oracle.getPrice();
+
+        assertEq(finalIsBadData, false);
 
         //        assertEq(afterPrice, finalPrice);
         assertApproxEqRel(afterPrice, finalPrice, 0.01e18);
