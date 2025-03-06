@@ -9,8 +9,10 @@ import { FixedPointMathLib as SoladyMath } from "../../../lib/solady/src/utils/F
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "../../../lib/solady/src/utils/SafeTransferLib.sol";
 import { FixedPointMathLib } from "../../../lib/solmate/src/utils/FixedPointMathLib.sol";
+import { Constants } from "../../core/helpers/Constants.sol";
 import { SharesMathLib } from "../../core/helpers/SharesMathLib.sol";
 import { IDahlia } from "../../core/interfaces/IDahlia.sol";
+import { IIrm } from "../../irm/interfaces/IIrm.sol";
 import { WrappedVaultFactory } from "../contracts/WrappedVaultFactory.sol";
 import { IDahliaWrappedVault } from "../interfaces/IDahliaWrappedVault.sol";
 import { InitializableERC20 } from "../periphery/InitializableERC20.sol";
@@ -519,8 +521,13 @@ contract WrappedVault is Ownable, InitializableERC20, IDahliaWrappedVault {
 
         // Account for interest rate accrued in Dahlia market
         if (reward == address(DEPOSIT_ASSET)) {
-            // 18 decimals
-            rewardsRate = dahlia.previewLendRateAfterDeposit(id, assets);
+            // get interest in 1 sec
+            (, uint256 _newRatePerSec,) =
+                IIrm(market.irm).calculateInterest(1, market.totalLendAssets + assets, market.totalBorrowAssets, market.fullUtilizationRate);
+            // we do not want to not want to divide by WAD as we need to multiple by WAD to compute the rewardsRate
+            uint256 dahliaWadInterestPerSec =
+                (market.totalBorrowAssets * _newRatePerSec) * (Constants.FEE_PRECISION - market.protocolFeeRate) / Constants.FEE_PRECISION;
+            rewardsRate = dahliaWadInterestPerSec / (market.totalLendAssets + assets);
         }
 
         RewardsInterval memory rewardsInterval = _rewardToInterval[reward];
