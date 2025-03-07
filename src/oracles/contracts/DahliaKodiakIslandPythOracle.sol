@@ -69,8 +69,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
     // These conversion factors convert each underlying token's price (from its Pyth feed)
     // into QUOTE_TOKEN terms.
-    uint256 public immutable ORACLE_PRECISION_TOKEN0;
-    uint256 public immutable ORACLE_PRECISION_TOKEN1;
+    uint256 public immutable ORACLE_PRECISION;
 
     // The vault (KodiakIsland) whose shares we want to price.
     address public immutable KODIAK_ISLAND; // 20 bytes
@@ -113,8 +112,8 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     /// @param delays Maximum allowed delays for base, and quote feed data
     /// @param staticOracleAddress The address of the Pyth static oracle
     /// @param duration TWAP duration in seconds
-    /// @param slippagePercentage TWAP slippage percentage
-    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress, uint32 duration, uint32 slippagePercentage)
+    /// @param slippage TWAP slippage percentage
+    constructor(address owner, Params memory params, Delays memory delays, address staticOracleAddress, uint32 duration, uint32 slippage)
         Ownable(owner)
         DahliaOracleStaticAddress(staticOracleAddress)
     {
@@ -125,7 +124,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         QUOTE_FEED = params.quoteFeed;
 
         _setTwapDuration(duration);
-        _setSlippagePercentage(slippagePercentage);
+        _setSlippagePercentage(slippage);
 
         emit ParamsUpdated(params);
         _setMaximumOracleDelays(delays);
@@ -134,6 +133,7 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         address token0Addr = IKodiakIsland(params.kodiakIsland).token0();
         address token1Addr = IKodiakIsland(params.kodiakIsland).token1();
         // Get decimals from ERC20 metadata.
+        int32 baseDecimals = getDecimals(params.kodiakIsland);
         int32 token0Decimals = getDecimals(token0Addr);
         int32 token1Decimals = getDecimals(token1Addr);
         int32 quoteDecimals = getDecimals(params.quoteToken);
@@ -145,11 +145,10 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
         // Compute conversion precision for each underlying token.
         // Formula: precision = 36 + quoteDecimals + tokenFeedExpo - quoteFeedExpo - tokenDecimals.
-        uint256 precision0 = (36 + quoteDecimals + token0FeedExpo - quoteFeedExpo - token0Decimals).toUint256();
-        uint256 precision1 = (36 + quoteDecimals + token1FeedExpo - quoteFeedExpo - token1Decimals).toUint256();
+        // TODO: I have no idea what precision should be
+        uint256 precision = (36 + quoteDecimals + token0FeedExpo - quoteFeedExpo - token0Decimals).toUint256();
 
-        ORACLE_PRECISION_TOKEN0 = 10 ** precision0;
-        ORACLE_PRECISION_TOKEN1 = 10 ** precision1;
+        ORACLE_PRECISION = 10 ** precision;
     }
 
     function getDecimals(address token) internal view returns (int32) {
@@ -189,6 +188,23 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         _setSlippagePercentage(newSlippagePercentage);
     }
 
+    function _isBadData(uint256 price) internal view returns (bool isBadData) {
+        IKodiakIsland kodiakIsland = IKodiakIsland(KODIAK_ISLAND);
+        uint160 avgSqrtPriceX96 = kodiakIsland.getAvgPrice(twapDuration);
+        IKodiakUniswapV3PoolState pool = IKodiakUniswapV3PoolState(kodiakIsland.pool());
+        (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
+
+        // Calculate the absolute difference between current and average prices
+        int256 diff = avgSqrtPriceX96.toInt256() - sqrtPriceX96.toInt256();
+        uint256 absDiff = FixedPointMathLib.abs(diff);
+
+        // Compute the deviation percentage.
+        // Note: Multiplying diff by 10000 to express as a percentage.
+        uint256 deviationPercentage = (absDiff * 1e5) / uint256(uint160(avgSqrtPriceX96));
+
+        isBadData = (deviationPercentage > slippagePercentage) || (price == 0);
+    }
+
     /// @inheritdoc IDahliaOracle
     /// @notice Returns the price of one vault token (share) in terms of QUOTE_TOKEN.
     /// The computation is:
@@ -200,10 +216,6 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         PythStructs.Price memory token1Price = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(BASE_TOKEN1_FEED, baseToken1MaxDelay);
         PythStructs.Price memory quotePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(QUOTE_FEED, quoteMaxDelay);
 
-        // Convert each underlying token's price to QUOTE_TOKEN terms.
-        uint256 priceToken0InQuote = ORACLE_PRECISION_TOKEN0.mulDiv(token0Price.price.toUint256(), quotePrice.price.toUint256());
-        uint256 priceToken1InQuote = ORACLE_PRECISION_TOKEN1.mulDiv(token1Price.price.toUint256(), quotePrice.price.toUint256());
-
         IKodiakIsland kodiakIsland = IKodiakIsland(KODIAK_ISLAND);
 
         // Get the vault's current underlying balances and total supply.
@@ -211,29 +223,16 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         uint256 totalVaultSupply = kodiakIsland.totalSupply();
         require(totalVaultSupply > 0, "Vault supply is zero");
 
-        // Compute total underlying value in QUOTE_TOKEN terms.
-        uint256 totalValueInQuote = underlying0 * priceToken0InQuote + underlying1 * priceToken1InQuote;
+        // Compute total underlying value in USD
+        uint256 totalUSDValueInIsland = underlying0 * token0Price.price.toUint256() + underlying1 * token1Price.price.toUint256();
 
         // Price per vault token (share).
-        price = totalValueInQuote / totalVaultSupply;
+        uint256 pricePerShare = totalUSDValueInIsland / totalVaultSupply;
 
-        uint160 avgSqrtPriceX96 = kodiakIsland.getAvgPrice(twapDuration);
-        IKodiakUniswapV3PoolState pool = IKodiakUniswapV3PoolState(kodiakIsland.pool());
-        (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
+        // Compute the price of one vault token (share) in terms of QUOTE_TOKEN.
+        price = ORACLE_PRECISION.mulDiv(pricePerShare, quotePrice.price.toUint256());
 
-        // Calculate the absolute difference between current and average prices
-        uint256 diff;
-        if (sqrtPriceX96 > avgSqrtPriceX96) {
-            diff = uint256(sqrtPriceX96) - uint256(avgSqrtPriceX96);
-        } else {
-            diff = uint256(avgSqrtPriceX96) - uint256(sqrtPriceX96);
-        }
-
-        // Compute the deviation percentage.
-        // Note: Multiplying diff by 10000 to express as a percentage.
-        uint256 deviationPercentage = (diff * 1e5) / uint256(avgSqrtPriceX96);
-
-        isBadData = (deviationPercentage > slippagePercentage) || (price == 0);
+        isBadData = _isBadData(price);
     }
 
     /// @dev Internal function to update maximum oracle delays.
