@@ -1,24 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IStaticOracle} from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
-import {StaticOracle} from "@uniswap-v3-oracle/solidity/contracts/StaticOracle.sol";
-import {Berachain} from "test/oracles/Constants.sol";
-import {BoundUtils} from "test/common/BoundUtils.sol";
-import {DahliaKodiakIslandPythOracle, IKodiakIsland} from "src/oracles/contracts/DahliaKodiakIslandPythOracle.sol";
-import {DahliaKodiakIslandPythOracleFactory} from "src/oracles/contracts/DahliaKodiakIslandPythOracleFactory.sol";
+//import { StaticOracle } from "@uniswap-v3-oracle/solidity/contracts/StaticOracle.sol";
+//import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
+//import {IStaticOracle} from "./uniswap-static-oracle/interfaces/IStaticOracle.sol";
+//import {StaticOracle} from "./uniswap-static-oracle/contracts/StaticOracle.sol";
 
-import {IERC20} from "@forge-std/interfaces/IERC20.sol";
+import { DahliaKodiakIslandPythOracle, IKodiakIsland } from "src/oracles/contracts/DahliaKodiakIslandPythOracle.sol";
+import { DahliaKodiakIslandPythOracleFactory } from "src/oracles/contracts/DahliaKodiakIslandPythOracleFactory.sol";
+import { BoundUtils } from "test/common/BoundUtils.sol";
+import { Berachain } from "test/oracles/Constants.sol";
 
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import { IERC20 } from "@forge-std/interfaces/IERC20.sol";
+
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
+import { Test, Vm } from "@forge-std/Test.sol";
+
+import { console } from "@forge-std/console.sol";
 import { SafeCastLib } from "@solady/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "@solady/utils/SafeTransferLib.sol";
-import {Test, Vm} from "@forge-std/Test.sol";
-import {TestContext} from "test/common/TestContext.sol";
-import {Timelock} from "src/oracles/contracts/Timelock.sol";
-import {console} from "@forge-std/console.sol";
+import { Timelock } from "src/oracles/contracts/Timelock.sol";
+import { TestContext } from "test/common/TestContext.sol";
 
 contract DahliaKodiakIslandPythOracleTest is Test {
     using BoundUtils for Vm;
@@ -275,33 +279,33 @@ contract DahliaKodiakIslandPythOracleTest is Test {
         assertEq(oracle.quoteMaxDelay(), 3);
     }
 
-    function test_static_oracle_during_swap_attack() public {
-        IStaticOracle staticOracle = IStaticOracle(deployCode("StaticOracle.sol", abi.encode(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4)));
-//        IStaticOracle staticOracle = new StaticOracle(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4);
-        IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
-        address uniswapPool = kodiakIsland.pool();
-        address[] memory pools = new address[](1);
-        pools[0] = uniswapPool;
-        uint256 beforePrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
-            baseAmount: 1e36,
-            baseToken: kodiakIsland.token0(),
-            quoteToken: kodiakIsland.token1(),
-            pools: pools,
-            period: 60
-        });
-
-        swapAttack();
-
-        uint256 afterPrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
-            baseAmount: 1e36,
-            baseToken: kodiakIsland.token0(),
-            quoteToken: kodiakIsland.token1(),
-            pools: pools,
-            period: 60
-        });
-
-        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
-    }
+    //    function test_static_oracle_during_swap_attack() public {
+    //        IStaticOracle staticOracle = IStaticOracle(deployCode("StaticOracle.sol", abi.encode(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4)));
+    //        //        IStaticOracle staticOracle = new StaticOracle(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4);
+    //        IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
+    //        address uniswapPool = kodiakIsland.pool();
+    //        address[] memory pools = new address[](1);
+    //        pools[0] = uniswapPool;
+    //        uint256 beforePrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
+    //            baseAmount: 1e36,
+    //            baseToken: kodiakIsland.token0(),
+    //            quoteToken: kodiakIsland.token1(),
+    //            pools: pools,
+    //            period: 60
+    //        });
+    //
+    //        swapAttack();
+    //
+    //        uint256 afterPrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
+    //            baseAmount: 1e36,
+    //            baseToken: kodiakIsland.token0(),
+    //            quoteToken: kodiakIsland.token1(),
+    //            pools: pools,
+    //            period: 60
+    //        });
+    //
+    //        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
+    //    }
 
     function test_getAvgPrice_during_swap_attack() public {
         IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());

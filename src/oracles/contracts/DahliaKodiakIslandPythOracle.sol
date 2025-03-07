@@ -69,7 +69,8 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
     // These conversion factors convert each underlying token's price (from its Pyth feed)
     // into QUOTE_TOKEN terms.
-    uint256 public immutable ORACLE_PRECISION;
+    uint256 public immutable ORACLE_PRECISION_TOKEN0;
+    uint256 public immutable ORACLE_PRECISION_TOKEN1;
 
     // The vault (KodiakIsland) whose shares we want to price.
     address public immutable KODIAK_ISLAND; // 20 bytes
@@ -133,7 +134,6 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         address token0Addr = IKodiakIsland(params.kodiakIsland).token0();
         address token1Addr = IKodiakIsland(params.kodiakIsland).token1();
         // Get decimals from ERC20 metadata.
-        int32 baseDecimals = getDecimals(params.kodiakIsland);
         int32 token0Decimals = getDecimals(token0Addr);
         int32 token1Decimals = getDecimals(token1Addr);
         int32 quoteDecimals = getDecimals(params.quoteToken);
@@ -145,10 +145,11 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
 
         // Compute conversion precision for each underlying token.
         // Formula: precision = 36 + quoteDecimals + tokenFeedExpo - quoteFeedExpo - tokenDecimals.
-        // TODO: I have no idea what precision should be
-        uint256 precision = (36 + quoteDecimals + token0FeedExpo - quoteFeedExpo - token0Decimals).toUint256();
+        uint256 precision0 = (36 + quoteDecimals + token0FeedExpo - quoteFeedExpo - token0Decimals).toUint256();
+        uint256 precision1 = (36 + quoteDecimals + token1FeedExpo - quoteFeedExpo - token1Decimals).toUint256();
 
-        ORACLE_PRECISION = 10 ** precision;
+        ORACLE_PRECISION_TOKEN0 = 10 ** precision0;
+        ORACLE_PRECISION_TOKEN1 = 10 ** precision1;
     }
 
     function getDecimals(address token) internal view returns (int32) {
@@ -216,6 +217,10 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         PythStructs.Price memory token1Price = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(BASE_TOKEN1_FEED, baseToken1MaxDelay);
         PythStructs.Price memory quotePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(QUOTE_FEED, quoteMaxDelay);
 
+        // Convert each underlying token's price to QUOTE_TOKEN terms.
+        uint256 priceUSDToken0InQuote = ORACLE_PRECISION_TOKEN0.mulDiv(token0Price.price.toUint256(), quotePrice.price.toUint256());
+        uint256 priceUSDToken1InQuote = ORACLE_PRECISION_TOKEN1.mulDiv(token1Price.price.toUint256(), quotePrice.price.toUint256());
+
         IKodiakIsland kodiakIsland = IKodiakIsland(KODIAK_ISLAND);
 
         // Get the vault's current underlying balances and total supply.
@@ -223,14 +228,11 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         uint256 totalVaultSupply = kodiakIsland.totalSupply();
         require(totalVaultSupply > 0, "Vault supply is zero");
 
-        // Compute total underlying value in USD
-        uint256 totalUSDValueInIsland = underlying0 * token0Price.price.toUint256() + underlying1 * token1Price.price.toUint256();
+        // Compute total underlying value in QUOTE_TOKEN terms.
+        uint256 totalUSDValueInQuote = underlying0 * priceUSDToken0InQuote + underlying1 * priceUSDToken1InQuote;
 
         // Price per vault token (share).
-        uint256 pricePerShare = totalUSDValueInIsland / totalVaultSupply;
-
-        // Compute the price of one vault token (share) in terms of QUOTE_TOKEN.
-        price = ORACLE_PRECISION.mulDiv(pricePerShare, quotePrice.price.toUint256());
+        price = totalUSDValueInQuote / totalVaultSupply;
 
         isBadData = _isBadData(price);
     }
