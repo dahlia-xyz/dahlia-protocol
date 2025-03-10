@@ -25,3 +25,9 @@
 [submodule "lib/royco"]
 	path = lib/royco
 	url = https://github.com/roycoprotocol/royco
+[submodule "lib/openzeppelin-3.4.0"]
+	path = lib/openzeppelin-3.4.0
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "lib/uniswap-v3-periphery-1.4.1"]
+	path = lib/uniswap-v3-periphery-1.4.1
+	url = https://github.com/Uniswap/v3-periphery

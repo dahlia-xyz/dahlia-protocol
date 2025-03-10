@@ -6,7 +6,7 @@ out = "out"
 libs = ["lib"]
 optimizer_runs = 200
 via_ir = true
-fs_permissions = [{ access = "read", path = "./out"}]
+fs_permissions = [{ access = "read", path = "./out" }]
 
 [profile.default.fmt]
 # copied from Royco
@@ -27,6 +27,11 @@ sort_imports = true
 runs = 256
 [profile.default.invariant]
 runs = 256
+
+[profile.static-oracle]
+solc_version = "0.7.6"
+src = "src/uniswap-static-oracle"
+via_ir = false
 
 [rpc_endpoints]
 sepolia = "${SEPOLIA_RPC_URL}"
