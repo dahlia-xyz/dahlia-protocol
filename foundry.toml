@@ -7,6 +7,7 @@ libs = ["lib"]
 optimizer_runs = 200
 via_ir = true
 fs_permissions = [{ access = "read", path = "./out" }]
+unchecked_cheatcode_artifacts = true
 
 [profile.default.fmt]
 # copied from Royco
@@ -30,7 +31,7 @@ runs = 256
 
 [profile.static-oracle]
 solc_version = "0.7.6"
-src = "src/uniswap-static-oracle"
+src = "uniswap-static-oracle"
 via_ir = false
 
 [rpc_endpoints]

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 //import { StaticOracle } from "@uniswap-v3-oracle/solidity/contracts/StaticOracle.sol";
-//import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
+import { IStaticOracle } from "@uniswap-v3-oracle/solidity/interfaces/IStaticOracle.sol";
 //import {IStaticOracle} from "./uniswap-static-oracle/interfaces/IStaticOracle.sol";
 //import {StaticOracle} from "./uniswap-static-oracle/contracts/StaticOracle.sol";
 
@@ -279,33 +279,33 @@ contract DahliaKodiakIslandPythOracleTest is Test {
         assertEq(oracle.quoteMaxDelay(), 3);
     }
 
-    //    function test_static_oracle_during_swap_attack() public {
-    //        IStaticOracle staticOracle = IStaticOracle(deployCode("StaticOracle.sol", abi.encode(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4)));
-    //        //        IStaticOracle staticOracle = new StaticOracle(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4);
-    //        IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
-    //        address uniswapPool = kodiakIsland.pool();
-    //        address[] memory pools = new address[](1);
-    //        pools[0] = uniswapPool;
-    //        uint256 beforePrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
-    //            baseAmount: 1e36,
-    //            baseToken: kodiakIsland.token0(),
-    //            quoteToken: kodiakIsland.token1(),
-    //            pools: pools,
-    //            period: 60
-    //        });
-    //
-    //        swapAttack();
-    //
-    //        uint256 afterPrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
-    //            baseAmount: 1e36,
-    //            baseToken: kodiakIsland.token0(),
-    //            quoteToken: kodiakIsland.token1(),
-    //            pools: pools,
-    //            period: 60
-    //        });
-    //
-    //        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
-    //    }
+    function test_static_oracle_during_swap_attack() public {
+        IStaticOracle staticOracle = IStaticOracle(deployCode("StaticOracle.sol:StaticOracle", abi.encode(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4)));
+        //        IStaticOracle staticOracle = new StaticOracle(0xD84CBf0B02636E7f53dB9E5e45A616E05d710990, 4);
+        IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
+        address uniswapPool = kodiakIsland.pool();
+        address[] memory pools = new address[](1);
+        pools[0] = uniswapPool;
+        uint256 beforePrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
+            baseAmount: 1e36,
+            baseToken: kodiakIsland.token0(),
+            quoteToken: kodiakIsland.token1(),
+            pools: pools,
+            period: 60
+        });
+
+        swapAttack();
+
+        uint256 afterPrice = staticOracle.quoteSpecificPoolsWithTimePeriod({
+            baseAmount: 1e36,
+            baseToken: kodiakIsland.token0(),
+            quoteToken: kodiakIsland.token1(),
+            pools: pools,
+            period: 60
+        });
+
+        assertApproxEqRel(beforePrice, afterPrice, 0.01e18);
+    }
 
     function test_getAvgPrice_during_swap_attack() public {
         IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
