@@ -199,11 +199,14 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
         int256 diff = avgSqrtPriceX96.toInt256() - sqrtPriceX96.toInt256();
         uint256 absDiff = FixedPointMathLib.abs(diff);
 
-        // Compute the deviation percentage.
-        // Note: Multiplying diff by 10000 to express as a percentage.
-        uint256 deviationPercentage = (absDiff * 1e5) / uint256(uint160(avgSqrtPriceX96));
+        // Calculate average of current and average prices
+        uint256 avgPriceX96 = (avgSqrtPriceX96 + sqrtPriceX96) / 2;
 
-        isBadData = (deviationPercentage > slippagePercentage) || (price == 0);
+        // Compute the Percentage Difference.
+        // Note: Multiplying diff by 10000 to express as a percentage.
+        uint256 percentageDiff = (absDiff * 1e5) / avgPriceX96;
+
+        isBadData = (percentageDiff > slippagePercentage) || (price == 0);
     }
 
     /// @inheritdoc IDahliaOracle

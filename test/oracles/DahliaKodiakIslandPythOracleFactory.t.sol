@@ -82,7 +82,8 @@ contract DahliaKodiakIslandPythOracleFactoryTest is Test {
         DahliaKodiakIslandPythOracle oracle = DahliaKodiakIslandPythOracle(oracleFactory.createKodiakIslandPythOracle(params, delays, 300, 5));
         (uint256 price, bool isBadData) = oracle.getPrice();
         vm.pauseGasMetering();
-        assertEq(oracle.ORACLE_PRECISION(), 10 ** 36);
+        assertEq(oracle.ORACLE_PRECISION_TOKEN0(), 10 ** 36);
+        assertEq(oracle.ORACLE_PRECISION_TOKEN1(), 10 ** 36);
         assertEq(oracle.KODIAK_ISLAND(), Berachain.WBERA_HONEY_KODIAK_ISLAND);
         assertEq(oracle.QUOTE_TOKEN(), Berachain.WETH_ERC20);
         assertEq(oracle.BASE_TOKEN0_FEED(), 0x962088abcfdbdb6e30db2e340c8cf887d9efb311b1f2f17b155a63dbb6d40265);

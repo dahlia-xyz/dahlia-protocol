@@ -61,7 +61,7 @@ contract DahliaKodiakIslandPythOracleTest is Test {
                  }),
                 delays,
                 300,
-                5
+                0.01e5
             )
         );
     }
