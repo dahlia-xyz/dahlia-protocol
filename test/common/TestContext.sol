@@ -17,6 +17,7 @@ import { IIrm } from "src/irm/interfaces/IIrm.sol";
 import { DahliaChainlinkOracleFactory } from "src/oracles/contracts/DahliaChainlinkOracleFactory.sol";
 import { DahliaDualOracleFactory } from "src/oracles/contracts/DahliaDualOracleFactory.sol";
 import { DahliaPythOracleFactory } from "src/oracles/contracts/DahliaPythOracleFactory.sol";
+import { DahliaPythV2OracleFactory } from "src/oracles/contracts/DahliaPythV2OracleFactory.sol";
 import { DahliaUniswapV3OracleFactory } from "src/oracles/contracts/DahliaUniswapV3OracleFactory.sol";
 import { Timelock } from "src/oracles/contracts/Timelock.sol";
 import { IDahliaOracle } from "src/oracles/interfaces/IDahliaOracle.sol";
@@ -338,6 +339,16 @@ contract TestContext {
         }
         address timelock = createTimelock();
         factory = new DahliaPythOracleFactory(timelock, Mainnet.PYTH_STATIC_ORACLE_ADDRESS);
+        contracts[index] = address(factory);
+    }
+
+    function createPythV2OracleFactory(address staticOracle) public returns (DahliaPythV2OracleFactory factory) {
+        string memory index = "DahliaPythV2OracleFactory";
+        if (contracts[index] != address(0)) {
+            return DahliaPythV2OracleFactory(contracts[index]);
+        }
+        address timelock = createTimelock();
+        factory = new DahliaPythV2OracleFactory(timelock, staticOracle);
         contracts[index] = address(factory);
     }
 
