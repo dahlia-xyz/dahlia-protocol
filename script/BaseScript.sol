@@ -30,6 +30,7 @@ abstract contract BaseScript is Script {
     string internal constant DESTINATION = "DESTINATION";
     string internal constant POINTS_FACTORY = "POINTS_FACTORY";
     string internal constant TIMELOCK_DELAY = "TIMELOCK_DELAY";
+    string internal constant PYTH_STATIC_ORACLE_ADDRESS = "PYTH_STATIC_ORACLE_ADDRESS";
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
