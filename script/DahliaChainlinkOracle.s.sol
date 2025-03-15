@@ -36,9 +36,9 @@ contract DahliaPythOracleScript is BaseScript {
         DahliaChainlinkOracle.Params memory params =
             DahliaChainlinkOracle.Params(baseToken, baseFeedPrimary, baseFeedSecondary, quoteToken, quoteFeedPrimary, quoteFeedSecondary);
         uint256 baseMaxDelayPrimary = _envUint("CHAINLINK_ORACLE_BASE_PRIMARY_MAX_DELAY");
-        uint256 baseMaxDelaySecondary = _envOr("CHAINLINK_ORACLE_BASE_SECONDARY_MAX_DELAY", 0);
-        uint256 quoteMaxDelayPrimary = _envOr("CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY", 0);
-        uint256 quoteMaxDelaySecondary = _envOr("CHAINLINK_ORACLE_QUOTE_SECONDARY_MAX_DELAY", 0);
+        uint256 baseMaxDelaySecondary = _envOr("CHAINLINK_ORACLE_BASE_SECONDARY_MAX_DELAY", uint256(0));
+        uint256 quoteMaxDelayPrimary = _envOr("CHAINLINK_ORACLE_QUOTE_PRIMARY_MAX_DELAY", uint256(0));
+        uint256 quoteMaxDelaySecondary = _envOr("CHAINLINK_ORACLE_QUOTE_SECONDARY_MAX_DELAY", uint256(0));
         DahliaChainlinkOracle.Delays memory delays = DESTINATION.eq("dev")
             ? DahliaChainlinkOracle.Delays(365 days, 365 days, 365 days, 365 days)
             : DahliaChainlinkOracle.Delays(baseMaxDelayPrimary, baseMaxDelaySecondary, quoteMaxDelayPrimary, quoteMaxDelaySecondary);

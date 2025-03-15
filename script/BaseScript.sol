@@ -136,4 +136,9 @@ abstract contract BaseScript is Script {
         value = vm.envOr(name, defaultValue);
         console.log(string(abi.encodePacked(name, ": '", value.toString(), "'")));
     }
+
+    function _envOr(string memory name, bytes32 defaultValue) internal view returns (bytes32 value) {
+        value = vm.envOr(name, defaultValue);
+        console.log(string(abi.encodePacked(name, ": '", uint256(value).toHexString(), "'")));
+    }
 }

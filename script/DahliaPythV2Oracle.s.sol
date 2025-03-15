@@ -29,9 +29,11 @@ contract DahliaPythV2OracleScript is BaseScript {
     }
 
     function checkPrice(bytes32 feed, uint256 maxDelay) internal view {
-        require(maxDelay != 0, "Max delay should not be zero for none zero feed");
-        PythStructs.Price memory basePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(feed, maxDelay);
-        require(basePrice.price > 0, string(abi.encodePacked("price should not be bad data maxDelay=", maxDelay.toString())));
+        if (feed != bytes32(0)) {
+            require(maxDelay != 0, "Max delay should not be zero for none zero feed");
+            PythStructs.Price memory basePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(feed, maxDelay);
+            require(basePrice.price > 0, string(abi.encodePacked("price should not be bad data maxDelay=", maxDelay.toString())));
+        }
     }
 
     function run() public {
@@ -41,14 +43,14 @@ contract DahliaPythV2OracleScript is BaseScript {
         _STATIC_ORACLE_ADDRESS = oracleFactory.STATIC_ORACLE_ADDRESS();
         address baseToken = _envAddress("PYTH_ORACLE_BASE_TOKEN");
         bytes32 baseFeedPrimary = _envBytes32("PYTH_ORACLE_BASE_PRIMARY_FEED");
-        bytes32 baseFeedSecondary = _envBytes32("PYTH_ORACLE_BASE_SECONDARY_FEED");
+        bytes32 baseFeedSecondary = _envOr("PYTH_ORACLE_BASE_SECONDARY_FEED", bytes32(0));
         address quoteToken = _envAddress("PYTH_ORACLE_QUOTE_TOKEN");
-        bytes32 quoteFeedPrimary = _envBytes32("PYTH_ORACLE_QUOTE_PRIMARY_FEED");
-        bytes32 quoteFeedSecondary = _envBytes32("PYTH_ORACLE_QUOTE_SECONDARY_FEED");
+        bytes32 quoteFeedPrimary = _envOr("PYTH_ORACLE_QUOTE_PRIMARY_FEED", bytes32(0));
+        bytes32 quoteFeedSecondary = _envOr("PYTH_ORACLE_QUOTE_SECONDARY_FEED", bytes32(0));
         uint256 baseMaxDelayPrimary = _envUint("PYTH_ORACLE_BASE_MAX_DELAY_PRIMARY");
-        uint256 baseMaxDelaySecondary = _envUint("PYTH_ORACLE_BASE_MAX_DELAY_SECONDARY");
-        uint256 quoteMaxDelayPrimary = _envUint("PYTH_ORACLE_QUOTE_MAX_DELAY_PRIMARY");
-        uint256 quoteMaxDelaySecondary = _envUint("PYTH_ORACLE_QUOTE_MAX_DELAY_SECONDARY");
+        uint256 baseMaxDelaySecondary = _envOr("PYTH_ORACLE_BASE_MAX_DELAY_SECONDARY", uint256(0));
+        uint256 quoteMaxDelayPrimary = _envOr("PYTH_ORACLE_QUOTE_MAX_DELAY_PRIMARY", uint256(0));
+        uint256 quoteMaxDelaySecondary = _envOr("PYTH_ORACLE_QUOTE_MAX_DELAY_SECONDARY", uint256(0));
         DahliaPythV2Oracle.Params memory params = DahliaPythV2Oracle.Params({
             baseToken: baseToken,
             baseFeedPrimary: baseFeedPrimary,

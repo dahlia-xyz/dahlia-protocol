@@ -38,3 +38,4 @@ sonic = "${SONIC_RPC_URL}"
 # https://github.com/foundry-rs/foundry/issues/4484
 80000 = { key = "verifyContract", url = "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" }
 80084 = { key = "verifyContract", url = "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan" }
+146 = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sonicscan.org/api" }
