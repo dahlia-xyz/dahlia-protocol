@@ -69,7 +69,7 @@ contract DahliaKodiakIslandPythOracleTest is Test {
     function test_kodiak_island_oracle_pythWithMaxDelay_success() public view {
         (uint256 _price, bool _isBadData) = oracle.getPrice();
         // TODO Check correct number
-        assertEq(_price, 2_295_212_787_654_355_649_510_749_137_872_409);
+        assertEq(_price, 2_295_212_787_654_355_649_510_749_137_872_409); // 6_082_235_249_584_020_861_099_252 vs 6_441_537_247_382_733_526_541_680
         assertEq(_isBadData, false);
     }
 
@@ -150,6 +150,37 @@ contract DahliaKodiakIslandPythOracleTest is Test {
 
         assertGt(token0AmountBefore, token0AmountAfter);
         assertGt(token1AmountAfter, token1AmountBefore);
+    }
+
+    function swapAttackToken0() internal {
+        IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
+        (uint256 underlying0, uint256 underlying1) = kodiakIsland.getUnderlyingBalances();
+
+        IUniswapV3Pool pool = IUniswapV3Pool(kodiakIsland.pool());
+        address token0 = pool.token0();
+        address token1 = pool.token1();
+
+        deal(token1, address(this), underlying1 + 10_000_000_000e18);
+        uint256 token0AmountBefore = IERC20(token0).balanceOf(address(this));
+        uint256 token1AmountBefore = IERC20(token1).balanceOf(address(this));
+
+        uint160 sqrtPriceLimitX96 = 1_461_446_703_485_210_103_287_273_052_203_988_822_378_723_970_341;
+
+        int256 amountSpecified = -int256(underlying0); // target draining token0
+
+        SwapCallbackData memory data = SwapCallbackData({ tokenIn: token1, tokenOut: token0 });
+
+        pool.swap(address(this), false, amountSpecified, sqrtPriceLimitX96, abi.encode(data));
+
+        //        (, uint256 underlying1PostSwap) = kodiakIsland.getUnderlyingBalances();
+
+        //        assertEq(underlying1PostSwap, 0, "token1 should be drained");
+
+        uint256 token0AmountAfter = IERC20(token0).balanceOf(address(this));
+        uint256 token1AmountAfter = IERC20(token1).balanceOf(address(this));
+
+        assertGt(token0AmountAfter, token0AmountBefore);
+        assertGt(token1AmountBefore, token1AmountAfter);
     }
 
     function returnTokensAfterSwapAttack(uint256 token0BalanceBefore, uint256 token1BalanceBefore) internal {
@@ -309,9 +340,10 @@ contract DahliaKodiakIslandPythOracleTest is Test {
 
     function test_getAvgPrice_during_swap_attack() public {
         IKodiakIsland kodiakIsland = IKodiakIsland(oracle.KODIAK_ISLAND());
+        vm.forward(100);
         uint160 beforePrice = kodiakIsland.getAvgPrice(60);
 
-        swapAttack();
+        swapAttackToken0();
 
         uint160 afterPrice = kodiakIsland.getAvgPrice(60);
 

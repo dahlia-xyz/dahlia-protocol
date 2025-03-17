@@ -214,22 +214,31 @@ contract DahliaKodiakIslandPythOracle is Ownable2Step, IDahliaOracle, DahliaOrac
     function getPrice() external view returns (uint256 price, bool isBadData) {
         // Get Pyth prices for token0, token1, and the quote token.
         PythStructs.Price memory token0Price = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(BASE_TOKEN0_FEED, baseToken0MaxDelay);
-        PythStructs.Price memory token1Price = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(BASE_TOKEN1_FEED, baseToken1MaxDelay);
+        //        PythStructs.Price memory token1Price = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(BASE_TOKEN1_FEED, baseToken1MaxDelay);
         PythStructs.Price memory quotePrice = IPyth(_STATIC_ORACLE_ADDRESS).getPriceNoOlderThan(QUOTE_FEED, quoteMaxDelay);
 
         // Convert each underlying token's price to QUOTE_TOKEN terms.
         uint256 priceUSDToken0InQuote = ORACLE_PRECISION_TOKEN0.mulDiv(token0Price.price.toUint256(), quotePrice.price.toUint256());
-        uint256 priceUSDToken1InQuote = ORACLE_PRECISION_TOKEN1.mulDiv(token1Price.price.toUint256(), quotePrice.price.toUint256());
+        //        uint256 priceUSDToken1InQuote = ORACLE_PRECISION_TOKEN1.mulDiv(token1Price.price.toUint256(), quotePrice.price.toUint256());
 
         IKodiakIsland kodiakIsland = IKodiakIsland(KODIAK_ISLAND);
 
         // Get the vault's current underlying balances and total supply.
         (uint256 underlying0, uint256 underlying1) = kodiakIsland.getUnderlyingBalances();
+        uint160 avgSqrtPriceX96 = kodiakIsland.getAvgPrice(twapDuration);
+
+        // Compute token1 per token0 ratio from sqrt(price).
         uint256 totalVaultSupply = kodiakIsland.totalSupply();
         require(totalVaultSupply > 0, "Vault supply is zero");
 
         // Compute total underlying value in QUOTE_TOKEN terms.
-        uint256 totalUSDValueInQuote = underlying0 * priceUSDToken0InQuote + underlying1 * priceUSDToken1InQuote;
+        // Convert token1 balance to token0 equivalent.
+        uint256 token1PerToken0 = (uint256(avgSqrtPriceX96) * uint256(avgSqrtPriceX96)) >> 192;
+        uint256 underlying1InToken0 = underlying1.mulDiv(1, token1PerToken0); // TODO: Probably not protected agains swap attack to token1.
+        // Sum the token0 balance with the converted token1 balance.
+        uint256 totalUnderlyingInToken0 = underlying0 + underlying1InToken0;
+        // Convert total underlying (in token0 equivalents) to QUOTE_TOKEN terms using token0's price.
+        uint256 totalUSDValueInQuote = totalUnderlyingInToken0.mulDiv(priceUSDToken0InQuote, 1);
 
         // Price per vault token (share).
         price = totalUSDValueInQuote / totalVaultSupply;
