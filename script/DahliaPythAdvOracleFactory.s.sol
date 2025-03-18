@@ -8,7 +8,7 @@ contract DahliaPythAdvOracleFactoryScript is BaseScript {
     bytes32 private constant _SALT = keccak256(abi.encode("DahliaPythAdvOracleFactory_V1"));
 
     function run() public {
-        address pythStaticOracleAddress = _envAddress("PYTH_STATIC_ORACLE_ADDRESS");
+        address pythStaticOracleAddress = _envAddress(PYTH_STATIC_ORACLE_ADDRESS);
         address timelock = _envAddress(DEPLOYED_TIMELOCK);
         bytes memory encodedArgs = abi.encode(timelock, pythStaticOracleAddress);
         bytes memory initCode = abi.encodePacked(type(DahliaPythAdvOracleFactory).creationCode, encodedArgs);

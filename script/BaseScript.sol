@@ -17,6 +17,7 @@ abstract contract BaseScript is Script {
     string internal constant DEPLOYED_DAHLIA = "DEPLOYED_DAHLIA";
     string internal constant DEPLOYED_PYTH_ADV_ORACLE_FACTORY = "DEPLOYED_PYTH_ADV_ORACLE_FACTORY";
     string internal constant DEPLOYED_PYTH_ORACLE_FACTORY = "DEPLOYED_PYTH_ORACLE_FACTORY";
+    string internal constant DEPLOYED_PYTH_V2_ORACLE_FACTORY = "DEPLOYED_PYTH_V2_ORACLE_FACTORY";
     string internal constant DEPLOYED_CHAINLINK_ORACLE_FACTORY = "DEPLOYED_CHAINLINK_ORACLE_FACTORY";
     string internal constant DEPLOYED_WRAPPED_VAULT_FACTORY = "DEPLOYED_WRAPPED_VAULT_FACTORY";
     string internal constant DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION = "DEPLOYED_WRAPPED_VAULT_IMPLEMENTATION";
@@ -29,6 +30,7 @@ abstract contract BaseScript is Script {
     string internal constant DESTINATION = "DESTINATION";
     string internal constant POINTS_FACTORY = "POINTS_FACTORY";
     string internal constant TIMELOCK_DELAY = "TIMELOCK_DELAY";
+    string internal constant PYTH_STATIC_ORACLE_ADDRESS = "PYTH_STATIC_ORACLE_ADDRESS";
 
     function setUp() public virtual {
         deployer = vm.rememberKey(vm.envUint("PRIVATE_KEY"));
@@ -133,5 +135,10 @@ abstract contract BaseScript is Script {
     function _envOr(string memory name, uint256 defaultValue) internal view returns (uint256 value) {
         value = vm.envOr(name, defaultValue);
         console.log(string(abi.encodePacked(name, ": '", value.toString(), "'")));
+    }
+
+    function _envOr(string memory name, bytes32 defaultValue) internal view returns (bytes32 value) {
+        value = vm.envOr(name, defaultValue);
+        console.log(string(abi.encodePacked(name, ": '", uint256(value).toHexString(), "'")));
     }
 }

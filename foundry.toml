@@ -6,7 +6,7 @@ out = "out"
 libs = ["lib"]
 optimizer_runs = 200
 via_ir = true
-fs_permissions = [{ access = "read", path = "./out"}]
+fs_permissions = [{ access = "read", path = "./out" }]
 
 [profile.default.fmt]
 # copied from Royco
@@ -34,8 +34,10 @@ mainnet = "${MAINNET_RPC_URL}"
 bartio = "${BARTIO_RPC_URL}"
 cartio = "${CARTIO_RPC_URL}"
 berachain = "${BERACHAIN_RPC_URL}"
+sonic = "${SONIC_RPC_URL}"
 
 [etherscan]
 # https://github.com/foundry-rs/foundry/issues/4484
 80000 = { key = "verifyContract", url = "https://api.routescan.io/v2/network/testnet/evm/80000/etherscan" }
 80084 = { key = "verifyContract", url = "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan" }
+146 = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sonicscan.org/api" }

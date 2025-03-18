@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+library Sonic {
+    address internal constant PYTH_STATIC_ORACLE_ADDRESS = 0x2880aB155794e7179c9eE2e38200202908C17B43;
+    address internal constant ERC20_WSTK_SCUSD = 0x9fb76f7ce5FCeAA2C42887ff441D46095E494206;
+    address internal constant ERC20_USDC = 0x29219dd400f2Bf60E5a23d13Be72B486D4038894;
+    address internal constant ERC20_WSTK_SCETH = 0xE8a41c62BB4d5863C6eadC96792cFE90A1f37C47;
+}
+
 library Mainnet {
     address internal constant UNISWAP_STATIC_ORACLE_ADDRESS = 0xB210CE856631EeEB767eFa666EC7C1C57738d438;
     address internal constant PYTH_STATIC_ORACLE_ADDRESS = 0x4305FB66699C3B2702D4d05CF36551390A4c69C6;
