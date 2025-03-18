@@ -68,6 +68,8 @@ program.command("generate-abi").action(async () => {
     "DahliaPythAdvOracleFactory",
     "DahliaUniswapV3Oracle",
     "DahliaUniswapV3OracleFactory",
+    "DahliaKodiakIslandPythOracle",
+    "DahliaKodiakIslandPythOracleFactory",
     "Timelock",
     "IDahliaOracle",
     "IDahliaWrappedVault",
