@@ -4,6 +4,7 @@ pipeline {
     }
     environment {
         GIT_SHA = "${sh(returnStdout: true, script: 'echo ${GIT_COMMIT} | cut -c1-12').trim()}"
+        ARBITRUM_RPC_URL = 'https://1rpc.io/arb'
         BERACHAIN_RPC_URL = 'https://rpc.berachain.com/'
         CARTIO_RPC_URL = 'https://teddilion-eth-cartio.berachain.com'
         MAINNET_RPC_URL = 'https://ethereum-rpc.publicnode.com'

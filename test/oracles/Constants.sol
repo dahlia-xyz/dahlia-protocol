@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+library Arbitrum {
+    // https://docs.pyth.network/price-feeds/contract-addresses/evm
+    address internal constant PYTH_STATIC_ORACLE_ADDRESS = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
+    // https://arbiscan.io/address/0x3D1aD04e82E595b7295751C35203f542dC986a43
+    address internal constant ERC20_ROYCO_TEST = 0x3D1aD04e82E595b7295751C35203f542dC986a43;
+    address internal constant ERC20_USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+    address internal constant ERC20_WETH = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+}
+
 library Sonic {
     address internal constant PYTH_STATIC_ORACLE_ADDRESS = 0x2880aB155794e7179c9eE2e38200202908C17B43;
     address internal constant ERC20_WSTK_SCUSD = 0x9fb76f7ce5FCeAA2C42887ff441D46095E494206;
