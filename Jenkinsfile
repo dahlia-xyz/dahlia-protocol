@@ -47,33 +47,12 @@ pipeline {
                     steps {
                         script {
                             sh 'pnpm run diff'
+                            sh 'forge test -vvvv'
                             sh 'pnpm run lint'
                             sh 'pnpm run size'
                         }
                     }
                 }
-//                stage('Coverage') {
-//                    steps {
-//                            script {
-//                                sh 'pnpm run coverage'
-//                            }
-//                    }
-//                }
-                stage('Debug') {
-                    steps {
-                        script {
-                            sh 'forge test -vvvv'
-                        }
-                    }
-                }
-//                stage('Coverage') {
-//                    steps {
-//                            script {
-//                                sh 'forge coverage --no-match-coverage=.s.sol --ir-minimum --report lcov'
-//                                cobertura(autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'lcov.info')
-//                            }
-//                    }
-//                }
             }
         }
     }
