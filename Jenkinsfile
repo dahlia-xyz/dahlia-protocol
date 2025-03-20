@@ -46,6 +46,7 @@ pipeline {
                 stage('Lint') {
                     steps {
                         script {
+                            sh 'pnpm run diff'
                             sh 'pnpm run lint'
                             sh 'pnpm run size'
                         }
@@ -58,13 +59,6 @@ pipeline {
 //                            }
 //                    }
 //                }
-                stage('Diff') {
-                    steps {
-                        script {
-                            sh 'pnpm run diff'
-                        }
-                    }
-                }
                 stage('Debug') {
                     steps {
                         script {
