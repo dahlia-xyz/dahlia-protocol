@@ -8,6 +8,7 @@ import { BaseScript } from "./BaseScript.sol";
 
 contract PythAggregatorV3Script is BaseScript {
     function run() external {
+        string memory INDEX = _envString(INDEX);
         string memory contractName = string(abi.encodePacked("DEPLOYED_PYTH_AGGREGATOR_", INDEX));
         address marketAddress = _envOr(contractName, address(0));
         if (marketAddress.code.length == 0 || marketAddress == address(0)) {
