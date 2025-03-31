@@ -49,6 +49,7 @@ contract ManageMarketImplUnitTest is Test {
         assertEq(address(market.vault), address(vault), "marketProxy = vault");
     }
 
+    /// forge-config: default.allow_internal_expect_revert = true
     function test_unit_manage_deployMarket_alreadyDeployed(IDahlia.MarketConfig memory marketParamsFuzz, IDahliaWrappedVault vault) public {
         marketParamsFuzz.irm = ctx.createTestIrm();
         marketParamsFuzz.lltv = bound(marketParamsFuzz.lltv, Constants.DEFAULT_MIN_LLTV, Constants.DEFAULT_MAX_LLTV);
@@ -58,7 +59,7 @@ contract ManageMarketImplUnitTest is Test {
 
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault, Constants.DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
 
-        vm.expectRevert(Errors.MarketAlreadyDeployed.selector);
+        vm.expectRevert(abi.encodeWithSelector(Errors.MarketAlreadyDeployed.selector));
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault, Constants.DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
     }
 }

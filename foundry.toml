@@ -1,5 +1,4 @@
 [profile.default]
-allow_internal_expect_revert = true
 solc_version = "0.8.27"
 src = "src"
 rpc_url = "http://0.0.0.0:8545"
