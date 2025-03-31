@@ -45,7 +45,6 @@ pipeline {
                 stage('Lint') {
                     steps {
                         script {
-                            sh 'forge soldeer update'
                             sh 'pnpm run diff'
                             sh 'forge test -vvvv'
                             sh 'pnpm run lint'

@@ -36,6 +36,3 @@ sonic = "${SONIC_RPC_URL}"
 [etherscan]
 # https://github.com/foundry-rs/foundry/issues/4484
 146 = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sonicscan.org/api" }
-
-[dependencies]
-"@pythnetwork-pyth-sdk-solidity" = "4.0.0"

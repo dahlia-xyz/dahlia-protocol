@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { PythAggregatorV3 } from "../dependencies/@pythnetwork-pyth-sdk-solidity-4.0.0/PythAggregatorV3.sol";
 import { console } from "../lib/forge-std/src/console.sol";
+
+import { PythAggregatorV3 } from "../src/pyth/PythAggregatorV3.sol";
 import { BaseScript } from "./BaseScript.sol";
 
 contract PythAggregatorV3Script is BaseScript {

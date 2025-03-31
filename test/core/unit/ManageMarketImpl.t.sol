@@ -59,7 +59,7 @@ contract ManageMarketImplUnitTest is Test {
 
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault, Constants.DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
 
-        vm.expectRevert(abi.encodeWithSelector(Errors.MarketAlreadyDeployed.selector));
+        vm.expectRevert(Errors.MarketAlreadyDeployed.selector);
         ManageMarketImpl.deployMarket(markets, marketParamsFuzzId, marketParamsFuzz, vault, Constants.DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
     }
 }
