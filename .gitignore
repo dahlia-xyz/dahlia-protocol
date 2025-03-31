@@ -48,3 +48,7 @@ ignition/deployments/chain-31337
 .nx
 slither.db.json
 lcov.info
+
+
+# Soldeer
+/dependencies

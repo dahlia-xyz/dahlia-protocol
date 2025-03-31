@@ -1,0 +1,6 @@
+[[dependencies]]
+name = "@pythnetwork-pyth-sdk-solidity"
+version = "4.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/@pythnetwork-pyth-sdk-solidity/4_0_0_09-08-2024_06:26:20_pyth-sdk-solidity.zip"
+checksum = "d29ff0824fa5b197ecfba3ed94edede7e8e148f46b89caa9873d80323f29aca6"
+integrity = "58c86bd769aede29d45a13e743fa356a99bc88c29a750e6cdd7c13d5c2d4d62a"

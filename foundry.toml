@@ -1,4 +1,5 @@
 [profile.default]
+allow_internal_expect_revert = true
 solc_version = "0.8.27"
 src = "src"
 rpc_url = "http://0.0.0.0:8545"
@@ -36,3 +37,6 @@ sonic = "${SONIC_RPC_URL}"
 [etherscan]
 # https://github.com/foundry-rs/foundry/issues/4484
 146 = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sonicscan.org/api" }
+
+[dependencies]
+"@pythnetwork-pyth-sdk-solidity" = "4.0.0"
