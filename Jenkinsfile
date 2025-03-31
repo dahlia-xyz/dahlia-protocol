@@ -4,8 +4,8 @@ pipeline {
     }
     environment {
         GIT_SHA = "${sh(returnStdout: true, script: 'echo ${GIT_COMMIT} | cut -c1-12').trim()}"
+        ARBITRUM_RPC_URL = 'https://app.dahliadev.xyz/rpc/evm/42161'
         BERACHAIN_RPC_URL = 'https://rpc.berachain.com/'
-        CARTIO_RPC_URL = 'https://teddilion-eth-cartio.berachain.com'
         MAINNET_RPC_URL = 'https://ethereum-rpc.publicnode.com'
         SEPOLIA_RPC_URL = 'https://ethereum-sepolia-rpc.publicnode.com'
     }
@@ -45,40 +45,13 @@ pipeline {
                 stage('Lint') {
                     steps {
                         script {
+                            sh 'pnpm run diff'
+                            sh 'forge test -vvvv'
                             sh 'pnpm run lint'
                             sh 'pnpm run size'
                         }
                     }
                 }
-//                stage('Coverage') {
-//                    steps {
-//                            script {
-//                                sh 'pnpm run coverage'
-//                            }
-//                    }
-//                }
-                stage('Diff') {
-                    steps {
-                        script {
-                            sh 'pnpm run diff'
-                        }
-                    }
-                }
-                stage('Debug') {
-                    steps {
-                        script {
-                            sh 'forge test -vvvv'
-                        }
-                    }
-                }
-//                stage('Coverage') {
-//                    steps {
-//                            script {
-//                                sh 'forge coverage --no-match-coverage=.s.sol --ir-minimum --report lcov'
-//                                cobertura(autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'lcov.info')
-//                            }
-//                    }
-//                }
             }
         }
     }
