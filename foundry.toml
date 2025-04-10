@@ -36,3 +36,4 @@ sonic = "${SONIC_RPC_URL}"
 [etherscan]
 # https://github.com/foundry-rs/foundry/issues/4484
 146 = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sonicscan.org/api" }
+80094 = { key = "${ETHERSCAN_API_KEY}", url = "https://api.berascan.com/api" }
