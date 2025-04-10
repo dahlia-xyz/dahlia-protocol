@@ -11,7 +11,7 @@ pipeline {
     }
     agent {
         node {
-            label 'debian1'
+            label 'alpine1'
         }
     }
     stages {
