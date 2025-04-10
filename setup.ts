@@ -77,7 +77,7 @@ program.command("generate-abi").action(async () => {
   ];
   await Promise.all(
     contracts.map(async (contract) => {
-      const { stdout } = await $`forge inspect ${contract} abi`;
+      const { stdout } = await $`forge inspect ${contract} abi --json`;
       await fs.writeFile(`./abis/${contract}.json`, stdout);
     }),
   );
