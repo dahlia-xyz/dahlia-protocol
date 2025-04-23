@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { IPyth } from "../../src/pyth/interfaces/IPyth.sol";
 import { Test, Vm } from "@forge-std/Test.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { IPyth } from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import { PythStructs } from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import { Constants } from "src/core/helpers/Constants.sol";
 import { MarketMath } from "src/core/helpers/MarketMath.sol";
 import { DahliaPythV2Oracle } from "src/oracles/contracts/DahliaPythV2Oracle.sol";
 import { DahliaPythV2OracleFactory } from "src/oracles/contracts/DahliaPythV2OracleFactory.sol";
+import { PythStructs } from "src/pyth/PythStructs.sol";
 import { BoundUtils } from "test/common/BoundUtils.sol";
 import { TestContext } from "test/common/TestContext.sol";
 import { Sonic } from "test/oracles/Constants.sol";

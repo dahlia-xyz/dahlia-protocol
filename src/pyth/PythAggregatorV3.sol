@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache 2
 pragma solidity ^0.8.0;
 
-import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
-import { PythStructs } from "../../lib/pyth-sdk-solidity/PythStructs.sol";
+import { PythStructs } from "./PythStructs.sol";
+import { IPyth } from "./interfaces/IPyth.sol";
 
 // This interface is forked from the Zerolend Adapter found here:
 // https://github.com/zerolend/pyth-oracles/blob/master/contracts/PythAggregatorV3.sol

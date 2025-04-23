@@ -19,9 +19,6 @@
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/vectorized/solady
-[submodule "lib/pyth-sdk-solidity"]
-	path = lib/pyth-sdk-solidity
-	url = https://github.com/pyth-network/pyth-sdk-solidity
 [submodule "lib/royco"]
 	path = lib/royco
 	url = https://github.com/roycoprotocol/royco
