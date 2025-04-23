@@ -52,6 +52,7 @@ program.command("generate-abi").action(async () => {
     "IDahliaRegistry",
     "DahliaRegistry",
     "IPermitted",
+    "IPyth",
     "IrmFactory",
     "IIrm",
     "ChainlinkWstETHToETH",
