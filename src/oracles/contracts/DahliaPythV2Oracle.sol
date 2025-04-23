@@ -3,10 +3,10 @@ pragma solidity ^0.8.27;
 
 import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "../../../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { IPyth } from "../../../lib/pyth-sdk-solidity/IPyth.sol";
-import { PythStructs } from "../../../lib/pyth-sdk-solidity/PythStructs.sol";
 import { FixedPointMathLib } from "../../../lib/solady/src/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "../../../lib/solady/src/utils/SafeCastLib.sol";
+import { PythStructs } from "../../../src/pyth/PythStructs.sol";
+import { IPyth } from "../../../src/pyth/interfaces/IPyth.sol";
 import { DahliaOracleStaticAddress } from "../abstracts/DahliaOracleStaticAddress.sol";
 import { Errors } from "../helpers/Errors.sol";
 import { IDahliaOracle } from "../interfaces/IDahliaOracle.sol";

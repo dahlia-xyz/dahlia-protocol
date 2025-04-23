@@ -2,13 +2,13 @@
 pragma solidity ^0.8.27;
 
 import { IERC20Metadata } from "../lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { IPyth } from "../lib/pyth-sdk-solidity/IPyth.sol";
-import { PythStructs } from "../lib/pyth-sdk-solidity/PythStructs.sol";
 import { CREATE3 } from "../lib/solady/src/utils/CREATE3.sol";
 import { LibString } from "../lib/solady/src/utils/LibString.sol";
 import { SafeCastLib } from "../lib/solady/src/utils/SafeCastLib.sol";
 import { DahliaPythAdvOracleFactory } from "../src/oracles/contracts/DahliaPythAdvOracleFactory.sol";
 import { DahliaPythOracle } from "../src/oracles/contracts/DahliaPythOracle.sol";
+import { PythStructs } from "../src/pyth/PythStructs.sol";
+import { IPyth } from "../src/pyth/interfaces/IPyth.sol";
 import { BaseScript } from "./BaseScript.sol";
 
 contract DahliaPythAdvOracleScript is BaseScript {
