@@ -12,7 +12,7 @@ pipeline {
     }
     agent {
         node {
-            label 'debian1'
+            label 'alpine1'
         }
     }
     stages {
@@ -46,7 +46,7 @@ pipeline {
                 stage('Lint') {
                     steps {
                         script {
-                            sh 'forge test -vvvv'
+                            sh 'forge test'
                             sh 'pnpm run lint'
                             sh 'pnpm run size'
                         }
