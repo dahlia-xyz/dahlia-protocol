@@ -8,6 +8,7 @@ pipeline {
         BERACHAIN_RPC_URL = 'https://rpc.berachain.com/'
         MAINNET_RPC_URL = 'https://ethereum-rpc.publicnode.com'
         SEPOLIA_RPC_URL = 'https://ethereum-sepolia-rpc.publicnode.com'
+        FOUNDRY_THREADS = '1'
     }
     agent {
         node {
