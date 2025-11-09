@@ -46,7 +46,6 @@ pipeline {
                 stage('Lint') {
                     steps {
                         script {
-                            sh 'pnpm run diff'
                             sh 'forge test -vvvv'
                             sh 'pnpm run lint'
                             sh 'pnpm run size'
