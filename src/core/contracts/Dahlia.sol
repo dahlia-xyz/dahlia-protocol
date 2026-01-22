@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
 import { Ownable, Ownable2Step } from "../../../lib/openzeppelin-contracts/contracts/access/Ownable2Step.sol";
@@ -129,9 +129,8 @@ contract Dahlia is Permitted, Ownable2Step, IDahlia, ReentrancyGuard {
         uint256 fee = dahliaRegistry.getValue(Constants.VALUE_ID_ROYCO_WRAPPED_VAULT_INITIAL_FRONTEND_FEE);
         uint256 dahliaFee = dahliaRegistry.getValue(Constants.VALUE_ID_DAHLIA_MARKET_INITIAL_PROTOCOL_FEE);
         address owner = marketConfig.owner == address(0) ? msg.sender : marketConfig.owner;
-        IDahliaWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY)).wrapVault(
-            id, marketConfig.loanToken, owner, marketConfig.name, fee
-        );
+        IDahliaWrappedVault wrappedVault = WrappedVaultFactory(dahliaRegistry.getAddress(Constants.ADDRESS_ID_ROYCO_WRAPPED_VAULT_FACTORY))
+            .wrapVault(id, marketConfig.loanToken, owner, marketConfig.name, fee);
         ManageMarketImpl.deployMarket(markets, id, marketConfig, wrappedVault, dahliaFee);
         marketSequence++;
     }
